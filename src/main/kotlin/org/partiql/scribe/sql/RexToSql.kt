@@ -7,6 +7,7 @@ import org.partiql.ast.SetQuantifier
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCase
 import org.partiql.ast.exprCaseBranch
+import org.partiql.ast.exprCollection
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprPath
 import org.partiql.ast.exprPathStepIndex
@@ -27,12 +28,33 @@ import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.plan.visitor.PlanBaseVisitor
 import org.partiql.scribe.ScribeProblem
+import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlTransform.Companion.translate
+import org.partiql.types.AnyOfType
+import org.partiql.types.AnyType
+import org.partiql.types.BagType
+import org.partiql.types.BlobType
+import org.partiql.types.BoolType
+import org.partiql.types.ClobType
+import org.partiql.types.DateType
+import org.partiql.types.DecimalType
+import org.partiql.types.FloatType
+import org.partiql.types.GraphType
+import org.partiql.types.IntType
+import org.partiql.types.ListType
+import org.partiql.types.MissingType
+import org.partiql.types.NullType
+import org.partiql.types.SexpType
 import org.partiql.types.StaticType
+import org.partiql.types.StringType
 import org.partiql.types.StructType
+import org.partiql.types.SymbolType
+import org.partiql.types.TimeType
+import org.partiql.types.TimestampType
 import org.partiql.types.TupleConstraint
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
+import org.partiql.value.TextValue
 
 /**
  * Local scope.
@@ -132,13 +154,35 @@ public open class RexToSql(
         return exprPathStepSymbol(symbol)
     }
 
+    /**
+     * Rewrite key indexing of string literals to use symbol step syntax — i.e. x['y'] -> x.y
+     *
+     * @param node
+     * @return
+     */
+    @OptIn(PartiQLValueExperimental::class)
     private fun visitRexOpPathStepKey(node: Rex.Op.Path.Step.Key) : Expr.Path.Step {
+        val key = node.key.op
+        if (key is Rex.Op.Lit && key.value is StringValue) {
+            val symbol = id((key.value as StringValue).value!!)
+            return exprPathStepSymbol(symbol)
+        }
         return exprPathStepIndex(visitRex(node.key, StaticType.STRING))
     }
 
     override fun visitRexOpCollection(node: Rex.Op.Collection, ctx: StaticType): Expr {
-        // TODO!
-        return super.visitRexOpCollection(node, ctx)
+        val type = staticTypeToCollectionType(ctx)
+        val values = node.values.map { visitRexOp(it.op, it.type) }
+        return exprCollection(type, values)
+    }
+
+    private fun staticTypeToCollectionType(type: StaticType): Expr.Collection.Type {
+        return when (type.asNullable()) {
+            is ListType -> Expr.Collection.Type.LIST
+            is SexpType -> Expr.Collection.Type.SEXP
+            is BagType -> Expr.Collection.Type.BAG
+            else -> error("Type is not a collection type, found: $type")
+        }
     }
 
     override fun visitRexOpStruct(node: Rex.Op.Struct, ctx: StaticType): Expr {
@@ -182,7 +226,6 @@ public open class RexToSql(
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: StaticType): Expr {
-        val typeEnv = node.rel.type.schema
         val relToSql = RelToSql(transform)
         val rexToSql = RexToSql(transform, locals)
         val sfw = relToSql.apply(node.rel)

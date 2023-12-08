@@ -7,6 +7,7 @@ import org.partiql.ast.exprBinary
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
 import org.partiql.ast.exprIsType
+import org.partiql.ast.exprLike
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprSessionAttribute
 import org.partiql.ast.exprUnary
@@ -135,6 +136,9 @@ public abstract class SqlCalls {
         "date_diff_hour" to { args -> dateDiff(DatetimeField.HOUR, args) },
         "date_diff_minute" to { args -> dateDiff(DatetimeField.MINUTE, args) },
         "date_diff_second" to { args -> dateDiff(DatetimeField.SECOND, args) },
+        // LIKE
+        "like" to { args -> like(args, escape = false) },
+        "like_escape" to { args -> like(args, escape = true) },
         // IS
         "is_bool" to { args -> isType(PartiQLValueType.BOOL, args) },
         "is_int8" to { args -> isType(PartiQLValueType.INT8, args) },
@@ -249,6 +253,13 @@ public abstract class SqlCalls {
         val arg1 = args[0].expr
         val arg2 = args[1].expr
         return exprCall(call, listOf(arg0, arg1, arg2))
+    }
+
+    public open fun like(args: SqlArgs, escape: Boolean): Expr {
+        val arg0 = args[0].expr
+        val arg1 = args[1].expr
+        val arg2 = if (escape) args[2].expr else null
+        return exprLike(arg0, arg1, arg2, false)
     }
 
     public open fun rewriteCast(type: PartiQLValueType, args: SqlArgs): Expr {
