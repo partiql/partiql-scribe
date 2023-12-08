@@ -175,9 +175,6 @@ public abstract class SqlCalls {
         "in_collection" to { args -> inCollection(args) },
         // betwen
         "between" to {args -> between(args)},
-        // like
-        "like" to {args -> like(args)},
-        "like_escape" to {args -> like(args)},
     )
 
     public fun retarget(name: String, args: SqlArgs): Expr {
