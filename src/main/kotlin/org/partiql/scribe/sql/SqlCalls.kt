@@ -138,6 +138,9 @@ public abstract class SqlCalls {
         "date_diff_hour" to { args -> dateDiff(DatetimeField.HOUR, args) },
         "date_diff_minute" to { args -> dateDiff(DatetimeField.MINUTE, args) },
         "date_diff_second" to { args -> dateDiff(DatetimeField.SECOND, args) },
+        // LIKE
+        "like" to { args -> like(args, escape = false) },
+        "like_escape" to { args -> like(args, escape = true) },
         // IS
         "is_bool" to { args -> isType(PartiQLValueType.BOOL, args) },
         "is_int8" to { args -> isType(PartiQLValueType.INT8, args) },
@@ -266,9 +269,11 @@ public abstract class SqlCalls {
 
     public open fun between(args: SqlArgs) : Expr = exprBetween(args[0].expr, args[1].expr, args[2].expr, false)
 
-    public open fun like(args: SqlArgs) : Expr = when (args.size) {
-        2 -> exprLike(args[0].expr, args[1].expr, null, false)
-        else -> exprLike(args[0].expr, args[1].expr, args[2].expr, false)
+    public open fun like(args: SqlArgs, escape: Boolean): Expr {
+        val arg0 = args[0].expr
+        val arg1 = args[1].expr
+        val arg2 = if (escape) args[2].expr else null
+        return exprLike(arg0, arg1, arg2, false)
     }
 
     public open fun rewriteCast(type: PartiQLValueType, args: SqlArgs): Expr {
