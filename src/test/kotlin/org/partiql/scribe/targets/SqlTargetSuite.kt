@@ -99,6 +99,9 @@ abstract class SqlTargetSuite {
                     val actual = result.output.value
                     val expected = it.statement
                     comparator.assertEquals(expected, actual) {
+                        this.appendLine("Input Query: $statement")
+                        this.appendLine("Expected result: $expected")
+                        this.appendLine("Actual result: $actual")
                         // debug dump
                         PlanPrinter.append(this, result.input)
                     }

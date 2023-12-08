@@ -2,69 +2,72 @@
 --  PartiQL Path Navigation
 -- ----------------------------------------
 
+-- T1 -> Any
+
 --#[paths-00]
 -- tuple navigation
-x.y;
+t1.y;
 
 --#[paths-01]
 -- array navigation with literal
-x[0];
+t1[0];
     
 --#[paths-02]
 -- tuple navigation with array notation
-x['y'];
+t1['y'];
 
 --#[paths-03]
 -- tuple navigation (2)
-x."y";
+t1."y";
 
 --#[paths-04]
 -- tuple navigation with explicit cast as string
-x[CAST(z AS STRING)];
+t1[CAST(str AS STRING)];
 
 -- ----------------------------------------
 --  Composition of Navigation (5 choose 3)
 -- ----------------------------------------
 
 --#[paths-05]
-x.y[0]['y'];
+t1.y[0]['y'];
 
 --#[paths-06]
-x.y[0]."y";
+t1.y[0]."y";
 
 --#[paths-07]
-x.y[0][CAST(z AS STRING)];
+t1.y[0][CAST(str AS STRING)];
 
 --#[paths-08]
-x.y['y']."y";
+t1.y['y']."y";
 
 --#[paths-09]
-x.y['y'][CAST(z AS STRING)];
+t1.y['y'][CAST(str AS STRING)];
 
 --#[paths-10]
-x.y."y"[CAST(z AS STRING)];
+t1.y."y"[CAST(str AS STRING)];
 
 --#[paths-11]
-x[0]['y']."y";
+t1[0]['y']."y";
 
 --#[paths-12]
-x[0]['y'][CAST(z AS STRING)];
+t1[0]['y'][CAST(str AS STRING)];
 
 --#[paths-13]
-x[0]."y"[CAST(z AS STRING)];
+t1[0]."y"[CAST(str AS STRING)];
 
 --#[paths-14]
-x['y']."y"[CAST(z AS STRING)];
+t1['y']."y"[CAST(str AS STRING)];
 
 -- ----------------------------------------
 --  Array Navigation with Expressions
 -- ----------------------------------------
 
 --#[paths-15]
-x[0+1];
+t1[0+1];
 
 --#[paths-16]
-x[ABS(1)];
+-- abs function not supported in the header
+t1[ABS(1)];
 
 -- ----------------------------------------
 --  PartiQL Path Navigation (+SFW)
