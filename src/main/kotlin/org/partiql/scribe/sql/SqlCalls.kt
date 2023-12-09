@@ -3,10 +3,13 @@ package org.partiql.scribe.sql
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
+import org.partiql.ast.exprBetween
 import org.partiql.ast.exprBinary
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
+import org.partiql.ast.exprInCollection
 import org.partiql.ast.exprIsType
+import org.partiql.ast.exprLike
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprSessionAttribute
 import org.partiql.ast.exprUnary
@@ -165,6 +168,13 @@ public abstract class SqlCalls {
         // Session Attributes
         "current_user" to sessionAttribute(Expr.SessionAttribute.Attribute.CURRENT_USER),
         "current_date" to sessionAttribute(Expr.SessionAttribute.Attribute.CURRENT_DATE),
+        // in collection
+        "in_collection" to { args -> inCollection(args) },
+        // betwen
+        "between" to {args -> between(args)},
+        // like
+        "like" to {args -> like(args)},
+        "like_escape" to {args -> like(args)},
     )
 
     public fun retarget(name: String, args: SqlArgs): Expr {
@@ -251,6 +261,16 @@ public abstract class SqlCalls {
         return exprCall(call, listOf(arg0, arg1, arg2))
     }
 
+    // functions to operator
+    public open fun inCollection(args: SqlArgs) : Expr = exprInCollection(args[0].expr, args[1].expr, false)
+
+    public open fun between(args: SqlArgs) : Expr = exprBetween(args[0].expr, args[1].expr, args[2].expr, false)
+
+    public open fun like(args: SqlArgs) : Expr = when (args.size) {
+        2 -> exprLike(args[0].expr, args[1].expr, null, false)
+        else -> exprLike(args[0].expr, args[1].expr, args[2].expr, false)
+    }
+
     public open fun rewriteCast(type: PartiQLValueType, args: SqlArgs): Expr {
         assert(args.size == 1) { "CAST should only have 1 argument" }
         val value = args[0].expr
@@ -288,8 +308,12 @@ public abstract class SqlCalls {
     }
 
     public open fun isType(type: PartiQLValueType, args: SqlArgs): Expr {
-        assert(args.size == 1) { "IS should only have 1 argument" }
-        val value = args.last().expr
+        // leverage the fact that we have at most 2 type parameters, a little hacky but ok for now
+        val (typeArg0, typeArg1, value) = when(args.size) {
+            1 -> Triple(null, null, args[0].expr)
+            2 -> Triple(null, args.first(), args[1].expr)
+            else -> Triple(args[0], args[1], args[2].expr)
+        }
         val asType = when (type) {
             PartiQLValueType.ANY -> typeAny()
             PartiQLValueType.BOOL -> typeBool()
@@ -299,11 +323,11 @@ public abstract class SqlCalls {
             PartiQLValueType.INT64 -> typeInt8()
             PartiQLValueType.INT -> typeInt()
             PartiQLValueType.DECIMAL_ARBITRARY -> typeDecimal(null, null)
-            PartiQLValueType.DECIMAL -> typeDecimal(args[0].toInt(), args[1].toInt())
+            PartiQLValueType.DECIMAL -> typeDecimal(typeArg0?.toInt(), typeArg1?.toInt())
             PartiQLValueType.FLOAT32 -> typeFloat32()
             PartiQLValueType.FLOAT64 -> typeFloat64()
-            PartiQLValueType.CHAR -> typeChar(args[0].toInt())
-            PartiQLValueType.STRING -> typeString(args[0].toInt())
+            PartiQLValueType.CHAR -> typeChar(typeArg1?.toInt())
+            PartiQLValueType.STRING -> typeString(typeArg1?.toInt())
             PartiQLValueType.SYMBOL -> typeSymbol()
             PartiQLValueType.BINARY -> error("Unsupported")
             PartiQLValueType.BYTE -> error("Unsupported")

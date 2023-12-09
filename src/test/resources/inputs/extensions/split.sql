@@ -1,11 +1,11 @@
 --#[split-00]
-split(v, d);
+split(str, str);
 
 --#[split-01]
-split(v, d)[n];
+split(str, str)[0];
 
 --#[split-02]
-split(v, d)[n];
+split(str, str)[0];
 
 --#[split-sfw-00]
 SELECT split(v, '.') AS chars FROM T;

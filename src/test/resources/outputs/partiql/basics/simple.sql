@@ -22,106 +22,223 @@ true;
 'hello';
 
 --#[sanity-lit-04]
-[ 'a', 'b', 'c' ];
+('a', 'b', 'c');
 
 --#[sanity-lit-05]
-<< 'a', 'b', 'c' >>;
+<<'a', 'b', 'c'>>;
 
 --#[sanity-lit-06]
-{ 'a': 1, 'b': 2, 'c': 3 };
+{'a': 1, 'b': 2, 'c': 3};
 
 -- ------------------
 --  Basic Expressions
 -- ------------------
 
 --#[expr-00]
-lhs OR rhs;
+"default"."T1" OR "default"."T1";
 
 --#[expr-01]
-lhs AND rhs;
+"default"."T1" AND "default"."T1";
 
 --#[expr-02]
-NOT v;
+NOT "default"."T1";
 
 --#[expr-03]
-lhs < rhs;
+"default"."T1" < "default"."T1";
 
 --#[expr-04]
-lhs <= rhs;
+"default"."T1" <= "default"."T1";
 
 --#[expr-05]
-lhs > rhs;
+"default"."T1" > "default"."T1";
 
 --#[expr-06]
-lhs >= rhs;
+"default"."T1" >= "default"."T1";
 
 --#[expr-07]
-lhs = rhs;
+"default"."T1" = "default"."T1";
 
 --#[expr-08]
-lhs != rhs;
+NOT "default"."T1" = "default"."T1";
 
 --#[expr-09]
-lhs <> rhs;
+NOT "default"."T1" = "default"."T1";
 
 --#[expr-10]
-lhs IS NOT rhs;
+"default"."T1" IS NULL;
 
 --#[expr-11]
-lhs IN ( true );
+NOT "default"."T1" IS NULL;
 
 --#[expr-12]
-lhs NOT IN ( false );
+"default"."T1" IS MISSING;
 
 --#[expr-13]
-lhs IN collection;
+NOT "default"."T1" IS MISSING;
 
 --#[expr-14]
-lhs NOT IN collection;
+"default"."T1" IS INT2;
 
 --#[expr-15]
-lhs LIKE rhs;
+NOT "default"."T1" IS INT2;
 
 --#[expr-16]
-lhs NOT LIKE rhs;
+"default"."T1" IS INT4;
 
 --#[expr-17]
-lhs LIKE rhs ESCAPE esc;
+NOT "default"."T1" IS INT4;
 
 --#[expr-18]
-v BETWEEN lo AND hi;
+"default"."T1" IS INT8;
 
 --#[expr-19]
-v NOT BETWEEN lo AND hi;
+NOT "default"."T1" IS INT8;
 
 --#[expr-20]
-lhs & rhs;
+"default"."T1" IS INT;
 
 --#[expr-21]
-lhs || rhs;
+NOT "default"."T1" IS INT;
 
 --#[expr-22]
-lhs + rhs;
+"default"."T1" IS DECIMAL;
 
 --#[expr-23]
-lhs - rhs;
+NOT "default"."T1" IS DECIMAL;
 
 --#[expr-24]
-lhs % rhs;
+"default"."T1" IS DOUBLE PRECISION;
 
 --#[expr-25]
-lhs * rhs;
+NOT "default"."T1" IS DOUBLE PRECISION;
 
 --#[expr-26]
-lhs / rhs;
+"default"."T1" IS BOOL;
 
 --#[expr-27]
-CURRENT_USER;
+NOT "default"."T1" IS BOOL;
 
 --#[expr-28]
-CURRENT_DATE;
+"default"."T1" IS SYMBOL;
 
 --#[expr-29]
+NOT "default"."T1" IS SYMBOL;
+
+--#[expr-30]
+"default"."T1" IS DATE;
+
+--#[expr-31]
+NOT "default"."T1" IS DATE;
+
+--#[expr-32]
+"default"."T1" IS TIME;
+
+--#[expr-33]
+NOT "default"."T1" IS TIME;
+
+--#[expr-34]
+"default"."T1" IS TIMESTAMP;
+
+--#[expr-35]
+NOT "default"."T1" IS TIMESTAMP;
+
+--#[expr-36]
+"default"."T1" IS STRING;
+
+--#[expr-37]
+NOT "default"."T1" IS STRING;
+
+--#[expr-38]
+"default"."T1" IS CLOB;
+
+--#[expr-39]
+NOT "default"."T1" IS CLOB;
+
+--#[expr-40]
+"default"."T1" IS BLOB;
+
+--#[expr-41]
+NOT "default"."T1" IS BLOB;
+
+--#[expr-42]
+"default"."T1" IS LIST;
+
+--#[expr-43]
+NOT "default"."T1" IS LIST;
+
+--#[expr-44]
+"default"."T1" IS SEXP;
+
+--#[expr-45]
+NOT "default"."T1" IS SEXP;
+
+--#[expr-46]
+"default"."T1" IS STRUCT;
+
+--#[expr-47]
+NOT "default"."T1" IS STRUCT;
+
+--#[expr-48]
+"default"."T1" IS BAG;
+
+--#[expr-49]
+NOT "default"."T1" IS BAG;
+
+--#[expr-50]
+"default"."T1" IN (true);
+
+--#[expr-51]
+NOT "default"."T1" IN (false);
+
+--#[expr-52]
+"default"."T1" IN "default"."T1";
+
+--#[expr-53]
+NOT "default"."T1" IN "default"."T1";
+
+--#[expr-54]
+"default"."T1" LIKE "default"."T1";
+
+--#[expr-55]
+NOT "default"."T1" LIKE "default"."T1";
+
+--#[expr-56]
+"default"."T1" LIKE "default"."T1" ESCAPE "default"."T1";
+
+--#[expr-57]
+"default"."T1" BETWEEN "default"."T1" AND "default"."T1";
+
+--#[expr-58]
+NOT "default"."T1" BETWEEN "default"."T1" AND "default"."T1";
+
+--#[expr-59]
+"default"."T1" || "default"."T1";
+
+--#[expr-60]
+"default"."T1" & "default"."T1";
+
+--#[expr-61]
+"default"."T1" + "default"."T1";
+
+--#[expr-62]
+"default"."T1" - "default"."T1";
+
+--#[expr-63]
+"default"."T1" % "default"."T1";
+
+--#[expr-64]
+"default"."T1" * "default"."T1";
+
+--#[expr-65]
+"default"."T1" / "default"."T1";
+
+--#[expr-66]
+CURRENT_USER;
+
+--#[expr-67]
+CURRENT_DATE;
+
+--#[expr-68]
 'My name is ' || CURRENT_USER;
 
 -- TO BE CONTINUED ....

@@ -35,34 +35,34 @@ true;
 -- ------------------
 
 --#[expr-00]
-t1 OR t2;
+t1 OR t1;
 
 --#[expr-01]
-t1 AND t2;
+t1 AND t1;
 
 --#[expr-02]
 NOT t1;
 
 --#[expr-03]
-t1 < t2;
+t1 < t1;
 
 --#[expr-04]
-t1 <= t2;
+t1 <= t1;
 
 --#[expr-05]
-t1 > t2;
+t1 > t1;
 
 --#[expr-06]
-t1 >= t2;
+t1 >= t1;
 
 --#[expr-07]
-t1 = t2;
+t1 = t1;
 
 --#[expr-08]
-t1 != t2;
+t1 != t1;
 
 --#[expr-09]
-t1 <> t2;
+t1 <> t1;
 
 --#[expr-10]
 t1 IS NULL;
@@ -191,54 +191,54 @@ t1 IN ( true );
 t1 NOT IN ( false );
 
 --#[expr-52]
-t1 IN t2;
+t1 IN t1;
 
 --#[expr-53]
-t1 NOT IN t2;
+t1 NOT IN t1;
 
 --#[expr-54]
-t1 LIKE t2;
+t1 LIKE t1;
 
 --#[expr-55]
-t1 NOT LIKE t2;
+t1 NOT LIKE t1;
 
 --#[expr-56]
-t1 LIKE t2 ESCAPE t3;
+t1 LIKE t1 ESCAPE t1;
 
 --#[expr-57]
-t1 BETWEEN t2 AND t3;
+t1 BETWEEN t1 AND t1;
 
 --#[expr-58]
-t1 NOT BETWEEN t2 AND t3;
+t1 NOT BETWEEN t1 AND t1;
 
 --#[expr-59]
-t1 || t2;
+t1 || t1;
 
 --#[expr-60]
-t1 & t2;
+t1 & t1;
 
 --#[expr-61]
-t1 + t2;
+t1 + t1;
 
 --#[expr-62]
-t1 - t2;
+t1 - t1;
 
 --#[expr-63]
-t1 % t2;
+t1 % t1;
 
 --#[expr-64]
-t1 * t2;
+t1 * t1;
 
 --#[expr-65]
-t1 / t2;
+t1 / t1;
 
 --#[expr-66]
 CURRENT_USER;
 
---#[expr-28]
+--#[expr-67]
 CURRENT_DATE;
 
---#[expr-29]
+--#[expr-68]
 'My name is ' || CURRENT_USER;
 
 -- TO BE CONTINUED ....

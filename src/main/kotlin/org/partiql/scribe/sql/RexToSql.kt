@@ -28,8 +28,27 @@ import org.partiql.plan.Rex
 import org.partiql.plan.visitor.PlanBaseVisitor
 import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.sql.SqlTransform.Companion.translate
+import org.partiql.types.AnyOfType
+import org.partiql.types.AnyType
+import org.partiql.types.BagType
+import org.partiql.types.BlobType
+import org.partiql.types.BoolType
+import org.partiql.types.ClobType
+import org.partiql.types.DateType
+import org.partiql.types.DecimalType
+import org.partiql.types.FloatType
+import org.partiql.types.GraphType
+import org.partiql.types.IntType
+import org.partiql.types.ListType
+import org.partiql.types.MissingType
+import org.partiql.types.NullType
+import org.partiql.types.SexpType
 import org.partiql.types.StaticType
+import org.partiql.types.StringType
 import org.partiql.types.StructType
+import org.partiql.types.SymbolType
+import org.partiql.types.TimeType
+import org.partiql.types.TimestampType
 import org.partiql.types.TupleConstraint
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
@@ -71,7 +90,7 @@ public open class RexToSql(
     /**
      * Pass along the Rex [StaticType]
      */
-    override fun visitRex(node: Rex, ctx: StaticType) = super.visitRexOp(node.op, ctx)
+    override fun visitRex(node: Rex, ctx: StaticType) = super.visitRexOp(node.op, node.type)
 
     @OptIn(PartiQLValueExperimental::class)
     override fun visitRexOpLit(node: Rex.Op.Lit, ctx: StaticType): Expr {
@@ -137,8 +156,13 @@ public open class RexToSql(
     }
 
     override fun visitRexOpCollection(node: Rex.Op.Collection, ctx: StaticType): Expr {
-        // TODO!
-        return super.visitRexOpCollection(node, ctx)
+        val values = node.values.map { visitRex(it, ctx) }
+        return when (ctx) {
+            is ListType -> Expr.Collection(Expr.Collection.Type.LIST, values)
+            is SexpType -> Expr.Collection(Expr.Collection.Type.SEXP, values)
+            is BagType -> Expr.Collection(Expr.Collection.Type.BAG, values)
+            else -> throw UnsupportedOperationException("unsupported collection type $ctx")
+        }
     }
 
     override fun visitRexOpStruct(node: Rex.Op.Struct, ctx: StaticType): Expr {
@@ -165,6 +189,7 @@ public open class RexToSql(
     }
 
     override fun visitRexOpCall(node: Rex.Op.Call, ctx: StaticType): Expr {
+
         val (name, args) = when (node) {
             is Rex.Op.Call.Static -> {
                 val name = node.fn.signature.name
@@ -259,7 +284,7 @@ public open class RexToSql(
             val struct = first.expr as Expr.Struct
             struct.fields.map {
                 val expr = it.value
-                val asAlias = id(((it.name as Expr.Lit).value as StringValue).value ?: "")
+                val asAlias = binder(((it.name as Expr.Lit).value as StringValue).value ?: "")
                 selectProjectItemExpression(expr, asAlias)
             }
         } else {
