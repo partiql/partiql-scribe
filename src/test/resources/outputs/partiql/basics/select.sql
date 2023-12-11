@@ -35,4 +35,4 @@ SELECT "T"['c'] || CURRENT_USER AS "_1" FROM "default"."T" AS "T";
 SELECT CURRENT_USER AS "CURRENT_USER" FROM "default"."T" AS "T";
 
 --#[select-12]
-SELECT "t".a AS "a" FROM "default"."T" AS "t";
+SELECT "t"['a'] AS "a" FROM "default"."T" AS "t";
