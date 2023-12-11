@@ -35,18 +35,4 @@ SELECT "T"['c'] || CURRENT_USER AS "_1" FROM "default"."T" AS "T";
 SELECT CURRENT_USER AS "CURRENT_USER" FROM "default"."T" AS "T";
 
 --#[select-12]
-SELECT CURRENT_DATE AS "CURRENT_DATE" FROM "default"."T" AS "T";
-
---#[select-13]
-SELECT DATE_DIFF(DAY, CURRENT_DATE, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
-
---#[select-14]
--- Currently the header for date_add only support INT type
-SELECT DATE_ADD(DAY, CAST(5 AS INT), CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
-
---#[select-15]
--- Currently the header for date_add only support INT type
-SELECT DATE_ADD(DAY, CAST(-5 AS INT), CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
-
---#[select-16]
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t";

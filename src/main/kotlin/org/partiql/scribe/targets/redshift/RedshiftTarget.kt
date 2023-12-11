@@ -1,5 +1,7 @@
 package org.partiql.scribe.targets.redshift
 
+import org.partiql.ast.Statement
+import org.partiql.ast.sql.SqlDialect
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
@@ -28,6 +30,8 @@ public object RedshiftTarget : SqlTarget() {
 
     override val version: String = "0"
 
+    override val dialect: SqlDialect = RedshiftDialect
+
     /**
      * Wire the Redshift call rewrite rules.
      */
@@ -39,12 +43,13 @@ public object RedshiftTarget : SqlTarget() {
     override val features: SqlFeatures = RedshiftFeatures
 
     /**
-     * At this point, no plan rewriting.
+     * Rewrite a PartiQLPlan in terms of Redshift features.
      */
     override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback) =
         RedshiftRewriter(onProblem).visitPartiQLPlan(plan, Unit) as PartiQLPlan
 
     private class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Unit>() {
+
         override fun visitRelOpProject(node: Rel.Op.Project, ctx: Unit): PlanNode {
             // Make sure that the output type is homogeneous
             node.projections.forEachIndexed { index, projection ->

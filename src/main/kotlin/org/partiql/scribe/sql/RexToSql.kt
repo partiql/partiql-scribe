@@ -21,34 +21,15 @@ import org.partiql.ast.selectProject
 import org.partiql.ast.selectProjectItemAll
 import org.partiql.ast.selectProjectItemExpression
 import org.partiql.ast.selectValue
-import org.partiql.plan.Fn
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.plan.visitor.PlanBaseVisitor
-import org.partiql.scribe.ScribeProblem
-import org.partiql.scribe.sql.SqlTransform.Companion.translate
-import org.partiql.types.AnyOfType
-import org.partiql.types.AnyType
 import org.partiql.types.BagType
-import org.partiql.types.BlobType
-import org.partiql.types.BoolType
-import org.partiql.types.ClobType
-import org.partiql.types.DateType
-import org.partiql.types.DecimalType
-import org.partiql.types.FloatType
-import org.partiql.types.GraphType
-import org.partiql.types.IntType
 import org.partiql.types.ListType
-import org.partiql.types.MissingType
-import org.partiql.types.NullType
 import org.partiql.types.SexpType
 import org.partiql.types.StaticType
-import org.partiql.types.StringType
 import org.partiql.types.StructType
-import org.partiql.types.SymbolType
-import org.partiql.types.TimeType
-import org.partiql.types.TimestampType
 import org.partiql.types.TupleConstraint
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
@@ -207,7 +188,6 @@ public open class RexToSql(
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: StaticType): Expr {
-        val typeEnv = node.rel.type.schema
         val relToSql = RelToSql(transform)
         val rexToSql = RexToSql(transform, locals)
         val sfw = relToSql.apply(node.rel)
