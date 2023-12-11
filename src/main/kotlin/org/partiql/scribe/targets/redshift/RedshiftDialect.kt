@@ -20,7 +20,7 @@ public object RedshiftDialect : SqlDialect() {
     override fun visitSelectProjectItemExpression(node: Select.Project.Item.Expression, head: SqlBlock): SqlBlock {
         var h = head
         h = visitExprWrapped(node.expr, h)
-        h = if (node.asAlias != null) h concat r(" AS \"${node.asAlias!!.sql()}\"") else h
+        h = if (node.asAlias != null) h concat r(" AS \"${node.asAlias!!.symbol}\"") else h
         return h
     }
 
