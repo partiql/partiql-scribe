@@ -18,12 +18,11 @@ object SparkDialect : SqlDialect() {
         var h = head
         h = when (node.type) {
             From.Value.Type.SCAN -> h
-            From.Value.Type.UNPIVOT -> h concat r("UNPIVOT ")
+            else -> error("${node.type} is not unsupported feature by spark")
         }
         h = visitExprWrapped(node.expr, h)
         h = if (node.asAlias != null) h concat r(" AS ${node.asAlias!!.sql()}") else h
-        h = if (node.atAlias != null) h concat r(" AT ${node.atAlias!!.sql()}") else h
-        h = if (node.byAlias != null) h concat r(" BY ${node.byAlias!!.sql()}") else h
+        // AT and BY should be stopped by feature validation.
         return h
     }
 
@@ -68,8 +67,5 @@ object SparkDialect : SqlDialect() {
 
     // Spark, has no sense of case sensitivity
     // https://spark.apache.org/docs/latest/sql-ref-identifier.html
-    private fun Identifier.Symbol.sql() = when (caseSensitivity) {
-        Identifier.CaseSensitivity.SENSITIVE -> "`$symbol`"
-        Identifier.CaseSensitivity.INSENSITIVE -> "`$symbol`"
-    }
+    private fun Identifier.Symbol.sql() = "`$symbol`"
 }

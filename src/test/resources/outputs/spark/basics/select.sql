@@ -36,4 +36,11 @@ SELECT `T`.`c` || `current_user`() AS `_1` FROM `default`.`T` AS `T`;
 --#[select-11]
 SELECT `current_user`() AS `CURRENT_USER` FROM `default`.`T` AS `T`;
 
+--#[select-12]
+SELECT `t`.`a` AS `a` FROM `default`.`T` AS `t`;
+
+-- #[select-13]
+-- No Select Value
+-- SELECT VALUE {z: a} FROM T;
+
 

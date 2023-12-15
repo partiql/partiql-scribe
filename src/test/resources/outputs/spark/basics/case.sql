@@ -1,24 +1,28 @@
---#[case-00]
-1;
+-- #[case-00]
+-- Spark does not support top level expression.
+-- 1;
 
---#[case-01]
-CASE
-    WHEN 1 = 2 THEN 0
-    WHEN 2 = 3 THEN 1
-    ELSE 3
-END;
+-- #[case-01]
+-- Spark does not support top level expression.
+-- CASE
+--     WHEN 1 = 2 THEN 0
+--     WHEN 2 = 3 THEN 1
+--     ELSE 3
+-- END;
 
---#[case-02]
-CASE
-    WHEN 1 = 1 THEN 'MATCH!'
-    ELSE 'NO MATCH!'
-END;
+-- #[case-02]
+-- Spark does not support top level expression.
+-- CASE
+--     WHEN 1 = 1 THEN 'MATCH!'
+--     ELSE 'NO MATCH!'
+-- END;
 
---#[case-03]
-CASE
-    WHEN 'Hello World' = 'Hello World' THEN true
-    ELSE false
-END;
+-- #[case-03]
+-- Spark does not support top level expression.
+-- CASE
+--     WHEN 'Hello World' = 'Hello World' THEN true
+--     ELSE false
+-- END;
 
 --#[case-04]
 SELECT
@@ -70,5 +74,6 @@ SELECT
         END AS `result`
 FROM `default`.`T` AS `T`;
 
---#[case-10]
-2;
+-- #[case-10]
+-- Spark does not support top level expression.
+-- 2;
