@@ -3,15 +3,14 @@ package org.partiql.scribe.sql
 import org.junit.jupiter.api.Test
 import org.partiql.ast.sql.SqlLayout
 import org.partiql.ast.sql.sql
-import org.partiql.plan.Global
 import org.partiql.plan.Identifier
 import org.partiql.plan.*
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.plan.Statement
-import org.partiql.plan.global
 import org.partiql.scribe.ProblemCallback
 import org.partiql.types.StaticType
+import org.partiql.types.StringType
 import org.partiql.types.function.FunctionParameter
 import org.partiql.types.function.FunctionSignature
 import org.partiql.value.PartiQLValueExperimental
@@ -34,17 +33,20 @@ class SqlTransformTest {
             // {
             //   T : << >>
             // }
-            val globals = listOf(
-                global(
-                    identifierQualified(
-                        root = identifierSymbol("T", Identifier.CaseSensitivity.INSENSITIVE),
-                        steps = emptyList(),
-                    ),
-                    StaticType.BAG
+            val catalogs = listOf(
+                catalog(
+                    name = "Test",
+                    symbols = listOf(
+                        catalogSymbol(
+                            path = listOf("T"),
+                            type = StaticType.BAG
+                        )
+                    )
                 ),
             )
             val scan = rel(
-                type = schema("_1" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(0)))
+                type = schema("_1" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(
+                    catalogSymbolRef(0,0))))
             )
 
             val var0 = rex(StaticType.STRUCT, rexOpVar(0))
@@ -94,7 +96,7 @@ class SqlTransformTest {
             val statement = statementQuery(select)
 
             //
-            globals to statement
+            catalogs to statement
         }
 
         // SELECT a, b, c FROM T AS _1
@@ -110,7 +112,7 @@ class SqlTransformTest {
         val case = Case(
             input = statement,
             expected = "SELECT _1.a AS a, _1.b AS b, _1.c AS c FROM T AS _1",
-            globals = globals,
+            catalogs = globals,
         )
         case.assert()
     }
@@ -128,17 +130,21 @@ class SqlTransformTest {
             // {
             //   T : << >>
             // }
-            val globals = listOf(
-                global(
-                    identifierQualified(
-                        root = identifierSymbol("T", Identifier.CaseSensitivity.INSENSITIVE),
-                        steps = emptyList(),
-                    ),
-                    StaticType.BAG
+            val catalogs = listOf(
+                catalog(
+                    name = "Test",
+                    symbols = listOf(
+                        catalogSymbol(
+                            path = listOf("T"),
+                            type = StaticType.BAG
+                        )
+                    )
                 ),
             )
             val scan = rel(
-                type = schema("_1" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(0)))
+                type = schema("_1" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(
+                    catalogSymbolRef(0,0)
+                )))
             )
 
             val var0 = rex(StaticType.STRUCT, rexOpVar(0))
@@ -214,7 +220,7 @@ class SqlTransformTest {
             val statement = statementQuery(select)
 
             //
-            globals to statement
+            catalogs to statement
         }
 
         // SELECT a, b, c FROM T AS _1
@@ -230,7 +236,7 @@ class SqlTransformTest {
         val case = Case(
             input = statement,
             expected = "SELECT _1.a + _1.b AS _1, abs(_1.c) AS _2 FROM T AS _1",
-            globals = globals,
+            catalogs = globals,
         )
         case.assert()
     }
@@ -248,19 +254,19 @@ class SqlTransformTest {
     private class Case(
         private val input: Statement,
         private val expected: String,
-        private val globals: List<Global>,
+        private val catalogs: List<Catalog>,
     ) {
 
         fun assert() {
-            val transform = SqlTransform(globals, SqlCalls.DEFAULT, problemThrower)
+            val transform = SqlTransform(catalogs, SqlCalls.DEFAULT, problemThrower)
             val ast = transform.apply(input)
             val actual = ast.sql(SqlLayout.ONELINE)
             assertEquals(expected, actual)
         }
     }
 
-    private fun path(root: Rex, vararg steps: String) = rexOpPath(
+    private fun path(root: Rex, vararg steps: String) = rexOpPathIndex(
         root = root,
-        steps = steps.map { rexOpPathStepIndex(rex(StaticType.STRING, rexOpLit(stringValue(it)))) },
+        key = rex(StaticType.STRING,rexOpLit(stringValue(steps[0])))
     )
 }

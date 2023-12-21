@@ -1,7 +1,6 @@
 package org.partiql.scribe.targets.partiql
 
-import com.amazon.ionelement.api.ionString
-import com.amazon.ionelement.api.ionStructOf
+import org.partiql.plugins.local.LocalConnector
 import org.partiql.scribe.targets.SqlTargetSuite
 import org.partiql.scribe.test.SessionProvider
 import kotlin.io.path.toPath
@@ -14,10 +13,11 @@ class PartiQLTargetSuite : SqlTargetSuite() {
 
     override val sessions = SessionProvider(
         mapOf(
-            "default" to ionStructOf(
-                "connector_name" to ionString("local"),
-                "root" to ionString(this::class.java.getResource("/catalogs/default")!!.path)
-            )
+            "default" to
+                    LocalConnector.Metadata(
+                        this::class.java.getResource("/catalogs/default")!!.toURI().toPath(),
+                        listOf(split)
+                    )
         )
     )
 }

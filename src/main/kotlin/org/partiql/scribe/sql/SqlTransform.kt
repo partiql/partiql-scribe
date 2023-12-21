@@ -4,7 +4,7 @@ import org.partiql.ast.Expr
 import org.partiql.ast.identifierQualified
 import org.partiql.ast.identifierSymbol
 import org.partiql.ast.statementQuery
-import org.partiql.plan.Global
+import org.partiql.plan.Catalog
 import org.partiql.plan.Identifier
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
@@ -17,7 +17,7 @@ import org.partiql.plan.Statement as PlanStatement
  * [SqlTransform] represents extendable logic for translating from a [PlanNode] to [AstNode] tree.
  */
 public open class SqlTransform(
-    private val globals: List<Global>,
+    private val catalogs: List<Catalog>,
     private val calls: SqlCalls,
     private val onProblem: ProblemCallback,
 ) {
@@ -31,9 +31,16 @@ public open class SqlTransform(
         throw UnsupportedOperationException("Can only transform a query statement")
     }
 
-    public fun getGlobal(ref: Int): AstIdentifier.Qualified? {
-        val g = globals.getOrNull(ref) ?: return null
-        return translate(g.path)
+    public fun getGlobal(ref: Catalog.Symbol.Ref): AstIdentifier.Qualified? {
+        val catalog = catalogs[ref.catalog]
+        val symbol = catalog.symbols[ref.symbol]
+
+        return translate(
+            org.partiql.plan.identifierQualified(
+                org.partiql.plan.identifierSymbol(catalog.name, caseSensitivity = Identifier.CaseSensitivity.SENSITIVE),
+                symbol.path.map { org.partiql.plan.identifierSymbol(it, Identifier.CaseSensitivity.SENSITIVE) }
+            )
+        )
     }
 
     public fun getFunction(name: String, args: SqlArgs): Expr = calls.retarget(name, args)

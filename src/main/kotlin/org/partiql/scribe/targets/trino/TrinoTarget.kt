@@ -87,7 +87,7 @@ public object TrinoTarget : SqlTarget() {
          * @return
          */
         @OptIn(PartiQLValueExperimental::class)
-        override fun visitRexOpPathStepIndex(node: Rex.Op.Path.Step.Index, ctx: Unit): PlanNode {
+        override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: Unit): PlanNode {
             val op = node.key.op
             val type = node.key.type
             if (type !is ListType || type.asNonNullable() !is ListType) {
@@ -95,7 +95,7 @@ public object TrinoTarget : SqlTarget() {
             }
             if (op !is Rex.Op.Lit) {
                 error("Trino array indexing only supports integer literals, e.g. x[1].")
-                return super.visitRexOpPathStepIndex(node, ctx)
+                return super.visitRexOpPathIndex(node, ctx)
             }
             val i = when (val v = op.value) {
                 is Int8Value -> v.int
@@ -108,22 +108,12 @@ public object TrinoTarget : SqlTarget() {
             //
             if (i == null) {
                 error("Trino array index must be a non-null integer, e.g. x[1].")
-                return super.visitRexOpPathStepIndex(node, ctx)
+                return super.visitRexOpPathIndex(node, ctx)
             }
             // rewrite to be 1-indexed
             val index = i + 1
             val key = rex(StaticType.INT, rexOpLit(int32Value(index)))
-            return rexOpPathStepIndex(key)
-        }
-
-        override fun visitRexOpPathStepUnpivot(node: Rex.Op.Path.Step.Unpivot, ctx: Unit): PlanNode {
-            error("Redshift does not support unpivot path steps, e.g. `x.y.*`")
-            return super.visitRexOpPathStepUnpivot(node, ctx)
-        }
-
-        override fun visitRexOpPathStepWildcard(node: Rex.Op.Path.Step.Wildcard, ctx: Unit): PlanNode {
-            error("Redshift does not support wildcard path steps, e.g. `x.y[*]`")
-            return super.visitRexOpPathStepWildcard(node, ctx)
+            return rexOpPathIndex(node.root, key)
         }
 
         private fun error(message: String) {

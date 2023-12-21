@@ -14,10 +14,8 @@ class TestConnector(private val catalog: TestCatalog) : Connector {
     override fun getMetadata(session: ConnectorSession): ConnectorMetadata = Metadata()
 
     class Factory(private val provider: TestCatalog.Provider) : Connector.Factory {
-
-        override fun getName(): String = "test"
-
-        override fun create(catalogName: String, config: StructElement): Connector {
+        override val name: String = "test"
+        override fun create(catalogName: String, config: StructElement?): Connector {
             val catalog = provider[catalogName]
             return TestConnector(catalog)
         }

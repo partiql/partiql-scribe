@@ -1,6 +1,7 @@
 package org.partiql.scribe.plugin
 
 import org.partiql.spi.Plugin
+import org.partiql.spi.connector.Connector
 import org.partiql.spi.function.PartiQLFunction
 import org.partiql.spi.function.PartiQLFunctionExperimental
 
@@ -28,9 +29,8 @@ import org.partiql.spi.function.PartiQLFunctionExperimental
  * assertFailure { planner.plan(statement, sess.copyWith(catalog: "cat_failure")) }
  */
 class TestPlugin(private val provider: TestCatalog.Provider) : Plugin {
+    override val factory: Connector.Factory = TestConnector.Factory(provider)
 
-    override fun getConnectorFactories() = listOf(TestConnector.Factory(provider))
-
-    @OptIn(PartiQLFunctionExperimental::class)
-    override fun getFunctions(): List<PartiQLFunction> = emptyList()
+    @PartiQLFunctionExperimental
+    override val functions: List<PartiQLFunction> = emptyList()
 }

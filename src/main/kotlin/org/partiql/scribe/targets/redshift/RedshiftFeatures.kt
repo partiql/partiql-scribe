@@ -1,6 +1,5 @@
 package org.partiql.scribe.targets.redshift
 
-import org.partiql.plan.Global
 import org.partiql.plan.Identifier
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.Rel
@@ -42,14 +41,9 @@ public object RedshiftFeatures : SqlFeatures.Defensive() {
 
     override fun visitStatementQuery(node: Statement.Query, ctx: ProblemCallback) = visitChildren(node, ctx)
 
-    override fun visitGlobal(node: Global, ctx: ProblemCallback) = visitChildren(node, ctx)
-
     override fun visitRexOpGlobal(node: Rex.Op.Global, ctx: ProblemCallback) = visitChildren(node, ctx)
 
     override fun visitRexOpPath(node: Rex.Op.Path, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpPathStep(node: Rex.Op.Path.Step, ctx: ProblemCallback) = visitChildren(node, ctx)
-
     override fun visitRelBinding(node: Rel.Binding, ctx: ProblemCallback) = visitChildren(node, ctx)
 
     override fun visitRelType(node: Rel.Type, ctx: ProblemCallback) = visitChildren(node, ctx)
@@ -59,7 +53,4 @@ public object RedshiftFeatures : SqlFeatures.Defensive() {
     override fun visitIdentifierSymbol(node: Identifier.Symbol, ctx: ProblemCallback) = visitChildren(node, ctx)
 
     override fun visitIdentifierQualified(node: Identifier.Qualified, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpPathStepSymbol(node: Rex.Op.Path.Step.Symbol, ctx: ProblemCallback) =
-        visitChildren(node, ctx)
 }
