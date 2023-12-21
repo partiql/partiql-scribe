@@ -73,7 +73,7 @@ public abstract class SqlTarget : ScribeTarget<String> {
      * Default Plan to AST translation. This method is only for potential edge cases
      */
     open fun unplan(plan: PartiQLPlan, onProblem: ProblemCallback): AstStatement {
-        val transform = SqlTransform(plan.globals, getCalls(onProblem), onProblem)
+        val transform = SqlTransform(plan.catalogs, getCalls(onProblem), onProblem)
         return transform.apply(plan.statement)
     }
 }

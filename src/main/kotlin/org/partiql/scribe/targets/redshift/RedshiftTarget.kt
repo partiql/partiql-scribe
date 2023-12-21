@@ -93,7 +93,7 @@ public object RedshiftTarget : SqlTarget() {
          * @return
          */
         @OptIn(PartiQLValueExperimental::class)
-        override fun visitRexOpPathStepIndex(node: Rex.Op.Path.Step.Index, ctx: Unit): PlanNode {
+        override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: Unit): PlanNode {
             val op = node.key.op
             if (op !is Rex.Op.Lit) {
                 error("Redshift path step must an integer literal, e.g. x[0].")
@@ -110,17 +110,7 @@ public object RedshiftTarget : SqlTarget() {
                     else -> error("Redshift path step must an integer literal, e.g. x[0].")
                 }
             }
-            return super.visitRexOpPathStepIndex(node, ctx)
-        }
-
-        override fun visitRexOpPathStepUnpivot(node: Rex.Op.Path.Step.Unpivot, ctx: Unit): PlanNode {
-            error("Redshift does not support unpivot path steps, e.g. `x.y.*`")
-            return super.visitRexOpPathStepUnpivot(node, ctx)
-        }
-
-        override fun visitRexOpPathStepWildcard(node: Rex.Op.Path.Step.Wildcard, ctx: Unit): PlanNode {
-            error("Redshift does not support wildcard path steps, e.g. `x.y[*]`")
-            return super.visitRexOpPathStepWildcard(node, ctx)
+            return super.visitRexOpPathIndex(node, ctx)
         }
 
         private fun error(message: String) {

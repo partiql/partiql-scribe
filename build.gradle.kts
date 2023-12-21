@@ -19,6 +19,7 @@ object Versions {
     const val jline = "3.21.0"
     const val junit5 = "5.9.3"
     const val picoCli = "4.7.0"
+    const val partiql = "0.14.1-SNAPSHOT"
 }
 
 object Deps {
@@ -29,15 +30,19 @@ object Deps {
     const val kotlinTest = "org.jetbrains.kotlin:kotlin-test:${Versions.kotlin}"
     const val kotlinTestJunit = "org.jetbrains.kotlin:kotlin-test-junit5:${Versions.kotlin}"
     const val picoCli = "info.picocli:picocli:${Versions.picoCli}"
+    const val partiqlLang = "org.partiql:partiql-lang-kotlin:${Versions.partiql}"
+
 }
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
-    // Ship with PartiQL
+    // We need the local plugin for the CLI application
     api(fileTree("libs") { include("*.jar") })
+    api(Deps.partiqlLang)
     implementation(Deps.guava)
     implementation(Deps.jansi)
     implementation(Deps.jline)

@@ -1,5 +1,7 @@
 package org.partiql.scribe.targets
 
+import com.amazon.ionelement.api.ionString
+import com.amazon.ionelement.api.ionStructOf
 import org.junit.jupiter.api.DynamicContainer
 import org.junit.jupiter.api.DynamicContainer.dynamicContainer
 import org.junit.jupiter.api.DynamicNode
@@ -14,6 +16,7 @@ import org.partiql.scribe.sql.SqlTarget
 import org.partiql.scribe.test.ScribeTest
 import org.partiql.scribe.test.ScribeTestProvider
 import org.partiql.scribe.test.SessionProvider
+import org.partiql.spi.connector.ConnectorSession
 import org.partiql.types.function.FunctionParameter
 import org.partiql.types.function.FunctionSignature
 import org.partiql.value.PartiQLValueExperimental
@@ -80,10 +83,7 @@ abstract class SqlTargetSuite {
     private fun loadF(parent: File, file: File): DynamicContainer {
         val group = parent.name
         val tests = parse(group, file)
-
         val scribe = ScribeCompiler.builder()
-            .plugins(listOf(LocalPlugin()))
-            .functions(listOf(split))
             .build()
 
         val children = tests.map {
@@ -104,6 +104,13 @@ abstract class SqlTargetSuite {
                         this.appendLine("Actual result: $actual")
                         // debug dump
                         PlanPrinter.append(this, result.input)
+                    }
+                    if (result.problems.isNotEmpty()) {
+                        buildString {
+                            this.appendLine("Problems occured: ${result.problems}")
+                            // debug dump
+                            PlanPrinter.append(this, result.input)
+                        }
                     }
                 } catch (ex: ScribeException) {
                     fail {

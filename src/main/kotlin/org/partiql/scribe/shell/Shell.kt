@@ -117,22 +117,20 @@ internal class Shell(private val state: State) {
 
     private val exiting = AtomicBoolean()
 
-    // our frenemy
-    private val scribe = ScribeCompiler.builder()
-        .plugins(listOf(plugin))
-        .functions(listOf(split))
-        .build()
-
     // for \d commands
-    private val connector = plugin.getConnectorFactories()
-        .first()
-        .create(state.catalog, catalogConfig[state.catalog]!!) as LocalConnector
+    private val connector = plugin.factory.create(state.catalog, catalogConfig[state.catalog]!!) as LocalConnector
 
     // dummy, doesn't matter
     private val connectorSession = object : ConnectorSession {
         override fun getQueryId(): String = ""
         override fun getUserId(): String = ""
     }
+
+    private val metadata = connector.getMetadata(connectorSession)
+
+    // our frenemy
+    private val scribe = ScribeCompiler.builder()
+        .build()
 
     fun start() {
         val interrupter = ThreadInterrupter()
@@ -221,7 +219,6 @@ internal class Shell(private val state: State) {
                             out.error("Expected <table> argument")
                             continue
                         }
-                        val metadata = connector.getMetadata(connectorSession)
                         val path = arg1.toBindingPath()
                         val handle = metadata.getObjectHandle(connectorSession, path)
                         if (handle == null) {
@@ -306,7 +303,9 @@ internal class Shell(private val state: State) {
             userId = currentUser ?: "scribe",
             currentCatalog = state.catalog,
             currentDirectory = state.path,
-            catalogConfig = catalogConfig,
+            catalogs = mapOf(
+                state.catalog to metadata
+            )
         )
         try {
             val result = scribe.compile(input, state.target, session)

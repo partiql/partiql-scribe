@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
+import org.partiql.plugins.local.LocalConnector
 import org.partiql.plugins.local.LocalPlugin
 import org.partiql.scribe.Scribe
 import org.partiql.scribe.ScribeCompiler
@@ -16,8 +17,10 @@ import org.partiql.scribe.targets.partiql.PartiQLTarget
 import org.partiql.scribe.test.ScribeTest
 import org.partiql.scribe.test.ScribeTestProvider
 import org.partiql.scribe.test.SessionProvider
+import org.partiql.spi.connector.ConnectorSession
 import java.lang.StringBuilder
 import java.util.stream.Stream
+import kotlin.io.path.toPath
 import kotlin.streams.asStream
 
 /**
@@ -40,10 +43,7 @@ class SqlTargetInspect {
      */
     private val sessions = SessionProvider(
         mapOf(
-            "default" to ionStructOf(
-                "connector_name" to ionString("local"),
-                "root" to ionString(this::class.java.getResource("/catalogs/default")!!.path)
-            )
+            "default" to LocalConnector.Metadata(this::class.java.getResource("/catalogs/default")!!.toURI().toPath())
         )
     )
 
@@ -51,12 +51,10 @@ class SqlTargetInspect {
      * Each dir becomes a container and file becomes a container; each expected output is a test node.
      */
     @TestFactory
-    // @Disabled
     public fun factory(): Stream<DynamicNode> {
-        val plugin = LocalPlugin()
         val scribe = ScribeCompiler.builder()
-            .plugins(listOf(plugin))
             .build()
+
         return inputs.iterator().asSequence().map {
             //
             val displayName = it.key.toString()
@@ -88,8 +86,16 @@ class SqlTargetInspect {
     @Test
     public fun subquery() {
         val plugin = LocalPlugin()
+        val connector = plugin.factory.create("local", ionStructOf(
+            "connector_name" to ionString("local"),
+            "root" to ionString(this::class.java.getResource("/catalogs/default")!!.path)
+        ))
+        val connectorSession = object : ConnectorSession {
+            override fun getQueryId(): String = ""
+            override fun getUserId(): String = ""
+        }
+        val connectorMetadata = connector.getMetadata(connectorSession)
         val scribe = ScribeCompiler.builder()
-            .plugins(listOf(plugin))
             .build()
         //
         val key = ScribeTest.Key("basics", "subquery-03")
