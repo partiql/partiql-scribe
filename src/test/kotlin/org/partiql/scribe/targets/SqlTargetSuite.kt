@@ -1,5 +1,6 @@
 package org.partiql.scribe.targets
 
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.DynamicContainer
 import org.junit.jupiter.api.DynamicContainer.dynamicContainer
 import org.junit.jupiter.api.DynamicNode
@@ -10,6 +11,7 @@ import org.partiql.plan.debug.PlanPrinter
 import org.partiql.plugins.local.LocalPlugin
 import org.partiql.scribe.ScribeCompiler
 import org.partiql.scribe.ScribeException
+import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.sql.SqlTarget
 import org.partiql.scribe.test.ScribeTest
 import org.partiql.scribe.test.ScribeTestProvider
@@ -86,24 +88,35 @@ abstract class SqlTargetSuite {
             .functions(listOf(split))
             .build()
 
-        val children = tests.map {
+        val children = tests.map { test ->
             // Prepare
-            val displayName = it.key.toString()
-            val session = sessions.get(it.key)
-            val statement = (inputs[it.key] ?: error("No test with key ${it.key}")).statement
+            val displayName = test.key.toString()
+            val session = sessions.get(test.key)
+            val statement = (inputs[test.key] ?: error("No test with key ${test.key}")).statement
 
             // Assert
             dynamicTest(displayName) {
                 try {
                     val result = scribe.compile(statement, target, session)
                     val actual = result.output.value
-                    val expected = it.statement
+                    val expected = test.statement
                     comparator.assertEquals(expected, actual) {
                         this.appendLine("Input Query: $statement")
                         this.appendLine("Expected result: $expected")
                         this.appendLine("Actual result: $actual")
                         // debug dump
                         PlanPrinter.append(this, result.input)
+                    }
+
+                    // catch any transpile error
+                    assertFalse(result.problems.any { it.level == ScribeProblem.Level.ERROR }) {
+                        buildString {
+                            this.appendLine("Expect no error during the transpilation process, but received: ")
+                            result.problems.filter { it.level == ScribeProblem.Level.ERROR }.forEach {
+                                this.appendLine(it)
+                            }
+                            PlanPrinter.append(this, result.input)
+                        }
                     }
                 } catch (ex: ScribeException) {
                     fail {
