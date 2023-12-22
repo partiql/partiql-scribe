@@ -75,10 +75,6 @@ class SqlTargetInspect {
                         sb.toString()
                     }
                 }
-                // val actual = result.output.value
-                // val expected = it.statement
-                // //
-                // PlanPrinter.append(this, result.plan)
             }
         }.asStream()
     }

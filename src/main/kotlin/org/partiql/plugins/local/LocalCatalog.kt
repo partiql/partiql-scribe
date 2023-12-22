@@ -20,7 +20,7 @@ private sealed class FsTree(val name: String) {
 /**
  * Build a memoized catalog tree from local schema definitions.
  */
-public class LocalCatalog private constructor(private val root: FsTree.D) {
+internal class LocalCatalog private constructor(private val root: FsTree.D) {
 
     /**
      * Search the tree for the type.
@@ -48,7 +48,7 @@ public class LocalCatalog private constructor(private val root: FsTree.D) {
     /**
      * Provide a list of all objects in this catalog.
      */
-    public fun listObjects(): List<BindingPath> = sequence { search(emptyList(), root) }.toList()
+    internal fun listObjects(): List<BindingPath> = sequence { search(emptyList(), root) }.toList()
 
     private suspend fun SequenceScope<BindingPath>.search(acc: List<BindingName>, node: FsTree) =
         when (node) {
@@ -73,7 +73,7 @@ public class LocalCatalog private constructor(private val root: FsTree.D) {
         /**
          * Builds a FsTree from the given root.
          */
-        public fun load(root: Path): LocalCatalog = LocalCatalog(root.toFile().tree() as FsTree.D)
+        internal fun load(root: Path): LocalCatalog = LocalCatalog(root.toFile().tree() as FsTree.D)
 
         private fun File.tree(): FsTree = when (this.isDirectory) {
             true -> d()

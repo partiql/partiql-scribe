@@ -5,6 +5,9 @@ import org.partiql.errors.ProblemSeverity
 import org.partiql.parser.PartiQLParser
 import org.partiql.plan.PartiQLPlan
 import org.partiql.planner.PartiQLPlanner
+import org.partiql.plugins.local.LocalPlugin
+import org.partiql.spi.connector.ConnectorSession
+import org.partiql.types.function.FunctionSignature
 
 /**
  * ScribeCompiler is a full text-to-text compiler pipeline for the PartiQL Scribe project.
@@ -15,6 +18,7 @@ import org.partiql.planner.PartiQLPlanner
 public class ScribeCompiler internal constructor(
     private val parser: PartiQLParser,
     private val planner: PartiQLPlanner,
+    private val functions: List<FunctionSignature.Scalar>
 ) {
 
     // backend

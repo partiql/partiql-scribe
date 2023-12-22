@@ -23,7 +23,7 @@ import org.partiql.types.StaticType
  * @property path
  * @property type
  */
-class LocalObject(
+internal class LocalObject(
     val path: List<String>,
     val type: StaticType,
 ) : ConnectorObject {

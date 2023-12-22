@@ -101,15 +101,6 @@ internal class Shell(private val state: State) {
         public var debug: Boolean = false
     }
 
-    private val plugin = LocalPlugin()
-    private val catalogRoot = state.root.resolve(state.catalog).toString()
-    private val catalogConfig = mapOf(
-        state.catalog to ionStructOf(
-            field("connector_name", ionString("local")),
-            field("root", ionString(catalogRoot)),
-        ),
-    )
-
     private val output = System.out
     private val homeDir: Path = Paths.get(System.getProperty("user.home"))
     private val out = PrintStream(output)
@@ -117,16 +108,13 @@ internal class Shell(private val state: State) {
 
     private val exiting = AtomicBoolean()
 
-    // for \d commands
-    private val connector = plugin.factory.create(state.catalog, catalogConfig[state.catalog]!!) as LocalConnector
-
     // dummy, doesn't matter
     private val connectorSession = object : ConnectorSession {
         override fun getQueryId(): String = ""
         override fun getUserId(): String = ""
     }
 
-    private val metadata = connector.getMetadata(connectorSession)
+    private val metadata = LocalConnector.Metadata(state.root, listOf(split))
 
     // our frenemy
     private val scribe = ScribeCompiler.builder()
@@ -206,7 +194,7 @@ internal class Shell(private val state: State) {
                         out.println()
                         out.info("Catalog: ${state.catalog}")
                         out.info("-------------------------")
-                        val objects = connector.listObjects()
+                        val objects = metadata.listObjects()
                         for (obj in objects) {
                             out.info(obj.sql())
                         }

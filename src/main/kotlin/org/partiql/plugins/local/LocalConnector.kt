@@ -43,7 +43,7 @@ import kotlin.io.path.notExists
  * @property catalogName    Catalog name
  * @property config         Catalog configuration
  */
-class LocalConnector(
+internal class LocalConnector(
     private val catalogRoot: Path,
     private val catalogName: String,
     private val config: StructElement,
@@ -57,7 +57,7 @@ class LocalConnector(
     private val metadata = Metadata(catalogRoot)
 
     // not yet defined in SPI
-    public fun listObjects(): List<BindingPath> = metadata.listObjects()
+    internal fun listObjects(): List<BindingPath> = metadata.listObjects()
 
     override fun getMetadata(session: ConnectorSession): ConnectorMetadata = metadata
 
@@ -78,7 +78,7 @@ class LocalConnector(
         }
     }
 
-    class Metadata(private val root: Path, override val functions: List<FunctionSignature.Scalar> = emptyList()) : ConnectorMetadata {
+    internal class Metadata(private val root: Path, override val functions: List<FunctionSignature.Scalar> = emptyList()) : ConnectorMetadata {
 
         /**
          * TODO watch root for changes and rebuild catalog if needed.
@@ -105,5 +105,7 @@ class LocalConnector(
 
         internal fun listObjects(): List<BindingPath> = catalog.listObjects()
 
+        internal fun loadFunction(functions: List<FunctionSignature.Scalar> ) =
+            Metadata(this.root, this.functions + functions)
     }
 }

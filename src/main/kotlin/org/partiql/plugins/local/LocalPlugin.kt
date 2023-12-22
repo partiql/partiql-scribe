@@ -24,7 +24,7 @@ import org.partiql.spi.function.PartiQLFunctionExperimental
  *
  * Backed by a memoized catalog tree from the given root dir; global bindings are files.
  */
-class LocalPlugin : Plugin {
+internal class LocalPlugin : Plugin {
 
     override val factory: Connector.Factory = LocalConnector.Factory()
 
