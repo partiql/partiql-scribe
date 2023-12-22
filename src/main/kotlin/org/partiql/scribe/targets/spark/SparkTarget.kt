@@ -16,7 +16,7 @@ import org.partiql.scribe.sql.SqlTarget
 object SparkTarget : SqlTarget() {
     override val target: String = "Spark"
 
-    override val version: String = "0"
+    override val version: String = "3.1"
 
     override val dialect: SqlDialect = SparkDialect
 
