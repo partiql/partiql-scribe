@@ -34,7 +34,7 @@ import org.partiql.types.TupleConstraint
 
 // Use some generated serde eventually
 
-public inline fun <reified T : IonElement> StructElement.getAngry(name: String): T {
+internal inline fun <reified T : IonElement> StructElement.getAngry(name: String): T {
     val f = getOptional(name) ?: error("Expected field `$name`")
     if (f !is T) {
         error("Expected field `name` to be of type ${T::class.simpleName}")
@@ -47,7 +47,7 @@ public inline fun <reified T : IonElement> StructElement.getAngry(name: String):
  *
  * The format used is effectively Avro JSON, but with PartiQL type names.
  */
-public fun IonElement.toStaticType(): StaticType {
+internal fun IonElement.toStaticType(): StaticType {
     return when (this) {
         is StringElement -> this.toStaticType()
         is ListElement -> this.toStaticType()
@@ -57,7 +57,7 @@ public fun IonElement.toStaticType(): StaticType {
 }
 
 // Atomic type
-public fun StringElement.toStaticType(): StaticType = when (textValue) {
+internal fun StringElement.toStaticType(): StaticType = when (textValue) {
     "any" -> StaticType.ANY
     "bool" -> StaticType.BOOL
     "int8" -> error("`int8` is currently not supported")
@@ -94,7 +94,7 @@ public fun ListElement.toStaticType(): StaticType {
 }
 
 // Complex type
-public fun StructElement.toStaticType(): StaticType {
+internal fun StructElement.toStaticType(): StaticType {
     val type = getAngry<StringElement>("type").textValue
     return when (type) {
         "bag" -> toBagType()
@@ -105,22 +105,22 @@ public fun StructElement.toStaticType(): StaticType {
     }
 }
 
-public fun StructElement.toBagType(): StaticType {
+internal fun StructElement.toBagType(): StaticType {
     val items = getAngry<IonElement>("items").toStaticType()
     return BagType(items)
 }
 
-public fun StructElement.toListType(): StaticType {
+internal fun StructElement.toListType(): StaticType {
     val items = getAngry<IonElement>("items").toStaticType()
     return ListType(items)
 }
 
-public fun StructElement.toSexpType(): StaticType {
+internal fun StructElement.toSexpType(): StaticType {
     val items = getAngry<IonElement>("items").toStaticType()
     return SexpType(items)
 }
 
-public fun StructElement.toStructType(): StaticType {
+internal fun StructElement.toStructType(): StaticType {
     // Constraints
     var contentClosed = false
     val constraintsE = getOptional("constraints") ?: ionListOf()
@@ -149,7 +149,7 @@ public fun StructElement.toStructType(): StaticType {
     return StructType(fields, contentClosed, constraints = constraints)
 }
 
-public fun StaticType.toIon(): IonElement = when (this) {
+internal fun StaticType.toIon(): IonElement = when (this) {
     is AnyOfType -> this.toIon()
     is AnyType -> ionString("any")
     is BlobType -> ionString("blob")
