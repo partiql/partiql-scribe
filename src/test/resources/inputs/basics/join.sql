@@ -1,0 +1,26 @@
+--#[join-00]
+SELECT * FROM T AS t, T AS s;
+
+--#[join-01]
+SELECT * FROM T AS t CROSS JOIN T AS s;
+
+--#[join-02]
+SELECT * FROM T AS t JOIN T AS s ON TRUE;
+
+--#[join-03]
+SELECT * FROM T AS t, T AS s, T AS r;
+
+--#[join-04]
+SELECT * FROM T AS t CROSS JOIN T AS s CROSS JOIN T AS r;
+
+--#[join-05]
+SELECT * FROM T AS t JOIN T AS s ON TRUE JOIN T AS r ON TRUE;
+
+--#[join-06]
+SELECT * FROM T AS t LEFT CROSS JOIN T AS s;
+
+--#[join-07]
+SELECT * FROM T AS t LEFT JOIN T AS s ON TRUE;
+
+--#[join-08]
+SELECT * FROM T AS t FULL JOIN T AS s ON TRUE;
