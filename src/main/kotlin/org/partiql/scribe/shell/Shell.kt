@@ -101,15 +101,6 @@ internal class Shell(private val state: State) {
         public var debug: Boolean = false
     }
 
-    private val plugin = LocalPlugin()
-    private val catalogRoot = state.root.resolve(state.catalog).toString()
-    private val catalogConfig = mapOf(
-        state.catalog to ionStructOf(
-            field("connector_name", ionString("local")),
-            field("root", ionString(catalogRoot)),
-        ),
-    )
-
     private val output = System.out
     private val homeDir: Path = Paths.get(System.getProperty("user.home"))
     private val out = PrintStream(output)
@@ -117,22 +108,17 @@ internal class Shell(private val state: State) {
 
     private val exiting = AtomicBoolean()
 
-    // our frenemy
-    private val scribe = ScribeCompiler.builder()
-        .plugins(listOf(plugin))
-        .functions(listOf(split))
-        .build()
-
-    // for \d commands
-    private val connector = plugin.getConnectorFactories()
-        .first()
-        .create(state.catalog, catalogConfig[state.catalog]!!) as LocalConnector
-
     // dummy, doesn't matter
     private val connectorSession = object : ConnectorSession {
         override fun getQueryId(): String = ""
         override fun getUserId(): String = ""
     }
+
+    private val metadata = LocalConnector.Metadata(state.root, listOf(split))
+
+    // our frenemy
+    private val scribe = ScribeCompiler.builder()
+        .build()
 
     fun start() {
         val interrupter = ThreadInterrupter()
@@ -208,7 +194,7 @@ internal class Shell(private val state: State) {
                         out.println()
                         out.info("Catalog: ${state.catalog}")
                         out.info("-------------------------")
-                        val objects = connector.listObjects()
+                        val objects = metadata.listObjects()
                         for (obj in objects) {
                             out.info(obj.sql())
                         }
@@ -221,7 +207,6 @@ internal class Shell(private val state: State) {
                             out.error("Expected <table> argument")
                             continue
                         }
-                        val metadata = connector.getMetadata(connectorSession)
                         val path = arg1.toBindingPath()
                         val handle = metadata.getObjectHandle(connectorSession, path)
                         if (handle == null) {
@@ -306,7 +291,9 @@ internal class Shell(private val state: State) {
             userId = currentUser ?: "scribe",
             currentCatalog = state.catalog,
             currentDirectory = state.path,
-            catalogConfig = catalogConfig,
+            catalogs = mapOf(
+                state.catalog to metadata
+            )
         )
         try {
             val result = scribe.compile(input, state.target, session)

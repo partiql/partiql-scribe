@@ -108,32 +108,44 @@ public open class RexToSql(
         return exprVar(global, scope)
     }
 
-    override fun visitRexOpPath(node: Rex.Op.Path, ctx: StaticType): Expr {
-        val root = visitRex(node.root, StaticType.ANY)
-        val steps = node.steps.map { visitRexOpPathStep(it) }
-        return exprPath(root, steps)
+    override fun visitRexOpPath(node: Rex.Op.Path, ctx: StaticType): Expr =
+        when(node) {
+            is Rex.Op.Path.Index -> visitRexOpPathIndex(node, ctx)
+            is Rex.Op.Path.Key -> visitRexOpPathKey(node, ctx)
+            is Rex.Op.Path.Symbol -> visitRexOpPathSymbol(node, ctx)
+        }
+
+    override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: StaticType): Expr {
+        val prev = visitRex(node.root, ctx)
+        val step = exprPathStepIndex(visitRex(node.key, ctx))
+        if (prev is Expr.Path) {
+            return exprPath(prev.root, prev.steps + step)
+        }
+        else {
+            return exprPath(visitRex(node.root, ctx), listOf(step))
+        }
     }
 
-    private fun visitRexOpPathStep(node: Rex.Op.Path.Step): Expr.Path.Step = when (node) {
-        is Rex.Op.Path.Step.Index -> visitRexOpPathStepIndex(node)
-        is Rex.Op.Path.Step.Symbol -> visitRexOpPathStepSymbol(node)
-        is Rex.Op.Path.Step.Key -> visitRexOpPathStepKey(node)
-        is Rex.Op.Path.Step.Unpivot -> exprPathStepUnpivot()
-        is Rex.Op.Path.Step.Wildcard -> exprPathStepWildcard()
+    override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: StaticType): Expr {
+        val prev = visitRex(node.root, ctx)
+        val step = exprPathStepIndex(visitRex(node.key, ctx))
+        if (prev is Expr.Path) {
+            return exprPath(prev.root, prev.steps + step)
+        }
+        else {
+            return exprPath(visitRex(node.root, ctx), listOf(step))
+        }
     }
 
-    private fun visitRexOpPathStepIndex(node: Rex.Op.Path.Step.Index): Expr.Path.Step {
-        val k = visitRex(node.key, StaticType.ANY)
-        return exprPathStepIndex(k)
-    }
-
-    private fun visitRexOpPathStepSymbol(node: Rex.Op.Path.Step.Symbol): Expr.Path.Step {
-        val symbol = id(node.key)
-        return exprPathStepSymbol(symbol)
-    }
-
-    private fun visitRexOpPathStepKey(node: Rex.Op.Path.Step.Key) : Expr.Path.Step {
-        return exprPathStepIndex(visitRex(node.key, StaticType.STRING))
+    override fun visitRexOpPathSymbol(node: Rex.Op.Path.Symbol, ctx: StaticType): Expr {
+        val prev = visitRex(node.root, ctx)
+        val step = exprPathStepSymbol(id(node.key))
+        if (prev is Expr.Path) {
+            return exprPath(prev.root, prev.steps + step)
+        }
+        else {
+            return exprPath(visitRex(node.root, ctx), listOf(step))
+        }
     }
 
     override fun visitRexOpCollection(node: Rex.Op.Collection, ctx: StaticType): Expr {
