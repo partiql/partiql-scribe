@@ -36,3 +36,6 @@ SELECT CURRENT_USER FROM T;
 
 --#[select-12]
 SELECT a FROM t;
+
+--#[select-13]
+SELECT VALUE {z: a} FROM T;

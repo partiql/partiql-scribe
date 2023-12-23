@@ -1,0 +1,18 @@
+--#[is-null-00]
+SELECT b IS NULL FROM T;
+
+--#[is-null-01]
+SELECT b IS NOT NULL FROM T;
+
+--#[is-null-02]
+SELECT MISSING IS NULL FROM T;
+
+--#[is-null-03]
+SELECT NULL IS NULL FROM T;
+
+--#[is-null-04]
+SELECT MISSING IS MISSING FROM T;
+
+--#[is-null-05]
+SELECT NULL IS MISSING FROM T;
+
