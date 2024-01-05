@@ -22,6 +22,7 @@ import java.lang.StringBuilder
 import java.util.stream.Stream
 import kotlin.io.path.toPath
 import kotlin.streams.asStream
+import kotlin.test.Ignore
 
 /**
  * This is a special non-test suite which runs *EVERY* input query against the target for inspection purposes.
@@ -51,6 +52,7 @@ class SqlTargetInspect {
      * Each dir becomes a container and file becomes a container; each expected output is a test node.
      */
     @TestFactory
+    @Ignore
     public fun factory(): Stream<DynamicNode> {
         val scribe = ScribeCompiler.builder()
             .build()

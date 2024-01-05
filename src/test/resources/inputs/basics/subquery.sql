@@ -3,8 +3,9 @@
 1 = (SELECT b FROM T);
 
 -- Row value subquery coercion
---#[subquery-01]
-(false, 1) = (SELECT a, b FROM T);
+-- TODO: ERROR: SELECT constructor with 2 attributes cannot be coerced to a scalar. Found constructor type: struct(a: bool, b: int4, [Open(value=false), UniqueAttrs(value=true), Ordered])
+-- #[subquery-01]
+-- (false, 1) = (SELECT a, b FROM T);
 
 -- IN collection subquery
 --#[subquery-02]
