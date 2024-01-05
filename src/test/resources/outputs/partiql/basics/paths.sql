@@ -131,5 +131,5 @@ SELECT "t"['x']['y']['y'][CAST("t"['z'] AS STRING)] AS "v" FROM "default"."T" AS
 --#[paths-sfw-15]
 SELECT "t"['x'][0 + 1] AS "v" FROM "default"."T" AS "t";
 
---#[paths-sfw-16] TODO: ABS not yet implemented in the header.
+-- #[paths-sfw-16] TODO: ABS not yet implemented in the header.
 -- SELECT "t".x[ABS(1)] AS "v" FROM "default"."T" AS "t";

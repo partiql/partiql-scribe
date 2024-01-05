@@ -1,5 +1,6 @@
 package org.partiql.scribe.sql
 
+import com.amazon.ionelement.api.field
 import org.junit.jupiter.api.Test
 import org.partiql.ast.sql.SqlLayout
 import org.partiql.ast.sql.sql
@@ -8,6 +9,7 @@ import org.partiql.plan.*
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.plan.Statement
+import org.partiql.plan.debug.PlanPrinter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.types.StaticType
 import org.partiql.types.StringType
@@ -23,16 +25,7 @@ class SqlTransformTest {
 
     @Test
     fun sanity() {
-        // SELECT _1.a, _1.b, _1.c FROM T AS _1
-
-        // SCAN global(T)
-        // |> PROJECT var(0).a, var(0).b, var(0).c
-        // |> SELECT { 'a': var(0), 'b': var(1), 'c': var(2) }
-
         val (globals, statement) = run {
-            // {
-            //   T : << >>
-            // }
             val catalogs = listOf(
                 catalog(
                     name = "Test",
@@ -45,25 +38,48 @@ class SqlTransformTest {
                 ),
             )
             val scan = rel(
-                type = schema("_1" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(
+                type = schema("T" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(
                     catalogSymbolRef(0,0))))
             )
-
-            val var0 = rex(StaticType.STRUCT, rexOpVar(0))
-
-            // PROJECT var(0).a, var(0).b, var(0).c
             val project = rel(
-                type = schema(
-                    "a" to StaticType.INT,
-                    "b" to StaticType.INT,
-                    "c" to StaticType.INT,
-                ),
+                type = schema( "T" to StaticType.STRUCT),
                 op = relOpProject(
                     input = scan,
                     projections = listOf(
-                        rex(StaticType.INT, path(var0, "a")),
-                        rex(StaticType.INT, path(var0, "b")),
-                        rex(StaticType.INT, path(var0, "c")),
+                        rex(
+                            type = StaticType.STRUCT,
+                            op = rexOpStruct(
+                                fields = listOf(
+                                    rexOpStructField(
+                                        k = rex(StaticType.STRING, rexOpLit(stringValue("a"))),
+                                        v = rex(StaticType.INT,
+                                            rexOpPathKey(
+                                                root = rex(StaticType.INT, rexOpVar(0)),
+                                                key = rex(StaticType.STRING, rexOpLit(stringValue("a")))
+                                            )
+                                        )
+                                    ),
+                                    rexOpStructField(
+                                        k = rex(StaticType.STRING, rexOpLit(stringValue("b"))),
+                                        v = rex(StaticType.INT,
+                                            rexOpPathKey(
+                                                root = rex(StaticType.INT, rexOpVar(0)),
+                                                key = rex(StaticType.STRING, rexOpLit(stringValue("b")))
+                                            )
+                                        )
+                                    ),
+                                    rexOpStructField(
+                                        k = rex(StaticType.STRING, rexOpLit(stringValue("c"))),
+                                        v = rex(StaticType.INT,
+                                            rexOpPathKey(
+                                                root = rex(StaticType.INT, rexOpVar(0)),
+                                                key = rex(StaticType.STRING, rexOpLit(stringValue("c")))
+                                            )
+                                        )
+                                    ),
+                                )
+                            )
+                        )
                     )
                 )
             )
@@ -73,45 +89,20 @@ class SqlTransformTest {
                 op = rexOpSelect(
                     constructor = rex(
                         type = StaticType.STRUCT,
-                        op = rexOpStruct(
-                            listOf(
-                                rexOpStructField(
-                                    k = rex(StaticType.STRING, rexOpLit(stringValue("a"))),
-                                    v = rex(StaticType.INT, rexOpVar(0)),
-                                ),
-                                rexOpStructField(
-                                    k = rex(StaticType.STRING, rexOpLit(stringValue("b"))),
-                                    v = rex(StaticType.INT, rexOpVar(1)),
-                                ),
-                                rexOpStructField(
-                                    k = rex(StaticType.STRING, rexOpLit(stringValue("c"))),
-                                    v = rex(StaticType.INT, rexOpVar(2)),
-                                ),
-                            )
-                        )
+                        op = rexOpVar(0)
                     ),
                     rel = project
                 )
             )
             val statement = statementQuery(select)
-
-            //
             catalogs to statement
         }
 
-        // SELECT a, b, c FROM T AS _1
-        //
-        // Normalized: SELECT _1.a AS a, _1.b AS b, _1.c AS c FROM T AS _1
-        //
-        // Equivalent: SELECT VALUE { 'a': _1.a, 'b': _1.b, 'c': _1.c } FROM T AS _1
-
-        // SCAN global(T)
-        // |> PROJECT var(0).a, var(0).b, var(0).c
-        // |> SELECT { 'a': var(0), 'b': var(1), 'c': var(2) }
-
         val case = Case(
             input = statement,
-            expected = "SELECT _1.a AS a, _1.b AS b, _1.c AS c FROM T AS _1",
+            expected = """
+                SELECT VALUE {'a': "T"['a'], 'b': "T"['b'], 'c': "T"['c']} FROM "Test"."T" AS "T"
+            """.trimIndent(),
             catalogs = globals,
         )
         case.assert()
@@ -119,17 +110,7 @@ class SqlTransformTest {
 
     @Test
     fun calls() {
-        // SELECT a + b, abs(c) FROM T AS _1
-        // SELECT _1.a + _1.b AS _1, abs(_1.c) AS _2 FROM T AS _1
-
-        // SCAN global(T)
-        // |> PROJECT call(plus, [var(0).a, var(0).b]), call(abs, [var(0).c])
-        // |> SELECT { '_1': var(0), '_2': var(1) }
-
         val (globals, statement) = run {
-            // {
-            //   T : << >>
-            // }
             val catalogs = listOf(
                 catalog(
                     name = "Test",
@@ -141,14 +122,6 @@ class SqlTransformTest {
                     )
                 ),
             )
-            val scan = rel(
-                type = schema("_1" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(
-                    catalogSymbolRef(0,0)
-                )))
-            )
-
-            val var0 = rex(StaticType.STRUCT, rexOpVar(0))
-
             val plus = FunctionSignature.Scalar(
                 name = "plus", returns = PartiQLValueType.INT,
                 parameters = listOf(
@@ -163,32 +136,46 @@ class SqlTransformTest {
                     FunctionParameter("value", PartiQLValueType.INT),
                 )
             )
+            val scan = rel(
+                type = schema("T" to StaticType.STRUCT), op = relOpScan(rex(StaticType.STRUCT, rexOpGlobal(
+                    catalogSymbolRef(0,0)
+                )))
+            )
 
-            // |> PROJECT call(plus, [var(0).a, var(0).b]), call(abs, [var(0).c])
+            val var0 = rex(StaticType.STRUCT, rexOpVar(0))
+
             val project = rel(
-                type = schema(
-                    "_1" to StaticType.INT,
-                    "_2" to StaticType.INT,
-                ),
+                type = schema( "T" to StaticType.STRUCT),
                 op = relOpProject(
                     input = scan,
                     projections = listOf(
                         rex(
-                            StaticType.INT,
-                            rexOpCallStatic(
-                                fn = fn(plus),
-                                args = listOf(
-                                    (rex(StaticType.INT, path(var0, "a"))),
-                                    (rex(StaticType.INT, path(var0, "b"))),
-                                )
-                            )
-                        ),
-                        rex(
-                            StaticType.INT,
-                            rexOpCallStatic(
-                                fn = fn(abs),
-                                args = listOf(
-                                    (rex(StaticType.INT, path(var0, "c"))),
+                            type = StaticType.STRUCT,
+                            op = rexOpStruct(
+                                fields = listOf(
+                                    rexOpStructField(
+                                        k = rex(StaticType.STRING, rexOpLit(stringValue("a"))),
+                                        v = rex(StaticType.INT,
+                                            rexOpCallStatic(
+                                                fn = fn(plus),
+                                                args = listOf(
+                                                    (rex(StaticType.INT, path(var0, "a"))),
+                                                    (rex(StaticType.INT, path(var0, "b"))),
+                                                )
+                                            )
+                                        )
+                                    ),
+                                    rexOpStructField(
+                                        k = rex(StaticType.STRING, rexOpLit(stringValue("b"))),
+                                        v = rex(StaticType.INT,
+                                            rexOpCallStatic(
+                                                fn = fn(abs),
+                                                args = listOf(
+                                                    (rex(StaticType.INT, path(var0, "c"))),
+                                                )
+                                            )
+                                        )
+                                    ),
                                 )
                             )
                         ),
@@ -201,18 +188,7 @@ class SqlTransformTest {
                 op = rexOpSelect(
                     constructor = rex(
                         type = StaticType.STRUCT,
-                        op = rexOpStruct(
-                            listOf(
-                                rexOpStructField(
-                                    k = rex(StaticType.STRING, rexOpLit(stringValue("_1"))),
-                                    v = rex(StaticType.INT, rexOpVar(0)),
-                                ),
-                                rexOpStructField(
-                                    k = rex(StaticType.STRING, rexOpLit(stringValue("_2"))),
-                                    v = rex(StaticType.INT, rexOpVar(1)),
-                                ),
-                            )
-                        )
+                        op = rexOpVar(0)
                     ),
                     rel = project
                 )
@@ -222,20 +198,11 @@ class SqlTransformTest {
             //
             catalogs to statement
         }
-
-        // SELECT a, b, c FROM T AS _1
-        //
-        // Normalized: SELECT _1.a AS a, _1.b AS b, _1.c AS c FROM T AS _1
-        //
-        // Equivalent: SELECT VALUE { 'a': _1.a, 'b': _1.b, 'c': _1.c } FROM T AS _1
-
-        // SCAN global(T)
-        // |> PROJECT var(0).a, var(0).b, var(0).c
-        // |> SELECT { 'a': var(0), 'b': var(1), 'c': var(2) }
-
         val case = Case(
             input = statement,
-            expected = "SELECT _1.a + _1.b AS _1, abs(_1.c) AS _2 FROM T AS _1",
+            expected = """
+                SELECT VALUE {'a': "T"['a'] + "T"['b'], 'b': "abs"("T"['c'])} FROM "Test"."T" AS "T"
+            """.trimIndent(),
             catalogs = globals,
         )
         case.assert()
