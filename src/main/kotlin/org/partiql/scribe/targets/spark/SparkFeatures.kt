@@ -1,7 +1,6 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.plan.Fn
-import org.partiql.plan.Global
 import org.partiql.plan.Identifier
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode
@@ -57,20 +56,19 @@ object SparkFeatures : SqlFeatures.Defensive() {
 
     override fun visitStatementQuery(node: Statement.Query, ctx: ProblemCallback) = visitChildren(node, ctx)
 
-    override fun visitGlobal(node: Global, ctx: ProblemCallback) = visitChildren(node, ctx)
-
     override fun visitRexOpGlobal(node: Rex.Op.Global, ctx: ProblemCallback) = visitChildren(node, ctx)
 
     override fun visitRexOpPath(node: Rex.Op.Path, ctx: ProblemCallback) = visitChildren(node, ctx)
 
-    override fun visitRexOpPathStep(node: Rex.Op.Path.Step, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpPathStepKey(node: Rex.Op.Path.Step.Key, ctx: ProblemCallback) {
-        // Stops expression like a[CAST(b AS STRING)]
+    override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: ProblemCallback) {
         if (node.key.op !is Rex.Op.Lit) {
             ctx.error("Spark path step must an identifier, e.g. `x`.`y`")
         }
     }
+
+    override fun visitRexOpPathSymbol(node: Rex.Op.Path.Symbol, ctx: ProblemCallback) = visitChildren(node, ctx)
+
+    override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: ProblemCallback) = visitChildren(node, ctx)
 
     override fun visitRelBinding(node: Rel.Binding, ctx: ProblemCallback) = visitChildren(node, ctx)
 
@@ -81,8 +79,6 @@ object SparkFeatures : SqlFeatures.Defensive() {
     override fun visitIdentifierSymbol(node: Identifier.Symbol, ctx: ProblemCallback) = visitChildren(node, ctx)
 
     override fun visitIdentifierQualified(node: Identifier.Qualified, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpPathStepSymbol(node: Rex.Op.Path.Step.Symbol, ctx: ProblemCallback) = visitChildren(node, ctx)
 
     override fun visitFn(node: Fn, ctx: ProblemCallback) = visitChildren(node, ctx)
 
@@ -102,7 +98,7 @@ object SparkFeatures : SqlFeatures.Defensive() {
             super.visitRelOpProject(node, ctx)
         }
 
-        override fun visitRexOpPathStepKey(node: Rex.Op.Path.Step.Key, ctx: ProblemCallback) {
+        override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: ProblemCallback) {
             // Stops expression like a[CAST(b AS STRING)]
             if (node.key.op !is Rex.Op.Lit) {
                 ctx.error("Spark path step must an identifier, e.g. `x`.`y`")

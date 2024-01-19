@@ -91,9 +91,7 @@ public open class RexToSql(
             return locals.projections[node.ref]
         }
         val binding = locals.env.getOrNull(node.ref)
-        if (binding == null) {
-            error("Malformed plan, resolved local (\$var ${node.ref}) not in ${locals.dump()}")
-        }
+            ?: error("Malformed plan, resolved local (\$var ${node.ref}) not in ${locals.dump()}")
         val identifier = binder(binding.name)
         val scope = Expr.Var.Scope.DEFAULT
         return exprVar(identifier, scope)

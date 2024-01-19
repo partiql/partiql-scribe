@@ -68,11 +68,21 @@ public object TrinoTarget : SqlTarget() {
          * Only allow "foo"."bar" as Trino does have nested path expressions.
          */
         override fun visitRexOpPath(node: Rex.Op.Path, ctx: Unit): PlanNode {
-            if (node.root.op !is Rex.Op.Var) {
-                error("Trino does not support path expressions on non-variable values")
-            }
-            if (node.steps.size != 1) {
-                error("Trino does not support path expressions beyond a single level")
+            when(node) {
+                is Rex.Op.Path.Index -> Unit
+                is Rex.Op.Path.Key -> {
+                    if (node.root.op !is Rex.Op.Var) {
+                        error("Trino does not support path expressions on non-variable values")
+                    }
+                    if (node.key.op !is Rex.Op.Var) {
+                        error("Trino does not support path expressions on non-variable values")
+                    }
+                }
+                is Rex.Op.Path.Symbol -> {
+                    if (node.root.op !is Rex.Op.Lit) {
+                        error("Trino does not support path expressions on non-variable values")
+                    }
+                }
             }
             return super.visitRexOpPath(node, ctx)
         }
