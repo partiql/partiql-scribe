@@ -11,6 +11,7 @@ import org.partiql.scribe.sql.SqlTarget
 import org.partiql.types.ListType
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType
+import org.partiql.types.StringType
 import org.partiql.value.Int16Value
 import org.partiql.value.Int32Value
 import org.partiql.value.Int64Value
@@ -74,12 +75,15 @@ public object TrinoTarget : SqlTarget() {
                     if (node.root.op !is Rex.Op.Var) {
                         error("Trino does not support path expressions on non-variable values")
                     }
-                    if (node.key.op !is Rex.Op.Var) {
-                        error("Trino does not support path expressions on non-variable values")
+                    if (node.key.op !is Rex.Op.Lit) {
+                        error("Trino does not support path non-literal path expressions, found ${node.key.op}")
+                    }
+                    if (node.key.type !is StringType) {
+                        error("Trino path expression must be a string literal.")
                     }
                 }
                 is Rex.Op.Path.Symbol -> {
-                    if (node.root.op !is Rex.Op.Lit) {
+                    if (node.root.op !is Rex.Op.Var) {
                         error("Trino does not support path expressions on non-variable values")
                     }
                 }
@@ -98,15 +102,20 @@ public object TrinoTarget : SqlTarget() {
          */
         @OptIn(PartiQLValueExperimental::class)
         override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: Unit): PlanNode {
-            val op = node.key.op
-            val type = node.key.type
+
+            // Assert root type
+            val type = node.root.type
             if (type !is ListType || type.asNonNullable() !is ListType) {
                 error("Trino only supports indexing on `array` type data; found $type")
             }
+
+            // Assert key type
+            val op = node.key.op
             if (op !is Rex.Op.Lit) {
                 error("Trino array indexing only supports integer literals, e.g. x[1].")
                 return super.visitRexOpPathIndex(node, ctx)
             }
+
             val i = when (val v = op.value) {
                 is Int8Value -> v.int
                 is Int16Value -> v.int

@@ -137,3 +137,6 @@ SELECT t.x[0 + 1] AS v FROM t;
 -- #[paths-sfw-16]
 -- TODO: ABS not implemented yet
 -- SELECT t.x[ABS(1)] AS v FROM t;
+
+--#[paths-sfw-16]
+SELECT t.array[0] AS v FROM t;

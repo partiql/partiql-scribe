@@ -35,6 +35,13 @@
         type: "any",
       },
       {
+        name: "array",
+        type: {
+          type: "list",
+          items: "int",
+        },
+      },
+      {
         name: "z",
         type: "string",
       },

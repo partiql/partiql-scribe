@@ -7,17 +7,7 @@ import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.types.StructType
 import org.partiql.types.TupleConstraint
 
-public object TrinoFeatures : SqlFeatures.Defensive() {
-
-    override fun visitPartiQLPlan(node: PartiQLPlan, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRel(node: Rel, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRelOpScan(node: Rel.Op.Scan, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRelOpProject(node: Rel.Op.Project, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRelOpSort(node: Rel.Op.Sort, ctx: ProblemCallback) = visitChildren(node, ctx)
+public object TrinoFeatures : SqlFeatures.Permissive() {
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: ProblemCallback) {
         when (val type = node.constructor.type) {
@@ -31,24 +21,4 @@ public object TrinoFeatures : SqlFeatures.Defensive() {
             else -> ctx.error("SELECT VALUE is NOT supported.")
         }
     }
-
-    override fun visitRex(node: Rex, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpLit(node: Rex.Op.Lit, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitStatementQuery(node: Statement.Query, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpGlobal(node: Rex.Op.Global, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpPath(node: Rex.Op.Path, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRelBinding(node: Rel.Binding, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRelType(node: Rel.Type, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitRexOpVar(node: Rex.Op.Var, ctx: ProblemCallback)  = visitChildren(node, ctx)
-
-    override fun visitIdentifierSymbol(node: Identifier.Symbol, ctx: ProblemCallback) = visitChildren(node, ctx)
-
-    override fun visitIdentifierQualified(node: Identifier.Qualified, ctx: ProblemCallback) = visitChildren(node, ctx)
 }

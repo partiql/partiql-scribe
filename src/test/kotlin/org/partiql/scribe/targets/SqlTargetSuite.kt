@@ -1,8 +1,5 @@
 package org.partiql.scribe.targets
 
-import com.amazon.ionelement.api.ionString
-import com.amazon.ionelement.api.ionStructOf
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.DynamicContainer
 import org.junit.jupiter.api.DynamicContainer.dynamicContainer
 import org.junit.jupiter.api.DynamicNode
@@ -10,7 +7,6 @@ import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
 import org.partiql.plan.debug.PlanPrinter
-import org.partiql.plugins.local.LocalPlugin
 import org.partiql.scribe.ScribeCompiler
 import org.partiql.scribe.ScribeException
 import org.partiql.scribe.ScribeProblem
@@ -18,7 +14,6 @@ import org.partiql.scribe.sql.SqlTarget
 import org.partiql.scribe.test.ScribeTest
 import org.partiql.scribe.test.ScribeTestProvider
 import org.partiql.scribe.test.SessionProvider
-import org.partiql.spi.connector.ConnectorSession
 import org.partiql.types.function.FunctionParameter
 import org.partiql.types.function.FunctionSignature
 import org.partiql.value.PartiQLValueExperimental
@@ -107,21 +102,24 @@ abstract class SqlTargetSuite {
                         // debug dump
                         PlanPrinter.append(this, result.input)
                     }
-                    if (result.problems.isNotEmpty()) {
-                        buildString {
-                            this.appendLine("Problems occured: ${result.problems}")
-                            // debug dump
-                            PlanPrinter.append(this, result.input)
+                    val errors = result.problems.filter { it.level == ScribeProblem.Level.ERROR }
+                    if (errors.isNotEmpty()) {
+                        fail {
+                            buildString {
+                                for (error in errors) {
+                                    appendLine(error)
+                                }
+                            }
                         }
                     }
                 } catch (ex: ScribeException) {
                     fail {
-                        val sb = StringBuilder()
-                        sb.appendLine(ex.message)
-                        for (problem in ex.problems) {
-                            sb.appendLine(problem)
+                        buildString {
+                            appendLine(ex.message)
+                            for (problem in ex.problems) {
+                                appendLine(problem)
+                            }
                         }
-                        sb.toString()
                     }
                 }
             }
