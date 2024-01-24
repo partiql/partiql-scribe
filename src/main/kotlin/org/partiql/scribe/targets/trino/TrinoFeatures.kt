@@ -1,24 +1,41 @@
 package org.partiql.scribe.targets.trino
 
-import org.partiql.plan.*
-import org.partiql.scribe.ProblemCallback
-import org.partiql.scribe.error
+import org.partiql.plan.Rel
+import org.partiql.plan.Rex
 import org.partiql.scribe.sql.SqlFeatures
-import org.partiql.types.StructType
-import org.partiql.types.TupleConstraint
 
-public object TrinoFeatures : SqlFeatures.Permissive() {
+public object TrinoFeatures : SqlFeatures.Defensive() {
 
-    override fun visitRexOpSelect(node: Rex.Op.Select, ctx: ProblemCallback) {
-        when (val type = node.constructor.type) {
-            is StructType -> {
-                if (type.contentClosed && type.constraints.contains(TupleConstraint.Ordered)) {
-                    visitChildren(node, ctx)
-                } else {
-                    ctx.error("SELECT VALUE of open, unordered structs is NOT supported.")
-                }
-            }
-            else -> ctx.error("SELECT VALUE is NOT supported.")
-        }
-    }
+    override val allow: Set<Class<*>> = setOf(
+        //
+        // Rel
+        //
+        Rel.Op.Scan::class.java,
+        Rel.Op.Project::class.java,
+        Rel.Op.Sort::class.java,
+        Rel.Op.Filter::class.java,
+        Rel.Op.Join::class.java,
+        Rel.Op.Limit::class.java,
+        Rel.Op.Offset::class.java,
+        //
+        // Rex
+        //
+        Rex.Op.Call::class.java,
+        Rex.Op.Call.Static::class.java,
+        Rex.Op.Case::class.java,
+        Rex.Op.Case.Branch::class.java,
+        Rex.Op.Collection::class.java,
+        Rex.Op.Global::class.java,
+        Rex.Op.Lit::class.java,
+        Rex.Op.Path::class.java,
+        Rex.Op.Path.Index::class.java,
+        Rex.Op.Path.Key::class.java,
+        Rex.Op.Path.Symbol::class.java,
+        Rex.Op.Select::class.java,
+        Rex.Op.Subquery::class.java,
+        Rex.Op.Struct::class.java,
+        Rex.Op.Struct.Field::class.java,
+        Rex.Op.TupleUnion::class.java,
+        Rex.Op.Var::class.java,
+    )
 }

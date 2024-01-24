@@ -109,6 +109,7 @@ abstract class SqlTargetSuite {
                                 for (error in errors) {
                                     appendLine(error)
                                 }
+                                PlanPrinter.append(this, result.input)
                             }
                         }
                     }

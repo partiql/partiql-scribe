@@ -68,4 +68,3 @@ SELECT `t`.`x`[0].`y`.`y` AS `v` FROM `default`.`T` AS `t`;
 
 --#[paths-sfw-15]
 SELECT `t`.`x`[0 + 1] AS `v` FROM `default`.`T` AS `t`;
-

@@ -56,14 +56,15 @@ SELECT
         END AS `result`
 FROM `default`.`T` AS `T`;
 
---#[case-08]
-SELECT
-    CASE
-        WHEN `T`.`x` = 'WATER' THEN 'x IS WATER'
-        WHEN `T`.`x` = 5 THEN 'x IS 5'
-        ELSE 'x IS SOMETHING ELSE'
-        END AS `result`
-FROM `default`.`T` AS `T`;
+-- #[case-08]
+-- ERROR: Spark does not support ANY type which creates a dynamic function call.
+-- SELECT
+--     CASE
+--         WHEN "T"."x" = 'WATER' THEN 'x IS WATER'
+--         WHEN "T"."x" = 5 THEN 'x IS 5'
+--         ELSE 'x IS SOMETHING ELSE'
+--         END AS "result"
+-- FROM "default"."T" AS "T";
 
 --#[case-09]
 SELECT
