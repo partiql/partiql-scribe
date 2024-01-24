@@ -55,12 +55,7 @@ public object RedshiftTarget : SqlTarget() {
             node.projections.forEachIndexed { index, projection ->
                 val type = projection.type.asNonNullable().flatten()
                 if (type !is SingleType) {
-                    onProblem(
-                        ScribeProblem(
-                            ScribeProblem.Level.ERROR,
-                            "Projection item (index $index) is heterogeneous (${type.allTypes.joinToString(",")}) and cannot be coerced to a single type."
-                        )
-                    )
+                    error("Projection item (index $index) is heterogeneous (${type.allTypes.joinToString(",")}) and cannot be coerced to a single type.")
                 }
             }
             return super.visitRelOpProject(node, ctx)

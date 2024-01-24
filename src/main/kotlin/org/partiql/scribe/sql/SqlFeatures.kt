@@ -1,7 +1,14 @@
 package org.partiql.scribe.sql
 
+import org.partiql.plan.Agg
+import org.partiql.plan.Catalog
+import org.partiql.plan.Fn
+import org.partiql.plan.Identifier
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode
+import org.partiql.plan.Rel
+import org.partiql.plan.Rex
+import org.partiql.plan.Statement
 import org.partiql.plan.visitor.PlanBaseVisitor
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.error
@@ -44,6 +51,38 @@ abstract class SqlFeatures : PlanBaseVisitor<Unit, ProblemCallback>() {
         return visitPartiQLPlan(node, onProblem)
     }
 
+    override fun visitAgg(node: Agg, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitRelOpAggregateCall(node: Rel.Op.Aggregate.Call, ctx: ProblemCallback) = visitChildren(node, ctx)
+
+    override fun visitCatalog(node: Catalog, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitCatalogSymbol(node: Catalog.Symbol, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitCatalogSymbolRef(node: Catalog.Symbol.Ref, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitFn(node: Fn, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitIdentifier(node: Identifier, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitIdentifierQualified(node: Identifier.Qualified, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitIdentifierSymbol(node: Identifier.Symbol, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitPartiQLPlan(node: PartiQLPlan, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitRel(node: Rel, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitRelBinding(node: Rel.Binding, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitRelType(node: Rel.Type, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitRex(node: Rex, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitStatement(node: Statement, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
+    override fun visitStatementQuery(node: Statement.Query, ctx: ProblemCallback)  = visitChildren(node, ctx)
+
     /**
      * This visits all of the [node]'s children without invoking the [defaultReturn] for the [node].
      */
@@ -52,13 +91,16 @@ abstract class SqlFeatures : PlanBaseVisitor<Unit, ProblemCallback>() {
     }
 
     /**
-     * An [SqlFeatures] which denies all features by default; thereby requiring explicit opt-in.
+     * An [SqlFeatures] which denies all features (rel.op and rex.op) by default; thereby requiring explicit opt-in.
      */
     public open class Defensive : SqlFeatures() {
 
+        open val allow: Set<Class<*>> = emptySet()
+
         override fun defaultReturn(node: PlanNode, ctx: ProblemCallback) {
-            val name = feature(node)
-            ctx.error("PartiQL feature ($name) is not supported.")
+            if (!allow.contains(node::class.java)) {
+                ctx.error("PartiQL feature (${feature(node)}) is not supported.")
+            }
         }
     }
 
@@ -67,9 +109,13 @@ abstract class SqlFeatures : PlanBaseVisitor<Unit, ProblemCallback>() {
      */
     public open class Permissive : SqlFeatures() {
 
-        override fun defaultReturn(node: PlanNode, ctx: ProblemCallback) {
-            // allow everything
-        }
+        /**
+         * Allow everything
+         *
+         * @param node
+         * @param ctx
+         */
+        override fun defaultReturn(node: PlanNode, ctx: ProblemCallback) = Unit
     }
 
     /**

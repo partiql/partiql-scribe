@@ -1,7 +1,5 @@
 package org.partiql.scribe.targets.redshift
 
-import com.amazon.ionelement.api.ionString
-import com.amazon.ionelement.api.ionStructOf
 import org.partiql.plugins.local.LocalConnector
 import org.partiql.scribe.targets.SqlTargetSuite
 import org.partiql.scribe.test.SessionProvider

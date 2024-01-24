@@ -1,6 +1,12 @@
 package org.partiql.scribe.targets.trino
 
-import org.partiql.plan.*
+import org.partiql.plan.PartiQLPlan
+import org.partiql.plan.PlanNode
+import org.partiql.plan.Rel
+import org.partiql.plan.Rex
+import org.partiql.plan.rex
+import org.partiql.plan.rexOpLit
+import org.partiql.plan.rexOpPathIndex
 import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
@@ -11,6 +17,9 @@ import org.partiql.scribe.sql.SqlTarget
 import org.partiql.types.ListType
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType
+import org.partiql.types.StringType
+import org.partiql.types.StructType
+import org.partiql.types.TupleConstraint
 import org.partiql.value.Int16Value
 import org.partiql.value.Int32Value
 import org.partiql.value.Int64Value
@@ -53,38 +62,44 @@ public object TrinoTarget : SqlTarget() {
             node.projections.forEachIndexed { index, projection ->
                 val type = projection.type.asNonNullable().flatten()
                 if (type !is SingleType) {
-                    onProblem(
-                        ScribeProblem(
-                            ScribeProblem.Level.ERROR,
-                            "Projection item (index $index) is heterogeneous (${type.allTypes.joinToString(",")}) and cannot be coerced to a single type."
-                        )
-                    )
+                    error("Projection item (index $index) is heterogeneous (${type.allTypes.joinToString(",")}) and cannot be coerced to a single type.")
                 }
             }
             return super.visitRelOpProject(node, ctx)
         }
 
-        /**
-         * Only allow "foo"."bar" as Trino does have nested path expressions.
-         */
-        override fun visitRexOpPath(node: Rex.Op.Path, ctx: Unit): PlanNode {
-            when(node) {
-                is Rex.Op.Path.Index -> Unit
-                is Rex.Op.Path.Key -> {
-                    if (node.root.op !is Rex.Op.Var) {
-                        error("Trino does not support path expressions on non-variable values")
-                    }
-                    if (node.key.op !is Rex.Op.Var) {
-                        error("Trino does not support path expressions on non-variable values")
+        override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Unit): PlanNode {
+            when (val type = node.constructor.type) {
+                is StructType -> {
+                    val open = !(type.contentClosed && type.constraints.contains(TupleConstraint.Open(false)))
+                    val unordered = !type.constraints.contains(TupleConstraint.Ordered)
+                    if (open || unordered) {
+                        error("SELECT VALUE of open, unordered structs is NOT supported.")
                     }
                 }
-                is Rex.Op.Path.Symbol -> {
-                    if (node.root.op !is Rex.Op.Lit) {
-                        error("Trino does not support path expressions on non-variable values")
-                    }
-                }
+                else -> error("SELECT VALUE is NOT supported.")
             }
-            return super.visitRexOpPath(node, ctx)
+            return super.visitRexOpSelect(node, ctx)
+        }
+
+        override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: Unit): PlanNode {
+            if (node.root.op !is Rex.Op.Var) {
+                error("Trino does not support path expressions on non-variable values")
+            }
+            if (node.key.op !is Rex.Op.Lit) {
+                error("Trino does not support path non-literal path expressions, found ${node.key.op}")
+            }
+            if (node.key.type !is StringType) {
+                error("Trino path expression must be a string literal.")
+            }
+            return super.visitRexOpPathKey(node, ctx)
+        }
+
+        override fun visitRexOpPathSymbol(node: Rex.Op.Path.Symbol, ctx: Unit): PlanNode {
+            if (node.root.op !is Rex.Op.Var) {
+                error("Trino does not support path expressions on non-variable values")
+            }
+            return super.visitRexOpPathSymbol(node, ctx)
         }
 
         /**
@@ -98,15 +113,20 @@ public object TrinoTarget : SqlTarget() {
          */
         @OptIn(PartiQLValueExperimental::class)
         override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: Unit): PlanNode {
-            val op = node.key.op
-            val type = node.key.type
+
+            // Assert root type
+            val type = node.root.type
             if (type !is ListType || type.asNonNullable() !is ListType) {
                 error("Trino only supports indexing on `array` type data; found $type")
             }
+
+            // Assert key type
+            val op = node.key.op
             if (op !is Rex.Op.Lit) {
                 error("Trino array indexing only supports integer literals, e.g. x[1].")
                 return super.visitRexOpPathIndex(node, ctx)
             }
+
             val i = when (val v = op.value) {
                 is Int8Value -> v.int
                 is Int16Value -> v.int
