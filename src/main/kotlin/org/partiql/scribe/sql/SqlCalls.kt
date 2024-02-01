@@ -173,7 +173,7 @@ public abstract class SqlCalls {
         "current_date" to sessionAttribute(Expr.SessionAttribute.Attribute.CURRENT_DATE),
         // in collection
         "in_collection" to { args -> inCollection(args) },
-        // betwen
+        // between
         "between" to {args -> between(args)},
     )
 

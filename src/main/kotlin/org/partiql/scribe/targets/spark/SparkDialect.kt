@@ -1,11 +1,13 @@
 package org.partiql.scribe.targets.spark
 
+import org.partiql.ast.AstNode
 import org.partiql.ast.Expr
 import org.partiql.ast.From
 import org.partiql.ast.Identifier
 import org.partiql.ast.Select
 import org.partiql.ast.exprPathStepSymbol
 import org.partiql.ast.identifierSymbol
+import org.partiql.ast.selectProjectItemExpression
 import org.partiql.ast.sql.SqlBlock
 import org.partiql.ast.sql.SqlDialect
 import org.partiql.scribe.sql.concat
@@ -62,10 +64,37 @@ object SparkDialect : SqlDialect() {
         return head concat r(".${node.symbol.sql()}")
     }
 
+    @OptIn(PartiQLValueExperimental::class)
+    override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
+        val fieldsAsSparkStructs = node.fields.map { field ->
+            selectProjectItemExpression(
+                expr = field.value,
+                asAlias = identifierSymbol((((field.name as Expr.Lit).value) as StringValue).string!!, caseSensitivity = Identifier.CaseSensitivity.INSENSITIVE)
+            )
+        }
+        return head concat list("STRUCT(", ")") { fieldsAsSparkStructs }
+    }
+
 
     private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 
     // Spark, has no sense of case sensitivity
     // https://spark.apache.org/docs/latest/sql-ref-identifier.html
     private fun Identifier.Symbol.sql() = "`$symbol`"
+
+    private fun list(
+        start: String? = "(",
+        end: String? = ")",
+        delimiter: String? = ", ",
+        children: () -> List<AstNode>,
+    ): SqlBlock {
+        val kids = children()
+        var h = start?.let { r(it) } ?: SqlBlock.Nil
+        kids.forEachIndexed { i, child ->
+            h = child.accept(this, h)
+            h = if (delimiter != null && (i + 1) < kids.size) h concat r(delimiter) else h
+        }
+        h = if (end != null) h concat r(end) else h
+        return h
+    }
 }

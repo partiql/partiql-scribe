@@ -4,9 +4,11 @@ import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.exprCall
+import org.partiql.ast.exprCast
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprVar
 import org.partiql.ast.identifierSymbol
+import org.partiql.ast.typeCustom
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.error
 import org.partiql.scribe.info
@@ -17,6 +19,7 @@ import org.partiql.types.BoolType
 import org.partiql.types.IntType
 import org.partiql.types.StaticType
 import org.partiql.value.PartiQLValueExperimental
+import org.partiql.value.StringValue
 import org.partiql.value.stringValue
 
 @OptIn(PartiQLValueExperimental::class)
@@ -25,6 +28,7 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow
         this.remove("bitwise_and")
+        this["cast_row"] = ::castrow
     }
 
     override fun eqFn(args: SqlArgs): Expr {
@@ -85,6 +89,19 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
         val arg0 = exprVar(id("current_timestamp"), Expr.Var.Scope.DEFAULT)
         val arg1 = exprLit(stringValue("UTC"))
         return exprCall(call, listOf(arg0, arg1))
+    }
+
+    private fun castrow(args: SqlArgs): Expr {
+        val castValue = args.first().expr
+        val rowCall = exprCall(
+            id("ROW"),
+            listOf(castValue)
+        )
+        val asType = ((((args.last().expr) as Expr.Lit).value) as StringValue).value!!
+        val customType = typeCustom(
+            name = asType
+        )
+        return exprCast(rowCall, customType)
     }
 
     private fun id(symbol: String) = identifierSymbol(symbol, Identifier.CaseSensitivity.INSENSITIVE)

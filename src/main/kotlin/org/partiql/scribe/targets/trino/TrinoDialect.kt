@@ -5,8 +5,10 @@ import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.Select
 import org.partiql.ast.SetQuantifier
+import org.partiql.ast.Type
 import org.partiql.ast.exprPathStepSymbol
 import org.partiql.ast.identifierSymbol
+import org.partiql.ast.selectProjectItemExpression
 import org.partiql.ast.sql.SqlBlock
 import org.partiql.ast.sql.SqlDialect
 import org.partiql.scribe.sql.concat
@@ -71,6 +73,37 @@ public object TrinoDialect : SqlDialect() {
         }
         return head concat list(select, "") { node.items }
     }
+
+    /**
+     * Trino's equivalent for struct is the ROW type. It can be created either by
+     * 1. a SELECT projection
+     *  e.g. Trino: (SELECT 1 AS x, 2 AS y) == PartiQL: { 'x': 1, 'y': 2}
+     * 2. creating a ROW and casting the ROW with the column names
+     *  e.g. Trino: CAST(ROW(1, 2) AS ROW(x INTEGER, y INTEGER)) == PartiQL: { 'x': 1, 'y': 2 }
+     *
+     * Option 1 is often the easiest way to create a ROW but due to subquery scalar coercion, if only a single ROW is
+     * projected, the output value will be the single value not in a ROW.
+     *  e.g. Trino: (SELECT 1 AS x) => 1
+     * [TrinoTarget] should have caught any instance of option 1 before reaching this stage.
+     *
+     * Option 2 requires additional type information for the ROW CAST. In [TrinoTarget], the
+     * `CAST(ROW(...) AS ROW(...))` is encoded as a scalar fn call, `cast_row` with the type information
+     * (i.e. everything following the `AS` in the `CAST`) encoded as a string literal.
+     */
+    @OptIn(PartiQLValueExperimental::class)
+    override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
+        // TODO: consider case when `node.fields.size` is 0
+        assert(node.fields.size > 1)
+        val fieldsAsItems = node.fields.map { field ->
+            selectProjectItemExpression(
+                expr = field.value,
+                asAlias = identifierSymbol((((field.name as Expr.Lit).value) as StringValue).string!!, caseSensitivity = Identifier.CaseSensitivity.INSENSITIVE)
+            )
+        }
+        return head concat list("(SELECT ", ")") { fieldsAsItems }
+    }
+
+    override fun visitTypeCustom(node: Type.Custom, head: SqlBlock): SqlBlock = head concat r(node.name)
 
     private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 
