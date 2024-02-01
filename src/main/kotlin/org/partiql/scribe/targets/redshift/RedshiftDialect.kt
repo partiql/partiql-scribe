@@ -1,5 +1,6 @@
 package org.partiql.scribe.targets.redshift
 
+import org.partiql.ast.AstNode
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.Select
@@ -44,8 +45,35 @@ public object RedshiftDialect : SqlDialect() {
         }
     }
 
+    override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
+        return head concat list("OBJECT(", ")") { node.fields }
+    }
+
+    override fun visitExprStructField(node: Expr.Struct.Field, head: SqlBlock): SqlBlock {
+        var h = head
+        h = visitExprWrapped(node.name, h)
+        h = h concat r(", ")
+        h = visitExprWrapped(node.value, h)
+        return h
+    }
+
     private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 
+    private fun list(
+        start: String? = "(",
+        end: String? = ")",
+        delimiter: String? = ", ",
+        children: () -> List<AstNode>,
+    ): SqlBlock {
+        val kids = children()
+        var h = start?.let { r(it) } ?: SqlBlock.Nil
+        kids.forEachIndexed { i, child ->
+            h = child.accept(this, h)
+            h = if (delimiter != null && (i + 1) < kids.size) h concat r(delimiter) else h
+        }
+        h = if (end != null) h concat r(end) else h
+        return h
+    }
 
     private fun Identifier.Symbol.sql() = when (caseSensitivity) {
         Identifier.CaseSensitivity.SENSITIVE -> "\"$symbol\""

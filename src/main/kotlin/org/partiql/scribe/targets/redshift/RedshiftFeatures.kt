@@ -20,6 +20,9 @@ public object RedshiftFeatures : SqlFeatures.Defensive() {
         Rel.Op.Join::class.java,
         Rel.Op.Limit::class.java,
         Rel.Op.Offset::class.java,
+        Rel.Op.Exclude::class.java,
+        Rel.Op.Exclude.Item::class.java,
+        Rel.Op.Exclude.Step.StructField::class.java,
         //
         // Rex
         //

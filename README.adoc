@@ -161,8 +161,8 @@ This is shown in the earlier `UTCNOW()` example.
 
 The most useful interfaces to implement for an SQL target are
 
-* `TpTarget<T>` — Base transpiler target interface
-* `SqlTarget` — Base `TpTarget<String>` implementation for an SQL dialect target
+* `SqlTarget<T>` — Base transpiler target interface
+* `SqlTarget` — Base `SqlTarget<String>` implementation for an SQL dialect target
 * `SqlCalls` — Ruleset for rewriting scalar calls
 * `SqlTransform` — Ruleset for RelToSql conversion
 
@@ -330,5 +330,5 @@ The PartiQL FS Plugin builds a catalog from a directory tree. It is implemented 
 
 NOTE: Directories are nested schemas; files represent table schema where the table name is the file name (without .ion).
 
-It will eventually be merged with mockdb. The only difference is that is meoizes parsed schemas and uses PartiQL Value Schema
+It will eventually be merged with mockdb. The only difference is that is memoizes parsed schemas and uses PartiQL Value Schema
 syntax.
