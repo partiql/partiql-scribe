@@ -75,6 +75,21 @@ object SparkDialect : SqlDialect() {
         return head concat list("STRUCT(", ")") { fieldsAsSparkStructs }
     }
 
+    override fun visitExprCall(node: Expr.Call, head: SqlBlock): SqlBlock {
+        return when {
+            node.function is Identifier.Symbol && (node.function as Identifier.Symbol).symbol == "transform"-> {
+                val array = visitExpr(node.args[0], SqlBlock.Nil)
+                val varName = visitExpr(node.args[1], SqlBlock.Nil)
+                val lambda = visitExpr(node.args[2], SqlBlock.Nil)
+                var h = head
+                h = visitIdentifier(node.function, h)
+                h = h concat "($array, $varName -> $lambda)"
+                h
+            }
+            else -> super.visitExprCall(node, head)
+        }
+    }
+
 
     private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 

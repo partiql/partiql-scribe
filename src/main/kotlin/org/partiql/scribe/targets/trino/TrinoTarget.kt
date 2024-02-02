@@ -23,6 +23,7 @@ import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
+import org.partiql.types.CollectionType
 import org.partiql.types.IntType
 import org.partiql.types.ListType
 import org.partiql.types.SingleType
@@ -41,6 +42,7 @@ import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.PartiQLValueType
 import org.partiql.value.int32Value
 import org.partiql.value.stringValue
+import org.partiql.value.symbolValue
 
 /**
  * Experimental Trino SQL transpilation target.
@@ -249,18 +251,68 @@ public object TrinoTarget : SqlTarget() {
                 type = StaticType.STRING,
                 op = rexOpLit(stringValue(this.toTrinoString()))
             )
-            val newV = Rex(
-                type = field.value,
-                op = when (field.value) {
-                    is StructType -> TODO()
-                    else -> newPath
-                }
+            val newV = field.value.toRex(
+                prefixPath = Rex(
+                    type = field.value,
+                    op = newPath
+                )
             )
             return rexOpCallStatic(
                 fn = Fn(cast_row_fn_sig),
                 args = listOf(
                     newV,
                     newK
+                )
+            )
+        }
+
+        private fun StaticType.toRex(prefixPath: Rex): Rex {
+            return when (this) {
+                is StructType -> {
+                    Rex(
+                        type = this,
+                        op = when (this.fields.size) {
+                            1 -> this.toRexCastRow(prefixPath)
+                            else -> this.toRexStruct(prefixPath)
+                        },
+                    )
+                }
+                is CollectionType -> Rex(
+                    type = this,
+                    op = this.toRexCallTransform(prefixPath),
+                )
+                else -> prefixPath
+            }
+        }
+
+        @OptIn(PartiQLValueExperimental::class)
+        private val transform_fn_sig = FunctionSignature.Scalar(
+            name = "transform",
+            returns = PartiQLValueType.ANY,
+            parameters = listOf(
+                FunctionParameter("prefix_path", PartiQLValueType.ANY),
+                FunctionParameter("value", PartiQLValueType.ANY)
+            ),
+            isNullable = false,
+            isNullCall = true
+        )
+
+        @OptIn(PartiQLValueExperimental::class)
+        private fun CollectionType.toRexCallTransform(prefixPath: Rex): Rex.Op.Call.Static {
+            val elementType = this.elementType
+            val newPath = Rex(
+                type = StaticType.ANY,
+                op = rexOpLit(
+                    value = symbolValue("coll_wildcard")    // TODO ALAN make unique?
+                )
+            )
+            return rexOpCallStatic(
+                fn = Fn(transform_fn_sig),
+                args = listOf(
+                    prefixPath,
+                    elementType.toRex(
+                        newPath
+                    )
                 )
             )
         }
@@ -293,29 +345,11 @@ public object TrinoTarget : SqlTarget() {
                     prefixPath,
                     field.key
                 )
-                val newV = Rex(
-                    type = field.value,
-                    op = when (field.value) {
-                        is StructType -> {
-                            val innerStructType = (field.value as StructType)
-                            when (innerStructType.fields.size) {
-                                0 -> TODO() // should be an error?
-                                1 -> innerStructType.toRexCastRow(
-                                    prefixPath = Rex(
-                                        type = field.value,
-                                        op = newPath
-                                    )
-                                )
-                                else -> innerStructType.toRexStruct(
-                                    prefixPath = Rex(
-                                        type = field.value,
-                                        op = newPath
-                                    )
-                                )
-                            }
-                        }
-                        else -> newPath
-                    }
+                val newV = field.value.toRex(
+                    prefixPath = Rex(
+                        type = field.value,
+                        op = newPath
+                    )
                 )
                 rexOpStructField(
                     k = Rex(

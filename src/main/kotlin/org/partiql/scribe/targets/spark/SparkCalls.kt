@@ -11,11 +11,13 @@ import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlTransform.Companion.id
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.stringValue
+import org.partiql.value.symbolValue
 
 class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow
         this["current_user"] = ::currentUser
+        this["transform"] = ::transform
     }
 
     // https://spark.apache.org/docs/latest/api/sql/index.html#array_contains
@@ -44,5 +46,14 @@ class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         val currentTimestamp = id("current_timestamp")
         val targetTimezone = exprLit(stringValue("utc"))
         return exprCall(convertTimeZone, listOf(targetTimezone, exprCall(currentTimestamp, emptyList())))
+    }
+
+    @OptIn(PartiQLValueExperimental::class)
+    private fun transform(sqlArgs: List<SqlArg>): Expr {
+        val fnName = id("transform")
+        val prefixPath = sqlArgs.first().expr
+        val lambda = sqlArgs.last().expr
+        val collWildcardId = exprLit(symbolValue("coll_wildcard"))
+        return exprCall(fnName, listOf(prefixPath, collWildcardId, lambda))
     }
 }

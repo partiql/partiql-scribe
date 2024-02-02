@@ -12,15 +12,18 @@ import org.partiql.ast.typeCustom
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.error
 import org.partiql.scribe.info
+import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.SqlTransform
 import org.partiql.types.BoolType
 import org.partiql.types.IntType
 import org.partiql.types.StaticType
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
 import org.partiql.value.stringValue
+import org.partiql.value.symbolValue
 
 @OptIn(PartiQLValueExperimental::class)
 public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
@@ -29,6 +32,7 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
         this["utcnow"] = ::utcnow
         this.remove("bitwise_and")
         this["cast_row"] = ::castrow
+        this["transform"] = ::transform
     }
 
     override fun eqFn(args: SqlArgs): Expr {
@@ -102,6 +106,15 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
             name = asType
         )
         return exprCast(rowCall, customType)
+    }
+
+    @OptIn(PartiQLValueExperimental::class)
+    private fun transform(sqlArgs: List<SqlArg>): Expr {
+        val fnName = SqlTransform.id("transform")
+        val prefixPath = sqlArgs.first().expr
+        val lambda = sqlArgs.last().expr
+        val collWildcardId = exprLit(symbolValue("coll_wildcard"))
+        return exprCall(fnName, listOf(prefixPath, collWildcardId, lambda))
     }
 
     private fun id(symbol: String) = identifierSymbol(symbol, Identifier.CaseSensitivity.INSENSITIVE)

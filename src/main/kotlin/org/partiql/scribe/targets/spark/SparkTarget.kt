@@ -1,6 +1,7 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.sql.SqlDialect
+import org.partiql.plan.Fn
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
@@ -8,6 +9,8 @@ import org.partiql.plan.Rex
 import org.partiql.plan.Statement
 import org.partiql.plan.relOpProject
 import org.partiql.plan.relOpScan
+import org.partiql.plan.rexOpCallStatic
+import org.partiql.plan.rexOpCollection
 import org.partiql.plan.rexOpLit
 import org.partiql.plan.rexOpPathSymbol
 import org.partiql.plan.rexOpSelect
@@ -20,12 +23,19 @@ import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
+import org.partiql.types.CollectionType
+import org.partiql.types.ListType
+import org.partiql.types.SexpType
 import org.partiql.types.StaticType
 import org.partiql.types.StringType
 import org.partiql.types.StructType
 import org.partiql.types.TupleConstraint
+import org.partiql.types.function.FunctionParameter
+import org.partiql.types.function.FunctionSignature
 import org.partiql.value.PartiQLValueExperimental
+import org.partiql.value.PartiQLValueType
 import org.partiql.value.stringValue
+import org.partiql.value.symbolValue
 
 object SparkTarget : SqlTarget() {
     override val target: String = "Spark"
@@ -86,19 +96,14 @@ object SparkTarget : SqlTarget() {
             val mappedBindings = bindings.map { binding ->
                 val type = binding.type
 
-                val constructor = when (type) {
-                    is StructType -> { // binding's type should be a StructType
-                        type.toRexStruct(
-                            Rex(
-                                type = type,
-                                op = rexOpVar(
-                                    0
-                                )
-                            )
+                val constructor = type.toRex(
+                    Rex(
+                        type = type,
+                        op = rexOpVar(
+                            0
                         )
-                    }
-                    else -> TODO()
-                }
+                    )
+                )
                 relOpScan(
                     rex = Rex(
                         type = type,
@@ -116,10 +121,7 @@ object SparkTarget : SqlTarget() {
                                 ),
                                 op = relOpProject(
                                     projections = listOf(
-                                        Rex(
-                                            type = type,
-                                            op = constructor
-                                        )
+                                        constructor
                                     ),
                                     input = origInput
                                 )
@@ -131,6 +133,52 @@ object SparkTarget : SqlTarget() {
             return mappedBindings.first()   // TODO ALAN currently just return the first binding; need to support multiple bindings
         }
 
+        private fun StaticType.toRex(prefixPath: Rex): Rex {
+            return when (this) {
+                is StructType -> Rex(
+                    type = this,
+                    op = this.toRexStruct(prefixPath),
+                )
+                is CollectionType -> Rex(
+                    type = this,
+                    op = this.toRexCallTransform(prefixPath),
+                )
+                else -> prefixPath
+            }
+        }
+
+        @OptIn(PartiQLValueExperimental::class)
+        private val transform_fn_sig = FunctionSignature.Scalar(
+            name = "transform",
+            returns = PartiQLValueType.ANY,
+            parameters = listOf(
+                FunctionParameter("prefix_path", PartiQLValueType.ANY),
+                FunctionParameter("value", PartiQLValueType.ANY)
+            ),
+            isNullable = false,
+            isNullCall = true
+        )
+
+        @OptIn(PartiQLValueExperimental::class)
+        private fun CollectionType.toRexCallTransform(prefixPath: Rex): Rex.Op.Call.Static {
+            val elementType = this.elementType
+            val newPath = Rex(
+                type = StaticType.ANY,
+                op = rexOpLit(
+                    value = symbolValue("coll_wildcard")    // TODO ALAN make unique?
+                )
+            )
+            return rexOpCallStatic(
+                fn = Fn(transform_fn_sig),
+                args = listOf(
+                    prefixPath,
+                    elementType.toRex(
+                        newPath
+                    )
+                )
+            )
+        }
+
         // Converts the Struct type to a Rex.Op.Struct
         @OptIn(PartiQLValueExperimental::class)
         private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
@@ -139,20 +187,11 @@ object SparkTarget : SqlTarget() {
                     prefixPath,
                     field.key
                 )
-                val newV = Rex(
-                    type = field.value,
-                    op = when (field.value) {
-                        is StructType -> {
-                            val innerStructType = (field.value as StructType)
-                            innerStructType.toRexStruct(
-                                prefixPath = Rex(
-                                    type = field.value,
-                                    op = newPath
-                                )
-                            )
-                        }
-                        else -> newPath
-                    }
+                val newV = field.value.toRex(
+                    prefixPath = Rex(
+                        type = field.value,
+                        op = newPath
+                    )
                 )
                 rexOpStructField(
                     k = Rex(

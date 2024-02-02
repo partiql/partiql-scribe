@@ -20,6 +20,7 @@ object SparkFeatures : SqlFeatures.Defensive() {
         Rel.Op.Exclude::class.java,
         Rel.Op.Exclude.Item::class.java,
         Rel.Op.Exclude.Step.StructField::class.java,
+        Rel.Op.Exclude.Step.CollWildcard::class.java,
         //
         // Rex
         //

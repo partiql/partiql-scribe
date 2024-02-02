@@ -92,8 +92,8 @@ public object TrinoDialect : SqlDialect() {
      */
     @OptIn(PartiQLValueExperimental::class)
     override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
-        // TODO: consider case when `node.fields.size` is 0
-        assert(node.fields.size > 1)
+        // TODO figure out how to output empty Trino ROW
+        assert(node.fields.size != 1)
         val fieldsAsItems = node.fields.map { field ->
             selectProjectItemExpression(
                 expr = field.value,
@@ -104,6 +104,21 @@ public object TrinoDialect : SqlDialect() {
     }
 
     override fun visitTypeCustom(node: Type.Custom, head: SqlBlock): SqlBlock = head concat r(node.name)
+
+    override fun visitExprCall(node: Expr.Call, head: SqlBlock): SqlBlock {
+        return when {
+            node.function is Identifier.Symbol && (node.function as Identifier.Symbol).symbol == "transform"-> {
+                val array = visitExpr(node.args[0], SqlBlock.Nil)
+                val varName = visitExpr(node.args[1], SqlBlock.Nil)
+                val lambda = visitExpr(node.args[2], SqlBlock.Nil)
+                var h = head
+                h = visitIdentifier(node.function, h)
+                h = h concat "($array, $varName -> $lambda)"
+                h
+            }
+            else -> super.visitExprCall(node, head)
+        }
+    }
 
     private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 
