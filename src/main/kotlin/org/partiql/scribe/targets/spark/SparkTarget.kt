@@ -7,8 +7,11 @@ import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.plan.Statement
+import org.partiql.plan.rel
+import org.partiql.plan.relBinding
 import org.partiql.plan.relOpProject
 import org.partiql.plan.relOpScan
+import org.partiql.plan.relType
 import org.partiql.plan.rexOpCallStatic
 import org.partiql.plan.rexOpCollection
 import org.partiql.plan.rexOpLit
@@ -20,12 +23,15 @@ import org.partiql.plan.rexOpVar
 import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
+import org.partiql.scribe.VarToPathRewriter
+import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
 import org.partiql.types.CollectionType
 import org.partiql.types.ListType
 import org.partiql.types.SexpType
+import org.partiql.types.SingleType
 import org.partiql.types.StaticType
 import org.partiql.types.StringType
 import org.partiql.types.StructType
@@ -49,18 +55,18 @@ object SparkTarget : SqlTarget() {
     override fun getCalls(onProblem: ProblemCallback): SqlCalls = SparkCalls(onProblem)
 
     override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback): PartiQLPlan =
-        SparkRewriter(onProblem).visitPartiQLPlan(plan, emptyList()) as PartiQLPlan
+        SparkRewriter(onProblem).visitPartiQLPlan(plan, null) as PartiQLPlan
 
-    private class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<List<Rel.Binding>>() {
-
-        override fun visitPartiQLPlan(node: PartiQLPlan, ctx: List<Rel.Binding>): PlanNode {
+    private class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
+        private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
+        override fun visitPartiQLPlan(node: PartiQLPlan, ctx: Rel.Type?): PlanNode {
             if ((node.statement !is Statement.Query) || (node.statement as Statement.Query).root.op !is Rex.Op.Select) {
                 error("Spark does not support top level expression")
             }
             return super.visitPartiQLPlan(node, ctx)
         }
 
-        override fun visitRexOpSelect(node: Rex.Op.Select, ctx: List<Rel.Binding>): PlanNode {
+        override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Rel.Type?): PlanNode {
             when (val type = node.constructor.type) {
                 is StructType -> {
                     val open = !(type.contentClosed && type.constraints.contains(TupleConstraint.Open(false)))
@@ -74,7 +80,7 @@ object SparkTarget : SqlTarget() {
             return super.visitRexOpSelect(node, ctx)
         }
 
-        override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: List<Rel.Binding>): PlanNode {
+        override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: Rel.Type?): PlanNode {
             if (node.key.op !is Rex.Op.Lit) {
                 error("Spark does not support path non-literal path expressions, found ${node.key.op}")
             }
@@ -84,53 +90,138 @@ object SparkTarget : SqlTarget() {
             return super.visitRexOpPathKey(node, ctx)
         }
 
-        override fun visitRel(node: Rel, ctx: List<Rel.Binding>): PlanNode {
-            return super.visitRel(node, node.type.schema)
+        override fun visitRel(node: Rel, ctx: Rel.Type?): PlanNode {
+            return super.visitRel(node, node.type)
         }
 
-        override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: List<Rel.Binding>): PlanNode {
-            // Replace `EXCLUDE` with a subquery
-            val origInput = node.input
-            val bindings = ctx
-
-            val mappedBindings = bindings.map { binding ->
-                val type = binding.type
-
-                val constructor = type.toRex(
-                    Rex(
-                        type = type,
-                        op = rexOpVar(
-                            0
+        override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
+            val project = super.visitRelOpProject(node, ctx) as Rel.Op.Project
+            return if (node.input.op is Rel.Op.Exclude) {
+                // When the Rel.Op.Project's input Rel.Op is Exclude
+                // 1. Rewrite the Rel's type schema to wrap the existing bindings in a new binding, `$__EXCLUDE_ALIAS__`
+                //    For example if schema was originally
+                //          [ <binding_name_1: type_1>, <binding_name_2: type_2> ]
+                //    Rewrite to:
+                //          [ <$__EXCLUDE_ALIAS__: Struct(Field(binding_name_1, type_1), Field(binding_name_2, type_2))> ]
+                // 2. Rewrite the projections' Rex.Op.Var to Rex.Op.Path with additional root of `$__EXCLUDE_ALIAS`
+                //    For example (for sake of demonstration subbing var refs with their symbol):
+                //          binding_name_1 + binding_name2
+                //    Rewrite to:
+                //          $__EXCLUDE_ALIAS.binding_name_1 + $__EXCLUDE_ALIAS.binding_name_2
+                val input = project.input
+                val inputOp = input.op as Rel.Op.Scan
+                val inputType = input.type
+                val newInputType = relType(
+                    schema = listOf(
+                        relBinding(
+                            name = EXCLUDE_ALIAS,
+                            type = StructType(
+                                fields = inputType.schema.map { binding ->
+                                    StructType.Field(binding.name, binding.type)
+                                }
+                            )
                         )
-                    )
+                    ),
+                    props = inputType.props
                 )
-                relOpScan(
-                    rex = Rex(
-                        type = type,
-                        op = rexOpSelect(
-                            constructor = Rex(
-                                type = type,
-                                op = rexOpVar(
-                                    ref = 0
+                val varToNameMap = inputType.schema.mapIndexed { index, binding -> index to binding.name }.toMap()
+                val varToPath = VarToPathRewriter(newVar = 0, oldVarToName = varToNameMap)
+                relOpProject(
+                    input = rel(
+                        type = newInputType,
+                        op = inputOp
+                    ),
+                    projections = project.projections.map { projection ->
+                        varToPath.visitRex(projection, StaticType.ANY) as Rex
+                    }
+                )
+            } else {
+                project
+            }
+        }
+
+        @OptIn(PartiQLValueExperimental::class)
+        override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): PlanNode {
+            // Replace `EXCLUDE` with a subquery
+            assert(ctx != null)
+            val origInput = node.input
+            val bindings = ctx!!.schema
+            val structType = StructType(
+                fields = bindings.map { binding ->
+                    StructType.Field(
+                        key = binding.name,
+                        value = binding.type
+                    )
+                }
+            )
+            val rexOpStruct = rexOpStruct(
+                bindings.mapIndexed { index, binding ->
+                    val type = binding.type
+                    val newStructType =
+                        rexOpStructField(
+                            k = Rex(
+                                type = StaticType.STRING,
+                                op = rexOpLit(
+                                    value = stringValue(binding.name)
                                 )
                             ),
-                            rel = Rel(
-                                type = Rel.Type(
-                                    schema = listOf(binding),
-                                    props = emptySet(),
-                                ),
-                                op = relOpProject(
-                                    projections = listOf(
-                                        constructor
-                                    ),
-                                    input = origInput
+                            v = type.toRex(
+                                prefixPath = Rex(
+                                    type = binding.type,
+                                    op = rexOpVar(
+                                        index
+                                    )
                                 )
+                            )
+                        )
+                    newStructType
+                }
+            )
+            val tWrappingStructType = StructType(
+                fields = listOf(
+                    StructType.Field(
+                        EXCLUDE_ALIAS,
+                        structType
+                    )
+                ),
+                constraints = setOf(
+                    TupleConstraint.Ordered,
+                    TupleConstraint.Open(false)
+                )
+            )
+            return relOpScan(
+                rex = Rex(
+                    type = tWrappingStructType,
+                    op = rexOpSelect(
+                        constructor = Rex(
+                            type = tWrappingStructType,
+                            op = rexOpVar(
+                                ref = 0
+                            )
+                        ),
+                        rel = Rel(
+                            type = Rel.Type(
+                                schema = listOf(
+                                    relBinding(
+                                        name = EXCLUDE_ALIAS,
+                                        type = structType
+                                    )
+                                ),
+                                props = emptySet()
+                            ),
+                            op = relOpProject(
+                                projections = listOf(
+                                    Rex(
+                                        type = structType,
+                                        op = rexOpStruct
+                                    )
+                                ),
+                                input = origInput
                             )
                         )
                     )
                 )
-            }
-            return mappedBindings.first()   // TODO ALAN currently just return the first binding; need to support multiple bindings
+            )
         }
 
         private fun StaticType.toRex(prefixPath: Rex): Rex {

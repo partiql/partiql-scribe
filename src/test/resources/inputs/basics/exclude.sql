@@ -29,3 +29,15 @@ SELECT * EXCLUDE t.a[*].field_x FROM EXCLUDE_T_COLL_WILDCARD AS t;
 
 --#[exclude-08]
 SELECT * EXCLUDE t.a[*].field_y FROM EXCLUDE_T_COLL_WILDCARD AS t;
+
+--#[exclude-09]
+-- EXCLUDE with JOIN and WHERE clause
+SELECT * EXCLUDE t1.foo, t2.flds.b, t2.flds.c.field_x FROM EXCLUDE_T AS t1, EXCLUDE_T AS t2 WHERE t1.foo = t2.foo;
+
+--#[exclude-10]
+-- EXCLUDE with multiple JOIN and WHERE clause
+SELECT * EXCLUDE t1.flds.a, t2.flds.b, t3.flds.c FROM EXCLUDE_T AS t1, EXCLUDE_T AS t2, EXCLUDE_T AS t3 WHERE t1.foo = t2.foo AND t2.foo = t3.foo;
+
+--#[exclude-11]
+-- EXCLUDE with select projection list and multiple JOINs
+SELECT t1.flds, t2.flds, t3.flds EXCLUDE t1.flds.a, t2.flds.b, t3.flds.c FROM EXCLUDE_T AS t1, EXCLUDE_T AS t2, EXCLUDE_T AS t3 WHERE t1.foo = t2.foo AND t2.foo = t3.foo;

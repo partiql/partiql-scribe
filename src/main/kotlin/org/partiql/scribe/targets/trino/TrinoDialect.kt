@@ -3,8 +3,6 @@ package org.partiql.scribe.targets.trino
 import org.partiql.ast.AstNode
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
-import org.partiql.ast.Select
-import org.partiql.ast.SetQuantifier
 import org.partiql.ast.Type
 import org.partiql.ast.exprPathStepSymbol
 import org.partiql.ast.identifierSymbol
@@ -40,38 +38,6 @@ public object TrinoDialect : SqlDialect() {
         } else {
             super.visitExprPathStepIndex(node, head)
         }
-    }
-
-    /**
-     * Trino does not have the unpivot path expression ie not allowing multiple project alls.
-     *
-     * @param node
-     * @param head
-     * @return
-     */
-    override fun visitSelectProject(node: Select.Project, head: SqlBlock): SqlBlock {
-        val select = when (node.setq) {
-            SetQuantifier.ALL -> "SELECT ALL "
-            SetQuantifier.DISTINCT -> "SELECT DISTINCT "
-            null -> "SELECT "
-        }
-        var hadProjectAll = false
-        var allProjectAll = true
-        for (item in node.items) {
-            if (item is Select.Project.Item.All) {
-                hadProjectAll = true
-            } else {
-                allProjectAll = false
-            }
-        }
-        if (hadProjectAll) {
-            if (allProjectAll) {
-                return head concat r(select) concat r("*")
-            } else {
-                error("Invalid Trino query, cannot use unpivot expression i.e. x.*")
-            }
-        }
-        return head concat list(select, "") { node.items }
     }
 
     /**
