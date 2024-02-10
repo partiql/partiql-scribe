@@ -17,6 +17,11 @@ import org.partiql.value.StringValue
  */
 public object RedshiftDialect : SqlDialect() {
 
+    // TODO ALAN prohibit struct wildcard in projection
+    override fun visitSelectProject(node: Select.Project, head: SqlBlock): SqlBlock {
+        return super.visitSelectProject(node, head)
+    }
+
     override fun visitSelectProjectItemExpression(node: Select.Project.Item.Expression, head: SqlBlock): SqlBlock {
         var h = head
         h = visitExprWrapped(node.expr, h)
