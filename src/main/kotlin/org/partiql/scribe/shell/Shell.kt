@@ -15,10 +15,6 @@
 package org.partiql.scribe.shell
 
 import com.amazon.ion.system.IonTextWriterBuilder
-import com.amazon.ionelement.api.field
-import com.amazon.ionelement.api.ionString
-import com.amazon.ionelement.api.ionStructOf
-import com.google.common.util.concurrent.Uninterruptibles
 import org.fusesource.jansi.AnsiConsole
 import org.jline.reader.EndOfFileException
 import org.jline.reader.History
@@ -33,13 +29,11 @@ import org.jline.utils.AttributedStyle.BOLD
 import org.jline.utils.InfoCmp
 import org.partiql.planner.PartiQLPlanner
 import org.partiql.plugins.local.LocalConnector
-import org.partiql.plugins.local.LocalPlugin
 import org.partiql.plugins.local.toIon
-import org.partiql.scribe.Scribe
 import org.partiql.scribe.ScribeCompiler
 import org.partiql.scribe.ScribeException
-import org.partiql.scribe.ScribeTarget
 import org.partiql.scribe.ScribeProblem
+import org.partiql.scribe.ScribeTarget
 import org.partiql.scribe.targets.partiql.PartiQLTarget
 import org.partiql.scribe.targets.redshift.RedshiftTarget
 import org.partiql.scribe.targets.trino.TrinoTarget
@@ -56,14 +50,10 @@ import java.io.PrintStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.annotation.concurrent.GuardedBy
 
-private val PROMPT_1 = AttributedStringBuilder()
-        .styled(BOLD.foreground(AttributedStyle.YELLOW), "scribe")
-        .append(" ▶ ")
-        .toAnsi()
+private val PROMPT_1 =
+    AttributedStringBuilder().styled(BOLD.foreground(AttributedStyle.YELLOW), "scribe").append(" ▶ ").toAnsi()
 private const val PROMPT_2 = "    | "
 private const val WELCOME_MSG = """    
 
@@ -117,19 +107,15 @@ internal class Shell(private val state: State) {
     private val metadata = LocalConnector.Metadata(state.root, listOf(split))
 
     // our frenemy
-    private val scribe = ScribeCompiler.builder()
-        .build()
+    private val scribe = ScribeCompiler.builder().build()
 
     fun start() {
         val interrupter = ThreadInterrupter()
         val exited = CountDownLatch(1)
-        Runtime.getRuntime().addShutdownHook(
-            Thread {
-                exiting.set(true)
-                interrupter.interrupt()
-                Uninterruptibles.awaitUninterruptibly(exited, 3000, TimeUnit.MILLISECONDS)
-            }
-        )
+        Runtime.getRuntime().addShutdownHook(Thread {
+            exiting.set(true)
+            interrupter.interrupt()
+        })
         try {
             AnsiConsole.systemInstall()
             run(exiting)
@@ -375,7 +361,6 @@ public fun PrintStream.warn(string: String) = this.println(ansi(string, WARN))
 private class ThreadInterrupter : Closeable {
     private val thread = Thread.currentThread()
 
-    @GuardedBy("this")
     private var processing = true
 
     @Synchronized

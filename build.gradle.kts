@@ -3,8 +3,8 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
     kotlin("jvm") version "1.6.20"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
     application
+    `maven-publish`
 }
 
 object Versions {
@@ -13,6 +13,7 @@ object Versions {
     const val kotlinLanguage = "1.6"
     const val kotlinApi = "1.6"
     const val jvmTarget = "1.8"
+
     // Deps
     const val guava = "31.1-jre"
     const val jansi = "2.4.0"
@@ -23,15 +24,13 @@ object Versions {
 }
 
 object Deps {
-    const val guava = "com.google.guava:guava:${Versions.guava}"
     const val jansi = "org.fusesource.jansi:jansi:${Versions.jansi}"
     const val jline = "org.jline:jline:${Versions.jline}"
     const val junitParams = "org.junit.jupiter:junit-jupiter-params:${Versions.junit5}"
     const val kotlinTest = "org.jetbrains.kotlin:kotlin-test:${Versions.kotlin}"
     const val kotlinTestJunit = "org.jetbrains.kotlin:kotlin-test-junit5:${Versions.kotlin}"
     const val picoCli = "info.picocli:picocli:${Versions.picoCli}"
-    const val partiqlLang = "org.partiql:partiql-lang-kotlin:${Versions.partiql}"
-
+    const val partiql = "org.partiql:partiql-lang-kotlin:${Versions.partiql}"
 }
 
 repositories {
@@ -39,8 +38,7 @@ repositories {
 }
 
 dependencies {
-    api(Deps.partiqlLang)
-    implementation(Deps.guava)
+    api(Deps.partiql)
     implementation(Deps.jansi)
     implementation(Deps.jline)
     implementation(Deps.picoCli)
@@ -90,14 +88,42 @@ tasks.register<GradleBuild>("install") {
     tasks = listOf("assembleDist", "distZip", "installDist")
 }
 
-tasks.shadowJar {
-    archiveBaseName.set("Scribe")
-    archiveClassifier.set("")
-    archiveVersion.set("HEAD")
-}
+publishing {
+    repositories {
+        maven {
+            url = uri(layout.buildDirectory.dir("import"))
+        }
+    }
+    publications {
+        create<MavenPublication>("main") {
 
-tasks.register<Copy>("release") {
-    dependsOn("shadowJar")
-    from(layout.buildDirectory.file("libs/Scribe-HEAD.jar"))
-    into(layout.projectDirectory)
+            artifactId = "scribe"
+            from(components["java"])
+
+            pom {
+                name = "PartiQL Scribe"
+                description = "The PartiQL Scribe query transpiler framework."
+                url = "https://partiql.org"
+
+                packaging = "jar"
+                groupId = "org.partiql"
+                version = "0.1"
+
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        name.set("PartiQL Team")
+                        email.set("partiql-dev@amazon.com")
+                        organization.set("PartiQL")
+                        organizationUrl.set("https://github.com/partiql")
+                    }
+                }
+            }
+        }
+    }
 }
