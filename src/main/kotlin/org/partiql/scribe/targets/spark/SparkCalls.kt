@@ -11,7 +11,6 @@ import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlTransform.Companion.id
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.stringValue
-import org.partiql.value.symbolValue
 
 class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
@@ -48,12 +47,18 @@ class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         return exprCall(convertTimeZone, listOf(targetTimezone, exprCall(currentTimestamp, emptyList())))
     }
 
-    @OptIn(PartiQLValueExperimental::class)
+    // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>
+    // docs: https://spark.apache.org/docs/latest/api/sql/index.html#transform
+    // This function is used for transpilation of `EXCLUDE` collection wildcards. It is similar to a functional map but
+    // uses some special syntax (same as Trino's `transform` function).
+    // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
+    // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
+    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexToSql
     private fun transform(sqlArgs: List<SqlArg>): Expr {
         val fnName = id("transform")
-        val prefixPath = sqlArgs.first().expr
-        val lambda = sqlArgs.last().expr
-        val collWildcardId = exprLit(symbolValue("coll_wildcard"))
-        return exprCall(fnName, listOf(prefixPath, collWildcardId, lambda))
+        val arrayExpr = sqlArgs[0].expr
+        val elementVar = sqlArgs[1].expr
+        val elementExpr = sqlArgs[2].expr
+        return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
     }
 }

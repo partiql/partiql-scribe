@@ -16,14 +16,12 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
-import org.partiql.scribe.sql.SqlTransform
 import org.partiql.types.BoolType
 import org.partiql.types.IntType
 import org.partiql.types.StaticType
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
 import org.partiql.value.stringValue
-import org.partiql.value.symbolValue
 
 @OptIn(PartiQLValueExperimental::class)
 public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
@@ -95,6 +93,11 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
         return exprCall(call, listOf(arg0, arg1))
     }
 
+    // Trino gives names to ROW fields by a call to `CAST`. See docs: https://trino.io/docs/current/language/types.html?highlight=row#row.
+    // Here, we model this ROW cast as a custom type cast with the row field names encoded in the custom type string.
+    // Note this `CAST(ROW(...))` call is only performed when the `ROW` has one field.
+    //
+    // CAST(ROW(<value>) AS <custom type with ROW field names>)
     private fun castrow(args: SqlArgs): Expr {
         val castValue = args.first().expr
         val rowCall = exprCall(
@@ -102,19 +105,23 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
             listOf(castValue)
         )
         val asType = ((((args.last().expr) as Expr.Lit).value) as StringValue).value!!
-        val customType = typeCustom(
-            name = asType
-        )
+        val customType = typeCustom(name = asType)
         return exprCast(rowCall, customType)
     }
 
-    @OptIn(PartiQLValueExperimental::class)
+    // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>
+    // docs: https://spark.apache.org/docs/latest/api/sql/#transform
+    // This function is used for transpilation of `EXCLUDE` collection wildcards. It is similar to a functional map but
+    // uses some special syntax (same as Spark's `transform` function).
+    // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
+    // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
+    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexToSql
     private fun transform(sqlArgs: List<SqlArg>): Expr {
-        val fnName = SqlTransform.id("transform")
-        val prefixPath = sqlArgs.first().expr
-        val lambda = sqlArgs.last().expr
-        val collWildcardId = exprLit(symbolValue("coll_wildcard"))
-        return exprCall(fnName, listOf(prefixPath, collWildcardId, lambda))
+        val fnName = id("transform")
+        val arrayExpr = sqlArgs[0].expr
+        val elementVar = sqlArgs[1].expr
+        val elementExpr = sqlArgs[2].expr
+        return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
     }
 
     private fun id(symbol: String) = identifierSymbol(symbol, Identifier.CaseSensitivity.INSENSITIVE)

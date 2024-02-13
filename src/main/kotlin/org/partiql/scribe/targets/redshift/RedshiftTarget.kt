@@ -68,19 +68,45 @@ public object RedshiftTarget : SqlTarget() {
     private class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
         private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
 
-        // TODO ALAN more docs + cleanup
-        // Redshift doesn't support struct wildcards. Convert any struct wildcards to an equivalent expanded form.
-        // Keep any relation references the same as before
+        /**
+         * Redshift does not support struct wildcards. Convert any struct wildcards to an equivalent expanded form.
+         * Keep any relation wildcards the same as before.
+         *
+         * For example, consider if tbl's schema is the following: tbl = { flds: Struct(a: int, b: boolean, c: string) }
+         * and a query with a relation wildcard
+         *      SELECT *
+         *      FROM tbl
+         * This query would be rewritten to something like
+         *      SELECT VALUE TUPLEUNION(varRef(0))
+         *      FROM tbl -- varRef(0)
+         * Since relation wildcards are supported, the output query would be something like:
+         *      SELECT tbl.*
+         *      FROM tbl
+         *
+         * When there's a struct wildcard, we have
+         *      SELECT tbl.flds.*
+         *      FROM tbl
+         * Which gets rewritten to:
+         *      SELECT VALUE TUPLEUNION(varRef(0).flds.*)
+         *      FROM tbl -- varRef(0)
+         * We expand the struct wildcard to something like the following:
+         *      SELECT VALUE TUPLEUNION({ 'a': varRef(0).flds.a }, { 'b': varRef(0).flds.b }, { 'c': varRef(0).flds.c })
+         *      FROM tbl -- varRef(0)
+         * With a final output of:
+         *      SELECT tbl.flds.a, tbl.flds.b, tbl.flds.c
+         *      FROM tbl
+         */
         @OptIn(PartiQLValueExperimental::class)
         override fun visitRexOpTupleUnion(node: Rex.Op.TupleUnion, ctx: Rel.Type?): PlanNode {
             val tupleUnion = super.visitRexOpTupleUnion(node, ctx) as Rex.Op.TupleUnion
-            val newArgs = tupleUnion.args.fold(emptyList<Rex>()) { agg, rex ->
+            val newArgsToTupleUnion = tupleUnion.args.fold(emptyList<Rex>()) { agg, rex ->
                 when (rex.op) {
-                    is Rex.Op.Path -> {
+                    is Rex.Op.Path -> { // Only case on struct wildcard paths
                         val prefixPath = rex.op
                         when (val st = rex.type) {
                             is StructType -> {
                                 val expandedFields = st.fields.map { field ->
+                                    // Create a new struct for each field
                                     Rex(
                                         type = StructType(
                                             fields = listOf(
@@ -124,7 +150,7 @@ public object RedshiftTarget : SqlTarget() {
                     else -> agg + rex
                 }
             }
-            return rexOpTupleUnion(newArgs)
+            return rexOpTupleUnion(newArgsToTupleUnion)
         }
 
         override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
@@ -164,8 +190,7 @@ public object RedshiftTarget : SqlTarget() {
                     ),
                     props = inputType.props
                 )
-                val varToNameMap = inputType.schema.mapIndexed { index, binding -> index to binding.name }.toMap()
-                val varToPath = VarToPathRewriter(newVar = 0, oldVarToName = varToNameMap)
+                val varToPath = VarToPathRewriter(newVar = 0, inputType)
                 val projectWithUpdatedVars = relOpProject(
                     input = rel(
                         type = newInputType,
@@ -175,7 +200,7 @@ public object RedshiftTarget : SqlTarget() {
                         varToPath.visitRex(projection, StaticType.ANY) as Rex
                     }
                 )
-                // Visit again to rewrite any struct wildcards
+                // Visit project again to rewrite any struct wildcards
                 visitRelOpProject(projectWithUpdatedVars, ctx)
             } else {
                 project
@@ -233,6 +258,28 @@ public object RedshiftTarget : SqlTarget() {
             return super.visitRel(node, node.type)
         }
 
+        /**
+         * `EXCLUDE` comes right before `PROJECT`, so here we recreate a [Rel.Op] with all exclude paths applied.
+         * We have full schema and since PlanTyper was run before this point, we know the schema after applying all
+         * exclude paths. From this schema with the excluded struct and collection fields, we recreate the input
+         * environment used by the final [Rel.Op.Project] through a combination of struct and collection constructors.
+         *
+         * For example, given input schema tbl = { flds: Struct(a: int, b: boolean, c: string) } and query
+         * SELECT t.*
+         * EXCLUDE t.flds.b
+         * FROM tbl AS t
+         *
+         * After the PlanTyper pass, we know the schema of `t` before the projection will be Struct(a: int, c: string)
+         * This rewrite will then output:
+         * SELECT $__EXCLUDE_ALIAS__.t.*    -- rewrite occurs in [Rel.Op.Project] after visiting [Rel.Op.Exclude]
+         * FROM (
+         *     SELECT { 't': { 'a': t.a, 'c': t.c } }
+         *     FROM tbl AS t
+         * ) AS $__EXCLUDE_ALIAS__
+         *
+         * The target dialect will then perform its own text rewrite depending on how struct and collections are
+         * represented.
+         */
         @OptIn(PartiQLValueExperimental::class)
         override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): PlanNode {
             // Replace `EXCLUDE` with a subquery
@@ -250,27 +297,25 @@ public object RedshiftTarget : SqlTarget() {
             val rexOpStruct = rexOpStruct(
                 bindings.mapIndexed { index, binding ->
                     val type = binding.type
-                    val newStructType =
-                        rexOpStructField(
-                            k = Rex(
-                                type = StaticType.STRING,
-                                op = rexOpLit(
-                                    value = stringValue(binding.name)
-                                )
-                            ),
-                            v = type.toRex(
-                                prefixPath = Rex(
-                                    type = binding.type,
-                                    op = rexOpVar(
-                                        index
-                                    )
+                    rexOpStructField(
+                        k = Rex(
+                            type = StaticType.STRING,
+                            op = rexOpLit(
+                                value = stringValue(binding.name)
+                            )
+                        ),
+                        v = type.toRex(
+                            prefixPath = Rex(
+                                type = type,
+                                op = rexOpVar(
+                                    index
                                 )
                             )
                         )
-                    newStructType
+                    )
                 }
             )
-            val tWrappingStructType = StructType(
+            val structWrappingBindings = StructType(
                 fields = listOf(
                     StructType.Field(
                         EXCLUDE_ALIAS,
@@ -284,10 +329,10 @@ public object RedshiftTarget : SqlTarget() {
             )
             return relOpScan(
                 rex = Rex(
-                    type = tWrappingStructType,
+                    type = structWrappingBindings,
                     op = rexOpSelect(
                         constructor = Rex(
-                            type = tWrappingStructType,
+                            type = structWrappingBindings,
                             op = rexOpVar(
                                 ref = 0
                             )
@@ -328,7 +373,6 @@ public object RedshiftTarget : SqlTarget() {
             }
         }
 
-        // Converts the Struct type to a Rex.Op.Struct
         @OptIn(PartiQLValueExperimental::class)
         private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
             val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->

@@ -13,7 +13,6 @@ import org.partiql.plan.relOpProject
 import org.partiql.plan.relOpScan
 import org.partiql.plan.relType
 import org.partiql.plan.rexOpCallStatic
-import org.partiql.plan.rexOpCollection
 import org.partiql.plan.rexOpLit
 import org.partiql.plan.rexOpPathSymbol
 import org.partiql.plan.rexOpSelect
@@ -24,14 +23,10 @@ import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.VarToPathRewriter
-import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
 import org.partiql.types.CollectionType
-import org.partiql.types.ListType
-import org.partiql.types.SexpType
-import org.partiql.types.SingleType
 import org.partiql.types.StaticType
 import org.partiql.types.StringType
 import org.partiql.types.StructType
@@ -59,6 +54,7 @@ object SparkTarget : SqlTarget() {
 
     private class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
         private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
+
         override fun visitPartiQLPlan(node: PartiQLPlan, ctx: Rel.Type?): PlanNode {
             if ((node.statement !is Statement.Query) || (node.statement as Statement.Query).root.op !is Rex.Op.Select) {
                 error("Spark does not support top level expression")
@@ -124,8 +120,7 @@ object SparkTarget : SqlTarget() {
                     ),
                     props = inputType.props
                 )
-                val varToNameMap = inputType.schema.mapIndexed { index, binding -> index to binding.name }.toMap()
-                val varToPath = VarToPathRewriter(newVar = 0, oldVarToName = varToNameMap)
+                val varToPath = VarToPathRewriter(newVar = 0, inputType)
                 relOpProject(
                     input = rel(
                         type = newInputType,
@@ -140,6 +135,28 @@ object SparkTarget : SqlTarget() {
             }
         }
 
+        /**
+         * `EXCLUDE` comes right before `PROJECT`, so here we recreate a [Rel.Op] with all exclude paths applied.
+         * We have full schema and since PlanTyper was run before this point, we know the schema after applying all
+         * exclude paths. From this schema with the excluded struct and collection fields, we recreate the input
+         * environment used by the final [Rel.Op.Project] through a combination of struct and collection constructors.
+         *
+         * For example, given input schema tbl = { flds: Struct(a: int, b: boolean, c: string) } and query
+         * SELECT t.*
+         * EXCLUDE t.flds.b
+         * FROM tbl AS t
+         *
+         * After the PlanTyper pass, we know the schema of `t` before the projection will be Struct(a: int, c: string)
+         * This rewrite will then output:
+         * SELECT $__EXCLUDE_ALIAS__.t.*    -- rewrite occurs in [Rel.Op.Project] after visiting [Rel.Op.Exclude]
+         * FROM (
+         *     SELECT { 't': { 'a': t.a, 'c': t.c } }
+         *     FROM tbl AS t
+         * ) AS $__EXCLUDE_ALIAS__
+         *
+         * The target dialect will then perform its own text rewrite depending on how struct and collections are
+         * represented.
+         */
         @OptIn(PartiQLValueExperimental::class)
         override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): PlanNode {
             // Replace `EXCLUDE` with a subquery
@@ -157,27 +174,25 @@ object SparkTarget : SqlTarget() {
             val rexOpStruct = rexOpStruct(
                 bindings.mapIndexed { index, binding ->
                     val type = binding.type
-                    val newStructType =
-                        rexOpStructField(
-                            k = Rex(
-                                type = StaticType.STRING,
-                                op = rexOpLit(
-                                    value = stringValue(binding.name)
-                                )
-                            ),
-                            v = type.toRex(
-                                prefixPath = Rex(
-                                    type = binding.type,
-                                    op = rexOpVar(
-                                        index
-                                    )
+                    rexOpStructField(
+                        k = Rex(
+                            type = StaticType.STRING,
+                            op = rexOpLit(
+                                value = stringValue(binding.name)
+                            )
+                        ),
+                        v = type.toRex(
+                            prefixPath = Rex(
+                                type = type,
+                                op = rexOpVar(
+                                    index
                                 )
                             )
                         )
-                    newStructType
+                    )
                 }
             )
-            val tWrappingStructType = StructType(
+            val structWrappingBindings = StructType(
                 fields = listOf(
                     StructType.Field(
                         EXCLUDE_ALIAS,
@@ -191,10 +206,10 @@ object SparkTarget : SqlTarget() {
             )
             return relOpScan(
                 rex = Rex(
-                    type = tWrappingStructType,
+                    type = structWrappingBindings,
                     op = rexOpSelect(
                         constructor = Rex(
-                            type = tWrappingStructType,
+                            type = structWrappingBindings,
                             op = rexOpVar(
                                 ref = 0
                             )
@@ -238,13 +253,15 @@ object SparkTarget : SqlTarget() {
             }
         }
 
+        // https://spark.apache.org/docs/latest/api/sql/index.html#transform
         @OptIn(PartiQLValueExperimental::class)
         private val transform_fn_sig = FunctionSignature.Scalar(
             name = "transform",
             returns = PartiQLValueType.ANY,
             parameters = listOf(
-                FunctionParameter("prefix_path", PartiQLValueType.ANY),
-                FunctionParameter("value", PartiQLValueType.ANY)
+                FunctionParameter("array_expr", PartiQLValueType.ANY),
+                FunctionParameter("element_var", PartiQLValueType.ANY),
+                FunctionParameter("element_expr", PartiQLValueType.ANY)
             ),
             isNullable = false,
             isNullCall = true
@@ -253,24 +270,24 @@ object SparkTarget : SqlTarget() {
         @OptIn(PartiQLValueExperimental::class)
         private fun CollectionType.toRexCallTransform(prefixPath: Rex): Rex.Op.Call.Static {
             val elementType = this.elementType
-            val newPath = Rex(
+            val elementVar = Rex(
                 type = StaticType.ANY,
                 op = rexOpLit(
-                    value = symbolValue("coll_wildcard")    // TODO ALAN make unique?
+                    value = symbolValue("___coll_wildcard___")
                 )
             )
             return rexOpCallStatic(
                 fn = Fn(transform_fn_sig),
                 args = listOf(
                     prefixPath,
+                    elementVar,
                     elementType.toRex(
-                        newPath
+                        elementVar
                     )
                 )
             )
         }
 
-        // Converts the Struct type to a Rex.Op.Struct
         @OptIn(PartiQLValueExperimental::class)
         private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
             val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->

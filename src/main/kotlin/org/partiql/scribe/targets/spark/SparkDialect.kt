@@ -64,6 +64,8 @@ object SparkDialect : SqlDialect() {
         return head concat r(".${node.symbol.sql()}")
     }
 
+    // Spark's equivalent for PartiQL's STRUCT type is struct type. Can use the `STRUCT` function to create Spark
+    // structs: https://spark.apache.org/docs/latest/api/sql/#struct. Names are provided by using an `AS` alias.
     @OptIn(PartiQLValueExperimental::class)
     override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
         val fieldsAsSparkStructs = node.fields.map { field ->
@@ -77,13 +79,14 @@ object SparkDialect : SqlDialect() {
 
     override fun visitExprCall(node: Expr.Call, head: SqlBlock): SqlBlock {
         return when {
-            node.function is Identifier.Symbol && (node.function as Identifier.Symbol).symbol == "transform"-> {
-                val array = visitExpr(node.args[0], SqlBlock.Nil)
-                val varName = visitExpr(node.args[1], SqlBlock.Nil)
-                val lambda = visitExpr(node.args[2], SqlBlock.Nil)
+            node.function is Identifier.Symbol && (node.function as Identifier.Symbol).symbol == "transform" -> {
+                // Spark's transform function uses `->` to separate between the element variable and the element expr.
+                val arrayExpr = visitExpr(node.args[0], SqlBlock.Nil)
+                val elementVar = visitExpr(node.args[1], SqlBlock.Nil)
+                val elementExpr = visitExpr(node.args[2], SqlBlock.Nil)
                 var h = head
                 h = visitIdentifier(node.function, h)
-                h = h concat "($array, $varName -> $lambda)"
+                h = h concat "($arrayExpr, $elementVar -> $elementExpr)"
                 h
             }
             else -> super.visitExprCall(node, head)

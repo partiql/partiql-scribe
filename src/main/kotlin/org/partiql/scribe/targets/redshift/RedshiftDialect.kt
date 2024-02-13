@@ -17,11 +17,6 @@ import org.partiql.value.StringValue
  */
 public object RedshiftDialect : SqlDialect() {
 
-    // TODO ALAN prohibit struct wildcard in projection
-    override fun visitSelectProject(node: Select.Project, head: SqlBlock): SqlBlock {
-        return super.visitSelectProject(node, head)
-    }
-
     override fun visitSelectProjectItemExpression(node: Select.Project.Item.Expression, head: SqlBlock): SqlBlock {
         var h = head
         h = visitExprWrapped(node.expr, h)
@@ -50,6 +45,8 @@ public object RedshiftDialect : SqlDialect() {
         }
     }
 
+    // Redshift's equivalent for PartiQL's STRUCT type is SUPER OBJECT. Can use the `OBJECT` function to create SUPER
+    // OBJECTs: https://docs.aws.amazon.com/redshift/latest/dg/r_object_function.html
     override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
         return head concat list("OBJECT(", ")") { node.fields }
     }

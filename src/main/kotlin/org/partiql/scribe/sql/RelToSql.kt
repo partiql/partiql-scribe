@@ -23,7 +23,6 @@ import org.partiql.ast.selectProjectItemExpression
 import org.partiql.plan.Agg
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
-import org.partiql.plan.Rex
 import org.partiql.plan.visitor.PlanBaseVisitor
 import org.partiql.types.StaticType
 
@@ -124,10 +123,9 @@ open class RelToSql(
         return sfw
     }
 
-    // TODO ALAN add PartiQL transpilation
     override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): ExprSfwBuilder {
         val sfw = visitRel(node.input, ctx)
-        // validate filter type
+        // validate exclude type
         val type = ctx!!
         // translate to AST
         val rexToSql = RexToSql(transform, Locals(type.schema))
@@ -138,10 +136,18 @@ open class RelToSql(
                     steps = item.steps.map { step ->
                         when (step) {
                             is Rel.Op.Exclude.Step.CollWildcard -> excludeStepCollWildcard()
-                            is Rel.Op.Exclude.Step.StructField -> excludeStepStructField(
-                                // TODO ALAN case on case-sensitivity
-                                id(step.symbol.symbol)
-                            )
+                            is Rel.Op.Exclude.Step.StructField -> {
+                                val case = when (step.symbol.caseSensitivity) {
+                                    org.partiql.plan.Identifier.CaseSensitivity.SENSITIVE -> Identifier.CaseSensitivity.SENSITIVE
+                                    org.partiql.plan.Identifier.CaseSensitivity.INSENSITIVE -> Identifier.CaseSensitivity.INSENSITIVE
+                                }
+                                excludeStepStructField(
+                                    Identifier.Symbol(
+                                        symbol = step.symbol.symbol,
+                                        caseSensitivity = case
+                                    )
+                                )
+                            }
                             is Rel.Op.Exclude.Step.CollIndex -> excludeStepCollIndex(step.index)
                             is Rel.Op.Exclude.Step.StructWildcard -> excludeStepStructWildcard()
                         }

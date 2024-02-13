@@ -22,10 +22,10 @@ SELECT `$__EXCLUDE_ALIAS__`.`t`.* FROM (SELECT STRUCT(STRUCT(STRUCT(`t`.`flds`.`
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 --#[exclude-07]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.* FROM (SELECT STRUCT(`transform`(`t`.`a`, coll_wildcard -> STRUCT(coll_wildcard.`field_y` AS `field_y`)) AS `a`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT `$__EXCLUDE_ALIAS__`.`t`.* FROM (SELECT STRUCT(`transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_y` AS `field_y`)) AS `a`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`) AS `$__EXCLUDE_ALIAS__`;
 
 --#[exclude-08]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.* FROM (SELECT STRUCT(`transform`(`t`.`a`, coll_wildcard -> STRUCT(coll_wildcard.`field_x` AS `field_x`)) AS `a`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT `$__EXCLUDE_ALIAS__`.`t`.* FROM (SELECT STRUCT(`transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_x` AS `field_x`)) AS `a`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`) AS `$__EXCLUDE_ALIAS__`;
 
 --#[exclude-09]
 -- EXCLUDE with JOIN and WHERE clause

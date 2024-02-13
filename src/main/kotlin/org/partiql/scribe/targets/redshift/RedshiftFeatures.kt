@@ -23,6 +23,7 @@ public object RedshiftFeatures : SqlFeatures.Defensive() {
         Rel.Op.Exclude::class.java,
         Rel.Op.Exclude.Item::class.java,
         Rel.Op.Exclude.Step.StructField::class.java,
+        // Do not support Rel.Op.Exclude.Step.CollWildcard -- currently, no efficient way to reconstruct SUPER ARRAYs
         //
         // Rex
         //

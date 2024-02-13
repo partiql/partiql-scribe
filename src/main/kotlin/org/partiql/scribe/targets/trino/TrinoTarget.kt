@@ -27,13 +27,19 @@ import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
+import org.partiql.types.BoolType
 import org.partiql.types.CollectionType
+import org.partiql.types.DateType
+import org.partiql.types.DecimalType
+import org.partiql.types.FloatType
 import org.partiql.types.IntType
 import org.partiql.types.ListType
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType
 import org.partiql.types.StringType
 import org.partiql.types.StructType
+import org.partiql.types.TimeType
+import org.partiql.types.TimestampType
 import org.partiql.types.TupleConstraint
 import org.partiql.types.function.FunctionParameter
 import org.partiql.types.function.FunctionSignature
@@ -115,8 +121,7 @@ public object TrinoTarget : SqlTarget() {
                     ),
                     props = inputType.props
                 )
-                val varToNameMap = inputType.schema.mapIndexed { index, binding -> index to binding.name }.toMap()
-                val varToPath = VarToPathRewriter(newVar = 0, oldVarToName = varToNameMap)
+                val varToPath = VarToPathRewriter(newVar = 0, inputType)
                 relOpProject(
                     input = rel(
                         type = newInputType,
@@ -217,6 +222,28 @@ public object TrinoTarget : SqlTarget() {
             return super.visitRel(node, node.type)
         }
 
+        /**
+         * `EXCLUDE` comes right before `PROJECT`, so here we recreate a [Rel.Op] with all exclude paths applied.
+         * We have full schema and since PlanTyper was run before this point, we know the schema after applying all
+         * exclude paths. From this schema with the excluded struct and collection fields, we recreate the input
+         * environment used by the final [Rel.Op.Project] through a combination of struct and collection constructors.
+         *
+         * For example, given input schema tbl = { flds: Struct(a: int, b: boolean, c: string) } and query
+         * SELECT t.*
+         * EXCLUDE t.flds.b
+         * FROM tbl AS t
+         *
+         * After the PlanTyper pass, we know the schema of `t` before the projection will be Struct(a: int, c: string)
+         * This rewrite will then output:
+         * SELECT $__EXCLUDE_ALIAS__.t.*    -- rewrite occurs in [Rel.Op.Project] after visiting [Rel.Op.Exclude]
+         * FROM (
+         *     SELECT { 't': { 'a': t.a, 'c': t.c } }
+         *     FROM tbl AS t
+         * ) AS $__EXCLUDE_ALIAS__
+         *
+         * The target dialect will then perform its own text rewrite depending on how struct and collections are
+         * represented.
+         */
         @OptIn(PartiQLValueExperimental::class)
         override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): PlanNode {
             // Replace `EXCLUDE` with a subquery
@@ -234,27 +261,25 @@ public object TrinoTarget : SqlTarget() {
             val rexOpStruct = rexOpStruct(
                 bindings.mapIndexed { index, binding ->
                     val type = binding.type
-                    val newStructType =
-                        rexOpStructField(
-                            k = Rex(
-                                type = StaticType.STRING,
-                                op = rexOpLit(
-                                    value = stringValue(binding.name)
-                                )
-                            ),
-                            v = type.toRex(
-                                prefixPath = Rex(
-                                    type = binding.type,
-                                    op = rexOpVar(
-                                        index
-                                    )
+                    rexOpStructField(
+                        k = Rex(
+                            type = StaticType.STRING,
+                            op = rexOpLit(
+                                value = stringValue(binding.name)
+                            )
+                        ),
+                        v = type.toRex(
+                            prefixPath = Rex(
+                                type = type,
+                                op = rexOpVar(
+                                    index
                                 )
                             )
                         )
-                    newStructType
+                    )
                 }
             )
-            val tWrappingStructType = StructType(
+            val structWrappingBindings = StructType(
                 fields = listOf(
                     StructType.Field(
                         EXCLUDE_ALIAS,
@@ -268,10 +293,10 @@ public object TrinoTarget : SqlTarget() {
             )
             return relOpScan(
                 rex = Rex(
-                    type = tWrappingStructType,
+                    type = structWrappingBindings,
                     op = rexOpSelect(
                         constructor = Rex(
-                            type = tWrappingStructType,
+                            type = structWrappingBindings,
                             op = rexOpVar(
                                 ref = 0
                             )
@@ -306,22 +331,23 @@ public object TrinoTarget : SqlTarget() {
             name = "cast_row",
             returns = PartiQLValueType.ANY,
             parameters = listOf(
-                FunctionParameter("value", PartiQLValueType.ANY)
+                FunctionParameter("cast_value", PartiQLValueType.ANY),
+                FunctionParameter("as_type", PartiQLValueType.ANY)
             ),
             isNullable = false,
             isNullCall = true
         )
 
         // Due to subquery coercion we need to make the `ROW` construction explicit and not rely on subquery coercion
+        // when the number of fields in the struct is 1
         @OptIn(PartiQLValueExperimental::class)
         private fun StructType.toRexCastRow(prefixPath: Rex): Rex.Op.Call.Static {
-            assert(this.fields.size  == 1)
+            assert(this.fields.size == 1)
             val field = this.fields.first()
             val newPath = rexOpPathSymbol(
                 prefixPath,
                 field.key
             )
-            // TODO ALAN convert to be Trino type
             val newK = Rex(
                 type = StaticType.STRING,
                 op = rexOpLit(stringValue(this.toTrinoString()))
@@ -347,6 +373,7 @@ public object TrinoTarget : SqlTarget() {
                     Rex(
                         type = this,
                         op = when (this.fields.size) {
+                            0 -> kotlin.error("Currently Trino does not allow empty ROWs. Consider `EXCLUDE` on the outer struct")
                             1 -> this.toRexCastRow(prefixPath)
                             else -> this.toRexStruct(prefixPath)
                         },
@@ -360,13 +387,15 @@ public object TrinoTarget : SqlTarget() {
             }
         }
 
+        // https://trino.io/docs/current/functions/array.html#transform
         @OptIn(PartiQLValueExperimental::class)
         private val transform_fn_sig = FunctionSignature.Scalar(
             name = "transform",
             returns = PartiQLValueType.ANY,
             parameters = listOf(
-                FunctionParameter("prefix_path", PartiQLValueType.ANY),
-                FunctionParameter("value", PartiQLValueType.ANY)
+                FunctionParameter("array_expr", PartiQLValueType.ANY),
+                FunctionParameter("element_var", PartiQLValueType.ANY),
+                FunctionParameter("element_expr", PartiQLValueType.ANY)
             ),
             isNullable = false,
             isNullCall = true
@@ -375,18 +404,19 @@ public object TrinoTarget : SqlTarget() {
         @OptIn(PartiQLValueExperimental::class)
         private fun CollectionType.toRexCallTransform(prefixPath: Rex): Rex.Op.Call.Static {
             val elementType = this.elementType
-            val newPath = Rex(
+            val elementVar = Rex(
                 type = StaticType.ANY,
                 op = rexOpLit(
-                    value = symbolValue("coll_wildcard")    // TODO ALAN make unique?
+                    value = symbolValue("___coll_wildcard___")
                 )
             )
             return rexOpCallStatic(
                 fn = Fn(transform_fn_sig),
                 args = listOf(
                     prefixPath,
+                    elementVar,
                     elementType.toRex(
-                        newPath
+                        elementVar
                     )
                 )
             )
@@ -408,13 +438,19 @@ public object TrinoTarget : SqlTarget() {
                     }
                     head + fieldsAsString + ")"
                 }
-                else -> TODO("other trino string conversions")
+                is BoolType -> "BOOLEAN"
+                is DecimalType -> "DECIMAL"
+                is TimestampType -> "TIMESTAMP"
+                is DateType -> "DATE"
+                is TimeType -> "TIME"
+                is FloatType -> "DOUBLE"
+                else -> TODO("Not yet able to convert StaticType $this to Trino")
             }
         }
 
-        // Converts the Struct type to a Rex.Op.Struct
         @OptIn(PartiQLValueExperimental::class)
         private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
+            assert(this.fields.size > 1)
             val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->
                 val newPath = rexOpPathSymbol(
                     prefixPath,

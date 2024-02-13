@@ -14,7 +14,6 @@ import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
 
 public object TrinoDialect : SqlDialect() {
-
     override fun visitExprSessionAttribute(node: Expr.SessionAttribute, head: SqlBlock): SqlBlock {
         return SqlBlock.Link(head, SqlBlock.Text(node.attribute.name.lowercase()))
     }
@@ -41,7 +40,7 @@ public object TrinoDialect : SqlDialect() {
     }
 
     /**
-     * Trino's equivalent for struct is the ROW type. It can be created either by
+     * Trino's equivalent for PartiQL's struct is the ROW type. It can be created either by
      * 1. a SELECT projection
      *  e.g. Trino: (SELECT 1 AS x, 2 AS y) == PartiQL: { 'x': 1, 'y': 2}
      * 2. creating a ROW and casting the ROW with the column names
@@ -50,16 +49,18 @@ public object TrinoDialect : SqlDialect() {
      * Option 1 is often the easiest way to create a ROW but due to subquery scalar coercion, if only a single ROW is
      * projected, the output value will be the single value not in a ROW.
      *  e.g. Trino: (SELECT 1 AS x) => 1
-     * [TrinoTarget] should have caught any instance of option 1 before reaching this stage.
+     * We encode this as a `SELECT` list with field names defined using an `AS` alias.
      *
-     * Option 2 requires additional type information for the ROW CAST. In [TrinoTarget], the
+     * Option 2 requires additional type information for the CAST ROW call. In [TrinoTarget], the
      * `CAST(ROW(...) AS ROW(...))` is encoded as a scalar fn call, `cast_row` with the type information
      * (i.e. everything following the `AS` in the `CAST`) encoded as a string literal.
+     * [TrinoTarget] should have already converted these singleton ROWs to CAST(ROW(...) AS ...) calls.
      */
     @OptIn(PartiQLValueExperimental::class)
     override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
-        // TODO figure out how to output empty Trino ROW
-        assert(node.fields.size != 1)
+        // node.fields.size == 0 is currently an error since Trino does not currently allow empty ROWs
+        // node.fields.size == 1 already covered by CAST(ROW(...) AS ...) calls
+        assert(node.fields.size > 1)
         val fieldsAsItems = node.fields.map { field ->
             selectProjectItemExpression(
                 expr = field.value,
@@ -73,13 +74,14 @@ public object TrinoDialect : SqlDialect() {
 
     override fun visitExprCall(node: Expr.Call, head: SqlBlock): SqlBlock {
         return when {
+            // Trino's transform function uses `->` to separate between the element variable and the element expr.
             node.function is Identifier.Symbol && (node.function as Identifier.Symbol).symbol == "transform"-> {
-                val array = visitExpr(node.args[0], SqlBlock.Nil)
-                val varName = visitExpr(node.args[1], SqlBlock.Nil)
-                val lambda = visitExpr(node.args[2], SqlBlock.Nil)
+                val arrayExpr = visitExpr(node.args[0], SqlBlock.Nil)
+                val elementVar = visitExpr(node.args[1], SqlBlock.Nil)
+                val elementExpr = visitExpr(node.args[2], SqlBlock.Nil)
                 var h = head
                 h = visitIdentifier(node.function, h)
-                h = h concat "($array, $varName -> $lambda)"
+                h = h concat "($arrayExpr, $elementVar -> $elementExpr)"
                 h
             }
             else -> super.visitExprCall(node, head)

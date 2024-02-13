@@ -19,8 +19,8 @@ SELECT * EXCLUDE t.flds.b, t.flds.c.field_x FROM EXCLUDE_T AS t;
 SELECT * EXCLUDE t.flds.c.field_y FROM EXCLUDE_T AS t;
 
 --#[exclude-06]
--- Exclude all the fields of `t.flds.c`; In some targets, creating an empty structure seems tricky or not possible? (e.g. Trino, Spark).
--- Could consider disallowing empty structs?
+-- Exclude all the fields of `t.flds.c`; In some targets, creating an empty structure seems impossible? (e.g. Trino).
+-- For this case, could consider excluding the outer struct itself (e.g. `EXCLUDE t.flds.c`).
 SELECT * EXCLUDE t.flds.c.field_x, t.flds.c.field_y FROM EXCLUDE_T AS t;
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
