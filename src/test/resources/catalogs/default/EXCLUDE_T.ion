@@ -18,7 +18,7 @@
                 fields: [
                   {
                     name: "field_x",
-                    type: "int",
+                    type: "int32",
                   },
                   {
                     name: "field_y",
@@ -35,7 +35,7 @@
                 fields: [
                   {
                     name: "field_x",
-                    type: "int",
+                    type: "int32",
                   },
                   {
                     name: "field_y",
@@ -52,7 +52,7 @@
                 fields: [
                   {
                     name: "field_x",
-                    type: "int",
+                    type: "int32",
                   },
                   {
                     name: "field_y",

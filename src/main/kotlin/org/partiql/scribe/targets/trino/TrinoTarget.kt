@@ -34,6 +34,8 @@ import org.partiql.types.DecimalType
 import org.partiql.types.FloatType
 import org.partiql.types.IntType
 import org.partiql.types.ListType
+import org.partiql.types.NullType
+import org.partiql.types.NumberConstraint
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType
 import org.partiql.types.StringType
@@ -48,6 +50,7 @@ import org.partiql.value.Int32Value
 import org.partiql.value.Int64Value
 import org.partiql.value.Int8Value
 import org.partiql.value.IntValue
+import org.partiql.value.PartiQLTimestampExperimental
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.PartiQLValueType
 import org.partiql.value.int32Value
@@ -422,10 +425,33 @@ public object TrinoTarget : SqlTarget() {
             )
         }
 
+        @OptIn(PartiQLTimestampExperimental::class)
         private fun StaticType.toTrinoString(): String {
             return when (this) {
-                is IntType -> "INTEGER"
-                is StringType -> "VARCHAR"
+                is IntType -> {
+                    when (rangeConstraint) {
+                        // PartiQL IntType does not support 8-bit INT (Trino's TINYINT)
+                        IntType.IntRangeConstraint.SHORT -> "SMALLINT"
+                        IntType.IntRangeConstraint.INT4 -> "INTEGER"
+                        IntType.IntRangeConstraint.LONG -> "BIGINT"
+                        IntType.IntRangeConstraint.UNCONSTRAINED -> kotlin.error("Unconstrained int not supported in Trino")
+                    }
+                }
+                is StringType -> {
+                    when (val constraint = lengthConstraint) {
+                        StringType.StringLengthConstraint.Unconstrained -> "VARCHAR"
+                        is StringType.StringLengthConstraint.Constrained -> {
+                            when (val numConstraint = constraint.length) {
+                                is NumberConstraint.Equals -> {
+                                    "CHAR($numConstraint)"
+                                }
+                                is NumberConstraint.UpTo -> {
+                                    "VARCHAR($numConstraint)"
+                                }
+                            }
+                        }
+                    }
+                }
                 is StructType -> {
                     val head = "ROW("
                     val fieldsAsString = this.fields.foldIndexed("") { index, acc, field ->
@@ -439,12 +465,47 @@ public object TrinoTarget : SqlTarget() {
                     head + fieldsAsString + ")"
                 }
                 is BoolType -> "BOOLEAN"
-                is DecimalType -> "DECIMAL"
-                is TimestampType -> "TIMESTAMP"
+                is DecimalType -> {
+                    when (val constraint = precisionScaleConstraint) {
+                        DecimalType.PrecisionScaleConstraint.Unconstrained -> kotlin.error("Unconstrained decimal not supported in Trino")
+                        is DecimalType.PrecisionScaleConstraint.Constrained -> {
+                            "DECIMAL(${constraint.precision}, ${constraint.scale})"
+                        }
+                    }
+                }
+                is TimestampType -> {
+                    when (precision) {
+                        null -> "TIMESTAMP"
+                        else -> {
+                            if (precision!! > 12) {
+                                kotlin.error("Precision > 12 is not supported in Trino")
+                            } else {
+                                "TIMESTAMP ($precision)"
+                            }
+                        }
+                    }
+                }
                 is DateType -> "DATE"
-                is TimeType -> "TIME"
-                is FloatType -> "DOUBLE"
-                else -> TODO("Not yet able to convert StaticType $this to Trino")
+                is TimeType -> {
+                    when (precision) {
+                        null -> "TIME"
+                        else -> {
+                            if (precision!! > 12) {
+                                kotlin.error("Precision > 12 is not supported in Trino")
+                            } else {
+                                "TIME ($precision)"
+                            }
+                        }
+                    }
+                }
+                is FloatType -> "DOUBLE"    // PartiQL FloatType does not have a constraint to differentiate between 32 and 64-bit floats. For now, mapping to DOUBLE.
+                is NullType -> "NULL"
+                is ListType -> {
+                    val head = "ARRAY<"
+                    val elementType = elementType.toTrinoString()
+                    head + elementType + ">"
+                }
+                else -> TODO("Not able to convert StaticType $this to Trino")
             }
         }
 

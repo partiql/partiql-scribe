@@ -41,3 +41,65 @@ SELECT * EXCLUDE t1.flds.a, t2.flds.b, t3.flds.c FROM EXCLUDE_T AS t1, EXCLUDE_T
 --#[exclude-11]
 -- EXCLUDE with select projection list and multiple JOINs
 SELECT t1.flds, t2.flds, t3.flds EXCLUDE t1.flds.a, t2.flds.b, t3.flds.c FROM EXCLUDE_T AS t1, EXCLUDE_T AS t2, EXCLUDE_T AS t3 WHERE t1.foo = t2.foo AND t2.foo = t3.foo;
+
+-- EXCLUDE with different types
+
+-- bool
+--#[exclude-12]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_BOOL AS t;
+
+-- int16
+--#[exclude-13]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_INT16 AS t;
+
+-- int32
+--#[exclude-14]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_INT32 AS t;
+
+-- int64
+--#[exclude-15]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_INT64 AS t;
+
+-- int (unconstrained)
+--#[exclude-16]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_INT AS t;
+
+-- decimal
+--#[exclude-17]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_DECIMAL AS t;
+
+-- float32
+--#[exclude-18]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_FLOAT32 AS t;
+
+-- float64
+--#[exclude-19]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_FLOAT64 AS t;
+
+-- string
+--#[exclude-20]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRING AS t;
+
+-- date
+--#[exclude-21]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_DATE AS t;
+
+-- time
+--#[exclude-22]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_TIME AS t;
+
+-- timestamp
+--#[exclude-23]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_TIMESTAMP AS t;
+
+-- null
+--#[exclude-24]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_NULL AS t;
+
+-- struct
+--#[exclude-25]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRUCT AS t;
+
+-- list
+--#[exclude-26]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_LIST AS t;
