@@ -57,10 +57,7 @@ class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
     // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexToSql
     private fun transform(sqlArgs: List<SqlArg>): Expr {
-        val fnName = identifierSymbol(
-            symbol = "transform",
-            caseSensitivity = Identifier.CaseSensitivity.SENSITIVE,
-        )
+        val fnName = id("transform")
         val arrayExpr = sqlArgs[0].expr
         val elementVar = sqlArgs[1].expr
         val elementExpr = sqlArgs[2].expr
