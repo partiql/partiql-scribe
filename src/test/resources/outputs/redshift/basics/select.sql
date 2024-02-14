@@ -17,16 +17,16 @@ SELECT "t1".*, "t2".* FROM "default"."T" AS "t1" INNER JOIN "default"."T" AS "t2
 
 -- Redshift doesn't support struct wildcard (i.e. <SUPER OBJECT>.*). Rewriting to include every struct field.
 --#[select-05]
-SELECT "T"."d".e AS "e" FROM "default"."T" AS "T";
+SELECT "T"."d"."e" AS "e" FROM "default"."T" AS "T";
 
 --#[select-06]
-SELECT "T" AS "t", "T"."d".e AS "e" FROM "default"."T" AS "T";
+SELECT "T" AS "t", "T"."d"."e" AS "e" FROM "default"."T" AS "T";
 
 --#[select-07]
-SELECT "T"."d".e AS "e", "T"."d".e AS "e" FROM "default"."T" AS "T";
+SELECT "T"."d"."e" AS "e", "T"."d"."e" AS "e" FROM "default"."T" AS "T";
 
 --#[select-08]
-SELECT "T"."d".e AS "e" FROM "default"."T" AS "T";
+SELECT "T"."d"."e" AS "e" FROM "default"."T" AS "T";
 
 --#[select-09]
 SELECT "T".* FROM "default"."T" AS "T";

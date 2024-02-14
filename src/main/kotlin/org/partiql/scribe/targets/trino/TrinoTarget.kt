@@ -14,7 +14,7 @@ import org.partiql.plan.rex
 import org.partiql.plan.rexOpCallStatic
 import org.partiql.plan.rexOpLit
 import org.partiql.plan.rexOpPathIndex
-import org.partiql.plan.rexOpPathSymbol
+import org.partiql.plan.rexOpPathKey
 import org.partiql.plan.rexOpSelect
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
@@ -347,9 +347,9 @@ public object TrinoTarget : SqlTarget() {
         private fun StructType.toRexCastRow(prefixPath: Rex): Rex.Op.Call.Static {
             assert(this.fields.size == 1)
             val field = this.fields.first()
-            val newPath = rexOpPathSymbol(
+            val newPath = rexOpPathKey(
                 prefixPath,
-                field.key
+                rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
             )
             val newK = Rex(
                 type = StaticType.STRING,
@@ -513,9 +513,9 @@ public object TrinoTarget : SqlTarget() {
         private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
             assert(this.fields.size > 1)
             val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->
-                val newPath = rexOpPathSymbol(
+                val newPath = rexOpPathKey(
                     prefixPath,
-                    field.key
+                    rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
                 )
                 val newV = field.value.toRex(
                     prefixPath = Rex(

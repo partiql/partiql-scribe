@@ -10,8 +10,9 @@ import org.partiql.plan.relBinding
 import org.partiql.plan.relOpProject
 import org.partiql.plan.relOpScan
 import org.partiql.plan.relType
+import org.partiql.plan.rex
 import org.partiql.plan.rexOpLit
-import org.partiql.plan.rexOpPathSymbol
+import org.partiql.plan.rexOpPathKey
 import org.partiql.plan.rexOpSelect
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
@@ -87,7 +88,7 @@ public object RedshiftTarget : SqlTarget() {
          *      SELECT tbl.flds.*
          *      FROM tbl
          * Which gets rewritten to:
-         *      SELECT VALUE TUPLEUNION(varRef(0).flds.*)
+         *      SELECT VALUE TUPLEUNION(varRef(0).flds)
          *      FROM tbl -- varRef(0)
          * We expand the struct wildcard to something like the following:
          *      SELECT VALUE TUPLEUNION({ 'a': varRef(0).flds.a }, { 'b': varRef(0).flds.b }, { 'c': varRef(0).flds.c })
@@ -96,61 +97,60 @@ public object RedshiftTarget : SqlTarget() {
          *      SELECT tbl.flds.a, tbl.flds.b, tbl.flds.c
          *      FROM tbl
          */
-        @OptIn(PartiQLValueExperimental::class)
         override fun visitRexOpTupleUnion(node: Rex.Op.TupleUnion, ctx: Rel.Type?): PlanNode {
-            val tupleUnion = super.visitRexOpTupleUnion(node, ctx) as Rex.Op.TupleUnion
-            val newArgsToTupleUnion = tupleUnion.args.fold(emptyList<Rex>()) { agg, rex ->
-                when (rex.op) {
-                    is Rex.Op.Path -> { // Only case on struct wildcard paths
-                        val prefixPath = rex.op
-                        when (val st = rex.type) {
-                            is StructType -> {
-                                val expandedFields = st.fields.map { field ->
-                                    // Create a new struct for each field
-                                    Rex(
-                                        type = StructType(
-                                            fields = listOf(
-                                                StructType.Field(
-                                                    key = field.key,
-                                                    value = field.value
-                                                )
-                                            )
-                                        ),
-                                        op = rexOpStruct(
-                                            fields = listOf(
-                                                rexOpStructField(
-                                                    k = Rex(
-                                                        type = StaticType.STRING,
-                                                        op = rexOpLit(
-                                                            stringValue(
-                                                                field.key
-                                                            )
-                                                        )
-                                                    ),
-                                                    v = Rex(
-                                                        type = field.value,
-                                                        op = rexOpPathSymbol(
-                                                            root = Rex(
-                                                                type = field.value,
-                                                                op = prefixPath
-                                                            ),
-                                                            key = field.key
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                }
-                                agg + expandedFields
-                            }
-                            else -> agg + rex
-                        }
-                    }
-                    else -> agg + rex
+            val newTupleUnion = super.visitRexOpTupleUnion(node, ctx) as Rex.Op.TupleUnion
+            val newArgs = mutableListOf<Rex>()
+            newTupleUnion.args.forEach { arg ->
+                val op = arg.op
+                val type = arg.type
+                if (op is Rex.Op.Path && type is StructType) {
+                    newArgs.addAll(expandStruct(op, type))
+                } else {
+                    newArgs.add(arg)
                 }
             }
-            return rexOpTupleUnion(newArgsToTupleUnion)
+            return rexOpTupleUnion(newArgs)
+        }
+
+        @OptIn(PartiQLValueExperimental::class)
+        private fun expandStruct(op: Rex.Op.Path, structType: StructType): List<Rex> {
+            return structType.fields.map { field ->
+                // Create a new struct for each field
+                Rex(
+                    type = StructType(
+                        fields = listOf(
+                            StructType.Field(
+                                key = field.key,
+                                value = field.value
+                            )
+                        )
+                    ),
+                    op = rexOpStruct(
+                        fields = listOf(
+                            rexOpStructField(
+                                k = Rex(
+                                    type = StaticType.STRING,
+                                    op = rexOpLit(
+                                        stringValue(
+                                            field.key
+                                        )
+                                    )
+                                ),
+                                v = Rex(
+                                    type = field.value,
+                                    op = rexOpPathKey(
+                                        root = Rex(
+                                            type = field.value,
+                                            op = op
+                                        ),
+                                        key = rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            }
         }
 
         override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
@@ -376,9 +376,9 @@ public object RedshiftTarget : SqlTarget() {
         @OptIn(PartiQLValueExperimental::class)
         private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
             val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->
-                val newPath = rexOpPathSymbol(
+                val newPath = rexOpPathKey(
                     prefixPath,
-                    field.key
+                    rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
                 )
                 val newV = field.value.toRex(
                     prefixPath = Rex(

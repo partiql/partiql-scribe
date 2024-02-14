@@ -110,7 +110,7 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
     }
 
     // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>
-    // docs: https://spark.apache.org/docs/latest/api/sql/#transform
+    // docs: https://trino.io/docs/current/functions/array.html#transform
     // This function is used for transpilation of `EXCLUDE` collection wildcards. It is similar to a functional map but
     // uses some special syntax (same as Spark's `transform` function).
     // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]

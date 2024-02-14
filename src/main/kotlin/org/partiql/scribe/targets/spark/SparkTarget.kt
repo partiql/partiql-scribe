@@ -12,9 +12,10 @@ import org.partiql.plan.relBinding
 import org.partiql.plan.relOpProject
 import org.partiql.plan.relOpScan
 import org.partiql.plan.relType
+import org.partiql.plan.rex
 import org.partiql.plan.rexOpCallStatic
 import org.partiql.plan.rexOpLit
-import org.partiql.plan.rexOpPathSymbol
+import org.partiql.plan.rexOpPathKey
 import org.partiql.plan.rexOpSelect
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
@@ -291,9 +292,9 @@ object SparkTarget : SqlTarget() {
         @OptIn(PartiQLValueExperimental::class)
         private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
             val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->
-                val newPath = rexOpPathSymbol(
+                val newPath = rexOpPathKey(
                     prefixPath,
-                    field.key
+                    rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
                 )
                 val newV = field.value.toRex(
                     prefixPath = Rex(

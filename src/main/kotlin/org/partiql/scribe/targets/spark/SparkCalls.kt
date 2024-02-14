@@ -1,8 +1,10 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Expr
+import org.partiql.ast.Identifier
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprLit
+import org.partiql.ast.identifierSymbol
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArg
@@ -55,7 +57,10 @@ class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
     // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexToSql
     private fun transform(sqlArgs: List<SqlArg>): Expr {
-        val fnName = id("transform")
+        val fnName = identifierSymbol(
+            symbol = "transform",
+            caseSensitivity = Identifier.CaseSensitivity.SENSITIVE,
+        )
         val arrayExpr = sqlArgs[0].expr
         val elementVar = sqlArgs[1].expr
         val elementExpr = sqlArgs[2].expr
