@@ -144,7 +144,7 @@ private object LocalSchema {
     private fun StructElement.int32(): StaticType = StaticType.INT4
 
     // constraints?
-    private fun StructElement.int64(): StaticType = StaticType.INT4
+    private fun StructElement.int64(): StaticType = StaticType.INT8
 
     // constraints?
     private fun StructElement.int(): StaticType = StaticType.INT
@@ -205,7 +205,11 @@ private object LocalSchema {
     private fun StructElement.date(): StaticType = StaticType.DATE
 
     // constraints?
-    private fun StructElement.time(): StaticType = StaticType.TIME
+    private fun StructElement.time(): StaticType {
+        val precision = getMaybe<IntElement>("precision")?.longValue?.toInt()
+        val withTimeZone = getMaybe<BoolElement>("withTimeZone")?.booleanValue ?: false
+        return TimeType(precision, withTimeZone)
+    }
 
     // constraints?
     @OptIn(PartiQLTimestampExperimental::class)
