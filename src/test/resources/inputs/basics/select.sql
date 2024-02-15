@@ -39,3 +39,51 @@ SELECT a FROM t;
 
 --#[select-13]
 SELECT VALUE {z: a} FROM T;
+
+--#[select-14]
+SELECT * FROM T WHERE T.b BETWEEN 0 AND 2;
+
+--#[select-15]
+SELECT * FROM T WHERE T.b NOT BETWEEN 0 AND 2;
+
+--#[select-16]
+SELECT * FROM T WHERE NOT T.b BETWEEN 0 AND 2;
+
+--#[select-17]
+SELECT * FROM T WHERE NOT T.b NOT BETWEEN 0 AND 2;
+
+--#[select-18]
+SELECT * FROM T WHERE T.b IN (0, 1, 2);
+
+--#[select-19]
+SELECT * FROM T WHERE T.b NOT IN (0, 1, 2);
+
+--#[select-20]
+SELECT * FROM T WHERE NOT T.b IN (0, 1, 2);
+
+--#[select-21]
+SELECT * FROM T WHERE NOT T.b NOT IN (0, 1, 2);
+
+--#[select-22]
+SELECT * FROM T WHERE T.b IS NULL;
+
+--#[select-23]
+SELECT * FROM T WHERE T.b IS NOT NULL;
+
+--#[select-24]
+SELECT * FROM T WHERE NOT T.b IS NULL;
+
+--#[select-25]
+SELECT * FROM T WHERE NOT T.b IS NOT NULL;
+
+--#[select-26]
+SELECT * FROM T WHERE T.c LIKE 'abc';
+
+--#[select-27]
+SELECT * FROM T WHERE T.c NOT LIKE 'abc';
+
+--#[select-28]
+SELECT * FROM T WHERE NOT T.c LIKE 'abc';
+
+--#[select-29]
+SELECT * FROM T WHERE NOT T.c NOT LIKE 'abc';

@@ -137,17 +137,30 @@ public class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
         }
     }
 
+    private fun Boolean?.flip(): Boolean {
+        return when (this) {
+            null -> true
+            else -> !this
+        }
+    }
+
     /**
      * Push the negation down if possible.
      * For example : NOT 1 is NULL -> 1 is NOT NULL.
+     *
+     * TODO: could consider removing redundant boolean expressions here. E.g.
+     *  - NOT NOT <expr> -> <expr>
+     *  - NOT false -> true
+     *  - NOT true -> false
+     * (this constant-folding step really should have been done at an earlier stage)
      */
     override fun notFn(args: SqlArgs): Expr {
         val arg = args.first()
         return when (val expr = arg.expr) {
-            is Expr.Between -> exprBetween(expr.value, expr.from, expr.to, true)
-            is Expr.InCollection -> exprInCollection(expr.lhs, expr.rhs, true)
-            is Expr.IsType -> exprIsType(expr.value, expr.type, true)
-            is Expr.Like -> exprLike(expr.value, expr.pattern, expr.escape, true)
+            is Expr.Between -> exprBetween(expr.value, expr.from, expr.to, expr.not.flip())
+            is Expr.InCollection -> exprInCollection(expr.lhs, expr.rhs, expr.not.flip())
+            is Expr.IsType -> exprIsType(expr.value, expr.type, expr.not.flip())
+            is Expr.Like -> exprLike(expr.value, expr.pattern, expr.escape, expr.not.flip())
             else -> super.negFn(args)
         }
     }
