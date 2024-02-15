@@ -147,6 +147,12 @@ public class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
     /**
      * Push the negation down if possible.
      * For example : NOT 1 is NULL -> 1 is NOT NULL.
+     *
+     * TODO: could consider removing redundant boolean expressions here. E.g.
+     *  - NOT NOT <expr> -> <expr>
+     *  - NOT false -> true
+     *  - NOT true -> false
+     * (this constant-folding step really should have been done at an earlier stage)
      */
     override fun notFn(args: SqlArgs): Expr {
         val arg = args.first()
