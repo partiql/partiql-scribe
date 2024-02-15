@@ -443,10 +443,18 @@ public object TrinoTarget : SqlTarget() {
                         is StringType.StringLengthConstraint.Constrained -> {
                             when (val numConstraint = constraint.length) {
                                 is NumberConstraint.Equals -> {
-                                    "CHAR($numConstraint)"
+                                    if (numConstraint.value < 0) {
+                                        kotlin.error("CHAR length must be non-negative ${numConstraint.value}")
+                                    } else {
+                                        "CHAR(${numConstraint.value})"
+                                    }
                                 }
                                 is NumberConstraint.UpTo -> {
-                                    "VARCHAR($numConstraint)"
+                                    if (numConstraint.value < 0) {
+                                        kotlin.error("VARCHAR length must be non-negative ${numConstraint.value}")
+                                    } else {
+                                        "VARCHAR(${numConstraint.value})"
+                                    }
                                 }
                             }
                         }
@@ -469,7 +477,13 @@ public object TrinoTarget : SqlTarget() {
                     when (val constraint = precisionScaleConstraint) {
                         DecimalType.PrecisionScaleConstraint.Unconstrained -> kotlin.error("Unconstrained decimal not supported in Trino")
                         is DecimalType.PrecisionScaleConstraint.Constrained -> {
-                            "DECIMAL(${constraint.precision}, ${constraint.scale})"
+                            if (constraint.precision !in 1..38) {
+                                kotlin.error("DECIMAL precision not in range [1, 38]: ${constraint.precision}")
+                            } else if (constraint.scale !in 0..constraint.precision) {
+                                kotlin.error("DECIMAL scale not in range [0, ${constraint.precision}]: ${constraint.scale}")
+                            } else {
+                                "DECIMAL(${constraint.precision}, ${constraint.scale})"
+                            }
                         }
                     }
                 }
@@ -477,10 +491,10 @@ public object TrinoTarget : SqlTarget() {
                     when (precision) {
                         null -> "TIMESTAMP"
                         else -> {
-                            if (precision!! > 12) {
-                                kotlin.error("Precision > 12 is not supported in Trino")
+                            if (precision!! !in 0..12) {
+                                kotlin.error("TIMESTAMP precision not in range [0, 12]: $precision")
                             } else {
-                                "TIMESTAMP ($precision)"
+                                "TIMESTAMP($precision)"
                             }
                         }
                     }
@@ -490,10 +504,10 @@ public object TrinoTarget : SqlTarget() {
                     when (precision) {
                         null -> "TIME"
                         else -> {
-                            if (precision!! > 12) {
-                                kotlin.error("Precision > 12 is not supported in Trino")
+                            if (precision!! !in 0..12) {
+                                kotlin.error("TIME precision not in range [0, 12]: $precision")
                             } else {
-                                "TIME ($precision)"
+                                "TIME($precision)"
                             }
                         }
                     }
