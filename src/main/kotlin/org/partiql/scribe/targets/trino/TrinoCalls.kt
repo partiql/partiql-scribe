@@ -20,7 +20,7 @@ import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.stringValue
 
 @OptIn(PartiQLValueExperimental::class)
-public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
+public open class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
 
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow

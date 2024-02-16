@@ -1,6 +1,5 @@
 package org.partiql.scribe.targets.redshift
 
-import org.partiql.ast.Statement
 import org.partiql.ast.sql.SqlDialect
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode
@@ -22,15 +21,21 @@ import org.partiql.value.IntValue
 import org.partiql.value.PartiQLValueExperimental
 
 /**
- * Experimental Redshift SQL transpilation target.
+ * Experimental Redshift SQL target.
  */
-public object RedshiftTarget : SqlTarget() {
+public open class RedshiftTarget : SqlTarget() {
 
     override val target: String = "Redshift"
 
     override val version: String = "0"
 
-    override val dialect: SqlDialect = RedshiftDialect
+    companion object {
+
+        @JvmStatic
+        public val DEFAULT = RedshiftTarget()
+    }
+
+    override val dialect: SqlDialect = RedshiftDialect()
 
     /**
      * Wire the Redshift call rewrite rules.
@@ -40,7 +45,7 @@ public object RedshiftTarget : SqlTarget() {
     /**
      * Redshift feature set allow list.
      */
-    override val features: SqlFeatures = RedshiftFeatures
+    override val features: SqlFeatures = RedshiftFeatures()
 
     /**
      * Rewrite a PartiQLPlan in terms of Redshift features.
@@ -48,7 +53,7 @@ public object RedshiftTarget : SqlTarget() {
     override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback) =
         RedshiftRewriter(onProblem).visitPartiQLPlan(plan, Unit) as PartiQLPlan
 
-    private class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Unit>() {
+    open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Unit>() {
 
         override fun visitRelOpProject(node: Rel.Op.Project, ctx: Unit): PlanNode {
             // Make sure that the output type is homogeneous

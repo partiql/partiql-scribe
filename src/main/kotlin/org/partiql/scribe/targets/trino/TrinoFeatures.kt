@@ -4,7 +4,7 @@ import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.scribe.sql.SqlFeatures
 
-public object TrinoFeatures : SqlFeatures.Defensive() {
+public open class TrinoFeatures : SqlFeatures.Defensive() {
 
     override val allow: Set<Class<*>> = setOf(
         //

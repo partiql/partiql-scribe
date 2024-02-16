@@ -12,7 +12,8 @@ import org.partiql.scribe.sql.SqlTransform.Companion.id
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.stringValue
 
-class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
+public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
+
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow
         this["current_user"] = ::currentUser

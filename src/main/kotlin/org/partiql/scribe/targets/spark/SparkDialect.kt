@@ -12,7 +12,7 @@ import org.partiql.scribe.sql.concat
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
 
-object SparkDialect : SqlDialect() {
+public open class SparkDialect : SqlDialect() {
 
     override fun visitFromValue(node: From.Value, head: SqlBlock): SqlBlock {
         var h = head

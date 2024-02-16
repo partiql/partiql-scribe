@@ -4,7 +4,7 @@ import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.scribe.sql.SqlFeatures
 
-object SparkFeatures : SqlFeatures.Defensive() {
+public open class SparkFeatures : SqlFeatures.Defensive() {
 
     override val allow: Set<Class<*>> = setOf(
         //
