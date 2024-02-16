@@ -15,7 +15,7 @@ import org.partiql.value.StringValue
 /**
  * Redshift SQL dialect for PartiQL Scribe.
  */
-public object RedshiftDialect : SqlDialect() {
+public open class RedshiftDialect : SqlDialect() {
 
     override fun visitSelectProjectItemExpression(node: Select.Project.Item.Expression, head: SqlBlock): SqlBlock {
         var h = head
@@ -75,10 +75,5 @@ public object RedshiftDialect : SqlDialect() {
         }
         h = if (end != null) h concat r(end) else h
         return h
-    }
-
-    private fun Identifier.Symbol.sql() = when (caseSensitivity) {
-        Identifier.CaseSensitivity.SENSITIVE -> "\"$symbol\""
-        Identifier.CaseSensitivity.INSENSITIVE -> symbol // verbatim ..
     }
 }

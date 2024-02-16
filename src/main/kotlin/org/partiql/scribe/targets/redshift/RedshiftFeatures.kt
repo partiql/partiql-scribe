@@ -7,7 +7,7 @@ import org.partiql.scribe.sql.SqlFeatures
 /**
  * Redshift high-level feature allow-list.
  */
-public object RedshiftFeatures : SqlFeatures.Defensive() {
+public open class RedshiftFeatures : SqlFeatures.Defensive() {
 
     override val allow: Set<Class<*>> = setOf(
         //

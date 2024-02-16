@@ -36,6 +36,7 @@ import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.ScribeTarget
 import org.partiql.scribe.targets.partiql.PartiQLTarget
 import org.partiql.scribe.targets.redshift.RedshiftTarget
+import org.partiql.scribe.targets.spark.SparkTarget
 import org.partiql.scribe.targets.trino.TrinoTarget
 import org.partiql.spi.BindingCase
 import org.partiql.spi.BindingName
@@ -260,8 +261,9 @@ internal class Shell(private val state: State) {
     private fun setTarget(targetArg: String) {
         val target = when (targetArg) {
             "partiql" -> PartiQLTarget
-            "redshift" -> RedshiftTarget
-            "trino" -> TrinoTarget
+            "redshift" -> RedshiftTarget.DEFAULT
+            "trino" -> TrinoTarget.DEFAULT
+            "spark" -> SparkTarget.DEFAULT
             else -> {
                 out.error("Unknown target `$targetArg`")
                 return

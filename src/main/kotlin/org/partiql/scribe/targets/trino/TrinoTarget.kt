@@ -60,13 +60,22 @@ import org.partiql.value.symbolValue
 /**
  * Experimental Trino SQL transpilation target.
  */
-public object TrinoTarget : SqlTarget() {
-
-    override val dialect = TrinoDialect
+public open class TrinoTarget : SqlTarget() {
 
     override val target: String = "Trino"
 
     override val version: String = "3"
+
+    companion object {
+
+        @JvmStatic
+        public val DEFAULT = TrinoTarget()
+    }
+
+    /**
+     * Trino SQL dialect.
+     */
+    override val dialect = TrinoDialect()
 
     /**
      * Wire the Trino call rewrite rules.
@@ -76,7 +85,7 @@ public object TrinoTarget : SqlTarget() {
     /**
      * Trino feature set allow list.
      */
-    override val features: SqlFeatures = TrinoFeatures
+    override val features: SqlFeatures = TrinoFeatures()
 
     /**
      * At this point, no plan rewriting.

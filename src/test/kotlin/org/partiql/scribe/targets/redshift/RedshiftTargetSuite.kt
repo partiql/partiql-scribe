@@ -7,7 +7,7 @@ import kotlin.io.path.toPath
 
 class RedshiftTargetSuite : SqlTargetSuite() {
 
-    override val target = RedshiftTarget
+    override val target = RedshiftTarget.DEFAULT
 
     override val root = this::class.java.getResource("/outputs/redshift")!!.toURI().toPath()
 

@@ -26,7 +26,7 @@ import org.partiql.value.PartiQLValueType
 import org.partiql.value.symbolValue
 
 @OptIn(PartiQLValueExperimental::class)
-public class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
+public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
 
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow

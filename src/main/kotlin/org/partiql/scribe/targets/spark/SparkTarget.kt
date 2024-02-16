@@ -39,21 +39,30 @@ import org.partiql.value.PartiQLValueType
 import org.partiql.value.stringValue
 import org.partiql.value.symbolValue
 
-object SparkTarget : SqlTarget() {
+public open class SparkTarget : SqlTarget() {
+
     override val target: String = "Spark"
 
     override val version: String = "3.1"
 
-    override val dialect: SqlDialect = SparkDialect
+    companion object {
 
-    override val features: SqlFeatures = SparkFeatures
+        @JvmStatic
+        public val DEFAULT = SparkTarget()
+    }
+
+    override val dialect: SqlDialect = SparkDialect()
+
+    override val features: SqlFeatures = SparkFeatures()
+
 
     override fun getCalls(onProblem: ProblemCallback): SqlCalls = SparkCalls(onProblem)
 
     override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback): PartiQLPlan =
         SparkRewriter(onProblem).visitPartiQLPlan(plan, null) as PartiQLPlan
 
-    private class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
+    open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
+
         private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
 
         override fun visitPartiQLPlan(node: PartiQLPlan, ctx: Rel.Type?): PlanNode {

@@ -13,7 +13,7 @@ import org.partiql.scribe.sql.concat
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
 
-public object TrinoDialect : SqlDialect() {
+public open class TrinoDialect : SqlDialect() {
     override fun visitExprSessionAttribute(node: Expr.SessionAttribute, head: SqlBlock): SqlBlock {
         return SqlBlock.Link(head, SqlBlock.Text(node.attribute.name.lowercase()))
     }

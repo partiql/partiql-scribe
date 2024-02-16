@@ -40,15 +40,21 @@ import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.stringValue
 
 /**
- * Experimental Redshift SQL transpilation target.
+ * Experimental Redshift SQL target.
  */
-public object RedshiftTarget : SqlTarget() {
+public open class RedshiftTarget : SqlTarget() {
 
     override val target: String = "Redshift"
 
     override val version: String = "0"
 
-    override val dialect: SqlDialect = RedshiftDialect
+    companion object {
+
+        @JvmStatic
+        public val DEFAULT = RedshiftTarget()
+    }
+
+    override val dialect: SqlDialect = RedshiftDialect()
 
     /**
      * Wire the Redshift call rewrite rules.
@@ -58,7 +64,7 @@ public object RedshiftTarget : SqlTarget() {
     /**
      * Redshift feature set allow list.
      */
-    override val features: SqlFeatures = RedshiftFeatures
+    override val features: SqlFeatures = RedshiftFeatures()
 
     /**
      * Rewrite a PartiQLPlan in terms of Redshift features.
@@ -66,7 +72,8 @@ public object RedshiftTarget : SqlTarget() {
     override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback) =
         RedshiftRewriter(onProblem).visitPartiQLPlan(plan, null) as PartiQLPlan
 
-    private class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
+    open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
+
         private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
 
         /**
