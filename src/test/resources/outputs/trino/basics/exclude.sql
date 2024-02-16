@@ -101,3 +101,23 @@ SELECT "$__EXCLUDE_ALIAS__"."t".* FROM (SELECT CAST(ROW(CAST(ROW((SELECT "t"."fo
 -- list
 --#[exclude-26]
 SELECT "$__EXCLUDE_ALIAS__"."t".* FROM (SELECT CAST(ROW(CAST(ROW(transform("t"."foo"."keep", ___coll_wildcard___ -> ___coll_wildcard___)) AS ROW(keep ARRAY<INTEGER>))) AS ROW(foo ROW(keep ARRAY<INTEGER>))) AS "t" FROM "default"."datatypes"."T_LIST" AS "t") AS "$__EXCLUDE_ALIAS__";
+
+-- decimal(5, 2)
+--#[exclude-27]
+SELECT "$__EXCLUDE_ALIAS__"."t".* FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep DECIMAL(5, 2)))) AS ROW(foo ROW(keep DECIMAL(5, 2)))) AS "t" FROM "default"."datatypes"."T_DECIMAL_5_2" AS "t") AS "$__EXCLUDE_ALIAS__";
+
+-- varchar(16)
+--#[exclude-28]
+SELECT "$__EXCLUDE_ALIAS__"."t".* FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR(16)))) AS ROW(foo ROW(keep VARCHAR(16)))) AS "t" FROM "default"."datatypes"."T_STRING_16" AS "t") AS "$__EXCLUDE_ALIAS__";
+
+-- char(16)
+--#[exclude-29]
+SELECT "$__EXCLUDE_ALIAS__"."t".* FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep CHAR(16)))) AS ROW(foo ROW(keep CHAR(16)))) AS "t" FROM "default"."datatypes"."T_CHAR_16" AS "t") AS "$__EXCLUDE_ALIAS__";
+
+-- time(6)
+--#[exclude-30]
+SELECT "$__EXCLUDE_ALIAS__"."t".* FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep TIME(6)))) AS ROW(foo ROW(keep TIME(6)))) AS "t" FROM "default"."datatypes"."T_TIME_6" AS "t") AS "$__EXCLUDE_ALIAS__";
+
+-- timestamp(6)
+--#[exclude-31]
+SELECT "$__EXCLUDE_ALIAS__"."t".* FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep TIMESTAMP(6)))) AS ROW(foo ROW(keep TIMESTAMP(6)))) AS "t" FROM "default"."datatypes"."T_TIMESTAMP_6" AS "t") AS "$__EXCLUDE_ALIAS__";

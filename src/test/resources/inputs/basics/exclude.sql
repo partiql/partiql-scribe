@@ -103,3 +103,23 @@ SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRUCT AS t;
 -- list
 --#[exclude-26]
 SELECT * EXCLUDE t.foo.bar FROM datatypes.T_LIST AS t;
+
+-- decimal(5, 2)
+--#[exclude-27]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_DECIMAL_5_2 AS t;
+
+-- varchar(16)
+--#[exclude-28]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRING_16 AS t;
+
+-- char(16)
+--#[exclude-29]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_CHAR_16 AS t;
+
+-- time(6)
+--#[exclude-30]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_TIME_6 AS t;
+
+-- timestamp(6)
+--#[exclude-31]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_TIMESTAMP_6 AS t;
