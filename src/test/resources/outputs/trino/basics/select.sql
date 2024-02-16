@@ -2,7 +2,7 @@
 SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c" FROM "default"."T" AS "T";
 
 --#[select-01]
-SELECT * FROM "default"."T" AS "T";
+SELECT "T".* FROM "default"."T" AS "T";
 
 --#[select-02]
 SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c" FROM "default"."T" AS "T";
@@ -12,7 +12,7 @@ SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c" FROM "default"."T" AS "T";
 -- SELECT VALUE a FROM T;
 
 --#[select-04]
-SELECT * FROM "default"."T" AS "t1" INNER JOIN "default"."T" AS "t2" ON true;
+SELECT "t1".*, "t2".* FROM "default"."T" AS "t1" INNER JOIN "default"."T" AS "t2" ON true;
 
 -- #[select-05]
 -- ERR! Trino doesn't have path expressions
@@ -31,7 +31,7 @@ SELECT * FROM "default"."T" AS "t1" INNER JOIN "default"."T" AS "t2" ON true;
 -- SELECT "T"."d".* FROM "default"."T" AS "T";
 
 --#[select-09]
-SELECT * FROM "default"."T" AS "T";
+SELECT "T".* FROM "default"."T" AS "T";
 
 --#[select-10]
 SELECT "T"."c" || current_user AS "_1" FROM "default"."T" AS "T";

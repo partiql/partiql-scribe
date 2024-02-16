@@ -4,12 +4,15 @@ import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.exprCall
+import org.partiql.ast.exprCast
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprVar
 import org.partiql.ast.identifierSymbol
+import org.partiql.ast.typeCustom
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.error
 import org.partiql.scribe.info
+import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
@@ -17,6 +20,7 @@ import org.partiql.types.BoolType
 import org.partiql.types.IntType
 import org.partiql.types.StaticType
 import org.partiql.value.PartiQLValueExperimental
+import org.partiql.value.StringValue
 import org.partiql.value.stringValue
 
 @OptIn(PartiQLValueExperimental::class)
@@ -25,6 +29,8 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow
         this.remove("bitwise_and")
+        this["cast_row"] = ::castrow
+        this["transform"] = ::transform
     }
 
     override fun eqFn(args: SqlArgs): Expr {
@@ -85,6 +91,37 @@ public class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
         val arg0 = exprVar(id("current_timestamp"), Expr.Var.Scope.DEFAULT)
         val arg1 = exprLit(stringValue("UTC"))
         return exprCall(call, listOf(arg0, arg1))
+    }
+
+    // Trino gives names to ROW fields by a call to `CAST`. See docs: https://trino.io/docs/current/language/types.html?highlight=row#row.
+    // Here, we model this ROW cast as a custom type cast with the row field names encoded in the custom type string.
+    // Note this `CAST(ROW(...))` call is only performed when the `ROW` has one field.
+    //
+    // CAST(ROW(<value>) AS <custom type with ROW field names>)
+    private fun castrow(args: SqlArgs): Expr {
+        val castValue = args.first().expr
+        val rowCall = exprCall(
+            id("ROW"),
+            listOf(castValue)
+        )
+        val asType = ((((args.last().expr) as Expr.Lit).value) as StringValue).value!!
+        val customType = typeCustom(name = asType)
+        return exprCast(rowCall, customType)
+    }
+
+    // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>
+    // docs: https://trino.io/docs/current/functions/array.html#transform
+    // This function is used for transpilation of `EXCLUDE` collection wildcards. It is similar to a functional map but
+    // uses some special syntax (same as Spark's `transform` function).
+    // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
+    // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
+    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexToSql
+    private fun transform(sqlArgs: List<SqlArg>): Expr {
+        val fnName = id("transform")
+        val arrayExpr = sqlArgs[0].expr
+        val elementVar = sqlArgs[1].expr
+        val elementExpr = sqlArgs[2].expr
+        return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
     }
 
     private fun id(symbol: String) = identifierSymbol(symbol, Identifier.CaseSensitivity.INSENSITIVE)

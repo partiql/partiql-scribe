@@ -1,8 +1,10 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Expr
+import org.partiql.ast.Identifier
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprLit
+import org.partiql.ast.identifierSymbol
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArg
@@ -16,6 +18,7 @@ class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow
         this["current_user"] = ::currentUser
+        this["transform"] = ::transform
     }
 
     // https://spark.apache.org/docs/latest/api/sql/index.html#array_contains
@@ -44,5 +47,20 @@ class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         val currentTimestamp = id("current_timestamp")
         val targetTimezone = exprLit(stringValue("utc"))
         return exprCall(convertTimeZone, listOf(targetTimezone, exprCall(currentTimestamp, emptyList())))
+    }
+
+    // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>
+    // docs: https://spark.apache.org/docs/latest/api/sql/index.html#transform
+    // This function is used for transpilation of `EXCLUDE` collection wildcards. It is similar to a functional map but
+    // uses some special syntax (same as Trino's `transform` function).
+    // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
+    // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
+    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexToSql
+    private fun transform(sqlArgs: List<SqlArg>): Expr {
+        val fnName = id("transform")
+        val arrayExpr = sqlArgs[0].expr
+        val elementVar = sqlArgs[1].expr
+        val elementExpr = sqlArgs[2].expr
+        return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
     }
 }
