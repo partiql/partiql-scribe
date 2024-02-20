@@ -22,7 +22,7 @@ public open class SqlTransform(
     private val onProblem: ProblemCallback,
 ) {
 
-    public fun apply(statement: PlanStatement): AstStatement {
+    public open fun apply(statement: PlanStatement): AstStatement {
         if (statement is PlanStatement.Query) {
             val transform = RexToSql(this, Locals(emptyList()))
             val expr = transform.apply(statement.root)
@@ -31,7 +31,7 @@ public open class SqlTransform(
         throw UnsupportedOperationException("Can only transform a query statement")
     }
 
-    public fun getGlobal(ref: Catalog.Symbol.Ref): AstIdentifier.Qualified? {
+    public open fun getGlobal(ref: Catalog.Symbol.Ref): AstIdentifier.Qualified? {
         val catalog = catalogs[ref.catalog]
         val symbol = catalog.symbols[ref.symbol]
 
@@ -43,7 +43,7 @@ public open class SqlTransform(
         )
     }
 
-    public fun getFunction(name: String, args: SqlArgs): Expr = calls.retarget(name, args)
+    public open fun getFunction(name: String, args: SqlArgs): Expr = calls.retarget(name, args)
 
     public fun handleProblem(problem: ScribeProblem) = onProblem(problem)
 
