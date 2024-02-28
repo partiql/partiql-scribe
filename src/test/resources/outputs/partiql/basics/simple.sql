@@ -59,10 +59,10 @@ NOT "default"."T1";
 "default"."T1" = "default"."T1";
 
 --#[expr-08]
-NOT "default"."T1" = "default"."T1";
+"default"."T1" <> "default"."T1";
 
 --#[expr-09]
-NOT "default"."T1" = "default"."T1";
+"default"."T1" <> "default"."T1";
 
 --#[expr-10]
 "default"."T1" IS NULL;

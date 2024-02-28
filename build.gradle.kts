@@ -51,6 +51,8 @@ dependencies {
 java {
     sourceCompatibility = JavaVersion.toVersion(Versions.jvmTarget)
     targetCompatibility = JavaVersion.toVersion(Versions.jvmTarget)
+    withJavadocJar()
+    withSourcesJar()
 }
 
 tasks.compileKotlin {

@@ -209,7 +209,14 @@ public abstract class SqlCalls {
         return exprBinary(op, args[0].expr, args[1].expr)
     }
 
-    public open fun notFn(args: SqlArgs): Expr = unary(Expr.Unary.Op.NOT, args)
+    public open fun notFn(args: SqlArgs): Expr {
+        // Check to replace NOT (x = y) with x <> y
+        val arg = args[0].expr
+        if (arg is Expr.Binary && arg.op == Expr.Binary.Op.EQ) {
+            return exprBinary(Expr.Binary.Op.NE, arg.lhs, arg.rhs)
+        }
+        return unary(Expr.Unary.Op.NOT, args)
+    }
 
     public open fun posFn(args: SqlArgs): Expr = unary(Expr.Unary.Op.POS, args)
 

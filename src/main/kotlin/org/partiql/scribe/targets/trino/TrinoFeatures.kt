@@ -1,5 +1,6 @@
 package org.partiql.scribe.targets.trino
 
+import org.partiql.plan.Agg
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.scribe.sql.SqlFeatures
@@ -17,6 +18,11 @@ public open class TrinoFeatures : SqlFeatures.Defensive() {
         Rel.Op.Join::class.java,
         Rel.Op.Limit::class.java,
         Rel.Op.Offset::class.java,
+        //-- Aggregations
+        Rel.Op.Aggregate::class.java,
+        Rel.Op.Aggregate.Call::class.java,
+        Agg::class.java,
+        //-- Exclude
         Rel.Op.Exclude::class.java,
         Rel.Op.Exclude.Item::class.java,
         Rel.Op.Exclude.Step.StructField::class.java,

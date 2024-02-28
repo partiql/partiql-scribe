@@ -10,14 +10,17 @@ import org.partiql.ast.exprVar
 import org.partiql.ast.identifierSymbol
 import org.partiql.ast.typeCustom
 import org.partiql.scribe.ProblemCallback
+import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.error
 import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
-import org.partiql.types.BoolType
+import org.partiql.types.DecimalType
+import org.partiql.types.FloatType
 import org.partiql.types.IntType
+import org.partiql.types.SingleType
 import org.partiql.types.StaticType
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
@@ -43,16 +46,22 @@ public open class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
     }
 
     private fun typesAreComparable(t0: StaticType, t1: StaticType): Boolean {
-        if (t0 == t1 || t0.toString() == t1.toString()) {
+        val l = t0.asNonNullable()
+        val r = t1.asNonNullable()
+        if (l == r || l.toString() == r.toString()) {
             return true
         }
-        if (t0 is BoolType && t1 is BoolType) {
+        if (l is SingleType && r is SingleType && l::class == r::class) {
             return true
         }
-        if (t0 is IntType && t1 is IntType) {
+        if (l.isNumeric() && r.isNumeric()) {
             return true
         }
         return false
+    }
+
+    private fun StaticType.isNumeric(): Boolean {
+        return this is IntType || this is FloatType || this is DecimalType
     }
 
     /**
@@ -101,8 +110,7 @@ public open class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
     private fun castrow(args: SqlArgs): Expr {
         val castValue = args.first().expr
         val rowCall = exprCall(
-            id("ROW"),
-            listOf(castValue)
+            id("ROW"), listOf(castValue)
         )
         val asType = ((((args.last().expr) as Expr.Lit).value) as StringValue).value!!
         val customType = typeCustom(name = asType)
