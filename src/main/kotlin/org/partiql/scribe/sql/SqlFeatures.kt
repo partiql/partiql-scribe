@@ -79,6 +79,8 @@ abstract class SqlFeatures : PlanBaseVisitor<Unit, ProblemCallback>() {
 
     override fun visitRex(node: Rex, ctx: ProblemCallback)  = visitChildren(node, ctx)
 
+    override fun visitRexOpCallDynamicCandidate(node: Rex.Op.Call.Dynamic.Candidate, ctx: ProblemCallback) = visitChildren(node, ctx)
+
     override fun visitStatement(node: Statement, ctx: ProblemCallback)  = visitChildren(node, ctx)
 
     override fun visitStatementQuery(node: Statement.Query, ctx: ProblemCallback)  = visitChildren(node, ctx)

@@ -163,8 +163,8 @@ public open class TrinoTarget : SqlTarget() {
         }
 
         override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: Rel.Type?): PlanNode {
-            if (node.root.op !is Rex.Op.Var) {
-                error("Trino does not support path expressions on non-variable values")
+            if (node.root.type.asNonNullable() !is StructType) {
+                error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${node.root.type}")
             }
             if (node.key.op !is Rex.Op.Lit) {
                 error("Trino does not support path non-literal path expressions, found ${node.key.op}")
