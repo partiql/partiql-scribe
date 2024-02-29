@@ -1,5 +1,6 @@
 package org.partiql.scribe
 
+import org.partiql.types.MissingType
 import org.partiql.types.NullType
 import org.partiql.types.StaticType
 import org.partiql.types.StaticType.Companion.NULL
@@ -15,6 +16,10 @@ public fun StaticType.asNullable(): StaticType =
         this.isNullable() -> this
         else -> unionOf(this, NULL).flatten()
     }
+
+public fun StaticType.asMissable(): StaticType = unionOf(this, MissingType).flatten()
+
+public fun StaticType.asAbsent(): StaticType = unionOf(this, NULL, MissingType).flatten()
 
 /**
  *  Returns a non-nullable version of the current [StaticType].
