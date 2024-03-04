@@ -161,7 +161,7 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
             is Expr.InCollection -> exprInCollection(expr.lhs, expr.rhs, expr.not.flip())
             is Expr.IsType -> exprIsType(expr.value, expr.type, expr.not.flip())
             is Expr.Like -> exprLike(expr.value, expr.pattern, expr.escape, expr.not.flip())
-            else -> super.negFn(args)
+            else -> super.notFn(args)
         }
     }
 

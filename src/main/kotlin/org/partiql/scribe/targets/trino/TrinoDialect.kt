@@ -94,6 +94,19 @@ public open class TrinoDialect : SqlDialect() {
 
     override fun visitTypeInt8(node: Type.Int8, head: SqlBlock): SqlBlock = head concat r("BIGINT")
 
+    override fun visitExprUnary(node: Expr.Unary, head: SqlBlock): SqlBlock {
+        val op = when (node.op) {
+            Expr.Unary.Op.NOT -> "NOT ("
+            Expr.Unary.Op.POS -> "+("
+            Expr.Unary.Op.NEG -> "-("
+        }
+        var h = head
+        h = h concat r(op)
+        h = visitExprWrapped(node.expr, h)
+        h = h concat r(")")
+        return h
+    }
+
     private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 
     private fun list(
