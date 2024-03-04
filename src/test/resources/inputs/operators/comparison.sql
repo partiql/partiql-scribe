@@ -57,3 +57,9 @@ SELECT b >= 1 FROM T;
 
 --#[gte-01]
 SELECT b >= x FROM T;
+
+--#[not-00]
+SELECT NOT a FROM T;
+
+--#[not-01]
+SELECT NOT (NOT a) FROM T;
