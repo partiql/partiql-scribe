@@ -88,6 +88,12 @@ public open class TrinoDialect : SqlDialect() {
         }
     }
 
+    override fun visitTypeInt2(node: Type.Int2, head: SqlBlock): SqlBlock = head concat r("SMALLINT")
+
+    override fun visitTypeInt4(node: Type.Int4, head: SqlBlock): SqlBlock = head concat r("INT")
+
+    override fun visitTypeInt8(node: Type.Int8, head: SqlBlock): SqlBlock = head concat r("BIGINT")
+
     private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 
     private fun list(
