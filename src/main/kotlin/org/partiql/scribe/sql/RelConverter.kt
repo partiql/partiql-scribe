@@ -39,7 +39,7 @@ import org.partiql.types.StaticType
  *
  * !!! IMPORTANT !!!
  */
-open class RelToSql(
+open class RelConverter(
     private val transform: SqlTransform,
 ) : PlanBaseVisitor<ExprSfwBuilder, Rel.Type?>() {
 
@@ -96,7 +96,7 @@ open class RelToSql(
         // validate scan type
         val type = ctx!!
         assert(type.schema.size == 1) { "Invalid SCAN schema, expected a single binding but found ${ctx.dump()}" }
-        val rexToSql = RexToSql(transform, Locals(type.schema))
+        val rexToSql = transform.getRexConverter(Locals(type.schema))
         // unpack to FROM clause
         sfw.from = fromValue(
             expr = rexToSql.apply(node.rex), // FROM <rex>,
@@ -118,7 +118,7 @@ open class RelToSql(
         // validate filter type
         val type = ctx!!
         // translate to AST
-        val rexToSql = RexToSql(transform, Locals(type.schema))
+        val rexToSql = transform.getRexConverter(Locals(type.schema))
         sfw.where = rexToSql.apply(node.predicate)
         return sfw
     }
@@ -128,33 +128,28 @@ open class RelToSql(
         // validate exclude type
         val type = ctx!!
         // translate to AST
-        val rexToSql = RexToSql(transform, Locals(type.schema))
-        sfw.exclude = exclude(
-            node.items.map { item ->
-                excludeItem(
-                    root = rexToSql.visitRexOpVar(item.root, StaticType.ANY) as Expr.Var,
-                    steps = item.steps.map { step ->
-                        when (step) {
-                            is Rel.Op.Exclude.Step.CollWildcard -> excludeStepCollWildcard()
-                            is Rel.Op.Exclude.Step.StructField -> {
-                                val case = when (step.symbol.caseSensitivity) {
-                                    org.partiql.plan.Identifier.CaseSensitivity.SENSITIVE -> Identifier.CaseSensitivity.SENSITIVE
-                                    org.partiql.plan.Identifier.CaseSensitivity.INSENSITIVE -> Identifier.CaseSensitivity.INSENSITIVE
-                                }
-                                excludeStepStructField(
-                                    Identifier.Symbol(
-                                        symbol = step.symbol.symbol,
-                                        caseSensitivity = case
-                                    )
-                                )
+        val rexToSql = transform.getRexConverter(Locals(type.schema))
+        sfw.exclude = exclude(node.items.map { item ->
+            excludeItem(root = rexToSql.visitRexOpVar(item.root, StaticType.ANY) as Expr.Var,
+                steps = item.steps.map { step ->
+                    when (step) {
+                        is Rel.Op.Exclude.Step.CollWildcard -> excludeStepCollWildcard()
+                        is Rel.Op.Exclude.Step.StructField -> {
+                            val case = when (step.symbol.caseSensitivity) {
+                                org.partiql.plan.Identifier.CaseSensitivity.SENSITIVE -> Identifier.CaseSensitivity.SENSITIVE
+                                org.partiql.plan.Identifier.CaseSensitivity.INSENSITIVE -> Identifier.CaseSensitivity.INSENSITIVE
                             }
-                            is Rel.Op.Exclude.Step.CollIndex -> excludeStepCollIndex(step.index)
-                            is Rel.Op.Exclude.Step.StructWildcard -> excludeStepStructWildcard()
+                            excludeStepStructField(
+                                Identifier.Symbol(
+                                    symbol = step.symbol.symbol, caseSensitivity = case
+                                )
+                            )
                         }
+                        is Rel.Op.Exclude.Step.CollIndex -> excludeStepCollIndex(step.index)
+                        is Rel.Op.Exclude.Step.StructWildcard -> excludeStepStructWildcard()
                     }
-                )
-            }
-        )
+                })
+        })
         return sfw
     }
 
@@ -165,7 +160,6 @@ open class RelToSql(
         val sfw = visitRel(node.input, null)
 
         // we had projections from the aggregation
-
 
         // we want to replace all existing vars with what's in sfw.select
         // HACK!!!
@@ -182,7 +176,7 @@ open class RelToSql(
             projections = projections,
         )
 
-        val rexToSql = RexToSql(transform, locals)
+        val rexToSql = transform.getRexConverter(locals)
         val type = ctx!!
         assert(type.schema.size == node.projections.size) { "Malformed plan, relation output type does not match projections" }
 
@@ -202,7 +196,7 @@ open class RelToSql(
         val lhs = visitRel(node.lhs, null)
         val rhs = visitRel(node.rhs, null)
         val schema = Locals(node.lhs.type.schema + node.rhs.type.schema)
-        val condition = RexToSql(transform, schema).apply(node.rex)
+        val condition = transform.getRexConverter(schema).apply(node.rex)
         val type = when (node.type) {
             Rel.Op.Join.Type.INNER -> From.Join.Type.INNER
             Rel.Op.Join.Type.LEFT -> From.Join.Type.LEFT_OUTER
@@ -210,17 +204,14 @@ open class RelToSql(
             Rel.Op.Join.Type.FULL -> From.Join.Type.FULL_OUTER
         }
         lhs.from = fromJoin(
-            lhs = lhs.from!!,
-            rhs = rhs.from!!,
-            type = type,
-            condition = condition
+            lhs = lhs.from!!, rhs = rhs.from!!, type = type, condition = condition
         )
         return lhs
     }
 
     override fun visitRelOpAggregate(node: Rel.Op.Aggregate, ctx: Rel.Type?): ExprSfwBuilder {
         val sfw = visitRel(node.input, null)
-        val rexToSql = RexToSql(transform, Locals(node.input.type.schema))
+        val rexToSql = transform.getRexConverter(Locals(node.input.type.schema))
         if (node.groups.isNotEmpty()) {
             sfw.groupBy = groupBy(
                 strategy = GroupBy.Strategy.FULL,
@@ -234,19 +225,16 @@ open class RelToSql(
             )
         }
         // Aggregations hack!!
-        sfw.select = selectProject(
-            setq = null,
-            items = node.calls.map {
-                selectProjectItemExpression(
-                    expr = visitAgg(rexToSql, it),
-                    asAlias = null,
-                )
-            }
-        )
+        sfw.select = selectProject(setq = null, items = node.calls.map {
+            selectProjectItemExpression(
+                expr = visitAgg(rexToSql, it),
+                asAlias = null,
+            )
+        })
         return sfw
     }
 
-    private fun visitAgg(transform: RexToSql, agg: Rel.Op.Aggregate.Call): Expr.Agg {
+    private fun visitAgg(transform: RexConverter, agg: Rel.Op.Aggregate.Call): Expr.Agg {
         val args = agg.args.map { transform.apply(it) }
         val call = agg.agg
         return exprAgg(
