@@ -46,7 +46,7 @@ public class Locals(
 )
 
 /**
- * RexToSql translates a [Rex] tree in the given local scope.
+ * RexConverter translates a [Rex] tree in the given local scope.
  */
 public open class RexConverter(
     private val transform: SqlTransform,
@@ -194,7 +194,7 @@ public open class RexConverter(
         val relToSql = transform.getRelConverter()
         val rexToSql = transform.getRexConverter(locals)
         val sfw = relToSql.apply(node.rel)
-        assert(sfw.select != null) { "SELECT from RelToSql should never be null" }
+        assert(sfw.select != null) { "SELECT from RelConverter should never be null" }
         val setq = getSetQuantifier(sfw.select!!)
         val select = convertSelectValueToSqlSelect(sfw.select, node.constructor, node.rel, setq) ?: convertSelectValue(
             node.constructor,
@@ -260,7 +260,7 @@ public open class RexConverter(
     ): Select? {
         val relProject = input.op as? Rel.Op.Project ?: return null
         val structOp = getConstructorFromProjection(constructor, relProject)?.op as? Rex.Op.Struct ?: return null
-        val newRexToSql = RexConverter(transform, Locals(relProject.input.type.schema))
+        val newRexConverter = RexConverter(transform, Locals(relProject.input.type.schema))
         val type = constructor.type as? StructType ?: return null
         if (type.constraints.contains(TupleConstraint.Open(false))
                 .not() || type.constraints.contains(TupleConstraint.Ordered).not()
@@ -285,7 +285,7 @@ public open class RexConverter(
                 }
                 val fieldName = (key.value as StringValue).value ?: return null
                 //
-                val expr = newRexToSql.apply(field.v)
+                val expr = newRexConverter.apply(field.v)
                 val asAlias = binder(fieldName)
                 selectProjectItemExpression(expr, asAlias)
             }

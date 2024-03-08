@@ -98,7 +98,7 @@ public open class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
     // uses some special syntax (same as Spark's `transform` function).
     // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
     // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
-    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexToSql
+    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexConverter
     private fun transform(sqlArgs: List<SqlArg>): Expr {
         val fnName = id("transform")
         val arrayExpr = sqlArgs[0].expr
