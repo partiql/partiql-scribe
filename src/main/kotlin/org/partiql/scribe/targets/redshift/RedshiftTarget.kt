@@ -68,11 +68,6 @@ public open class RedshiftTarget : SqlTarget() {
      */
     override fun getCalls(onProblem: ProblemCallback): SqlCalls = RedshiftCalls(onProblem)
 
-    override fun unplan(plan: PartiQLPlan, onProblem: ProblemCallback): Statement {
-        val transform = RedshiftTransform(plan.catalogs, getCalls(onProblem), onProblem)
-        return transform.apply(plan.statement)
-    }
-
     /**
      * Rewrite a PartiQLPlan in terms of Redshift features.
      */
