@@ -11,8 +11,6 @@ import org.partiql.ast.exprLit
 import org.partiql.ast.exprPath
 import org.partiql.ast.exprPathStepIndex
 import org.partiql.ast.exprPathStepSymbol
-import org.partiql.ast.exprPathStepUnpivot
-import org.partiql.ast.exprPathStepWildcard
 import org.partiql.ast.exprStruct
 import org.partiql.ast.exprStructField
 import org.partiql.ast.exprVar
@@ -50,7 +48,7 @@ public class Locals(
 /**
  * RexToSql translates a [Rex] tree in the given local scope.
  */
-public open class RexToSql(
+public open class RexConverter(
     private val transform: SqlTransform,
     private val locals: Locals,
 ) : PlanBaseVisitor<Expr, StaticType>() {
@@ -81,8 +79,7 @@ public open class RexToSql(
     override fun visitRexOpTupleUnion(node: Rex.Op.TupleUnion, ctx: StaticType): Expr {
         val args = node.args.map { arg -> visitRex(arg, ctx) }
         return exprCall(
-            identifierSymbol("TUPLEUNION", Identifier.CaseSensitivity.INSENSITIVE),
-            args = args
+            identifierSymbol("TUPLEUNION", Identifier.CaseSensitivity.INSENSITIVE), args = args
         )
     }
 
@@ -106,43 +103,39 @@ public open class RexToSql(
         return exprVar(global, scope)
     }
 
-    override fun visitRexOpPath(node: Rex.Op.Path, ctx: StaticType): Expr =
-        when(node) {
-            is Rex.Op.Path.Index -> visitRexOpPathIndex(node, ctx)
-            is Rex.Op.Path.Key -> visitRexOpPathKey(node, ctx)
-            is Rex.Op.Path.Symbol -> visitRexOpPathSymbol(node, ctx)
-        }
+    override fun visitRexOpPath(node: Rex.Op.Path, ctx: StaticType): Expr = when (node) {
+        is Rex.Op.Path.Index -> visitRexOpPathIndex(node, ctx)
+        is Rex.Op.Path.Key -> visitRexOpPathKey(node, ctx)
+        is Rex.Op.Path.Symbol -> visitRexOpPathSymbol(node, ctx)
+    }
 
     override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: StaticType): Expr {
         val prev = visitRex(node.root, ctx)
         val step = exprPathStepIndex(visitRex(node.key, ctx))
-        if (prev is Expr.Path) {
-            return exprPath(prev.root, prev.steps + step)
-        }
-        else {
-            return exprPath(visitRex(node.root, ctx), listOf(step))
+        return if (prev is Expr.Path) {
+            exprPath(prev.root, prev.steps + step)
+        } else {
+            exprPath(visitRex(node.root, ctx), listOf(step))
         }
     }
 
     override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: StaticType): Expr {
         val prev = visitRex(node.root, ctx)
         val step = exprPathStepIndex(visitRex(node.key, ctx))
-        if (prev is Expr.Path) {
-            return exprPath(prev.root, prev.steps + step)
-        }
-        else {
-            return exprPath(visitRex(node.root, ctx), listOf(step))
+        return if (prev is Expr.Path) {
+            exprPath(prev.root, prev.steps + step)
+        } else {
+            exprPath(visitRex(node.root, ctx), listOf(step))
         }
     }
 
     override fun visitRexOpPathSymbol(node: Rex.Op.Path.Symbol, ctx: StaticType): Expr {
         val prev = visitRex(node.root, ctx)
         val step = exprPathStepSymbol(id(node.key))
-        if (prev is Expr.Path) {
-            return exprPath(prev.root, prev.steps + step)
-        }
-        else {
-            return exprPath(visitRex(node.root, ctx), listOf(step))
+        return if (prev is Expr.Path) {
+            exprPath(prev.root, prev.steps + step)
+        } else {
+            exprPath(visitRex(node.root, ctx), listOf(step))
         }
     }
 
@@ -198,14 +191,16 @@ public open class RexToSql(
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: StaticType): Expr {
-        val relToSql = RelToSql(transform)
-        val rexToSql = RexToSql(transform, locals)
+        val relToSql = transform.getRelConverter()
+        val rexToSql = transform.getRexConverter(locals)
         val sfw = relToSql.apply(node.rel)
         assert(sfw.select != null) { "SELECT from RelToSql should never be null" }
         val setq = getSetQuantifier(sfw.select!!)
-        val select = convertSelectValueToSqlSelect(sfw.select, node.constructor, node.rel, setq)
-            ?: convertSelectValue(node.constructor, node.rel, setq)
-            ?: selectValue(rexToSql.apply(node.constructor), setq)
+        val select = convertSelectValueToSqlSelect(sfw.select, node.constructor, node.rel, setq) ?: convertSelectValue(
+            node.constructor,
+            node.rel,
+            setq
+        ) ?: selectValue(rexToSql.apply(node.constructor), setq)
         sfw.select = select
         return sfw.build()
     }
@@ -257,10 +252,15 @@ public open class RexToSql(
      * return null.
      */
     @OptIn(PartiQLValueExperimental::class)
-    private fun convertSelectValueToSqlSelect(curr: Select?, constructor: Rex, input: Rel, setq: SetQuantifier?): Select? {
+    private fun convertSelectValueToSqlSelect(
+        curr: Select?,
+        constructor: Rex,
+        input: Rel,
+        setq: SetQuantifier?,
+    ): Select? {
         val relProject = input.op as? Rel.Op.Project ?: return null
         val structOp = getConstructorFromProjection(constructor, relProject)?.op as? Rex.Op.Struct ?: return null
-        val newRexToSql = RexToSql(transform, Locals(relProject.input.type.schema))
+        val newRexToSql = RexConverter(transform, Locals(relProject.input.type.schema))
         val type = constructor.type as? StructType ?: return null
         if (type.constraints.contains(TupleConstraint.Open(false))
                 .not() || type.constraints.contains(TupleConstraint.Ordered).not()
@@ -292,8 +292,7 @@ public open class RexToSql(
         }
 
         return selectProject(
-            items = projections,
-            setq = setq
+            items = projections, setq = setq
         )
     }
 
@@ -304,7 +303,7 @@ public open class RexToSql(
     private fun convertSelectValue(constructor: Rex, input: Rel, setq: SetQuantifier?): Select? {
         val relProject = input.op as? Rel.Op.Project ?: return null
         val projection = getConstructorFromProjection(constructor, relProject) ?: return null
-        val rexToSql = RexToSql(transform, Locals(relProject.input.type.schema))
+        val rexToSql = RexConverter(transform, Locals(relProject.input.type.schema))
         return when (val op = projection.op) {
             is Rex.Op.TupleUnion -> {
                 val items = op.args.map {
@@ -317,11 +316,15 @@ public open class RexToSql(
     }
 
     @OptIn(PartiQLValueExperimental::class)
-    private fun getProjectionItemFromSingleItemStruct(rex: Rex, rexToSql: RexToSql): Select.Project.Item? {
+    private fun getProjectionItemFromSingleItemStruct(rex: Rex, rexToSql: RexConverter): Select.Project.Item? {
         val op = rex.op as? Rex.Op.Struct ?: return null
-        if (op.fields.size != 1) { return null }
+        if (op.fields.size != 1) {
+            return null
+        }
         val key = op.fields[0].k.op
-        if (key !is Rex.Op.Lit || key.value !is StringValue) { return null }
+        if (key !is Rex.Op.Lit || key.value !is StringValue) {
+            return null
+        }
         val fieldName = (key.value as StringValue).value ?: return null
         //
         val expr = rexToSql.apply(op.fields[0].v)
@@ -335,8 +338,12 @@ public open class RexToSql(
      */
     private fun getConstructorFromProjection(constructor: Rex, relProject: Rel.Op.Project): Rex? {
         val constructorOp = constructor.op as? Rex.Op.Var ?: return null
-        if (constructorOp.ref != 0) { return null }
-        if (relProject.projections.size != 1) { return null }
+        if (constructorOp.ref != 0) {
+            return null
+        }
+        if (relProject.projections.size != 1) {
+            return null
+        }
         return relProject.projections[0]
     }
 

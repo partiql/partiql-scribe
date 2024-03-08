@@ -24,7 +24,7 @@ public open class SqlTransform(
 
     public open fun apply(statement: PlanStatement): AstStatement {
         if (statement is PlanStatement.Query) {
-            val transform = RexToSql(this, Locals(emptyList()))
+            val transform = getRexConverter(Locals(emptyList()))
             val expr = transform.apply(statement.root)
             return statementQuery(expr)
         }
@@ -44,6 +44,10 @@ public open class SqlTransform(
     }
 
     public open fun getFunction(name: String, args: SqlArgs): Expr = calls.retarget(name, args)
+
+    public open fun getRexConverter(locals: Locals): RexConverter = RexConverter(this, locals)
+
+    public open fun getRelConverter(): RelConverter = RelConverter(this)
 
     public fun handleProblem(problem: ScribeProblem) = onProblem(problem)
 

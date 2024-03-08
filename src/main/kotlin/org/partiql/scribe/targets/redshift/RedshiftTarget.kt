@@ -1,5 +1,6 @@
 package org.partiql.scribe.targets.redshift
 
+import org.partiql.ast.Statement
 import org.partiql.ast.sql.SqlDialect
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode
@@ -26,6 +27,7 @@ import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
+import org.partiql.scribe.sql.SqlTransform
 import org.partiql.types.CollectionType
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType
@@ -48,6 +50,11 @@ public open class RedshiftTarget : SqlTarget() {
 
     override val version: String = "0"
 
+    /**
+     * Redshift feature set allow list.
+     */
+    override val features: SqlFeatures = RedshiftFeatures()
+
     companion object {
 
         @JvmStatic
@@ -61,10 +68,10 @@ public open class RedshiftTarget : SqlTarget() {
      */
     override fun getCalls(onProblem: ProblemCallback): SqlCalls = RedshiftCalls(onProblem)
 
-    /**
-     * Redshift feature set allow list.
-     */
-    override val features: SqlFeatures = RedshiftFeatures()
+    override fun unplan(plan: PartiQLPlan, onProblem: ProblemCallback): Statement {
+        val transform = RedshiftTransform(plan.catalogs, getCalls(onProblem), onProblem)
+        return transform.apply(plan.statement)
+    }
 
     /**
      * Rewrite a PartiQLPlan in terms of Redshift features.
