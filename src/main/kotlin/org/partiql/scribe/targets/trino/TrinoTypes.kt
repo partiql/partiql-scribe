@@ -58,7 +58,7 @@ internal object TrinoTypes {
         return false
     }
 
-    private fun candidates(t: StaticType): Set<KClass<*>> = t.allTypes
+    private fun candidates(t: StaticType): Set<KClass<*>> = t.flatten().allTypes
         .filter { it !is NullType && it !is MissingType }
         .flatMap { types[it::class]?.toList() ?: emptyList() }
         .toSet()

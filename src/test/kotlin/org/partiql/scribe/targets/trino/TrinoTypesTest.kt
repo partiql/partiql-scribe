@@ -87,4 +87,14 @@ class TrinoTypesTest {
         test(StaticType.LIST, StaticType.LIST)
     }
 
+    @Test
+    fun unionOfTypes() {
+        test(StaticType.unionOf(StaticType.INT, StaticType.INT2), StaticType.DECIMAL)
+        test(StaticType.unionOf(StaticType.INT, StaticType.STRING), StaticType.STRING)
+        // below should have been flattened at some point
+        test(StaticType.unionOf(StaticType.unionOf(StaticType.INT, StaticType.INT2)), StaticType.DECIMAL)
+        test(StaticType.unionOf(StaticType.unionOf(StaticType.INT, StaticType.STRING)), StaticType.DECIMAL)
+        test(StaticType.unionOf(StaticType.unionOf(StaticType.unionOf(StaticType.INT, StaticType.INT2))), StaticType.DECIMAL)
+        test(StaticType.unionOf(StaticType.unionOf(StaticType.unionOf(StaticType.INT))), StaticType.DECIMAL)
+    }
 }
