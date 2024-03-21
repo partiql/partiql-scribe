@@ -1,12 +1,12 @@
 package org.partiql.scribe
 
 import org.partiql.ast.Statement
+import org.partiql.errors.Problem
+import org.partiql.errors.ProblemCallback
 import org.partiql.errors.ProblemSeverity
 import org.partiql.parser.PartiQLParser
 import org.partiql.plan.PartiQLPlan
 import org.partiql.planner.PartiQLPlanner
-import org.partiql.plugins.local.LocalPlugin
-import org.partiql.spi.connector.ConnectorSession
 import org.partiql.types.function.FunctionSignature
 
 /**
@@ -55,9 +55,18 @@ public class ScribeCompiler internal constructor(
         return result.root
     }
 
+    private class PlanProblemCallback: ProblemCallback {
+        val problems = mutableListOf<Problem>()
+
+        override fun invoke(p1: Problem) {
+            problems.add(p1)
+        }
+    }
+
     private fun plan(statement: Statement, session: PartiQLPlanner.Session): PartiQLPlan {
-        val result = planner.plan(statement, session)
-        val errors = result.problems.filter { it.details.severity == ProblemSeverity.ERROR }
+        val callback = PlanProblemCallback()
+        val result = planner.plan(statement, session, onProblem = callback)
+        val errors = callback.problems.filter { it.details.severity == ProblemSeverity.ERROR }
         if (errors.isNotEmpty()) {
             throw RuntimeException("Planner encountered errors: ${errors.joinToString()}")
         }
