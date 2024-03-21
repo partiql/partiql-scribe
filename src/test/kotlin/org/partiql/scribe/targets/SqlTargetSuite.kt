@@ -95,13 +95,6 @@ abstract class SqlTargetSuite {
                     val result = scribe.compile(statement, target, session)
                     val actual = result.output.value
                     val expected = test.statement
-                    comparator.assertEquals(expected, actual) {
-                        this.appendLine("Input Query: $statement")
-                        this.appendLine("Expected result: $expected")
-                        this.appendLine("Actual result: $actual")
-                        // debug dump
-                        PlanPrinter.append(this, result.input)
-                    }
                     val errors = result.problems.filter { it.level == ScribeProblem.Level.ERROR }
                     if (errors.isNotEmpty()) {
                         fail {
@@ -112,6 +105,13 @@ abstract class SqlTargetSuite {
                                 PlanPrinter.append(this, result.input)
                             }
                         }
+                    }
+                    comparator.assertEquals(expected, actual) {
+                        this.appendLine("Input Query: $statement")
+                        this.appendLine("Expected result: $expected")
+                        this.appendLine("Actual result: $actual")
+                        // debug dump
+                        PlanPrinter.append(this, result.input)
                     }
                 } catch (ex: ScribeException) {
                     fail {
