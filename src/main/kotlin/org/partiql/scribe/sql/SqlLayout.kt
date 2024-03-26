@@ -32,23 +32,21 @@ public interface SqlLayout {
             private val indent = Indent(2, Indent.Type.SPACE)
 
             override fun format(head: SqlBlock): String {
-                val ctx = Ctx.empty()
-                format(head, ctx)
-                return ctx.toString()
-            }
-
-            private tailrec fun format(curr: SqlBlock, ctx: Ctx) {
-                when (curr) {
-                    is SqlBlock.NL -> ctx.out.appendLine()
-                    is SqlBlock.Text -> ctx.out.append(curr.text)
-                    is SqlBlock.Nest -> {
-                        if (curr.prefix != null) ctx.out.append(curr.prefix)
-                        @Suppress("NON_TAIL_RECURSIVE_CALL")
-                        format(curr.child, ctx.nest())
-                        if (curr.postfix != null) ctx.out.append(curr.postfix)
+                val sb = StringBuilder()
+                var curr: SqlBlock? = head
+                while (curr != null) {
+                    when (curr) {
+                        is SqlBlock.NL -> sb.appendLine()
+                        is SqlBlock.Text -> sb.append(curr.text)
+                        is SqlBlock.Nest -> {
+                            if (curr.prefix != null) sb.append(curr.prefix)
+                            sb.append(format(curr.child))
+                            if (curr.postfix != null) sb.append(curr.postfix)
+                        }
                     }
+                    curr = curr.next
                 }
-                return if (curr.next != null) format(curr.next!!, ctx) else Unit
+                return sb.toString()
             }
         }
 
@@ -59,23 +57,21 @@ public interface SqlLayout {
         public val ONELINE = object : SqlLayout {
 
             override fun format(head: SqlBlock): String {
-                val ctx = Ctx.empty()
-                format(head, ctx)
-                return ctx.toString()
-            }
-
-            private tailrec fun format(curr: SqlBlock, ctx: Ctx) {
-                when (curr) {
-                    is SqlBlock.NL -> {} // skip newlines
-                    is SqlBlock.Text -> ctx.out.append(curr.text)
-                    is SqlBlock.Nest -> {
-                        if (curr.prefix != null) ctx.out.append(curr.prefix)
-                        @Suppress("NON_TAIL_RECURSIVE_CALL")
-                        format(curr.child, ctx.nest())
-                        if (curr.postfix != null) ctx.out.append(curr.postfix)
+                val sb = StringBuilder()
+                var curr: SqlBlock? = head
+                while (curr != null) {
+                    when (curr) {
+                        is SqlBlock.NL -> {} // ignore
+                        is SqlBlock.Text -> sb.append(curr.text)
+                        is SqlBlock.Nest -> {
+                            if (curr.prefix != null) sb.append(curr.prefix)
+                            sb.append(format(curr.child))
+                            if (curr.postfix != null) sb.append(curr.postfix)
+                        }
                     }
+                    curr = curr.next
                 }
-                return if (curr.next != null) format(curr.next!!, ctx) else Unit
+                return sb.toString()
             }
         }
     }
