@@ -9,33 +9,36 @@ import org.partiql.ast.identifierSymbol
 import org.partiql.ast.selectProjectItemExpression
 import org.partiql.ast.sql.SqlBlock
 import org.partiql.ast.sql.SqlDialect
+import org.partiql.ast.sql.sql
 import org.partiql.scribe.sql.concat
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
 
 public open class TrinoDialect : SqlDialect() {
-    override fun visitExprSessionAttribute(node: Expr.SessionAttribute, head: SqlBlock): SqlBlock {
-        return SqlBlock.Link(head, SqlBlock.Text(node.attribute.name.lowercase()))
+    override fun visitExprSessionAttribute(node: Expr.SessionAttribute, tail: SqlBlock): SqlBlock {
+        return tail concat node.attribute.name.lowercase()
     }
 
     /**
      * Trino does not support x['y'] syntax; replace with x.y.
      *
      * @param node
-     * @param head
+     * @param tail
      * @return
      */
     @OptIn(PartiQLValueExperimental::class)
-    override fun visitExprPathStepIndex(node: Expr.Path.Step.Index, head: SqlBlock): SqlBlock {
+    override fun visitExprPathStepIndex(node: Expr.Path.Step.Index, tail: SqlBlock): SqlBlock {
         val key = node.key
         return if (key is Expr.Lit && key.value is StringValue) {
-            val symbol = exprPathStepSymbol(identifierSymbol(
-                symbol = (key.value as StringValue).value!!,
-                caseSensitivity = Identifier.CaseSensitivity.SENSITIVE,
-            ))
-            super.visitExprPathStepSymbol(symbol, head)
+            val symbol = exprPathStepSymbol(
+                identifierSymbol(
+                    symbol = (key.value as StringValue).value!!,
+                    caseSensitivity = Identifier.CaseSensitivity.SENSITIVE,
+                )
+            )
+            visitExprPathStepSymbol(symbol, tail)
         } else {
-            super.visitExprPathStepIndex(node, head)
+            super.visitExprPathStepIndex(node, tail)
         }
     }
 
@@ -57,57 +60,57 @@ public open class TrinoDialect : SqlDialect() {
      * [TrinoTarget] should have already converted these singleton ROWs to CAST(ROW(...) AS ...) calls.
      */
     @OptIn(PartiQLValueExperimental::class)
-    override fun visitExprStruct(node: Expr.Struct, head: SqlBlock): SqlBlock {
+    override fun visitExprStruct(node: Expr.Struct, tail: SqlBlock): SqlBlock {
         // node.fields.size == 0 is currently an error since Trino does not currently allow empty ROWs
         // node.fields.size == 1 already covered by CAST(ROW(...) AS ...) calls
         assert(node.fields.size > 1)
         val fieldsAsItems = node.fields.map { field ->
             selectProjectItemExpression(
-                expr = field.value,
-                asAlias = identifierSymbol((((field.name as Expr.Lit).value) as StringValue).string!!, caseSensitivity = Identifier.CaseSensitivity.INSENSITIVE)
+                expr = field.value, asAlias = identifierSymbol(
+                    (((field.name as Expr.Lit).value) as StringValue).string!!,
+                    caseSensitivity = Identifier.CaseSensitivity.INSENSITIVE
+                )
             )
         }
-        return head concat list("(SELECT ", ")") { fieldsAsItems }
+        return tail concat list("(SELECT ", ")") { fieldsAsItems }
     }
 
-    override fun visitTypeCustom(node: Type.Custom, head: SqlBlock): SqlBlock = head concat r(node.name)
+    override fun visitTypeCustom(node: Type.Custom, tail: SqlBlock): SqlBlock = tail concat node.name
 
-    override fun visitExprCall(node: Expr.Call, head: SqlBlock): SqlBlock {
+    override fun visitExprCall(node: Expr.Call, tail: SqlBlock): SqlBlock {
         return when {
             // Trino's transform function uses `->` to separate between the element variable and the element expr.
-            node.function is Identifier.Symbol && (node.function as Identifier.Symbol).symbol == "transform"-> {
-                val arrayExpr = visitExpr(node.args[0], SqlBlock.Nil)
-                val elementVar = visitExpr(node.args[1], SqlBlock.Nil)
-                val elementExpr = visitExpr(node.args[2], SqlBlock.Nil)
-                var h = head
-                h = visitIdentifier(node.function, h)
-                h = h concat "($arrayExpr, $elementVar -> $elementExpr)"
-                h
+            node.function is Identifier.Symbol && (node.function as Identifier.Symbol).symbol == "transform" -> {
+                val arrayExpr = node.args[0].sql(dialect = this)
+                val elementVar = node.args[1].sql(dialect = this)
+                val elementExpr = node.args[2].sql(dialect = this)
+                var t = tail
+                t = visitIdentifier(node.function, t)
+                t = t concat "($arrayExpr, $elementVar -> $elementExpr)"
+                t
             }
-            else -> super.visitExprCall(node, head)
+            else -> super.visitExprCall(node, tail)
         }
     }
 
-    override fun visitTypeInt2(node: Type.Int2, head: SqlBlock): SqlBlock = head concat r("SMALLINT")
+    override fun visitTypeInt2(node: Type.Int2, tail: SqlBlock): SqlBlock = tail concat "SMALLINT"
 
-    override fun visitTypeInt4(node: Type.Int4, head: SqlBlock): SqlBlock = head concat r("INT")
+    override fun visitTypeInt4(node: Type.Int4, tail: SqlBlock): SqlBlock = tail concat "INT"
 
-    override fun visitTypeInt8(node: Type.Int8, head: SqlBlock): SqlBlock = head concat r("BIGINT")
+    override fun visitTypeInt8(node: Type.Int8, tail: SqlBlock): SqlBlock = tail concat "BIGINT"
 
-    override fun visitExprUnary(node: Expr.Unary, head: SqlBlock): SqlBlock {
+    override fun visitExprUnary(node: Expr.Unary, tail: SqlBlock): SqlBlock {
         val op = when (node.op) {
             Expr.Unary.Op.NOT -> "NOT ("
             Expr.Unary.Op.POS -> "+("
             Expr.Unary.Op.NEG -> "-("
         }
-        var h = head
-        h = h concat r(op)
-        h = visitExprWrapped(node.expr, h)
-        h = h concat r(")")
-        return h
+        var t = tail
+        t = t concat op
+        t = visitExprWrapped(node.expr, t)
+        t = t concat ")"
+        return t
     }
-
-    private fun r(text: String): SqlBlock = SqlBlock.Text(text)
 
     private fun list(
         start: String? = "(",
@@ -116,12 +119,16 @@ public open class TrinoDialect : SqlDialect() {
         children: () -> List<AstNode>,
     ): SqlBlock {
         val kids = children()
-        var h = start?.let { r(it) } ?: SqlBlock.Nil
+        val h = SqlBlock.root()
+        var t = h
         kids.forEachIndexed { i, child ->
-            h = child.accept(this, h)
-            h = if (delimiter != null && (i + 1) < kids.size) h concat r(delimiter) else h
+            t = child.accept(this, t)
+            t = if (delimiter != null && (i + 1) < kids.size) t concat delimiter else t
         }
-        h = if (end != null) h concat r(end) else h
-        return h
+        return SqlBlock.Nest(
+            prefix = start,
+            postfix = end,
+            child = h,
+        )
     }
 }
