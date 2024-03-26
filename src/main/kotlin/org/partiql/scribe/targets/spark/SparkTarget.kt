@@ -1,6 +1,6 @@
 package org.partiql.scribe.targets.spark
 
-import org.partiql.ast.sql.SqlDialect
+import org.partiql.scribe.sql.SqlDialect
 import org.partiql.plan.Fn
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode

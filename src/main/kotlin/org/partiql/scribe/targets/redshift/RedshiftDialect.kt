@@ -6,8 +6,8 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Select
 import org.partiql.ast.exprPathStepSymbol
 import org.partiql.ast.identifierSymbol
-import org.partiql.ast.sql.SqlBlock
-import org.partiql.ast.sql.SqlDialect
+import org.partiql.scribe.sql.SqlBlock
+import org.partiql.scribe.sql.SqlDialect
 import org.partiql.scribe.sql.concat
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
