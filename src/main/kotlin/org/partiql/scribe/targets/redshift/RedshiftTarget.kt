@@ -1,7 +1,6 @@
 package org.partiql.scribe.targets.redshift
 
-import org.partiql.ast.Statement
-import org.partiql.ast.sql.SqlDialect
+import org.partiql.scribe.sql.SqlDialect
 import org.partiql.plan.PartiQLPlan
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
@@ -27,7 +26,6 @@ import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
-import org.partiql.scribe.sql.SqlTransform
 import org.partiql.types.CollectionType
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType

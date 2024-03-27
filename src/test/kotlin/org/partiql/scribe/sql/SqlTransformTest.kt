@@ -1,18 +1,12 @@
 package org.partiql.scribe.sql
 
-import com.amazon.ionelement.api.field
 import org.junit.jupiter.api.Test
-import org.partiql.ast.sql.SqlLayout
-import org.partiql.ast.sql.sql
-import org.partiql.plan.Identifier
 import org.partiql.plan.*
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.plan.Statement
-import org.partiql.plan.debug.PlanPrinter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.types.StaticType
-import org.partiql.types.StringType
 import org.partiql.types.function.FunctionParameter
 import org.partiql.types.function.FunctionSignature
 import org.partiql.value.PartiQLValueExperimental

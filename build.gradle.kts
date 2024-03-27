@@ -20,7 +20,7 @@ object Versions {
     const val jline = "3.21.0"
     const val junit5 = "5.9.3"
     const val picoCli = "4.7.0"
-    const val partiql = "0.14.3"
+    const val partiql = "0.14.4"
 }
 
 object Deps {
@@ -35,6 +35,7 @@ object Deps {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
