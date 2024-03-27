@@ -29,8 +29,6 @@ public interface SqlLayout {
         @JvmStatic
         public val DEFAULT = object : SqlLayout {
 
-            private val indent = Indent(2, Indent.Type.SPACE)
-
             override fun format(head: SqlBlock): String {
                 val sb = StringBuilder()
                 var curr: SqlBlock? = head
@@ -74,35 +72,5 @@ public interface SqlLayout {
                 return sb.toString()
             }
         }
-    }
-
-    private class Ctx private constructor(val out: StringBuilder, val level: Int) {
-        fun nest() = Ctx(out, level + 1)
-
-        override fun toString() = out.toString()
-
-        companion object {
-            fun empty() = Ctx(StringBuilder(), 0)
-        }
-    }
-
-    /**
-     * [SqlLayout] indent configuration.
-     *
-     * @property count
-     * @property type
-     */
-    public data class Indent(
-        @JvmField public val count: Int,
-        @JvmField public val type: Type,
-    ) {
-
-        enum class Type(val char: Char) {
-            TAB(Char(9)),
-            SPACE(Char(32)),
-            ;
-        }
-
-        override fun toString() = type.char.toString().repeat(count)
     }
 }
