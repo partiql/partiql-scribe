@@ -19,5 +19,21 @@ SELECT date_add('month', 5, current_date) AS "_1" FROM "default"."T" AS "T";
 --#[datetime-14]
 SELECT date_add('year', 5, current_date) AS "_1" FROM "default"."T" AS "T";
 
+
 --#[datetime-15]
-SELECT date_diff('day', current_date, current_date) AS "_1" FROM "default"."T" AS "T";
+SELECT date_diff('year', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-16]
+SELECT date_diff('month', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-17]
+SELECT date_diff('day', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-18]
+SELECT date_diff('hour', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-19]
+SELECT date_diff('minute', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-20]
+SELECT date_diff('second', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";

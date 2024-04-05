@@ -22,4 +22,19 @@ SELECT DATEADD(MONTH, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
 SELECT DATEADD(YEAR, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-15]
-SELECT DATEDIFF(DAY, CURRENT_DATE, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATEDIFF(YEAR, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-16]
+SELECT DATEDIFF(MONTH, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-17]
+SELECT DATEDIFF(DAY, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-18]
+SELECT DATEDIFF(HOUR, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-19]
+SELECT DATEDIFF(MINUTE, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-20]
+SELECT DATEDIFF(SECOND, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";

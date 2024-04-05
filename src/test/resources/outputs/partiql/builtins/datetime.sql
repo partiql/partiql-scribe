@@ -44,4 +44,19 @@ SELECT DATE_ADD(MONTH, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
 SELECT DATE_ADD(YEAR, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-15]
-SELECT DATE_DIFF(DAY, CURRENT_DATE, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATE_DIFF(YEAR, "T"['timestamp_1'], "T"['timestamp_2']) AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-16]
+SELECT DATE_DIFF(MONTH, "T"['timestamp_1'], "T"['timestamp_2']) AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-17]
+SELECT DATE_DIFF(DAY, "T"['timestamp_1'], "T"['timestamp_2']) AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-18]
+SELECT DATE_DIFF(HOUR, "T"['timestamp_1'], "T"['timestamp_2']) AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-19]
+SELECT DATE_DIFF(MINUTE, "T"['timestamp_1'], "T"['timestamp_2']) AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-20]
+SELECT DATE_DIFF(SECOND, "T"['timestamp_1'], "T"['timestamp_2']) AS "_1" FROM "default"."T" AS "T";

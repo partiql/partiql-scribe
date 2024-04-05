@@ -140,7 +140,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         val d1 = exprCall(id(extract), listOf(args[0].expr))
         val d2 = exprCall(id(extract), listOf(args[1].expr))
         return exprBinary(
-            op = Expr.Binary.Op.PLUS,
+            op = Expr.Binary.Op.MINUS,
             lhs = d2,
             rhs = d1,
         )
