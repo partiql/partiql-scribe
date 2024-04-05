@@ -117,7 +117,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     }
 
     /**
-     * PartiQL's date_diff accepts a part whereas Spark's datediff returns the difference in days.
+     * PartiQL's date_diff accepts a part whereas Spark's date_diff returns the difference in days between two dates.
      *
      * We extract the datetime part and perform the difference.
      *
@@ -126,7 +126,6 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
      *  > https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/functions.html#datediff(org.apache.spark.sql.Column,org.apache.spark.sql.Column)
      *  > https://spark.apache.org/docs/2.3.0/api/sql/index.html#datediff
      */
-    @OptIn(PartiQLValueExperimental::class)
     override fun dateDiff(part: DatetimeField, args: SqlArgs): Expr {
         val extract = when (part) {
             DatetimeField.YEAR -> "year"
