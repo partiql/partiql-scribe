@@ -49,7 +49,15 @@
       {
         name: "v",
         type: "string",
-      }
+      },
+      {
+        name: "timestamp_1",
+        type: "timestamp",
+      },
+      {
+        name: "timestamp_2",
+        type: "timestamp",
+      },
     ]
   }
 }
