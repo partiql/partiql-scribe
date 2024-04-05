@@ -107,7 +107,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         ) {
            if (it != null) "<quantity>" else "0"
         }
-        log.warn("PartiQL `date_add($part, <quantity>, <date>)` was replaced by Spark `<date> + $intervalString`.")
+        log.info("PartiQL `date_add($part, <quantity>, <date>)` was replaced by Spark `<date> + $intervalString`.")
 
         return exprBinary(
             op = Expr.Binary.Op.PLUS,
@@ -137,6 +137,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
             DatetimeField.SECOND -> "second"
             else -> error("Unexpected datetime part `$part`")
         }
+        log.info("PartiQL `date_diff($part, <date_1>, <date_2>)` was replaced by Spark `$extract(<date_2>) - $extract(<date_1>)`.")
         val d1 = exprCall(id(extract), listOf(args[0].expr))
         val d2 = exprCall(id(extract), listOf(args[1].expr))
         return exprBinary(
