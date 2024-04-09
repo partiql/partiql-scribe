@@ -27,7 +27,7 @@
 --#[case-04]
 SELECT
     CASE
-        WHEN (`T`.`a` = true) THEN 'a IS TRUE'
+        WHEN `T`.`a` = true THEN 'a IS TRUE'
         ELSE 'a MUST BE FALSE'
         END AS `result`
 FROM `default`.`T` AS `T`;
@@ -35,7 +35,7 @@ FROM `default`.`T` AS `T`;
 --#[case-05]
 SELECT
     CASE
-        WHEN (`T`.`a` = true) THEN 'a IS TRUE'
+        WHEN `T`.`a` = true THEN 'a IS TRUE'
         ELSE 'a MUST BE FALSE'
         END AS `result`
 FROM `default`.`T` AS `T`;
@@ -43,7 +43,7 @@ FROM `default`.`T` AS `T`;
 --#[case-06]
 SELECT
     CASE
-        WHEN (`T`.`b` = 10) THEN 'b IS 10'
+        WHEN `T`.`b` = 10 THEN 'b IS 10'
         ELSE 'b IS NOT 10'
         END AS `result`
 FROM `default`.`T` AS `T`;
@@ -51,7 +51,7 @@ FROM `default`.`T` AS `T`;
 --#[case-07]
 SELECT
     CASE
-        WHEN (`T`.`d`.`e` = 'WATER') THEN 'd.e IS WATER'
+        WHEN `T`.`d`.`e` = 'WATER' THEN 'd.e IS WATER'
         ELSE 'd.e IS NOT WATER'
         END AS `result`
 FROM `default`.`T` AS `T`;
