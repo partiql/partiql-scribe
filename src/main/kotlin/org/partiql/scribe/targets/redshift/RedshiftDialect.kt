@@ -4,6 +4,7 @@ import org.partiql.ast.AstNode
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.Select
+import org.partiql.ast.Type
 import org.partiql.ast.exprPathStepSymbol
 import org.partiql.ast.identifierSymbol
 import org.partiql.scribe.sql.SqlBlock
@@ -58,6 +59,8 @@ public open class RedshiftDialect : SqlDialect() {
         t = visitExprWrapped(node.value, t)
         return t
     }
+
+    override fun visitTypeString(node: Type.String, tail: SqlBlock): SqlBlock = tail concat "VARCHAR"
 
     private fun list(
         start: String? = "(",
