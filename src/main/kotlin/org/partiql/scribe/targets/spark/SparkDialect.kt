@@ -45,6 +45,14 @@ public open class SparkDialect : SqlDialect() {
         return h
     }
 
+    override fun visitExprBinary(node: Expr.Binary, tail: SqlBlock): SqlBlock {
+        var t = tail
+        t = t concat "("
+        t = super.visitExprBinary(node, t)
+        t = t concat ")"
+        return t
+    }
+
     @OptIn(PartiQLValueExperimental::class)
     override fun visitExprPathStepIndex(node: Expr.Path.Step.Index, tail: SqlBlock): SqlBlock {
         val key = node.key
