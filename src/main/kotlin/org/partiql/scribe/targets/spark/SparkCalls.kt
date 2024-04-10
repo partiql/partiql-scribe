@@ -4,7 +4,10 @@ import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
 import org.partiql.ast.exprBinary
 import org.partiql.ast.exprCall
+import org.partiql.ast.exprCast
 import org.partiql.ast.exprLit
+import org.partiql.ast.typeBigint
+import org.partiql.ast.typeInt
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArg
@@ -131,8 +134,8 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
                 function = id("months_between"),
                 args = listOf(d2, d1)
             )
-            log.info("PartiQL `date_diff(year, <date_1>, <date_2>)` was replaced by Spark `floor(months_between(<date_2>, <date_1>) / 12).")
-            floor(div(call, 12))
+            log.info("PartiQL `date_diff(year, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) / 12 AS BIGINT).")
+            truncate(div(call, 12))
         }
         DatetimeField.MONTH -> {
             val d1 = args[0].expr
@@ -141,13 +144,13 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
                 function = id("months_between"),
                 args = listOf(d2, d1)
             )
-            log.info("PartiQL `date_diff(month, <date_1>, <date_2>)` was replaced by Spark `floor(months_between(<date_2>, <date_1>)).")
-            floor(call)
+            log.info("PartiQL `date_diff(month, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) AS BIGINT).")
+            truncate(call)
         }
         DatetimeField.DAY -> {
             val d1 = args[0].expr
             val d2 = args[1].expr
-            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `date_diff(<date_2>, <date_1>).")
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `date_diff(<date_2>, <date_1>)`.")
             exprCall(
                 function = id("date_diff"),
                 args = listOf(d2, d1)
@@ -157,25 +160,28 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
             val d1 = unixTimestamp(args[0].expr)
             val d2 = unixTimestamp(args[1].expr)
             val d = diff(d2, d1)
-            floor(div(d, 3600))
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 3600 AS BIGINT)`.")
+            truncate(div(d, 3600))
         }
         DatetimeField.MINUTE -> {
             val d1 = unixTimestamp(args[0].expr)
             val d2 = unixTimestamp(args[1].expr)
             val d = diff(d2, d1)
-            floor(div(d, 60))
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 60 AS BIGINT)`.")
+            truncate(div(d, 60))
         }
         DatetimeField.SECOND -> {
             val d1 = unixTimestamp(args[0].expr)
             val d2 = unixTimestamp(args[1].expr)
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `unix_timestamp(<date_2>) - unix_timestamp(<date_1>)`.")
             diff(d2, d1)
         }
         else -> error("Unexpected datetime part `$part`")
     }
 
-    private fun floor(arg: Expr): Expr = exprCall(
-        function = id("floor"),
-        args = listOf(arg),
+    private fun truncate(arg: Expr): Expr = exprCast(
+        value = arg,
+        asType = typeBigint(),
     )
 
     private fun diff(lhs: Expr, rhs: Expr) = exprBinary(
