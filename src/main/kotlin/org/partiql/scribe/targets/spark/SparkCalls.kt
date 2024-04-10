@@ -134,7 +134,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
                 function = id("months_between"),
                 args = listOf(d2, d1)
             )
-            log.info("PartiQL `date_diff(year, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) / 12 AS BIGINT).")
+            log.info("PartiQL `date_diff(year, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) / 12 AS BIGINT)`.")
             truncate(div(call, 12))
         }
         DatetimeField.MONTH -> {
@@ -144,7 +144,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
                 function = id("months_between"),
                 args = listOf(d2, d1)
             )
-            log.info("PartiQL `date_diff(month, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) AS BIGINT).")
+            log.info("PartiQL `date_diff(month, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) AS BIGINT)`.")
             truncate(call)
         }
         DatetimeField.DAY -> {
