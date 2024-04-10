@@ -69,7 +69,7 @@ abstract class SqlDialect : AstBaseVisitor<SqlBlock, SqlBlock>() {
     // IDENTIFIERS & PATHS
 
     /**
-     * Default behavior is to wrap all SFW queries (and binary operators) with parentheses.
+     * Default behavior is to wrap all SFW queries (and nested binary operators) with parentheses.
      *
      * @param node
      * @param tail
