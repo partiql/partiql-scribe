@@ -2,24 +2,24 @@ package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
-import org.partiql.ast.Identifier
 import org.partiql.ast.exprBinary
 import org.partiql.ast.exprCall
+import org.partiql.ast.exprCast
 import org.partiql.ast.exprLit
-import org.partiql.ast.identifierSymbol
+import org.partiql.ast.typeBigint
+import org.partiql.ast.typeInt
 import org.partiql.scribe.ProblemCallback
-import org.partiql.scribe.error
 import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlTransform.Companion.id
-import org.partiql.scribe.warn
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.int32Value
 import org.partiql.value.stringValue
 
+@OptIn(PartiQLValueExperimental::class)
 public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
 
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
@@ -33,7 +33,6 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         val call = id("array_contains")
         log.info("PartiQL value IN collection was replaced by Spark `array_contains(collection, value)`")
         return exprCall(call, args.map { it.expr })
-
     }
 
     private fun currentUser(sqlArgs: List<SqlArg>): Expr {
@@ -97,7 +96,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
             DatetimeField.SECOND -> parts[6] = quantity
             else -> error("Unexpected datetime part `$part`")
         }
-        val interval = exprCall(id("make_interval"), parts.map { it ?:  exprLit(int32Value(0)) })
+        val interval = exprCall(id("make_interval"), parts.map { it ?: exprLit(int32Value(0)) })
 
         // Add detailed warning about this translation.
         val intervalString = parts.joinToString(
@@ -105,7 +104,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
             postfix = ")",
             separator = ", "
         ) {
-           if (it != null) "<quantity>" else "0"
+            if (it != null) "<quantity>" else "0"
         }
         log.info("PartiQL `date_add($part, <quantity>, <date>)` was replaced by Spark `<date> + $intervalString`.")
 
@@ -119,30 +118,86 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     /**
      * PartiQL's date_diff accepts a part whereas Spark's date_diff returns the difference in days between two dates.
      *
-     * We extract the datetime part and perform the difference.
+     * For date parts, we use the builtins (or calculate years)
+     * For time parts, we convert to unix seconds and convert using 60 seconds per minute and 60 minutes per hour.
      *
      * Notes:
      *  > https://github.com/partiql/partiql-lang-kotlin/wiki/Functions#date_diff----since-v010
      *  > https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/functions.html#datediff(org.apache.spark.sql.Column,org.apache.spark.sql.Column)
      *  > https://spark.apache.org/docs/2.3.0/api/sql/index.html#datediff
      */
-    override fun dateDiff(part: DatetimeField, args: SqlArgs): Expr {
-        val extract = when (part) {
-            DatetimeField.YEAR -> "year"
-            DatetimeField.MONTH -> "month"
-            DatetimeField.DAY -> "day"
-            DatetimeField.HOUR -> "hour"
-            DatetimeField.MINUTE -> "minute"
-            DatetimeField.SECOND -> "second"
-            else -> error("Unexpected datetime part `$part`")
+    override fun dateDiff(part: DatetimeField, args: SqlArgs): Expr = when (part) {
+        DatetimeField.YEAR -> {
+            val d1 = args[0].expr
+            val d2 = args[1].expr
+            val call = exprCall(
+                function = id("months_between"),
+                args = listOf(d2, d1)
+            )
+            log.info("PartiQL `date_diff(year, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) / 12 AS BIGINT)`.")
+            truncate(div(call, 12))
         }
-        log.info("PartiQL `date_diff($part, <date_1>, <date_2>)` was replaced by Spark `$extract(<date_2>) - $extract(<date_1>)`.")
-        val d1 = exprCall(id(extract), listOf(args[0].expr))
-        val d2 = exprCall(id(extract), listOf(args[1].expr))
-        return exprBinary(
-            op = Expr.Binary.Op.MINUS,
-            lhs = d2,
-            rhs = d1,
-        )
+        DatetimeField.MONTH -> {
+            val d1 = args[0].expr
+            val d2 = args[1].expr
+            val call = exprCall(
+                function = id("months_between"),
+                args = listOf(d2, d1)
+            )
+            log.info("PartiQL `date_diff(month, <date_1>, <date_2>)` was replaced by Spark `CAST(months_between(<date_2>, <date_1>) AS BIGINT)`.")
+            truncate(call)
+        }
+        DatetimeField.DAY -> {
+            val d1 = args[0].expr
+            val d2 = args[1].expr
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `date_diff(<date_2>, <date_1>)`.")
+            exprCall(
+                function = id("date_diff"),
+                args = listOf(d2, d1)
+            )
+        }
+        DatetimeField.HOUR -> {
+            val d1 = unixTimestamp(args[0].expr)
+            val d2 = unixTimestamp(args[1].expr)
+            val d = diff(d2, d1)
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 3600 AS BIGINT)`.")
+            truncate(div(d, 3600))
+        }
+        DatetimeField.MINUTE -> {
+            val d1 = unixTimestamp(args[0].expr)
+            val d2 = unixTimestamp(args[1].expr)
+            val d = diff(d2, d1)
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 60 AS BIGINT)`.")
+            truncate(div(d, 60))
+        }
+        DatetimeField.SECOND -> {
+            val d1 = unixTimestamp(args[0].expr)
+            val d2 = unixTimestamp(args[1].expr)
+            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `unix_timestamp(<date_2>) - unix_timestamp(<date_1>)`.")
+            diff(d2, d1)
+        }
+        else -> error("Unexpected datetime part `$part`")
     }
+
+    private fun truncate(arg: Expr): Expr = exprCast(
+        value = arg,
+        asType = typeBigint(),
+    )
+
+    private fun diff(lhs: Expr, rhs: Expr) = exprBinary(
+        op = Expr.Binary.Op.MINUS,
+        lhs = lhs,
+        rhs = rhs,
+    )
+
+    private fun div(arg: Expr, divisor: Int) = exprBinary(
+        op = Expr.Binary.Op.DIVIDE,
+        lhs = arg,
+        rhs = exprLit(int32Value(divisor))
+    )
+
+    private fun unixTimestamp(arg: Expr) = exprCall(
+        function = id("unix_timestamp"),
+        args = listOf(arg),
+    )
 }

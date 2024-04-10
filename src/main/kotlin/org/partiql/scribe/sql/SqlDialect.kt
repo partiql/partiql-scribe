@@ -69,16 +69,24 @@ abstract class SqlDialect : AstBaseVisitor<SqlBlock, SqlBlock>() {
     // IDENTIFIERS & PATHS
 
     /**
-     * Default behavior is to wrap all SFW queries with parentheses.
+     * Default behavior is to wrap all SFW queries (and nested binary operators) with parentheses.
      *
      * @param node
      * @param tail
+     * @param operators
      */
-    open fun visitExprWrapped(node: Expr, tail: SqlBlock): SqlBlock = when (node) {
-        is Expr.SFW -> {
+    open fun visitExprWrapped(node: Expr, tail: SqlBlock, operators: Boolean = false): SqlBlock = when {
+        node is Expr.SFW -> {
             var t = tail
             t = t concat "("
             t = visitExprSFW(node, t)
+            t = t concat ")"
+            t
+        }
+        node is Expr.Binary && operators -> {
+            var t = tail
+            t = t concat "("
+            t = visitExprBinary(node, t)
             t = t concat ")"
             t
         }
@@ -284,9 +292,9 @@ abstract class SqlDialect : AstBaseVisitor<SqlBlock, SqlBlock>() {
             Expr.Binary.Op.BITWISE_AND -> "&"
         }
         var t = tail
-        t = visitExprWrapped(node.lhs, t)
+        t = visitExprWrapped(node.lhs, t, operators = true)
         t = t concat " $op "
-        t = visitExprWrapped(node.rhs, t)
+        t = visitExprWrapped(node.rhs, t, operators = true)
         return t
     }
 
