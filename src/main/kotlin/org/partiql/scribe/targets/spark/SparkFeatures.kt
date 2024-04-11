@@ -29,6 +29,8 @@ public open class SparkFeatures : SqlFeatures.Defensive() {
         Rex.Op.Call.Static::class.java,
         Rex.Op.Case::class.java,
         Rex.Op.Case.Branch::class.java,
+        Rex.Op.Coalesce::class.java,
+        Rex.Op.Nullif::class.java,
         Rex.Op.Collection::class.java,
         Rex.Op.Global::class.java,
         Rex.Op.Lit::class.java,

@@ -7,7 +7,9 @@ import org.partiql.ast.SetQuantifier
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCase
 import org.partiql.ast.exprCaseBranch
+import org.partiql.ast.exprCoalesce
 import org.partiql.ast.exprLit
+import org.partiql.ast.exprNullIf
 import org.partiql.ast.exprPath
 import org.partiql.ast.exprPathStepIndex
 import org.partiql.ast.exprPathStepSymbol
@@ -170,6 +172,17 @@ public open class RexConverter(
             true -> default
             false -> exprCase(expr = null, branches = branches, default = default)
         }
+    }
+
+    override fun visitRexOpNullif(node: Rex.Op.Nullif, ctx: StaticType): Expr {
+        val value = visitRex(node.value, StaticType.ANY)
+        val nullifier = visitRex(node.nullifier, StaticType.ANY)
+        return exprNullIf(value, nullifier)
+    }
+
+    override fun visitRexOpCoalesce(node: Rex.Op.Coalesce, ctx: StaticType): Expr {
+        val args = node.args.map { visitRex(it, it.type) }
+        return exprCoalesce(args)
     }
 
     override fun visitRexOpCall(node: Rex.Op.Call, ctx: StaticType): Expr {
