@@ -160,20 +160,20 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
             val d1 = unixTimestamp(args[0].expr)
             val d2 = unixTimestamp(args[1].expr)
             val d = diff(d2, d1)
-            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 3600 AS BIGINT)`.")
+            log.info("PartiQL `date_diff(hour, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 3600 AS BIGINT)`.")
             truncate(div(d, 3600))
         }
         DatetimeField.MINUTE -> {
             val d1 = unixTimestamp(args[0].expr)
             val d2 = unixTimestamp(args[1].expr)
             val d = diff(d2, d1)
-            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 60 AS BIGINT)`.")
+            log.info("PartiQL `date_diff(minute, <date_1>, <date_2>)` was replaced by Spark `CAST((unix_timestamp(<date_2>) - unix_timestamp(<date_1>)) / 60 AS BIGINT)`.")
             truncate(div(d, 60))
         }
         DatetimeField.SECOND -> {
             val d1 = unixTimestamp(args[0].expr)
             val d2 = unixTimestamp(args[1].expr)
-            log.info("PartiQL `date_diff(day, <date_1>, <date_2>)` was replaced by Spark `unix_timestamp(<date_2>) - unix_timestamp(<date_1>)`.")
+            log.info("PartiQL `date_diff(second, <date_1>, <date_2>)` was replaced by Spark `unix_timestamp(<date_2>) - unix_timestamp(<date_1>)`.")
             diff(d2, d1)
         }
         else -> error("Unexpected datetime part `$part`")
