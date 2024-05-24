@@ -53,10 +53,10 @@ public open class RedshiftTarget : SqlTarget() {
      */
     override val features: SqlFeatures = RedshiftFeatures()
 
-    companion object {
+    public companion object {
 
         @JvmStatic
-        public val DEFAULT = RedshiftTarget()
+        public val DEFAULT: RedshiftTarget = RedshiftTarget()
     }
 
     override val dialect: SqlDialect = RedshiftDialect()
@@ -69,11 +69,12 @@ public open class RedshiftTarget : SqlTarget() {
     /**
      * Rewrite a PartiQLPlan in terms of Redshift features.
      */
-    override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback) =
+    override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback): PartiQLPlan =
         RedshiftRewriter(onProblem).visitPartiQLPlan(plan, null) as PartiQLPlan
 
-    open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
+    public open class RedshiftRewriter(public val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
 
+        @Suppress("PrivatePropertyName")
         private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
 
         /**

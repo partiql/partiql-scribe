@@ -3,6 +3,7 @@ package org.partiql.scribe.targets.redshift
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
+import org.partiql.ast.Type
 import org.partiql.ast.exprBetween
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
@@ -20,6 +21,7 @@ import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.SqlTypes
 import org.partiql.scribe.warn
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.PartiQLValueType
@@ -27,6 +29,14 @@ import org.partiql.value.symbolValue
 
 @OptIn(PartiQLValueExperimental::class)
 public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
+
+    override val types: SqlTypes = object : SqlTypes.Base() {
+        override fun int16(): Type = Type.Smallint()
+        override fun int32(): Type = Type.Int()
+        override fun int64(): Type = Type.Bigint()
+        override fun float32(): Type = Type.Real()
+        override fun float64(): Type = Type.Custom("DOUBLE PRECISION")
+    }
 
     override val rules: Map<String, SqlCallFn> = super.rules.toMutableMap().apply {
         this["utcnow"] = ::utcnow
@@ -129,8 +139,6 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
                 super.rewriteCast(type, args)
             }
             // using the customer type to rename type
-            PartiQLValueType.FLOAT32 -> exprCast(args[0].expr, typeCustom("FLOAT4"))
-            PartiQLValueType.FLOAT64 -> exprCast(args[0].expr, typeCustom("FLOAT8"))
             PartiQLValueType.BINARY -> exprCast(args[0].expr, typeCustom("VARBYTE"))
             PartiQLValueType.BYTE -> TODO("Mapping to VARBYTE(1), do this after supporting parameterized type")
             else -> super.rewriteCast(type, args)

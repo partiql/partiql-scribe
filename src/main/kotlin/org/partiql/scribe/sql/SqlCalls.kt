@@ -38,7 +38,6 @@ import org.partiql.ast.typeStruct
 import org.partiql.ast.typeSymbol
 import org.partiql.ast.typeTime
 import org.partiql.ast.typeTimestamp
-import org.partiql.types.StaticType
 import org.partiql.value.NumericValue
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.PartiQLValueType
@@ -47,20 +46,12 @@ import org.partiql.value.symbolValue
 /**
  * Transform the call args to the special form.
  */
-typealias SqlCallFn = (SqlArgs) -> Expr
+public typealias SqlCallFn = (SqlArgs) -> Expr
 
 /**
  * List of arguments.
  */
-typealias SqlArgs = List<SqlArg>
-
-/**
- * Pair an [Expr] with its resolved type.
- */
-public class SqlArg(
-    public val expr: Expr,
-    public val type: StaticType,
-)
+public typealias SqlArgs = List<SqlArg>
 
 /**
  * Maps a function name to basic rewrite logic.
@@ -70,10 +61,15 @@ public class SqlArg(
 @OptIn(PartiQLValueExperimental::class)
 public abstract class SqlCalls {
 
-    companion object {
-
-        public val DEFAULT = object : SqlCalls() {}
+    public companion object {
+        @JvmStatic
+        public val DEFAULT: SqlCalls = object : SqlCalls() {}
     }
+
+    /**
+     * SqlCalls uses the SqlTypes hooks to emit type AST nodes.
+     */
+    public open val types: SqlTypes = SqlTypes.DEFAULT
 
     /**
      * List of special form rules. See [org.partiql.planner.Header] for the derivations.
@@ -280,38 +276,46 @@ public abstract class SqlCalls {
         return exprLike(arg0, arg1, arg2, false)
     }
 
+    /**
+     * This function is responsible for translating CAST calls.
+     *
+     * In PartiQL 0.14 implementations, the CAST plan nodes are just a Rex.Op.Call.
+     * However, these are modeled as their own nodes in PartiQL 1.0. This improved modeling enables us to preserve
+     * the original type through to execution.
+     */
+    @Deprecated("This will be removed for PartiQL 1.0 compatibility.")
     public open fun rewriteCast(type: PartiQLValueType, args: SqlArgs): Expr {
         assert(args.size == 1) { "CAST should only have 1 argument" }
         val value = args[0].expr
         val asType = when (type) {
-            PartiQLValueType.ANY -> typeAny()
-            PartiQLValueType.BOOL -> typeBool()
-            PartiQLValueType.INT8 -> typeInt()
-            PartiQLValueType.INT16 -> typeInt2()
-            PartiQLValueType.INT32 -> typeInt4()
-            PartiQLValueType.INT64 -> typeInt8()
-            PartiQLValueType.INT -> typeInt()
-            PartiQLValueType.DECIMAL_ARBITRARY -> typeDecimal(null, null)
-            PartiQLValueType.DECIMAL -> typeDecimal(null, null)
-            PartiQLValueType.FLOAT32 -> typeFloat32()
-            PartiQLValueType.FLOAT64 -> typeFloat64()
-            PartiQLValueType.CHAR -> typeChar(null)
-            PartiQLValueType.STRING -> typeString(null)
-            PartiQLValueType.SYMBOL -> typeSymbol()
+            PartiQLValueType.ANY -> types.any()
+            PartiQLValueType.BOOL -> types.bool()
+            PartiQLValueType.INT8 -> types.int8()
+            PartiQLValueType.INT16 -> types.int16()
+            PartiQLValueType.INT32 -> types.int32()
+            PartiQLValueType.INT64 -> types.int64()
+            PartiQLValueType.INT -> types.int()
+            PartiQLValueType.DECIMAL -> types.decimal(null, null)
+            PartiQLValueType.DECIMAL_ARBITRARY -> types.decimalArbitrary()
+            PartiQLValueType.FLOAT32 -> types.float32()
+            PartiQLValueType.FLOAT64 -> types.float64()
+            PartiQLValueType.CHAR -> types.char(null)
+            PartiQLValueType.STRING -> types.string(null)
+            PartiQLValueType.SYMBOL -> types.symbol()
             PartiQLValueType.BINARY -> error("Unsupported")
             PartiQLValueType.BYTE -> error("Unsupported")
-            PartiQLValueType.BLOB -> typeBlob(null)
-            PartiQLValueType.CLOB -> typeClob(null)
-            PartiQLValueType.DATE -> typeDate()
-            PartiQLValueType.TIME -> typeTime(null)
-            PartiQLValueType.TIMESTAMP -> typeTimestamp(null)
-            PartiQLValueType.INTERVAL -> typeInterval(null)
-            PartiQLValueType.BAG -> typeBag()
-            PartiQLValueType.LIST -> typeList()
-            PartiQLValueType.SEXP -> typeSexp()
-            PartiQLValueType.STRUCT -> typeStruct()
-            PartiQLValueType.NULL -> typeNullType()
-            PartiQLValueType.MISSING -> typeMissing()
+            PartiQLValueType.BLOB -> types.blob(null)
+            PartiQLValueType.CLOB -> types.clob(null)
+            PartiQLValueType.DATE -> types.date()
+            PartiQLValueType.TIME -> types.time(null)
+            PartiQLValueType.TIMESTAMP -> types.timestamp(null)
+            PartiQLValueType.INTERVAL -> types.interval(null)
+            PartiQLValueType.BAG -> types.bag()
+            PartiQLValueType.LIST -> types.list()
+            PartiQLValueType.SEXP -> types.sexp()
+            PartiQLValueType.STRUCT -> types.struct()
+            PartiQLValueType.NULL -> error("CAST AS NULL not supported.")
+            PartiQLValueType.MISSING -> error("CAST AS MISSING not supported.")
         }
         return exprCast(value, asType)
     }

@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
 plugins {
     kotlin("jvm") version "1.6.20"
@@ -79,7 +80,7 @@ tasks.test {
 }
 
 kotlin {
-    explicitApi = null
+    explicitApi = ExplicitApiMode.Warning
 }
 
 application {
