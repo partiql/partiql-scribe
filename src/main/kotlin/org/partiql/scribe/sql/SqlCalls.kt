@@ -16,6 +16,7 @@ import org.partiql.ast.exprUnary
 import org.partiql.ast.identifierSymbol
 import org.partiql.ast.typeAny
 import org.partiql.ast.typeBag
+import org.partiql.ast.typeBigint
 import org.partiql.ast.typeBlob
 import org.partiql.ast.typeBool
 import org.partiql.ast.typeChar
@@ -33,6 +34,7 @@ import org.partiql.ast.typeList
 import org.partiql.ast.typeMissing
 import org.partiql.ast.typeNullType
 import org.partiql.ast.typeSexp
+import org.partiql.ast.typeSmallint
 import org.partiql.ast.typeString
 import org.partiql.ast.typeStruct
 import org.partiql.ast.typeSymbol
@@ -287,9 +289,9 @@ public abstract class SqlCalls {
             PartiQLValueType.ANY -> typeAny()
             PartiQLValueType.BOOL -> typeBool()
             PartiQLValueType.INT8 -> typeInt()
-            PartiQLValueType.INT16 -> typeInt2()
-            PartiQLValueType.INT32 -> typeInt4()
-            PartiQLValueType.INT64 -> typeInt8()
+            PartiQLValueType.INT16 -> typeSmallint()
+            PartiQLValueType.INT32 -> typeInt()
+            PartiQLValueType.INT64 -> typeBigint()
             PartiQLValueType.INT -> typeInt()
             PartiQLValueType.DECIMAL_ARBITRARY -> typeDecimal(null, null)
             PartiQLValueType.DECIMAL -> typeDecimal(null, null)
@@ -327,9 +329,9 @@ public abstract class SqlCalls {
             PartiQLValueType.ANY -> typeAny()
             PartiQLValueType.BOOL -> typeBool()
             PartiQLValueType.INT8 -> error("unsupported")
-            PartiQLValueType.INT16 -> typeInt2()
-            PartiQLValueType.INT32 -> typeInt4()
-            PartiQLValueType.INT64 -> typeInt8()
+            PartiQLValueType.INT16 -> typeSmallint()
+            PartiQLValueType.INT32 -> typeInt()
+            PartiQLValueType.INT64 -> typeBigint()
             PartiQLValueType.INT -> typeInt()
             PartiQLValueType.DECIMAL_ARBITRARY -> typeDecimal(null, null)
             PartiQLValueType.DECIMAL -> typeDecimal(typeArg0?.toInt(), typeArg1?.toInt())

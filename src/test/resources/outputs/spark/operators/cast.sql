@@ -1,5 +1,11 @@
-----#[cast-00]
---CAST('1' AS INT4);
+-- #[cast-00]
+-- SELECT CAST('1' AS INT);
 
---#[cast-01]
-SELECT CAST('foo' AS STRING) AS `s` FROM `default`.`T` AS `T`;
+-- #[cast-01]
+-- SELECT CAST('1' AS INT);
+
+-- #[cast-02]
+-- SELECT CAST('1' AS BIGINT);
+
+-- #[cast-03]
+-- SELECT CAST('1' AS BIGINT);

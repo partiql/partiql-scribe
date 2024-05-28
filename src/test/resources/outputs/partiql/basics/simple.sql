@@ -77,22 +77,26 @@ NOT ("default"."T1" IS NULL);
 NOT ("default"."T1" IS MISSING);
 
 --#[expr-14]
-"default"."T1" IS INT2;
+"default"."T1" IS SMALLINT;
 
 --#[expr-15]
-NOT ("default"."T1" IS INT2);
+NOT ("default"."T1" IS SMALLINT);
 
 --#[expr-16]
-"default"."T1" IS INT4;
+-- TODO USE INT as the default INT4 name.
+"default"."T1" IS INT;
 
 --#[expr-17]
-NOT ("default"."T1" IS INT4);
+-- TODO USE INT as the default INT4 name.
+NOT ("default"."T1" IS INT);
 
 --#[expr-18]
-"default"."T1" IS INT8;
+-- TODO USE BIGINT as the default BIGINT/INT8 name.
+"default"."T1" IS BIGINT;
 
 --#[expr-19]
-NOT ("default"."T1" IS INT8);
+-- TODO USE BIGINT as the default BIGINT/INT8 name.
+NOT ("default"."T1" IS BIGINT);
 
 --#[expr-20]
 "default"."T1" IS INT;
