@@ -2,7 +2,6 @@ package org.partiql.scribe
 
 import org.partiql.parser.PartiQLParserBuilder
 import org.partiql.planner.PartiQLPlannerBuilder
-import org.partiql.spi.connector.ConnectorMetadata
 import org.partiql.types.function.FunctionSignature
 
 public class ScribeCompilerBuilder {

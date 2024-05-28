@@ -52,7 +52,7 @@ class SqlTargetInspect {
      * Each dir becomes a container and file becomes a container; each expected output is a test node.
      */
     @TestFactory
-    @Ignore
+    // @Ignore
     public fun factory(): Stream<DynamicNode> {
         val scribe = ScribeCompiler.builder()
             .build()

@@ -1,11 +1,16 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import java.io.ByteArrayOutputStream
+import java.io.FileOutputStream
+import java.util.Properties
 
 plugins {
     kotlin("jvm") version "1.6.20"
     application
     `maven-publish`
 }
+
+val properties = "$buildDir/properties"
 
 object Versions {
     // Language
@@ -82,6 +87,12 @@ kotlin {
     explicitApi = null
 }
 
+sourceSets {
+    main {
+        output.dir(properties)
+    }
+}
+
 application {
     applicationName = "scribe"
     mainClass.set("org.partiql.scribe.shell.Main")
@@ -89,6 +100,26 @@ application {
 
 tasks.register<GradleBuild>("install") {
     tasks = listOf("assembleDist", "distZip", "installDist")
+}
+
+tasks.processResources {
+    dependsOn(tasks.findByName("generateProperties"))
+}
+
+tasks.create("generateProperties") {
+    val propertiesFile = file("$properties/scribe.properties")
+    val commit = ByteArrayOutputStream().apply {
+        exec {
+            commandLine = listOf("git", "rev-parse", "--short", "HEAD")
+            standardOutput = this@apply
+        }
+    }
+    // write properties
+    propertiesFile.parentFile.mkdirs()
+    val properties = Properties()
+    properties.setProperty("version", version.toString())
+    properties.setProperty("commit", commit.toString().trim())
+    properties.store(FileOutputStream(propertiesFile), null)
 }
 
 publishing {
