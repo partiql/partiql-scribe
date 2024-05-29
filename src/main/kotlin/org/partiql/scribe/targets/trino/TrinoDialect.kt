@@ -101,6 +101,13 @@ public open class TrinoDialect : SqlDialect() {
 
     override fun visitTypeString(node: Type.String, tail: SqlBlock): SqlBlock = tail concat "VARCHAR"
 
+    /**
+     * Use ARRAY[...] syntax for ALL collections.
+     */
+    override fun visitExprCollection(node: Expr.Collection, tail: SqlBlock): SqlBlock {
+        return tail concat list("ARRAY[", "]") { node.values }
+    }
+
     private fun list(
         start: String? = "(",
         end: String? = ")",

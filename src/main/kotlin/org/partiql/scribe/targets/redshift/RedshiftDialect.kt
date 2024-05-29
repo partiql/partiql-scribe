@@ -60,6 +60,13 @@ public open class RedshiftDialect : SqlDialect() {
         return t
     }
 
+    /**
+     * Use (...) syntax for ALL collections.
+     */
+    override fun visitExprCollection(node: Expr.Collection, tail: SqlBlock): SqlBlock {
+        return tail concat list { node.values }
+    }
+
     override fun visitTypeString(node: Type.String, tail: SqlBlock): SqlBlock = tail concat "VARCHAR"
 
     private fun list(

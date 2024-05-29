@@ -7,7 +7,6 @@ import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
 import org.partiql.ast.exprLit
 import org.partiql.ast.typeBigint
-import org.partiql.ast.typeInt
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArg
@@ -35,7 +34,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         return exprCall(call, args.map { it.expr })
     }
 
-    private fun currentUser(sqlArgs: List<SqlArg>): Expr {
+    private fun currentUser(args: List<SqlArg>): Expr {
         val currentUser = id("current_user")
         log.info("PartiQL CURRENT_USER was replaced by Spark `current_user()`")
         return exprCall(currentUser, emptyList())
@@ -46,7 +45,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     // current_timestamp() : https://spark.apache.org/docs/latest/api/sql/index.html#current_timestamp
     // convert_timezone() : https://spark.apache.org/docs/latest/api/sql/index.html#convert_timezone
     @OptIn(PartiQLValueExperimental::class)
-    private fun utcnow(sqlArgs: List<SqlArg>): Expr {
+    private fun utcnow(args: List<SqlArg>): Expr {
         val convertTimeZone = id("convert_timezone")
         log.info("PartiQL `utcnow()` was replaced by Spark `convert_timezone('UTC', current_timestamp())`")
         val currentTimestamp = id("current_timestamp")
@@ -61,11 +60,11 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
     // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
     // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
     // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexConverter
-    private fun transform(sqlArgs: List<SqlArg>): Expr {
+    private fun transform(args: List<SqlArg>): Expr {
         val fnName = id("transform")
-        val arrayExpr = sqlArgs[0].expr
-        val elementVar = sqlArgs[1].expr
-        val elementExpr = sqlArgs[2].expr
+        val arrayExpr = args[0].expr
+        val elementVar = args[1].expr
+        val elementExpr = args[2].expr
         return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
     }
 
@@ -83,9 +82,9 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
      */
     @OptIn(PartiQLValueExperimental::class)
     override fun dateAdd(part: DatetimeField, args: SqlArgs): Expr {
-        var quantity = args[0].expr
-        var date = args[1].expr
-        var parts = arrayOfNulls<Expr>(7)
+        val quantity = args[0].expr
+        val date = args[1].expr
+        val parts = arrayOfNulls<Expr>(7)
         when (part) {
             DatetimeField.YEAR -> parts[0] = quantity
             DatetimeField.MONTH -> parts[1] = quantity
