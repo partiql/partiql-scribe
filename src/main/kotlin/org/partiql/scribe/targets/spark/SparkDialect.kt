@@ -102,6 +102,17 @@ public open class SparkDialect : SqlDialect() {
 
     override fun visitTypeInt8(node: Type.Int8, tail: SqlBlock): SqlBlock = tail concat "BIGINT"
 
+    override fun visitExprCollection(node: Expr.Collection, tail: SqlBlock): SqlBlock {
+        val (start, end) = when (node.type) {
+            Expr.Collection.Type.ARRAY -> "array(" to ")"
+            Expr.Collection.Type.VALUES -> "VALUES (" to ")"
+            Expr.Collection.Type.SEXP,
+            Expr.Collection.Type.BAG,
+            Expr.Collection.Type.LIST -> "(" to ")"
+        }
+        return tail concat list(start, end) { node.values }
+    }
+
     // Spark, has no notion of case sensitivity
     // https://spark.apache.org/docs/latest/sql-ref-identifier.html
     private fun Identifier.Symbol.sql() = "`$symbol`"

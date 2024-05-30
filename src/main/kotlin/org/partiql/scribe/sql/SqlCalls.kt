@@ -211,13 +211,39 @@ public abstract class SqlCalls {
         return exprBinary(op, args[0].expr, args[1].expr)
     }
 
+    private fun Boolean?.flip(): Boolean = when (this) {
+        null -> true
+        else -> !this
+    }
+
+    /**
+     * Push the negation down if possible.
+     * For example : NOT 1 is NULL -> 1 is NOT NULL.
+     *
+     * TODO: could consider removing redundant boolean expressions here. E.g.
+     *  - NOT NOT <expr> -> <expr>
+     *  - NOT false -> true
+     *  - NOT true -> false
+     * (this constant-folding step really should have been done at an earlier stage)
+     */
     public open fun notFn(args: SqlArgs): Expr {
         // Check to replace NOT (x = y) with x <> y
         val arg = args[0].expr
-        if (arg is Expr.Binary && arg.op == Expr.Binary.Op.EQ) {
-            return exprBinary(Expr.Binary.Op.NE, arg.lhs, arg.rhs)
+        return when (arg) {
+            is Expr.Binary -> {
+                if (arg.op == Expr.Binary.Op.EQ) {
+                    exprBinary(Expr.Binary.Op.NE, arg.lhs, arg.rhs)
+                } else {
+                    unary(Expr.Unary.Op.NOT, args)
+                }
+            }
+            is Expr.Between -> exprBetween(arg.value, arg.from, arg.to, arg.not.flip())
+            is Expr.InCollection -> exprInCollection(arg.lhs, arg.rhs, arg.not.flip())
+            is Expr.IsType -> exprIsType(arg.value, arg.type, arg.not.flip())
+            is Expr.Like -> exprLike(arg.value, arg.pattern, arg.escape, arg.not.flip())
+            else -> unary(Expr.Unary.Op.NOT, args)
+
         }
-        return unary(Expr.Unary.Op.NOT, args)
     }
 
     public open fun posFn(args: SqlArgs): Expr = unary(Expr.Unary.Op.POS, args)

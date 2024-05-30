@@ -101,6 +101,17 @@ public open class TrinoDialect : SqlDialect() {
 
     override fun visitTypeString(node: Type.String, tail: SqlBlock): SqlBlock = tail concat "VARCHAR"
 
+    override fun visitExprCollection(node: Expr.Collection, tail: SqlBlock): SqlBlock {
+        val (start, end) = when (node.type) {
+            Expr.Collection.Type.ARRAY -> "ARRAY[" to "]"
+            Expr.Collection.Type.VALUES -> "VALUES (" to ")"
+            Expr.Collection.Type.SEXP,
+            Expr.Collection.Type.BAG,
+            Expr.Collection.Type.LIST -> "(" to ")"
+        }
+        return tail concat list(start, end) { node.values }
+    }
+
     private fun list(
         start: String? = "(",
         end: String? = ")",

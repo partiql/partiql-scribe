@@ -60,6 +60,21 @@ public open class RedshiftDialect : SqlDialect() {
         return t
     }
 
+    /**
+     * - LIST   -> https://docs.aws.amazon.com/redshift/latest/dg/r_expression_lists.html
+     * - ARRAY  -> https://docs.aws.amazon.com/redshift/latest/dg/r_array.html
+     */
+    override fun visitExprCollection(node: Expr.Collection, tail: SqlBlock): SqlBlock {
+        val (start, end) = when (node.type) {
+            Expr.Collection.Type.ARRAY -> "ARRAY(" to ")"
+            Expr.Collection.Type.VALUES -> "VALUES (" to ")"
+            Expr.Collection.Type.SEXP,
+            Expr.Collection.Type.BAG,
+            Expr.Collection.Type.LIST -> "(" to ")"
+        }
+        return tail concat list(start, end) { node.values }
+    }
+
     override fun visitTypeString(node: Type.String, tail: SqlBlock): SqlBlock = tail concat "VARCHAR"
 
     private fun list(
