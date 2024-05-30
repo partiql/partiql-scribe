@@ -68,19 +68,19 @@ NOT ("default"."T1");
 "default"."T1" IS NULL;
 
 --#[expr-11]
-NOT ("default"."T1" IS NULL);
+"default"."T1" IS NOT NULL;
 
 --#[expr-12]
 "default"."T1" IS MISSING;
 
 --#[expr-13]
-NOT ("default"."T1" IS MISSING);
+"default"."T1" IS NOT MISSING;
 
 --#[expr-14]
 "default"."T1" IS SMALLINT;
 
 --#[expr-15]
-NOT ("default"."T1" IS SMALLINT);
+"default"."T1" IS NOT SMALLINT;
 
 --#[expr-16]
 -- TODO USE INT as the default INT4 name.
@@ -88,7 +88,7 @@ NOT ("default"."T1" IS SMALLINT);
 
 --#[expr-17]
 -- TODO USE INT as the default INT4 name.
-NOT ("default"."T1" IS INT);
+"default"."T1" IS NOT INT;
 
 --#[expr-18]
 -- TODO USE BIGINT as the default BIGINT/INT8 name.
@@ -96,115 +96,115 @@ NOT ("default"."T1" IS INT);
 
 --#[expr-19]
 -- TODO USE BIGINT as the default BIGINT/INT8 name.
-NOT ("default"."T1" IS BIGINT);
+"default"."T1" IS NOT BIGINT;
 
 --#[expr-20]
 "default"."T1" IS INT;
 
 --#[expr-21]
-NOT ("default"."T1" IS INT);
+"default"."T1" IS NOT INT;
 
 --#[expr-22]
 "default"."T1" IS DECIMAL;
 
 --#[expr-23]
-NOT ("default"."T1" IS DECIMAL);
+"default"."T1" IS NOT DECIMAL;
 
 --#[expr-24]
 "default"."T1" IS DOUBLE PRECISION;
 
 --#[expr-25]
-NOT ("default"."T1" IS DOUBLE PRECISION);
+"default"."T1" IS NOT DOUBLE PRECISION;
 
 --#[expr-26]
 "default"."T1" IS BOOL;
 
 --#[expr-27]
-NOT ("default"."T1" IS BOOL);
+"default"."T1" IS NOT BOOL;
 
 --#[expr-28]
 "default"."T1" IS SYMBOL;
 
 --#[expr-29]
-NOT ("default"."T1" IS SYMBOL);
+"default"."T1" IS NOT SYMBOL;
 
 --#[expr-30]
 "default"."T1" IS DATE;
 
 --#[expr-31]
-NOT ("default"."T1" IS DATE);
+"default"."T1" IS NOT DATE;
 
 --#[expr-32]
 "default"."T1" IS TIME;
 
 --#[expr-33]
-NOT ("default"."T1" IS TIME);
+"default"."T1" IS NOT TIME;
 
 --#[expr-34]
 "default"."T1" IS TIMESTAMP;
 
 --#[expr-35]
-NOT ("default"."T1" IS TIMESTAMP);
+"default"."T1" IS NOT TIMESTAMP;
 
 --#[expr-36]
 "default"."T1" IS STRING;
 
 --#[expr-37]
-NOT ("default"."T1" IS STRING);
+"default"."T1" IS NOT STRING;
 
 --#[expr-38]
 "default"."T1" IS CLOB;
 
 --#[expr-39]
-NOT ("default"."T1" IS CLOB);
+"default"."T1" IS NOT CLOB;
 
 --#[expr-40]
 "default"."T1" IS BLOB;
 
 --#[expr-41]
-NOT ("default"."T1" IS BLOB);
+"default"."T1" IS NOT BLOB;
 
 --#[expr-42]
 "default"."T1" IS LIST;
 
 --#[expr-43]
-NOT ("default"."T1" IS LIST);
+"default"."T1" IS NOT LIST;
 
 --#[expr-44]
 "default"."T1" IS SEXP;
 
 --#[expr-45]
-NOT ("default"."T1" IS SEXP);
+"default"."T1" IS NOT SEXP;
 
 --#[expr-46]
 "default"."T1" IS STRUCT;
 
 --#[expr-47]
-NOT ("default"."T1" IS STRUCT);
+"default"."T1" IS NOT STRUCT;
 
 --#[expr-48]
 "default"."T1" IS BAG;
 
 --#[expr-49]
-NOT ("default"."T1" IS BAG);
+"default"."T1" IS NOT BAG;
 
 --#[expr-50]
 "default"."T1" IN (true);
 
 --#[expr-51]
-NOT ("default"."T1" IN (false));
+"default"."T1" NOT IN (false);
 
 --#[expr-52]
 "default"."T1" IN "default"."T1";
 
 --#[expr-53]
-NOT ("default"."T1" IN "default"."T1");
+"default"."T1" NOT IN "default"."T1";
 
 --#[expr-54]
 "default"."T1" LIKE "default"."T1";
 
 --#[expr-55]
-NOT ("default"."T1" LIKE "default"."T1");
+"default"."T1" NOT LIKE "default"."T1";
 
 --#[expr-56]
 "default"."T1" LIKE "default"."T1" ESCAPE "default"."T1";
@@ -213,7 +213,7 @@ NOT ("default"."T1" LIKE "default"."T1");
 "default"."T1" BETWEEN "default"."T1" AND "default"."T1";
 
 --#[expr-58]
-NOT ("default"."T1" BETWEEN "default"."T1" AND "default"."T1");
+"default"."T1" NOT BETWEEN "default"."T1" AND "default"."T1";
 
 --#[expr-59]
 "default"."T1" || "default"."T1";

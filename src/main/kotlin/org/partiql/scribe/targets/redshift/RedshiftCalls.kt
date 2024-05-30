@@ -6,6 +6,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.exprBetween
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
+import org.partiql.ast.exprCollection
 import org.partiql.ast.exprInCollection
 import org.partiql.ast.exprIsType
 import org.partiql.ast.exprLike
@@ -17,6 +18,7 @@ import org.partiql.ast.typeDecimal
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.error
 import org.partiql.scribe.info
+import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
@@ -32,6 +34,20 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
         this["utcnow"] = ::utcnow
         // -- Extensions
         this["split"] = ::split
+    }
+
+    /**
+     * SQL IN predicate is defined as `IN (...)`.
+     */
+    override fun inCollection(args: List<SqlArg>): Expr {
+        val lhs = args[0].expr
+        var rhs = args[1].expr
+        rhs = when (rhs) {
+            is Expr.Collection -> exprCollection(Expr.Collection.Type.LIST, rhs.values)
+            is Expr.SFW -> rhs
+            else -> error("IN predicate expected expression list or subquery, found ${rhs::class.qualifiedName}")
+        }
+        return exprInCollection(lhs, rhs, false)
     }
 
     /**
@@ -134,34 +150,6 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
             PartiQLValueType.BINARY -> exprCast(args[0].expr, typeCustom("VARBYTE"))
             PartiQLValueType.BYTE -> TODO("Mapping to VARBYTE(1), do this after supporting parameterized type")
             else -> super.rewriteCast(type, args)
-        }
-    }
-
-    private fun Boolean?.flip(): Boolean {
-        return when (this) {
-            null -> true
-            else -> !this
-        }
-    }
-
-    /**
-     * Push the negation down if possible.
-     * For example : NOT 1 is NULL -> 1 is NOT NULL.
-     *
-     * TODO: could consider removing redundant boolean expressions here. E.g.
-     *  - NOT NOT <expr> -> <expr>
-     *  - NOT false -> true
-     *  - NOT true -> false
-     * (this constant-folding step really should have been done at an earlier stage)
-     */
-    override fun notFn(args: SqlArgs): Expr {
-        val arg = args.first()
-        return when (val expr = arg.expr) {
-            is Expr.Between -> exprBetween(expr.value, expr.from, expr.to, expr.not.flip())
-            is Expr.InCollection -> exprInCollection(expr.lhs, expr.rhs, expr.not.flip())
-            is Expr.IsType -> exprIsType(expr.value, expr.type, expr.not.flip())
-            is Expr.Like -> exprLike(expr.value, expr.pattern, expr.escape, expr.not.flip())
-            else -> super.notFn(args)
         }
     }
 

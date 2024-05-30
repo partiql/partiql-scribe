@@ -10,10 +10,7 @@
 --#[subquery-02]
 SELECT `upper`(`T`.`v`) AS `_1`
     FROM `default`.`T` AS `T`
-    WHERE `array_contains`(`T`.`b`,
-            SELECT `T`.`b` AS `b`
-                FROM `default`.`T` AS `T`
-                WHERE `T`.`a`)
+    WHERE `T`.`b` IN (SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T` WHERE `T`.`a`)
 
 -- #[subquery-03]
 -- Spark does not support top level expression.

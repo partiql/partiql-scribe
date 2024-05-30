@@ -44,46 +44,46 @@ SELECT VALUE {"T"['z']: "T"['a']} FROM "default"."T" AS "T";
 SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] BETWEEN 0 AND 2;
 
 --#[select-15]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['b'] BETWEEN 0 AND 2);
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] NOT BETWEEN 0 AND 2;
 
 --#[select-16]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['b'] BETWEEN 0 AND 2);
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] NOT BETWEEN 0 AND 2;
 
 --#[select-17]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT (NOT ("T"['b'] BETWEEN 0 AND 2));
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] BETWEEN 0 AND 2;
 
 --#[select-18]
 SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] IN (0, 1, 2);
 
 --#[select-19]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['b'] IN (0, 1, 2));
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] NOT IN (0, 1, 2);
 
 --#[select-20]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['b'] IN (0, 1, 2));
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] NOT IN (0, 1, 2);
 
 --#[select-21]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT (NOT ("T"['b'] IN (0, 1, 2)));
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] IN (0, 1, 2);
 
 --#[select-22]
 SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] IS NULL;
 
 --#[select-23]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['b'] IS NULL);
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] IS NOT NULL;
 
 --#[select-24]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['b'] IS NULL);
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] IS NOT NULL;
 
 --#[select-25]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT (NOT ("T"['b'] IS NULL));
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['b'] IS NULL;
 
 --#[select-26]
 SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['c'] LIKE 'abc';
 
 --#[select-27]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['c'] LIKE 'abc');
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['c'] NOT LIKE 'abc';
 
 --#[select-28]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT ("T"['c'] LIKE 'abc');
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['c'] NOT LIKE 'abc';
 
 --#[select-29]
-SELECT "T".* FROM "default"."T" AS "T" WHERE NOT (NOT ("T"['c'] LIKE 'abc'));
+SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['c'] LIKE 'abc';

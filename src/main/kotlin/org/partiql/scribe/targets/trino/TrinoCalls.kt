@@ -5,6 +5,8 @@ import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
+import org.partiql.ast.exprCollection
+import org.partiql.ast.exprInCollection
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprVar
 import org.partiql.ast.identifierSymbol
@@ -105,6 +107,20 @@ public open class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
         val elementVar = sqlArgs[1].expr
         val elementExpr = sqlArgs[2].expr
         return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
+    }
+
+    /**
+     * SQL IN predicate is defined as `IN (...)`.
+     */
+    override fun inCollection(args: List<SqlArg>): Expr {
+        val lhs = args[0].expr
+        var rhs = args[1].expr
+        rhs = when (rhs) {
+            is Expr.Collection -> exprCollection(Expr.Collection.Type.LIST, rhs.values)
+            is Expr.SFW -> rhs
+            else -> error("IN predicate expected expression list or subquery, found ${rhs::class.qualifiedName}")
+        }
+        return exprInCollection(lhs, rhs, false)
     }
 
     private fun id(symbol: String) = identifierSymbol(symbol, Identifier.CaseSensitivity.INSENSITIVE)

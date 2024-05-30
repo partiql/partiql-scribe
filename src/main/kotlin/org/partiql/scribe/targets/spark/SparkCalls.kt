@@ -2,12 +2,18 @@ package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
+import org.partiql.ast.exprBetween
 import org.partiql.ast.exprBinary
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
+import org.partiql.ast.exprCollection
+import org.partiql.ast.exprInCollection
+import org.partiql.ast.exprIsType
+import org.partiql.ast.exprLike
 import org.partiql.ast.exprLit
 import org.partiql.ast.typeBigint
 import org.partiql.scribe.ProblemCallback
+import org.partiql.scribe.error
 import org.partiql.scribe.info
 import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
@@ -27,11 +33,18 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         this["transform"] = ::transform
     }
 
-    // https://spark.apache.org/docs/latest/api/sql/index.html#array_contains
+    /**
+     * SQL IN predicate is defined as `IN (...)`.
+     */
     override fun inCollection(args: List<SqlArg>): Expr {
-        val call = id("array_contains")
-        log.info("PartiQL value IN collection was replaced by Spark `array_contains(collection, value)`")
-        return exprCall(call, args.map { it.expr })
+        val lhs = args[0].expr
+        var rhs = args[1].expr
+        rhs = when (rhs) {
+            is Expr.Collection -> exprCollection(Expr.Collection.Type.LIST, rhs.values)
+            is Expr.SFW -> rhs
+            else -> error("IN predicate expected expression list or subquery, found ${rhs::class.qualifiedName}")
+        }
+        return exprInCollection(lhs, rhs, false)
     }
 
     private fun currentUser(args: List<SqlArg>): Expr {
