@@ -27,6 +27,7 @@ import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
+import org.partiql.types.AnyOfType
 import org.partiql.types.BoolType
 import org.partiql.types.CollectionType
 import org.partiql.types.DateType
@@ -34,6 +35,7 @@ import org.partiql.types.DecimalType
 import org.partiql.types.FloatType
 import org.partiql.types.IntType
 import org.partiql.types.ListType
+import org.partiql.types.MissingType
 import org.partiql.types.NullType
 import org.partiql.types.NumberConstraint
 import org.partiql.types.SingleType
@@ -527,6 +529,16 @@ public open class TrinoTarget : SqlTarget() {
                     val head = "ARRAY<"
                     val elementType = elementType.toTrinoString()
                     head + elementType + ">"
+                }
+                is AnyOfType -> {
+                    // Filter out unknown types. Trino types are nullable by default. Once Scribe uses PLK 0.15+,
+                    // `StaticType`s will be nullable + missable by default, so this branch will not be needed.
+                    val typesWithoutUnknown = this.flatten().allTypes.filterNot { it is NullType || it is MissingType }
+                    if (typesWithoutUnknown.size != 1) {
+                        error("Not able to convert StaticType $this to Trino")
+                    }
+                    val singleType = typesWithoutUnknown.first()
+                    singleType.toTrinoString()
                 }
                 else -> TODO("Not able to convert StaticType $this to Trino")
             }
