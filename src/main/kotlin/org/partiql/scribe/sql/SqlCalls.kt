@@ -107,6 +107,7 @@ public abstract class SqlCalls {
         "cast_int64" to { args -> rewriteCast(PartiQLValueType.INT64, args) },
         "cast_int" to { args -> rewriteCast(PartiQLValueType.INT, args) },
         "cast_decimal" to { args -> rewriteCast(PartiQLValueType.DECIMAL, args) },
+        "cast_decimal_arbitrary" to { args -> rewriteCast(PartiQLValueType.DECIMAL_ARBITRARY, args) },
         "cast_float32" to { args -> rewriteCast(PartiQLValueType.FLOAT32, args) },
         "cast_float64" to { args -> rewriteCast(PartiQLValueType.FLOAT64, args) },
         "cast_char" to { args -> rewriteCast(PartiQLValueType.CHAR, args) },
