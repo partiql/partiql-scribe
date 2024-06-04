@@ -123,3 +123,19 @@ SELECT * EXCLUDE t.foo.bar FROM datatypes.T_TIME_6 AS t;
 -- timestamp(6)
 --#[exclude-31]
 SELECT * EXCLUDE t.foo.bar FROM datatypes.T_TIMESTAMP_6 AS t;
+
+-- union(string, null)
+--#[exclude-32]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRING_NULL AS t;
+
+-- union(int32, null)
+--#[exclude-33]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_INT32_NULL AS t;
+
+-- union(varchar(16), null)
+--#[exclude-34]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRING_16_NULL AS t;
+
+-- union(char(16), null)
+--#[exclude-35]
+SELECT * EXCLUDE t.foo.bar FROM datatypes.T_CHAR_16_NULL AS t;
