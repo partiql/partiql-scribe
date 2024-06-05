@@ -139,3 +139,65 @@ SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRING_16_NULL AS t;
 -- union(char(16), null)
 --#[exclude-35]
 SELECT * EXCLUDE t.foo.bar FROM datatypes.T_CHAR_16_NULL AS t;
+
+-- Tests for EXCLUDE on top-level columns only --
+-- Baseline query without `EXCLUDE`
+--#[exclude-36]
+SELECT * FROM T_EXCLUDE_TOP_LEVEL AS t;
+
+-- EXCLUDE single top-level column (no `t.a`)
+--#[exclude-37]
+SELECT * EXCLUDE t.a FROM T_EXCLUDE_TOP_LEVEL AS t;
+
+-- EXCLUDE multiple top-level columns (no `t.a` through `t.e`)
+--#[exclude-38]
+SELECT * EXCLUDE t.a, t.b, t.c, t.d, t.e FROM T_EXCLUDE_TOP_LEVEL AS t;
+
+-- EXCLUDE top-level columns with WHERE
+--#[exclude-39]
+SELECT * EXCLUDE t.a, t.b FROM T_EXCLUDE_TOP_LEVEL AS t WHERE t.a AND t.c = 'remove';
+
+-- EXCLUDE top-level columns with explicit SELECT list
+--#[exclude-40]
+SELECT t.c, t.d, t.e, t.f, t.g EXCLUDE t.a, t.b FROM T_EXCLUDE_TOP_LEVEL AS t WHERE t.a AND t.c = 'remove';
+
+-- EXCLUDE top-level with subquery
+--#[exclude-41]
+SELECT subq.* EXCLUDE subq.remove_me FROM (SELECT t.*, 'foo' AS remove_me FROM T_EXCLUDE_TOP_LEVEL AS t WHERE t.a) AS subq;
+
+-- EXCLUDE top-level columns with JOIN
+--#[exclude-42]
+SELECT * EXCLUDE t1.a, t2.b, t1.c, t2.d, t1.e, t2.f, t1.g FROM T_EXCLUDE_TOP_LEVEL AS t1, T_EXCLUDE_TOP_LEVEL AS t2;
+
+-- EXCLUDE top-level columns with JOIN and WHERE
+--#[exclude-43]
+SELECT * EXCLUDE t1.a, t2.b, t1.c, t2.d, t1.e, t2.f, t1.g FROM T_EXCLUDE_TOP_LEVEL AS t1, T_EXCLUDE_TOP_LEVEL AS t2 WHERE t1.a AND t2.a;
+
+-- EXCLUDE top-level columns with JOIN and WHERE and specified SELECT element
+--#[exclude-44]
+SELECT t1.* EXCLUDE t1.a, t2.b, t1.c, t2.d, t1.e, t2.f, t1.g FROM T_EXCLUDE_TOP_LEVEL AS t1, T_EXCLUDE_TOP_LEVEL AS t2 WHERE t1.a AND t2.a;
+
+-- EXCLUDE top-level columns with JOIN and WHERE and specified SELECT elements
+--#[exclude-45]
+SELECT t1.*, t2.a AS special EXCLUDE t1.a, t2.b, t1.c, t2.d, t1.e, t2.f, t1.g FROM T_EXCLUDE_TOP_LEVEL AS t1, T_EXCLUDE_TOP_LEVEL AS t2 WHERE t1.a AND t2.a;
+
+-- EXCLUDE top-level columns with multiple JOINs
+--#[exclude-46]
+SELECT *
+EXCLUDE
+          t1.b, t1.c, t1.d, t1.e, t1.f, t1.g,
+    t2.a,       t2.c, t2.d, t2.e, t2.f, t2.g,
+    t3.a, t3.b,       t3.d, t3.e, t3.f, t3.g,
+    t4.a, t4.b, t4.c,       t4.e, t4.f, t4.g,
+    t5.a, t5.b, t5.c, t5.d,       t5.f, t5.g,
+    t6.a, t6.b, t6.c, t6.d, t6.e,       t6.g,
+    t7.a, t7.b, t7.c, t7.d, t7.e, t7.f
+FROM T_EXCLUDE_TOP_LEVEL AS t1 JOIN
+    T_EXCLUDE_TOP_LEVEL AS t2 ON t2.a LEFT JOIN
+    T_EXCLUDE_TOP_LEVEL AS t3 ON t3.a INNER JOIN
+    T_EXCLUDE_TOP_LEVEL AS t4 ON t4.a RIGHT JOIN
+    T_EXCLUDE_TOP_LEVEL AS t5 ON t5.a FULL JOIN
+    T_EXCLUDE_TOP_LEVEL AS t6 ON t6.a,
+    T_EXCLUDE_TOP_LEVEL AS t7
+WHERE
+    t1.a AND t2.a;

@@ -77,8 +77,8 @@ public open class RedshiftTarget : SqlTarget() {
         private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
 
         /**
-         * Redshift does not support struct wildcards. Convert any struct wildcards to an equivalent expanded form.
-         * Keep any relation wildcards the same as before.
+         * For Redshift, expand every wildcard, including relation wildcards (e.g. `SELECT tbl.*`) and
+         * struct/`OBJECT` wildcards (e.g. `SELECT tbl.foo.*`).
          *
          * For example, consider if tbl's schema is the following: tbl = { flds: Struct(a: int, b: boolean, c: string) }
          * and a query with a relation wildcard
@@ -87,8 +87,8 @@ public open class RedshiftTarget : SqlTarget() {
          * This query would be rewritten to something like
          *      SELECT VALUE TUPLEUNION(varRef(0))
          *      FROM tbl -- varRef(0)
-         * Since relation wildcards are supported, the output query would be something like:
-         *      SELECT tbl.*
+         * Rewrite the output query to something like:
+         *      SELECT tbl.flds
          *      FROM tbl
          *
          * When there's a struct wildcard, we have
@@ -110,7 +110,8 @@ public open class RedshiftTarget : SqlTarget() {
             newTupleUnion.args.forEach { arg ->
                 val op = arg.op
                 val type = arg.type
-                if (op is Rex.Op.Path && type is StructType) {
+                // For now, just support the expansion of variable references and paths
+                if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                     newArgs.addAll(expandStruct(op, type))
                 } else {
                     newArgs.add(arg)
@@ -120,7 +121,7 @@ public open class RedshiftTarget : SqlTarget() {
         }
 
         @OptIn(PartiQLValueExperimental::class)
-        private fun expandStruct(op: Rex.Op.Path, structType: StructType): List<Rex> {
+        private fun expandStruct(op: Rex.Op, structType: StructType): List<Rex> {
             return structType.fields.map { field ->
                 // Create a new struct for each field
                 Rex(
@@ -168,9 +169,28 @@ public open class RedshiftTarget : SqlTarget() {
                     error("Projection item (index $index) is heterogeneous (${type.allTypes.joinToString(",")}) and cannot be coerced to a single type.")
                 }
             }
-            val project = super.visitRelOpProject(node, ctx) as Rel.Op.Project
-            return if (node.input.op is Rel.Op.Exclude) {
-                // When the Rel.Op.Project's input Rel.Op is Exclude
+            val inputOp = node.input.op
+            val newNode = if (inputOp is Rel.Op.Exclude) {
+                // Check for special case involving just top-level column exclusions (i.e. # of steps is 1)
+                if (inputOp.items.all { it.steps.size == 1 }) {
+                    node.copy(
+                        input = inputOp.input   // get rid of `EXCLUDE` in plan; pass in `EXCLUDE`'s input Rel
+                    )
+                } else {
+                    // `EXCLUDE` node with non-top-level column exclusions; run existing `EXCLUDE` logic
+                    node
+                }
+            } else {
+                node
+            }
+            val project = super.visitRelOpProject(newNode, ctx) as Rel.Op.Project
+            return if (newNode.input.op is Rel.Op.Exclude) {
+                // When the Rel.Op.Project's input Rel.Op is Exclude and has deeper nested `EXCLUDE` paths
+                // TODO: further optimize deeper nested `EXCLUDE` paths
+                //   This rewrite will yield a semantically correct query but needs further optimization to not use
+                //   `OBJECT` function. Consider `OBJECT_TRANSFORM` as an alternative, which looks to be more
+                //   performant.
+                //
                 // 1. Rewrite the Rel's type schema to wrap the existing bindings in a new binding, `$__EXCLUDE_ALIAS__`
                 //    For example if schema was originally
                 //          [ <binding_name_1: type_1>, <binding_name_2: type_2> ]
