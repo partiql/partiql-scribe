@@ -1,11 +1,11 @@
--- #[cast-00]
--- SELECT CAST('1' AS INT);
+--#[cast-07]
+SELECT CAST(1 AS DECIMAL) AS "_1" FROM "default"."T" AS "T";
 
--- #[cast-01]
--- SELECT CAST('1' AS INT);
+--#[cast-08]
+SELECT CAST(1 AS DECIMAL) AS "_1" FROM "default"."T" AS "T";
 
--- #[cast-02]
--- SELECT CAST('1' AS BIGINT);
+--#[cast-09]
+SELECT CAST(9223372036854775807 AS DECIMAL(38,0)) AS "_1" FROM "default"."T" AS "T";
 
--- #[cast-03]
--- SELECT CAST('1' AS BIGINT);
+--#[cast-10]
+SELECT CAST(9223372036854775808 AS DECIMAL(38,0)) AS "_1" FROM "default"."T" AS "T";

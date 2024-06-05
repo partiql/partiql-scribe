@@ -144,6 +144,10 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
                 log.error("PartiQL `STRUCT` type not supported in Redshift")
                 super.rewriteCast(type, args)
             }
+            PartiQLValueType.DECIMAL_ARBITRARY -> {
+                log.info("PartiQL arbitrary decimal cast rewritten to CAST(_ AS DECIMAL(38,0))")
+                exprCast(args[0].expr, typeDecimal(38, 0))
+            }
             // using the customer type to rename type
             PartiQLValueType.FLOAT32 -> exprCast(args[0].expr, typeCustom("FLOAT4"))
             PartiQLValueType.FLOAT64 -> exprCast(args[0].expr, typeCustom("FLOAT8"))

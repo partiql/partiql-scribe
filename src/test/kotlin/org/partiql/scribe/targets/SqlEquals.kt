@@ -20,6 +20,9 @@ object SqlEqualsNaive : SqlEquals {
         val e = expected.clean()
         val a = actual.clean()
         // TODO some nicely formatted error message w/ comparison failures
+        if (expected.contains("DECIMAL")) {
+            println("Decimal test")
+        }
         assert(e == a) {
             buildString {
                 appendLine()

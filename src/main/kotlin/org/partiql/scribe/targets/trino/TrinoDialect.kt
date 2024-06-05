@@ -4,17 +4,25 @@ import org.partiql.ast.AstNode
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.Type
+import org.partiql.ast.exprCast
+import org.partiql.ast.exprLit
 import org.partiql.ast.exprPathStepSymbol
 import org.partiql.ast.identifierSymbol
 import org.partiql.ast.selectProjectItemExpression
+import org.partiql.ast.typeDecimal
+import org.partiql.lang.util.compareTo
 import org.partiql.scribe.sql.SqlBlock
 import org.partiql.scribe.sql.SqlDialect
 import org.partiql.scribe.sql.concat
 import org.partiql.scribe.sql.sql
+import org.partiql.value.IntValue
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
+import org.partiql.value.stringValue
+import java.math.BigInteger
 
 public open class TrinoDialect : SqlDialect() {
+
     override fun visitExprSessionAttribute(node: Expr.SessionAttribute, tail: SqlBlock): SqlBlock {
         return tail concat node.attribute.name.lowercase()
     }
@@ -40,6 +48,25 @@ public open class TrinoDialect : SqlDialect() {
         } else {
             super.visitExprPathStepIndex(node, tail)
         }
+    }
+
+    @OptIn(PartiQLValueExperimental::class)
+    override fun visitExprLit(node: Expr.Lit, tail: SqlBlock): SqlBlock {
+        val v = node.value
+        if (v is IntValue && isLiteralIntTooLarge(v.value)) {
+            // CAST('<v>' AS DECIMAL(38,0))
+            val lit = stringValue(v.value?.toString())
+            val ast = exprCast(exprLit(lit), typeDecimal(38, 0))
+            return visitExprCast(ast, tail)
+        }
+        return super.visitExprLit(node, tail)
+    }
+
+    private fun isLiteralIntTooLarge(value: BigInteger?): Boolean {
+        if (value == null) {
+            return false
+        }
+        return value > BigInteger.valueOf(Constants.INT_LITERAL_MAX_VALUE)
     }
 
     /**
@@ -130,5 +157,9 @@ public open class TrinoDialect : SqlDialect() {
             postfix = end,
             child = h,
         )
+    }
+
+    private object Constants {
+        const val INT_LITERAL_MAX_VALUE = Long.MAX_VALUE
     }
 }
