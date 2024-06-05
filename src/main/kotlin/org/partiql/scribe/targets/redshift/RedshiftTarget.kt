@@ -122,6 +122,9 @@ public open class RedshiftTarget : SqlTarget() {
 
         @OptIn(PartiQLValueExperimental::class)
         private fun expandStruct(op: Rex.Op, structType: StructType): List<Rex> {
+            if (structType.fields.isEmpty()) {
+                error("Struct fields $structType must be non-empty")
+            }
             return structType.fields.map { field ->
                 // Create a new struct for each field
                 Rex(
