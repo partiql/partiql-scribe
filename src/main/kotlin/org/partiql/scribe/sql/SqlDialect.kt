@@ -261,15 +261,22 @@ abstract class SqlDialect : AstBaseVisitor<SqlBlock, SqlBlock>() {
     }
 
     override fun visitExprUnary(node: Expr.Unary, tail: SqlBlock): SqlBlock {
+        val lit = node.expr is Expr.Lit
         val op = when (node.op) {
             Expr.Unary.Op.NOT -> "NOT ("
-            Expr.Unary.Op.POS -> "+("
-            Expr.Unary.Op.NEG -> "-("
+            Expr.Unary.Op.POS -> when (lit) {
+                true -> "+"
+                else -> "+("
+            }
+            Expr.Unary.Op.NEG -> when (lit) {
+                true -> "-"
+                else -> "-("
+            }
         }
         var t = tail
         t = t concat op
         t = visitExprWrapped(node.expr, t)
-        t = t concat ")"
+        t = if (lit) t else (t concat ")")
         return t
     }
 
