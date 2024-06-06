@@ -19,11 +19,13 @@ import org.partiql.plan.rexOpPathKey
 import org.partiql.plan.rexOpSelect
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
+import org.partiql.plan.rexOpTupleUnion
 import org.partiql.plan.rexOpVar
 import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.VarToPathRewriter
+import org.partiql.scribe.expandStruct
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
@@ -65,6 +67,27 @@ public open class SparkTarget : SqlTarget() {
 
         private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
 
+        /**
+         * Expand every wildcard including:
+         * - relation wildcards (e.g. SELECT tbl.*) and
+         * - struct wildcards (e.g. `SELECT tbl.foo.*`).
+         */
+        override fun visitRexOpTupleUnion(node: Rex.Op.TupleUnion, ctx: Rel.Type?): PlanNode {
+            val newTupleUnion = super.visitRexOpTupleUnion(node, ctx) as Rex.Op.TupleUnion
+            val newArgs = mutableListOf<Rex>()
+            newTupleUnion.args.forEach { arg ->
+                val op = arg.op
+                val type = arg.type
+                // For now, just support the expansion of variable references and paths
+                if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
+                    newArgs.addAll(expandStruct(op, type))
+                } else {
+                    newArgs.add(arg)
+                }
+            }
+            return rexOpTupleUnion(newArgs)
+        }
+
         override fun visitPartiQLPlan(node: PartiQLPlan, ctx: Rel.Type?): PlanNode {
             if ((node.statement !is Statement.Query) || (node.statement as Statement.Query).root.op !is Rex.Op.Select) {
                 error("Spark does not support top level expression")
@@ -101,9 +124,23 @@ public open class SparkTarget : SqlTarget() {
         }
 
         override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
-            val project = super.visitRelOpProject(node, ctx) as Rel.Op.Project
-            return if (node.input.op is Rel.Op.Exclude) {
-                // When the Rel.Op.Project's input Rel.Op is Exclude
+            val inputOp = node.input.op
+            val newNode = if (inputOp is Rel.Op.Exclude) {
+                // Check for special case involving just top-level column exclusions (i.e. # of steps is 1)
+                if (inputOp.items.all { it.steps.size == 1 }) {
+                    node.copy(
+                        input = inputOp.input   // get rid of `EXCLUDE` in plan; pass in `EXCLUDE`'s input Rel
+                    )
+                } else {
+                    // `EXCLUDE` node with non-top-level column exclusions; run existing `EXCLUDE` logic
+                    node
+                }
+            } else {
+                node
+            }
+            val project = super.visitRelOpProject(newNode, ctx) as Rel.Op.Project
+            return if (newNode.input.op is Rel.Op.Exclude) {
+                // When the Rel.Op.Project's input Rel.Op is Exclude and has deeper nested `EXCLUDE` paths
                 // 1. Rewrite the Rel's type schema to wrap the existing bindings in a new binding, `$__EXCLUDE_ALIAS__`
                 //    For example if schema was originally
                 //          [ <binding_name_1: type_1>, <binding_name_2: type_2> ]

@@ -79,6 +79,9 @@ public open class RexConverter(
     }
 
     override fun visitRexOpTupleUnion(node: Rex.Op.TupleUnion, ctx: StaticType): Expr {
+        if (node.args.isEmpty()) {
+            error("TupleUnion $node has no args")
+        }
         val args = node.args.map { arg -> visitRex(arg, ctx) }
         return exprCall(
             identifierSymbol("TUPLEUNION", Identifier.CaseSensitivity.INSENSITIVE), args = args
