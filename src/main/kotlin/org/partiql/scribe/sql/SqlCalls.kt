@@ -203,7 +203,6 @@ public abstract class SqlCalls {
     }
 
     public open fun unary(op: Expr.Unary.Op, args: SqlArgs): Expr {
-        Long.MAX_VALUE
         assert(args.size == 1) { "Unary operator $op requires exactly 1 argument" }
         return exprUnary(op, args[0].expr)
     }
