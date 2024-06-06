@@ -4,12 +4,17 @@ import org.partiql.ast.AstNode
 import org.partiql.plan.PartiQLPlan
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeOutput
+import org.partiql.scribe.ScribeTag
 import org.partiql.scribe.ScribeTarget
 import org.partiql.scribe.VersionProvider
 import org.partiql.types.StaticType
 import org.partiql.plan.Statement as PlanStatement
 
-public class SqlOutput(schema: StaticType, value: String) : ScribeOutput<String>(schema, value) {
+public class SqlOutput(
+    tag: ScribeTag,
+    value: String,
+    schema: StaticType,
+) : ScribeOutput<String>(tag, value, schema) {
 
     override fun toString(): String = value
 
@@ -66,15 +71,16 @@ public abstract class SqlTarget : ScribeTarget<String> {
         val schema = (newPlan.statement as PlanStatement.Query).root.type
         val newAst = unplan(newPlan, onProblem)
         val block = dialect.apply(newAst)
-        var sql = block.sql(layout)
+        val sql = block.sql(layout)
 
-        // Append an info comment
-        sql = buildString {
-            appendLine("-- $target $version // Scribe @ ${VersionProvider.tag} ")
-            append(sql)
-        }
+        val tag = ScribeTag(
+            scribeVersion = VersionProvider.version,
+            scribeCommit = VersionProvider.commit,
+            target = this.target,
+            targetVersion = this.version,
+        )
 
-        return SqlOutput(schema, sql)
+        return SqlOutput(tag, sql, schema)
     }
 
     /**
