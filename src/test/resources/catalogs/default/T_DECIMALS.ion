@@ -1,0 +1,21 @@
+{
+  type: "bag",
+  items: {
+    type: "struct",
+    constraints: [ closed, ordered, unique ],
+    fields: [
+      {
+        name: "da", // decimal arbitrary
+        type: "decimal",
+      },
+      {
+        name: "de", // decimal exact
+        type: {
+          type: "decimal",
+          precision: 10,
+          scale: 0,
+        },
+      },
+    ]
+  }
+}

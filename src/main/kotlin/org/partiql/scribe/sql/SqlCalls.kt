@@ -107,6 +107,7 @@ public abstract class SqlCalls {
         "cast_int64" to { args -> rewriteCast(PartiQLValueType.INT64, args) },
         "cast_int" to { args -> rewriteCast(PartiQLValueType.INT, args) },
         "cast_decimal" to { args -> rewriteCast(PartiQLValueType.DECIMAL, args) },
+        "cast_decimal_arbitrary" to ::removeDecimalArbitraryCoercion,
         "cast_float32" to { args -> rewriteCast(PartiQLValueType.FLOAT32, args) },
         "cast_float64" to { args -> rewriteCast(PartiQLValueType.FLOAT64, args) },
         "cast_char" to { args -> rewriteCast(PartiQLValueType.CHAR, args) },
@@ -202,6 +203,7 @@ public abstract class SqlCalls {
     }
 
     public open fun unary(op: Expr.Unary.Op, args: SqlArgs): Expr {
+        Long.MAX_VALUE
         assert(args.size == 1) { "Unary operator $op requires exactly 1 argument" }
         return exprUnary(op, args[0].expr)
     }
@@ -300,6 +302,11 @@ public abstract class SqlCalls {
     public open fun inCollection(args: SqlArgs) : Expr = exprInCollection(args[0].expr, args[1].expr, false)
 
     public open fun between(args: SqlArgs) : Expr = exprBetween(args[0].expr, args[1].expr, args[2].expr, false)
+
+    private fun removeDecimalArbitraryCoercion(args: SqlArgs): Expr {
+        assert(args.size == 1) { "cast_decimal_arbitrary should only have one argument" }
+        return args[0].expr
+    }
 
     public open fun like(args: SqlArgs, escape: Boolean): Expr {
         val arg0 = args[0].expr
