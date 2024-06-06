@@ -23,6 +23,7 @@ import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.VarToPathRewriter
 import org.partiql.scribe.asNonNullable
+import org.partiql.scribe.expandStruct
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
@@ -118,50 +119,6 @@ public open class RedshiftTarget : SqlTarget() {
                 }
             }
             return rexOpTupleUnion(newArgs)
-        }
-
-        @OptIn(PartiQLValueExperimental::class)
-        private fun expandStruct(op: Rex.Op, structType: StructType): List<Rex> {
-            if (structType.fields.isEmpty()) {
-                error("Struct fields $structType must be non-empty")
-            }
-            return structType.fields.map { field ->
-                // Create a new struct for each field
-                Rex(
-                    type = StructType(
-                        fields = listOf(
-                            StructType.Field(
-                                key = field.key,
-                                value = field.value
-                            )
-                        )
-                    ),
-                    op = rexOpStruct(
-                        fields = listOf(
-                            rexOpStructField(
-                                k = Rex(
-                                    type = StaticType.STRING,
-                                    op = rexOpLit(
-                                        stringValue(
-                                            field.key
-                                        )
-                                    )
-                                ),
-                                v = Rex(
-                                    type = field.value,
-                                    op = rexOpPathKey(
-                                        root = Rex(
-                                            type = field.value,
-                                            op = op
-                                        ),
-                                        key = rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            }
         }
 
         override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
