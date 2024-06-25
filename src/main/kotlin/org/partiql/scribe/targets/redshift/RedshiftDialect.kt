@@ -12,6 +12,13 @@ import org.partiql.scribe.sql.SqlDialect
 import org.partiql.scribe.sql.concat
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
+import org.partiql.value.TimeValue
+import org.partiql.value.TimestampValue
+import org.partiql.value.datetime.Time
+import org.partiql.value.datetime.TimeZone
+import org.partiql.value.datetime.Timestamp
+import java.math.BigDecimal
+import kotlin.math.abs
 
 /**
  * Redshift SQL dialect for PartiQL Scribe.
@@ -76,6 +83,77 @@ public open class RedshiftDialect : SqlDialect() {
     }
 
     override fun visitTypeString(node: Type.String, tail: SqlBlock): SqlBlock = tail concat "VARCHAR"
+
+    // Essentially the same as `SqlDialect`. For SQL time and timestamp literals, Redshift (like Postgresql) requires
+    // specifying if the time/timestamp has a timezone in the type name. Otherwise, the offset will be ignored.
+    // Postgresql reference -- https://www.postgresql.org/docs/16/datatype-datetime.html#DATATYPE-DATETIME-INPUT-TIME-STAMPS
+    @OptIn(PartiQLValueExperimental::class)
+    override fun visitExprLit(node: Expr.Lit, tail: SqlBlock): SqlBlock {
+        val value = when (val v = node.value) {
+            is TimeValue -> {
+                when (val t = v.value) {
+                    null -> "null"  // null.time
+                    else -> sqlString(t)
+                }
+            }
+            is TimestampValue -> {
+                when (val t = v.value) {
+                    null -> "null" // null.timestamp
+                    else -> sqlString(t)
+                }
+            }
+            else -> return super.visitExprLit(node, tail)
+        }
+        return tail concat value
+    }
+
+    private fun padZeros(v: Int, totalDigits: Int): String = String.format("%0${totalDigits}d", v)
+
+    private fun sqlString(tz: TimeZone?): String {
+        return when (tz) {
+            null -> ""
+            is TimeZone.UnknownTimeZone -> "-00:00" // could consider giving an error for unknown time zone offset
+            is TimeZone.UtcOffset -> {
+                val sign = if (tz.totalOffsetMinutes < 0) {
+                    "-"
+                } else {
+                    "+"
+                }
+                val hh = padZeros(abs(tz.tzHour), 2)
+                val mm = padZeros(abs(tz.tzMinute), 2)
+                "$sign$hh:$mm"
+            }
+        }
+    }
+
+    private fun sqlString(t: Time): String {
+        val hh = padZeros(t.hour, 2)
+        val mm = padZeros(t.minute, 2)
+        val ss = padZeros(t.decimalSecond.toInt(), 2)
+        val frac = t.decimalSecond.remainder(BigDecimal.ONE).toString().substring(1) // drop leading 0
+        val timeZone = sqlString(t.timeZone)
+        val timeType = when (t.timeZone) {
+            null -> "TIME"
+            else -> "TIMETZ"    // `TIMETZ` is shorter than `TIME WITH TIME ZONE`
+        }
+        return "$timeType '$hh:$mm:$ss$frac$timeZone'"
+    }
+
+    private fun sqlString(t: Timestamp): String {
+        val yyyy = padZeros(t.year, 4)
+        val mon = padZeros(t.month, 2)
+        val dd = padZeros(t.day, 2)
+        val hh = padZeros(t.hour, 2)
+        val min = padZeros(t.minute, 2)
+        val ss = padZeros(t.decimalSecond.toInt(), 2)
+        val frac = t.decimalSecond.remainder(BigDecimal.ONE).toString().substring(1) // drop leading 0
+        val timeZone = sqlString(t.timeZone)
+        val timestampType = when (t.timeZone) {
+            null -> "TIMESTAMP"
+            else -> "TIMESTAMPTZ"   // `TIMESTAMPTZ` is shorter than `TIMESTAMP WITH TIME ZONE`
+        }
+        return "$timestampType '$yyyy-$mon-$dd $hh:$min:$ss$frac$timeZone'"
+    }
 
     private fun list(
         start: String? = "(",
