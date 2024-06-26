@@ -103,6 +103,8 @@ public open class SparkDialect : SqlDialect() {
 
     override fun visitTypeInt8(node: Type.Int8, tail: SqlBlock): SqlBlock = tail concat "BIGINT"
 
+    override fun visitTypeFloat64(node: Type.Float64, tail: SqlBlock): SqlBlock = tail concat "DOUBLE"
+
     override fun visitExprCollection(node: Expr.Collection, tail: SqlBlock): SqlBlock {
         val (start, end) = when (node.type) {
             Expr.Collection.Type.ARRAY -> "array(" to ")"

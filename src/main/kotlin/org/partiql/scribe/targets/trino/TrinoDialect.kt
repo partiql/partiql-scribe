@@ -125,6 +125,8 @@ public open class TrinoDialect : SqlDialect() {
 
     override fun visitTypeInt8(node: Type.Int8, tail: SqlBlock): SqlBlock = tail concat "BIGINT"
 
+    override fun visitTypeFloat64(node: Type.Float64, tail: SqlBlock): SqlBlock = tail concat "DOUBLE"
+
     override fun visitTypeString(node: Type.String, tail: SqlBlock): SqlBlock = tail concat "VARCHAR"
 
     override fun visitExprCollection(node: Expr.Collection, tail: SqlBlock): SqlBlock {

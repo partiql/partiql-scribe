@@ -1,11 +1,23 @@
+-- tests translations of type names across dialects.
+
+-- exact numeric
+
 --#[cast-00]
-CAST('1' AS INT);
+SELECT CAST('1' AS INT) FROM T;
 
 --#[cast-01]
-CAST('1' AS INT4);
+SELECT CAST('1' AS INT4) FROM T;
 
 --#[cast-02]
-CAST('1' AS INT8);
+SELECT CAST('1' AS INT8) FROM T;
 
 --#[cast-03]
-CAST('1' AS BIGINT);
+SELECT CAST('1' AS BIGINT) FROM T;
+
+-- approximate numeric
+
+-- #[cast-04]
+-- SELECT CAST(1 AS REAL) FROM T;
+
+--#[cast-05]
+SELECT CAST(1 AS DOUBLE PRECISION) FROM T;

@@ -1,11 +1,17 @@
 --#[cast-00]
-CAST('1' AS INT);
+SELECT CAST('1' AS INT) AS "_1" FROM "default"."T" AS "T";
 
 --#[cast-01]
-CAST('1' AS INT);
+SELECT CAST('1' AS INT) AS "_1" FROM "default"."T" AS "T";
 
 --#[cast-02]
-CAST('1' AS BIGINT);
+SELECT CAST('1' AS BIGINT) AS "_1" FROM "default"."T" AS "T";
 
 --#[cast-03]
-CAST('1' AS BIGINT);
+SELECT CAST('1' AS BIGINT) AS "_1" FROM "default"."T" AS "T";
+
+-- #[cast-04]
+-- SELECT CAST(1 AS REAL) AS "_1" FROM "default"."T" AS "T";
+
+--#[cast-05]
+SELECT CAST(1 AS DOUBLE) AS "_1" FROM "default"."T" AS "T";
