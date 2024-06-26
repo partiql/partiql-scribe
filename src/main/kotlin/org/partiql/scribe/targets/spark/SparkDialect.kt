@@ -15,6 +15,7 @@ import org.partiql.scribe.sql.concat
 import org.partiql.scribe.sql.sql
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.StringValue
+import org.partiql.value.TimeValue
 
 public open class SparkDialect : SqlDialect() {
 
@@ -111,6 +112,15 @@ public open class SparkDialect : SqlDialect() {
             Expr.Collection.Type.LIST -> "(" to ")"
         }
         return tail concat list(start, end) { node.values }
+    }
+
+    @OptIn(PartiQLValueExperimental::class)
+    override fun visitExprLit(node: Expr.Lit, tail: SqlBlock): SqlBlock {
+        // Error on time literals; Spark does not have a time type or literal
+        if (node.value is TimeValue) {
+            error("Attempting to print ${node.value}. Time type is not supported in Spark.")
+        }
+        return super.visitExprLit(node, tail)
     }
 
     // Spark, has no notion of case sensitivity

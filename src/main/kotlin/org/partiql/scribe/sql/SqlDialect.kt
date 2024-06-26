@@ -33,7 +33,6 @@ import org.partiql.ast.visitor.AstBaseVisitor
 import org.partiql.value.MissingValue
 import org.partiql.value.NullValue
 import org.partiql.value.PartiQLValueExperimental
-import org.partiql.value.io.PartiQLValueTextWriter
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 

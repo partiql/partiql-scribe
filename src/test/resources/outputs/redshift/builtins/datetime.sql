@@ -38,3 +38,9 @@ SELECT DATEDIFF(MINUTE, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "defa
 
 --#[datetime-20]
 SELECT DATEDIFF(SECOND, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-21]
+SELECT DATEADD(SECOND, 1, TIMESTAMP '2017-01-02 03:04:05.006') AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-22]
+SELECT DATEDIFF(SECOND, TIMESTAMP '2017-01-02 03:04:05.006', TIMESTAMP '2017-01-02 03:04:20.006') AS "_1" FROM "default"."T" AS "T";
