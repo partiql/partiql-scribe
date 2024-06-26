@@ -173,7 +173,7 @@ abstract class SqlDialect : AstBaseVisitor<SqlBlock, SqlBlock>() {
 
     override fun visitTypeReal(node: Type.Real, tail: SqlBlock): SqlBlock = tail concat "REAL"
 
-    override fun visitTypeFloat32(node: Type.Float32, tail: SqlBlock): SqlBlock = tail concat "FLOAT32"
+    override fun visitTypeFloat32(node: Type.Float32, tail: SqlBlock): SqlBlock = tail concat "REAL"
 
     override fun visitTypeFloat64(node: Type.Float64, tail: SqlBlock): SqlBlock = tail concat "DOUBLE PRECISION"
 
@@ -232,8 +232,8 @@ abstract class SqlDialect : AstBaseVisitor<SqlBlock, SqlBlock>() {
     override fun visitTypeInterval(node: Type.Interval, tail: SqlBlock): SqlBlock =
         tail concat type("INTERVAL", node.precision)
 
-    // unsupported
-    override fun visitTypeCustom(node: Type.Custom, tail: SqlBlock): SqlBlock = defaultReturn(node, tail)
+    // insert custom type as-is
+    override fun visitTypeCustom(node: Type.Custom, tail: SqlBlock): SqlBlock = tail concat node.name
 
     // Expressions
 

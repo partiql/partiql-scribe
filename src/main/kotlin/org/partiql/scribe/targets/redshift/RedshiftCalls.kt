@@ -3,18 +3,17 @@ package org.partiql.scribe.targets.redshift
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
-import org.partiql.ast.exprBetween
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCast
 import org.partiql.ast.exprCollection
 import org.partiql.ast.exprInCollection
-import org.partiql.ast.exprIsType
-import org.partiql.ast.exprLike
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprVar
 import org.partiql.ast.identifierSymbol
 import org.partiql.ast.typeCustom
 import org.partiql.ast.typeDecimal
+import org.partiql.ast.typeFloat32
+import org.partiql.ast.typeFloat64
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.error
 import org.partiql.scribe.info
@@ -145,8 +144,8 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
                 super.rewriteCast(type, args)
             }
             // using the customer type to rename type
-            PartiQLValueType.FLOAT32 -> exprCast(args[0].expr, typeCustom("FLOAT4"))
-            PartiQLValueType.FLOAT64 -> exprCast(args[0].expr, typeCustom("FLOAT8"))
+            PartiQLValueType.FLOAT32 -> exprCast(args[0].expr, typeFloat32())
+            PartiQLValueType.FLOAT64 -> exprCast(args[0].expr, typeFloat64())
             PartiQLValueType.BINARY -> exprCast(args[0].expr, typeCustom("VARBYTE"))
             PartiQLValueType.BYTE -> TODO("Mapping to VARBYTE(1), do this after supporting parameterized type")
             else -> super.rewriteCast(type, args)
