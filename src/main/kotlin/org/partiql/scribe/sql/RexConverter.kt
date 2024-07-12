@@ -3,7 +3,9 @@ package org.partiql.scribe.sql
 import org.partiql.ast.Expr
 import org.partiql.ast.Identifier
 import org.partiql.ast.Select
+import org.partiql.ast.SetOp
 import org.partiql.ast.SetQuantifier
+import org.partiql.ast.exprBagOp
 import org.partiql.ast.exprCall
 import org.partiql.ast.exprCase
 import org.partiql.ast.exprCaseBranch
@@ -21,9 +23,11 @@ import org.partiql.ast.selectProject
 import org.partiql.ast.selectProjectItemAll
 import org.partiql.ast.selectProjectItemExpression
 import org.partiql.ast.selectValue
+import org.partiql.ast.setOp
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
+import org.partiql.plan.rexOpSelect
 import org.partiql.plan.visitor.PlanBaseVisitor
 import org.partiql.types.BagType
 import org.partiql.types.ListType
@@ -206,19 +210,64 @@ public open class RexConverter(
         return transform.getFunction(name, args)
     }
 
+    private fun planToAstSetQ(setQuantifier: org.partiql.plan.SetQuantifier?): org.partiql.ast.SetQuantifier {
+        return when (setQuantifier) {
+            null, org.partiql.plan.SetQuantifier.DISTINCT -> SetQuantifier.DISTINCT
+            org.partiql.plan.SetQuantifier.ALL -> SetQuantifier.ALL
+        }
+    }
+
+    /**
+     * Create an ast [Expr.BagOp] from two plan [Rel] nodes (coming from a plan SQL set op).
+     */
+    private fun relSetOpToBagOp(lhs: Rel, rhs: Rel, setq: org.partiql.plan.SetQuantifier, opType: SetOp.Type, ctx: StaticType): Expr.BagOp {
+        // Since the args to a SQL set op are both SFW queries, re-create an [Expr.SFW]
+        val lhsRex = rexOpSelect(
+            constructor = Rex(
+                type = lhs.type.schema.first().type,
+                Rex.Op.Var(0)
+            ),
+            rel = lhs
+        )
+        val lhsExpr = visitRexOp(node = lhsRex, ctx = ctx)
+        val rhsRex = rexOpSelect(
+            constructor = Rex(
+                type = rhs.type.schema.first().type,
+                Rex.Op.Var(0)
+            ),
+            rel = rhs
+        )
+        val rhsExpr = visitRexOp(node = rhsRex, ctx = ctx)
+        return exprBagOp(
+            type = setOp(type = opType, setq = planToAstSetQ(setq)),
+            lhs = lhsExpr,
+            rhs = rhsExpr,
+            outer = false
+        )
+    }
+
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: StaticType): Expr {
-        val relToSql = transform.getRelConverter()
-        val rexToSql = transform.getRexConverter(locals)
-        val sfw = relToSql.apply(node.rel)
-        assert(sfw.select != null) { "SELECT from RelConverter should never be null" }
-        val setq = getSetQuantifier(sfw.select!!)
-        val select = convertSelectValueToSqlSelect(sfw.select, node.constructor, node.rel, setq) ?: convertSelectValue(
-            node.constructor,
-            node.rel,
-            setq
-        ) ?: selectValue(rexToSql.apply(node.constructor), setq)
-        sfw.select = select
-        return sfw.build()
+        val rel = node.rel
+        return when (val op = rel.op) {
+            // SQL sets modeled as a Rel node taking in two Rels
+            is Rel.Op.Except -> relSetOpToBagOp(op.lhs, op.rhs, op.setq, SetOp.Type.EXCEPT, ctx)
+            is Rel.Op.Intersect -> relSetOpToBagOp(op.lhs, op.rhs, op.setq, SetOp.Type.INTERSECT, ctx)
+            is Rel.Op.Union -> relSetOpToBagOp(op.lhs, op.rhs, op.setq, SetOp.Type.UNION, ctx)
+            else -> {
+                val relToSql = transform.getRelConverter()
+                val rexToSql = transform.getRexConverter(locals)
+                val sfw = relToSql.apply(rel)
+                assert(sfw.select != null) { "SELECT from RelConverter should never be null" }
+                val setq = getSetQuantifier(sfw.select!!)
+                val select = convertSelectValueToSqlSelect(sfw.select, node.constructor, node.rel, setq) ?: convertSelectValue(
+                    node.constructor,
+                    node.rel,
+                    setq
+                ) ?: selectValue(rexToSql.apply(node.constructor), setq)
+                sfw.select = select
+                return sfw.build()
+            }
+        }
     }
 
     override fun visitRexOpSubquery(node: Rex.Op.Subquery, ctx: StaticType): Expr {
@@ -279,7 +328,7 @@ public open class RexConverter(
         val newRexConverter = RexConverter(transform, Locals(relProject.input.type.schema))
         val type = constructor.type as? StructType ?: return null
         if (type.constraints.contains(TupleConstraint.Open(false))
-                .not() || type.constraints.contains(TupleConstraint.Ordered).not()
+                .not()
         ) {
             return null
         }

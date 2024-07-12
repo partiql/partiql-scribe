@@ -22,6 +22,7 @@ public open class SparkFeatures : SqlFeatures.Defensive() {
         Rel.Op.Exclude.Item::class.java,
         Rel.Op.Exclude.Step.StructField::class.java,
         Rel.Op.Exclude.Step.CollWildcard::class.java,
+        Rel.Op.Union::class.java,
         //
         // Rex
         //
