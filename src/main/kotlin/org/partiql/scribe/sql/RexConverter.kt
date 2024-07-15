@@ -224,7 +224,7 @@ public open class RexConverter(
         // Since the args to a SQL set op are both SFW queries, re-create an [Expr.SFW]
         val lhsRex = rexOpSelect(
             constructor = Rex(
-                type = lhs.type.schema.first().type,
+                type = lhs.type.schema.first().type.asOrderedStruct(),
                 Rex.Op.Var(0)
             ),
             rel = lhs
@@ -232,7 +232,7 @@ public open class RexConverter(
         val lhsExpr = visitRexOp(node = lhsRex, ctx = ctx)
         val rhsRex = rexOpSelect(
             constructor = Rex(
-                type = rhs.type.schema.first().type,
+                type = rhs.type.schema.first().type.asOrderedStruct(),
                 Rex.Op.Var(0)
             ),
             rel = rhs
@@ -244,6 +244,16 @@ public open class RexConverter(
             rhs = rhsExpr,
             outer = false
         )
+    }
+
+    // Adds the [TupleConstraint.Ordered] for [StructType]s
+    private fun StaticType.asOrderedStruct(): StaticType {
+        return when (this) {
+            is StructType -> this.copy(
+                constraints = this.constraints + setOf(TupleConstraint.Ordered)
+            )
+            else -> this
+        }
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: StaticType): Expr {
@@ -328,7 +338,7 @@ public open class RexConverter(
         val newRexConverter = RexConverter(transform, Locals(relProject.input.type.schema))
         val type = constructor.type as? StructType ?: return null
         if (type.constraints.contains(TupleConstraint.Open(false))
-                .not()
+                .not() || type.constraints.contains(TupleConstraint.Ordered).not()
         ) {
             return null
         }
