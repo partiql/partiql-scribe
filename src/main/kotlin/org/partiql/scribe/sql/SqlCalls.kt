@@ -196,7 +196,7 @@ public abstract class SqlCalls {
         }
     }
 
-    private fun default(name: String, args: SqlArgs): Expr {
+    public open fun default(name: String, args: SqlArgs): Expr {
         return exprCall(
             function = identifierSymbol(name, Identifier.CaseSensitivity.SENSITIVE),
             args = args.map { it.expr },
