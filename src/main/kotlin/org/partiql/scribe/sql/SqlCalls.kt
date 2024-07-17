@@ -12,6 +12,7 @@ import org.partiql.ast.exprIsType
 import org.partiql.ast.exprLike
 import org.partiql.ast.exprLit
 import org.partiql.ast.exprSessionAttribute
+import org.partiql.ast.exprTrim
 import org.partiql.ast.exprUnary
 import org.partiql.ast.identifierSymbol
 import org.partiql.ast.typeAny
@@ -26,9 +27,6 @@ import org.partiql.ast.typeDecimal
 import org.partiql.ast.typeFloat32
 import org.partiql.ast.typeFloat64
 import org.partiql.ast.typeInt
-import org.partiql.ast.typeInt2
-import org.partiql.ast.typeInt4
-import org.partiql.ast.typeInt8
 import org.partiql.ast.typeInterval
 import org.partiql.ast.typeList
 import org.partiql.ast.typeMissing
@@ -171,13 +169,20 @@ public abstract class SqlCalls {
         "is_struct" to { args -> isType(PartiQLValueType.STRUCT, args) },
         "is_null" to { args -> isType(PartiQLValueType.NULL, args) },
         "is_missing" to { args -> isType(PartiQLValueType.MISSING, args) },
+        // Trim
+        "trim" to { args -> trim(args, Expr.Trim.Spec.BOTH) },
+        "trim_chars" to { args -> trim(args, Expr.Trim.Spec.BOTH) },
+        "trim_leading" to { args -> trim(args, Expr.Trim.Spec.LEADING) },
+        "trim_leading_chars" to { args -> trim(args, Expr.Trim.Spec.LEADING) },
+        "trim_trailing" to { args -> trim(args, Expr.Trim.Spec.TRAILING) },
+        "trim_trailing_chars" to { args -> trim(args, Expr.Trim.Spec.TRAILING) },
         // Session Attributes
         "current_user" to sessionAttribute(Expr.SessionAttribute.Attribute.CURRENT_USER),
         "current_date" to sessionAttribute(Expr.SessionAttribute.Attribute.CURRENT_DATE),
         // in collection
         "in_collection" to { args -> inCollection(args) },
         // between
-        "between" to {args -> between(args)},
+        "between" to { args -> between(args) },
     )
 
     public fun retarget(name: String, args: SqlArgs): Expr {
@@ -298,9 +303,9 @@ public abstract class SqlCalls {
     }
 
     // functions to operator
-    public open fun inCollection(args: SqlArgs) : Expr = exprInCollection(args[0].expr, args[1].expr, false)
+    public open fun inCollection(args: SqlArgs): Expr = exprInCollection(args[0].expr, args[1].expr, false)
 
-    public open fun between(args: SqlArgs) : Expr = exprBetween(args[0].expr, args[1].expr, args[2].expr, false)
+    public open fun between(args: SqlArgs): Expr = exprBetween(args[0].expr, args[1].expr, args[2].expr, false)
 
     private fun removeDecimalArbitraryCoercion(args: SqlArgs): Expr {
         assert(args.size == 1) { "cast_decimal_arbitrary should only have one argument" }
@@ -352,7 +357,7 @@ public abstract class SqlCalls {
 
     public open fun isType(type: PartiQLValueType, args: SqlArgs): Expr {
         // leverage the fact that we have at most 2 type parameters, a little hacky but ok for now
-        val (typeArg0, typeArg1, value) = when(args.size) {
+        val (typeArg0, typeArg1, value) = when (args.size) {
             1 -> Triple(null, null, args[0].expr)
             2 -> Triple(null, args.first(), args[1].expr)
             else -> Triple(args[0], args[1], args[2].expr)
@@ -388,6 +393,24 @@ public abstract class SqlCalls {
             PartiQLValueType.MISSING -> typeMissing()
         }
         return exprIsType(value, asType, null)
+    }
+
+    /**
+     * SQL TRIM — TRIM( [ BOTH | LEADING | TRAILING ] [<chars> FROM ] <value> )
+     */
+    public open fun trim(args: SqlArgs, spec: Expr.Trim.Spec): Expr {
+        return when (args.size) {
+            1 -> {
+                val value = args[0].expr
+                exprTrim(value, null, spec)
+            }
+            2 -> {
+                val value = args[0].expr
+                val chars = args[1].expr
+                exprTrim(value, chars, spec)
+            }
+            else -> error("Unsupported trim(...) with arity ${args.size}")
+        }
     }
 
     private fun SqlArg.toInt() = ((this.expr as Expr.Lit).value as NumericValue<*>).int
