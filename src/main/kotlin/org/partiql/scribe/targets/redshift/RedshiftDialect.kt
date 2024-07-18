@@ -67,6 +67,31 @@ public open class RedshiftDialect : SqlDialect() {
         return t
     }
 
+    override fun visitExprTrim(node: Expr.Trim, tail: SqlBlock): SqlBlock {
+        var t = tail
+        t = t concat "TRIM("
+        // [[LEADING|TRAILING|BOTH] [chars FROM]
+        when {
+            node.spec != null && node.chars != null -> {
+                t = t concat node.spec!!.name
+                t = t concat " "
+                t = visitExprWrapped(node.chars!!, t)
+                t = t concat " FROM "
+            }
+            node.spec != null -> {
+                t = t concat node.spec!!.name
+                t = t concat " "
+            }
+            node.chars != null -> {
+                t = visitExprWrapped(node.chars!!, t)
+                t = t concat " FROM "
+            }
+        }
+        t = visitExprWrapped(node.value, t)
+        t = t concat ")"
+        return t
+    }
+
     /**
      * - LIST   -> https://docs.aws.amazon.com/redshift/latest/dg/r_expression_lists.html
      * - ARRAY  -> https://docs.aws.amazon.com/redshift/latest/dg/r_array.html

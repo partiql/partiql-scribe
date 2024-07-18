@@ -129,6 +129,28 @@ public open class SparkDialect : SqlDialect() {
     // https://spark.apache.org/docs/latest/sql-ref-identifier.html
     private fun Identifier.Symbol.sql() = "`$symbol`"
 
+    override fun visitExprTrim(node: Expr.Trim, tail: SqlBlock): SqlBlock {
+        var t = tail
+        if (node.chars == null) {
+            // special forms
+            t = t concat when (node.spec) {
+                Expr.Trim.Spec.BOTH -> "trim("
+                Expr.Trim.Spec.LEADING -> "ltrim("
+                Expr.Trim.Spec.TRAILING -> "rtrim("
+                else -> "trim("
+            }
+        } else {
+            t = t concat "trim("
+            t = t concat if (node.spec == null) "BOTH" else node.spec!!.name
+            t = t concat " "
+            t = visitExprWrapped(node.chars!!, t)
+            t = t concat " FROM "
+        }
+        t = visitExprWrapped(node.value, t)
+        t = t concat ")"
+        return t
+    }
+
     private fun list(
         start: String? = "(",
         end: String? = ")",
