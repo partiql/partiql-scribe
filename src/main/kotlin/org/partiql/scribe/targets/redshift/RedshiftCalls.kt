@@ -33,6 +33,7 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
         this["utcnow"] = ::utcnow
         // -- Extensions
         this["split"] = ::split
+        this["OBJECT_TRANSFORM"] = ::objectTransform
     }
 
     /**
@@ -91,6 +92,17 @@ public open class RedshiftCalls(private val log: ProblemCallback) : SqlCalls() {
         val arg0 = args[0].expr
         val arg1 = args[1].expr
         return exprCall(id, listOf(arg0, arg1))
+    }
+
+    private fun objectTransform(args: SqlArgs): Expr {
+        // https://docs.aws.amazon.com/redshift/latest/dg/r_object_transform_function.html
+        // Currently by default, function names get marked as case-sensitive identifiers in SqlCalls.
+        // OBJECT_TRANSFORM in Redshift has to be unquoted so adding to the `rules`.
+        val id = id("OBJECT_TRANSFORM")
+        val input = args[0].expr
+        val keepPaths = args[1].expr
+        val setPaths = args[2].expr
+        return exprCall(id, listOf(input, keepPaths, setPaths))
     }
 
     override fun rewriteCast(type: PartiQLValueType, args: SqlArgs): Expr {

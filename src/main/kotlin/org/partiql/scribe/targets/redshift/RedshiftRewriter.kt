@@ -1,47 +1,37 @@
 package org.partiql.scribe.targets.redshift
 
+import org.partiql.plan.Identifier
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
-import org.partiql.plan.rel
-import org.partiql.plan.relBinding
 import org.partiql.plan.relOpProject
-import org.partiql.plan.relOpScan
-import org.partiql.plan.relType
-import org.partiql.plan.rex
-import org.partiql.plan.rexOpLit
-import org.partiql.plan.rexOpPathKey
-import org.partiql.plan.rexOpSelect
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
 import org.partiql.plan.rexOpTupleUnion
-import org.partiql.plan.rexOpVar
 import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
-import org.partiql.scribe.VarToPathRewriter
+import org.partiql.scribe.RexOpVarTypeRewriter
 import org.partiql.scribe.asNonNullable
-import org.partiql.scribe.expandStruct
+import org.partiql.types.AnyOfType
+import org.partiql.types.BagType
 import org.partiql.types.CollectionType
+import org.partiql.types.ListType
+import org.partiql.types.SexpType
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType
 import org.partiql.types.StructType
-import org.partiql.types.TupleConstraint
 import org.partiql.value.Int16Value
 import org.partiql.value.Int32Value
 import org.partiql.value.Int64Value
 import org.partiql.value.Int8Value
 import org.partiql.value.IntValue
 import org.partiql.value.PartiQLValueExperimental
-import org.partiql.value.stringValue
 
 /**
  * The [RedshiftRewriter] holds the base logic for a PartiQL plan for translation to Redshift SQL.
  */
 public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
-
-    private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
-
     /**
      * For Redshift, expand every wildcard, including relation wildcards (e.g. `SELECT tbl.*`) and
      * struct/`OBJECT` wildcards (e.g. `SELECT tbl.foo.*`).
@@ -86,6 +76,28 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
         return rexOpTupleUnion(newArgs)
     }
 
+    // Ensures we rewrite any [VarRef]s and [Path]s when the `SELECT` does not have a TUPLEUNION.
+    // E.g. `SELECT t.a.b FROM t`
+    override fun visitRexOpStruct(node: Rex.Op.Struct, ctx: Rel.Type?): PlanNode {
+        val struct = super.visitRexOpStruct(node, ctx) as Rex.Op.Struct
+        val newStruct = struct.fields.map { field ->
+            val op = field.v.op
+            val type = field.v.type
+            val newOp = if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
+                rewriteToObjectTransform(op, type)
+            } else {
+                op
+            }
+            rexOpStructField(
+                k = field.k,
+                v = field.v.copy(
+                    op = newOp
+                )
+            )
+        }
+        return rexOpStruct(newStruct)
+    }
+
     override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
         // Make sure that the output type is homogeneous
         node.projections.forEachIndexed { index, projection ->
@@ -96,67 +108,27 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
         }
         val inputOp = node.input.op
         val newNode = if (inputOp is Rel.Op.Exclude) {
-            // Check for special case involving just top-level column exclusions (i.e. # of steps is 1)
-            if (inputOp.items.all { it.steps.size == 1 }) {
-                node.copy(
-                    input = inputOp.input   // get rid of `EXCLUDE` in plan; pass in `EXCLUDE`'s input Rel
+            val inputToExclude = inputOp.input
+            val excludePaths = inputOp.items
+            // apply exclusions to the EXCLUDE's input schema
+            val initBindings = inputToExclude.type.schema
+            val newSchema = excludePaths.fold((initBindings)) { bindings, item -> excludeBindings(bindings, item) }
+            val newInput = inputToExclude.copy(
+                type = inputToExclude.type.copy(
+                    schema = newSchema
                 )
-            } else {
-                // `EXCLUDE` node with non-top-level column exclusions; run existing `EXCLUDE` logic
-                node
+            )
+            val newProjections = node.projections.map { projection ->
+                RexOpVarTypeRewriter(newSchema).visitRex(projection, Unit) as Rex
             }
+            relOpProject(
+                input = newInput,
+                projections = newProjections
+            )
         } else {
             node
         }
-        val project = super.visitRelOpProject(newNode, ctx) as Rel.Op.Project
-        return if (newNode.input.op is Rel.Op.Exclude) {
-            // When the Rel.Op.Project's input Rel.Op is Exclude and has deeper nested `EXCLUDE` paths
-            // TODO: further optimize deeper nested `EXCLUDE` paths
-            //   This rewrite will yield a semantically correct query but needs further optimization to not use
-            //   `OBJECT` function. Consider `OBJECT_TRANSFORM` as an alternative, which looks to be more
-            //   performant.
-            //
-            // 1. Rewrite the Rel's type schema to wrap the existing bindings in a new binding, `$__EXCLUDE_ALIAS__`
-            //    For example if schema was originally
-            //          [ <binding_name_1: type_1>, <binding_name_2: type_2> ]
-            //    Rewrite to:
-            //          [ <$__EXCLUDE_ALIAS__: Struct(Field(binding_name_1, type_1), Field(binding_name_2, type_2))> ]
-            // 2. Rewrite the projections' Rex.Op.Var to Rex.Op.Path with additional root of `$__EXCLUDE_ALIAS`
-            //    For example (for sake of demonstration subbing var refs with their symbol):
-            //          binding_name_1 + binding_name2
-            //    Rewrite to:
-            //          $__EXCLUDE_ALIAS.binding_name_1 + $__EXCLUDE_ALIAS.binding_name_2
-            val input = project.input
-            val inputOp = input.op as Rel.Op.Scan
-            val inputType = input.type
-            val newInputType = relType(
-                schema = listOf(
-                    relBinding(
-                        name = EXCLUDE_ALIAS,
-                        type = StructType(
-                            fields = inputType.schema.map { binding ->
-                                StructType.Field(binding.name, binding.type)
-                            }
-                        )
-                    )
-                ),
-                props = inputType.props
-            )
-            val varToPath = VarToPathRewriter(newVar = 0, inputType)
-            val projectWithUpdatedVars = relOpProject(
-                input = rel(
-                    type = newInputType,
-                    op = inputOp
-                ),
-                projections = project.projections.map { projection ->
-                    varToPath.visitRex(projection, StaticType.ANY) as Rex
-                }
-            )
-            // Visit project again to rewrite any struct wildcards
-            visitRelOpProject(projectWithUpdatedVars, ctx)
-        } else {
-            project
-        }
+        return super.visitRelOpProject(newNode, ctx) as Rel.Op.Project
     }
 
     /**
@@ -210,145 +182,109 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
         return super.visitRel(node, node.type)
     }
 
+    // Apply the given `excludePath` to the `bindings`
+    private fun excludeBindings(bindings: List<Rel.Binding>, excludePath: Rel.Op.Exclude.Item): List<Rel.Binding> {
+        val newBindings = bindings.toMutableList()
+        val varRef = excludePath.root.ref
+        val binding = bindings[varRef]
+        val newType = binding.type.exclude(excludePath.steps)
+        newBindings[varRef] = binding.copy(
+            type = newType
+        )
+        return newBindings
+    }
+
+    private fun StaticType.exclude(steps: List<Rel.Op.Exclude.Step>): StaticType =
+        when (this) {
+            is StructType -> this.exclude(steps)
+            is CollectionType -> this.exclude(steps)
+            is AnyOfType -> StaticType.unionOf(
+                this.types.map { it.exclude(steps) }.toSet()
+            )
+            else -> this
+        }.flatten()
+
     /**
-     * `EXCLUDE` comes right before `PROJECT`, so here we recreate a [Rel.Op] with all exclude paths applied.
-     * We have full schema and since PlanTyper was run before this point, we know the schema after applying all
-     * exclude paths. From this schema with the excluded struct and collection fields, we recreate the input
-     * environment used by the final [Rel.Op.Project] through a combination of struct and collection constructors.
+     * Applies exclusions to struct fields and annotates structs that have an excluded field (or nested field) with
+     * a meta "EXPAND" set to true.
      *
-     * For example, given input schema tbl = { flds: Struct(a: int, b: boolean, c: string) } and query
-     * SELECT t.*
-     * EXCLUDE t.flds.b
-     * FROM tbl AS t
-     *
-     * After the PlanTyper pass, we know the schema of `t` before the projection will be Struct(a: int, c: string)
-     * This rewrite will then output:
-     * SELECT $__EXCLUDE_ALIAS__.t.*    -- rewrite occurs in [Rel.Op.Project] after visiting [Rel.Op.Exclude]
-     * FROM (
-     *     SELECT { 't': { 'a': t.a, 'c': t.c } }
-     *     FROM tbl AS t
-     * ) AS $__EXCLUDE_ALIAS__
-     *
-     * The target dialect will then perform its own text rewrite depending on how struct and collections are
-     * represented.
+     * @param steps
+     * @return
      */
-    @OptIn(PartiQLValueExperimental::class)
-    override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): PlanNode {
-        // Replace `EXCLUDE` with a subquery
-        assert(ctx != null)
-        val origInput = node.input
-        val bindings = ctx!!.schema
-        val structType = StructType(
-            fields = bindings.map { binding ->
-                StructType.Field(
-                    key = binding.name,
-                    value = binding.type
-                )
+    private fun StructType.exclude(steps: List<Rel.Op.Exclude.Step>): StaticType {
+        val step = steps.first()
+        val output = fields.mapNotNull { field ->
+            val newField = if (steps.size == 1) {
+                // excluding at current level
+                null
+            } else {
+                // excluding at a deeper level
+                val k = field.key
+                val v = field.value.exclude(steps.drop(1))
+                StructType.Field(k, v)
             }
-        )
-        val rexOpStruct = rexOpStruct(
-            bindings.mapIndexed { index, binding ->
-                val type = binding.type
-                rexOpStructField(
-                    k = Rex(
-                        type = StaticType.STRING,
-                        op = rexOpLit(
-                            value = stringValue(binding.name)
-                        )
-                    ),
-                    v = type.toRex(
-                        prefixPath = Rex(
-                            type = type,
-                            op = rexOpVar(
-                                index
-                            )
-                        )
-                    )
-                )
+            when (step) {
+                is Rel.Op.Exclude.Step.StructField -> {
+                    if (step.symbol.isEquivalentTo(field.key)) {
+                        newField
+                    } else {
+                        field
+                    }
+                }
+                is Rel.Op.Exclude.Step.StructWildcard -> newField
+                else -> field
             }
-        )
-        val structWrappingBindings = StructType(
-            fields = listOf(
-                StructType.Field(
-                    EXCLUDE_ALIAS,
-                    structType
-                )
-            ),
-            constraints = setOf(
-                TupleConstraint.Ordered,
-                TupleConstraint.Open(false)
-            )
-        )
-        return relOpScan(
-            rex = Rex(
-                type = structWrappingBindings,
-                op = rexOpSelect(
-                    constructor = Rex(
-                        type = structWrappingBindings,
-                        op = rexOpVar(
-                            ref = 0
-                        )
-                    ),
-                    rel = Rel(
-                        type = Rel.Type(
-                            schema = listOf(
-                                relBinding(
-                                    name = EXCLUDE_ALIAS,
-                                    type = structType
-                                )
-                            ),
-                            props = emptySet()
-                        ),
-                        op = relOpProject(
-                            projections = listOf(
-                                Rex(
-                                    type = structType,
-                                    op = rexOpStruct
-                                )
-                            ),
-                            input = origInput
-                        )
-                    )
-                )
-            )
-        )
+        }
+        val newMetas = this.metas.toMutableMap()
+        newMetas["EXPAND"] = true
+        return this.copy(fields = output, metas = newMetas)
     }
 
-    private fun StaticType.toRex(prefixPath: Rex): Rex {
+    /**
+     * Applies exclusions to collection element type.
+     *
+     * Note: this function should not actually be called since collection index and wildcard exclusion is not supported
+     * for Redshift transpilation.
+     *
+     * @param steps
+     * @return
+     */
+    private fun CollectionType.exclude(steps: List<Rel.Op.Exclude.Step>): StaticType {
+        var e = this.elementType
+        when (steps.first()) {
+            is Rel.Op.Exclude.Step.CollIndex -> {
+                if (steps.size > 1) {
+                    e = e.exclude(steps.drop(1))
+                }
+            }
+            is Rel.Op.Exclude.Step.CollWildcard -> {
+                if (steps.size > 1) {
+                    e = e.exclude(steps.drop(1))
+                }
+                // currently no change to elementType if collection wildcard is last element; this behavior could
+                // change based on RFC definition
+            }
+            else -> {
+                // currently no change to elementType and no error thrown; could consider an error/warning in
+                // the future
+            }
+        }
         return when (this) {
-            is StructType -> Rex(
-                type = this,
-                op = this.toRexStruct(prefixPath),
-            )
-            is CollectionType -> prefixPath // currently just return back the prefixPath for CollectionType in Redshift
-            else -> prefixPath
+            is BagType -> this.copy(e)
+            is ListType -> this.copy(e)
+            is SexpType -> this.copy(e)
         }
     }
 
-    @OptIn(PartiQLValueExperimental::class)
-    private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
-        val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->
-            val newPath = rexOpPathKey(
-                prefixPath,
-                rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
-            )
-            val newV = field.value.toRex(
-                prefixPath = Rex(
-                    type = field.value,
-                    op = newPath
-                )
-            )
-            rexOpStructField(
-                k = Rex(
-                    type = StaticType.STRING,
-                    op = rexOpLit(stringValue(field.key))
-                ),
-                v = newV
-            )
-        }
-        return rexOpStruct(
-            fields = fieldsAsRexOpStructField
-        )
+    /**
+     * Compare an identifier to a struct field; handling case-insensitive comparisons.
+     *
+     * @param other
+     * @return
+     */
+    private fun Identifier.Symbol.isEquivalentTo(other: String): Boolean = when (caseSensitivity) {
+        Identifier.CaseSensitivity.SENSITIVE -> symbol == other
+        Identifier.CaseSensitivity.INSENSITIVE -> symbol.equals(other, ignoreCase = true)
     }
 
     private fun error(message: String) {

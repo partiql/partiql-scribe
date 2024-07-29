@@ -6,21 +6,21 @@ SELECT "t"."flds" AS "flds" FROM "default"."EXCLUDE_T" AS "t";
 SELECT "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-02]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT OBJECT('flds', OBJECT('a', OBJECT('field_x', "t"."flds"."a"."field_x", 'field_y', "t"."flds"."a"."field_y"), 'c', OBJECT('field_x', "t"."flds"."c"."field_x", 'field_y', "t"."flds"."c"."field_y")), 'foo', "t"."foo") AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"c"') AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-03]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT OBJECT('flds', OBJECT('a', OBJECT('field_x', "t"."flds"."a"."field_x", 'field_y', "t"."flds"."a"."field_y"), 'b', OBJECT('field_x', "t"."flds"."b"."field_x", 'field_y', "t"."flds"."b"."field_y"), 'c', OBJECT('field_y', "t"."flds"."c"."field_y")), 'foo', "t"."foo") AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"b"', '"c"."field_y"') AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-04]
 -- Exclude two nested fields
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT OBJECT('flds', OBJECT('a', OBJECT('field_x', "t"."flds"."a"."field_x", 'field_y', "t"."flds"."a"."field_y"), 'c', OBJECT('field_y', "t"."flds"."c"."field_y")), 'foo', "t"."foo") AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"c"."field_y"') AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-05]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT OBJECT('flds', OBJECT('a', OBJECT('field_x', "t"."flds"."a"."field_x", 'field_y', "t"."flds"."a"."field_y"), 'b', OBJECT('field_x', "t"."flds"."b"."field_x", 'field_y', "t"."flds"."b"."field_y"), 'c', OBJECT('field_x', "t"."flds"."c"."field_x")), 'foo', "t"."foo") AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"b"', '"c"."field_x"') AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-06]
 -- Exclude all the fields of `t.flds.c`
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT OBJECT('flds', OBJECT('a', OBJECT('field_x', "t"."flds"."a"."field_x", 'field_y', "t"."flds"."a"."field_y"), 'b', OBJECT('field_x', "t"."flds"."b"."field_x", 'field_y', "t"."flds"."b"."field_y"), 'c', OBJECT()), 'foo', "t"."foo") AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"b"', '"c"' SET '"c"', OBJECT()) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 -- COLLECTION WILDCARD is not supported for Redshift target
@@ -32,15 +32,15 @@ SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo"
 
 --#[exclude-09]
 -- EXCLUDE with JOIN and WHERE clause
-SELECT "$__EXCLUDE_ALIAS__"."t1"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."foo" AS "foo" FROM (SELECT OBJECT('flds', OBJECT('a', OBJECT('field_x', "t1"."flds"."a"."field_x", 'field_y', "t1"."flds"."a"."field_y"), 'b', OBJECT('field_x', "t1"."flds"."b"."field_x", 'field_y', "t1"."flds"."b"."field_y"), 'c', OBJECT('field_x', "t1"."flds"."c"."field_x", 'field_y', "t1"."flds"."c"."field_y"))) AS "t1", OBJECT('flds', OBJECT('a', OBJECT('field_x', "t2"."flds"."a"."field_x", 'field_y', "t2"."flds"."a"."field_y"), 'c', OBJECT('field_y', "t2"."flds"."c"."field_y")), 'foo', "t2"."foo") AS "t2" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true WHERE "t1"."foo" = "t2"."foo") AS "$__EXCLUDE_ALIAS__";
+SELECT "t1"."flds" AS "flds", OBJECT_TRANSFORM("t2"."flds" KEEP '"a"', '"c"."field_y"') AS "flds", "t2"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true WHERE "t1"."foo" = "t2"."foo";
 
 --#[exclude-10]
 -- EXCLUDE with multiple JOIN and WHERE clause
-SELECT "$__EXCLUDE_ALIAS__"."t1"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t1"."foo" AS "foo", "$__EXCLUDE_ALIAS__"."t2"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."foo" AS "foo", "$__EXCLUDE_ALIAS__"."t3"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t3"."foo" AS "foo" FROM (SELECT OBJECT('flds', OBJECT('b', OBJECT('field_x', "t1"."flds"."b"."field_x", 'field_y', "t1"."flds"."b"."field_y"), 'c', OBJECT('field_x', "t1"."flds"."c"."field_x", 'field_y', "t1"."flds"."c"."field_y")), 'foo', "t1"."foo") AS "t1", OBJECT('flds', OBJECT('a', OBJECT('field_x', "t2"."flds"."a"."field_x", 'field_y', "t2"."flds"."a"."field_y"), 'c', OBJECT('field_x', "t2"."flds"."c"."field_x", 'field_y', "t2"."flds"."c"."field_y")), 'foo', "t2"."foo") AS "t2", OBJECT('flds', OBJECT('a', OBJECT('field_x', "t3"."flds"."a"."field_x", 'field_y', "t3"."flds"."a"."field_y"), 'b', OBJECT('field_x', "t3"."flds"."b"."field_x", 'field_y', "t3"."flds"."b"."field_y")), 'foo', "t3"."foo") AS "t3" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo")) AS "$__EXCLUDE_ALIAS__";
+SELECT OBJECT_TRANSFORM("t1"."flds" KEEP '"b"', '"c"') AS "flds", "t1"."foo" AS "foo", OBJECT_TRANSFORM("t2"."flds" KEEP '"a"', '"c"') AS "flds", "t2"."foo" AS "foo", OBJECT_TRANSFORM("t3"."flds" KEEP '"a"', '"b"') AS "flds", "t3"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo");
 
 --#[exclude-11]
 -- EXCLUDE with select projection list and multiple JOINs
-SELECT "$__EXCLUDE_ALIAS__"."t1"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t3"."flds" AS "flds" FROM (SELECT OBJECT('flds', OBJECT('b', OBJECT('field_x', "t1"."flds"."b"."field_x", 'field_y', "t1"."flds"."b"."field_y"), 'c', OBJECT('field_x', "t1"."flds"."c"."field_x", 'field_y', "t1"."flds"."c"."field_y")), 'foo', "t1"."foo") AS "t1", OBJECT('flds', OBJECT('a', OBJECT('field_x', "t2"."flds"."a"."field_x", 'field_y', "t2"."flds"."a"."field_y"), 'c', OBJECT('field_x', "t2"."flds"."c"."field_x", 'field_y', "t2"."flds"."c"."field_y")), 'foo', "t2"."foo") AS "t2", OBJECT('flds', OBJECT('a', OBJECT('field_x', "t3"."flds"."a"."field_x", 'field_y', "t3"."flds"."a"."field_y"), 'b', OBJECT('field_x', "t3"."flds"."b"."field_x", 'field_y', "t3"."flds"."b"."field_y")), 'foo', "t3"."foo") AS "t3" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo")) AS "$__EXCLUDE_ALIAS__";
+SELECT OBJECT_TRANSFORM("t1"."flds" KEEP '"b"', '"c"') AS "flds", OBJECT_TRANSFORM("t2"."flds" KEEP '"a"', '"c"') AS "flds", OBJECT_TRANSFORM("t3"."flds" KEEP '"a"', '"b"') AS "flds" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo");
 
 -- Tests for EXCLUDE on top-level columns only --
 -- Baseline query without `EXCLUDE`
@@ -101,3 +101,11 @@ FROM
     "default"."T_EXCLUDE_TOP_LEVEL" AS "t5" ON "t5"."a" FULL OUTER JOIN
     "default"."T_EXCLUDE_TOP_LEVEL" AS "t6" ON "t6"."a" INNER JOIN
 "default"."T_EXCLUDE_TOP_LEVEL" AS "t7" ON true WHERE "t1"."a" AND "t2"."a";
+
+-- EXCLUDE all nested fields of a struct
+--#[exclude-47]
+SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"b"', '"c"' SET '"a"', OBJECT(), '"b"', OBJECT(), '"c"', OBJECT()) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
+
+-- EXCLUDE all fields of a top-level struct column
+--#[exclude-48]
+SELECT OBJECT() AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
