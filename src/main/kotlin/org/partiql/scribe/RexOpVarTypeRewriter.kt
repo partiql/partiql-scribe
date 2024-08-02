@@ -12,6 +12,11 @@ import org.partiql.value.StringValue
 /**
  * Rewrite [Rex]s with [Rex.Op] of [Rex.Op.Var]s to use the type specified from [bindings]. Any re-written
  * [Rex.Op.Var]s will also be propagated to other parent nodes (e.g. paths).
+ *
+ * This [PlanRewriter] is used as part of the nested `EXCLUDE` rewrite used by Redshift. Other targets may also use this
+ * rewriter in the future https://github.com/partiql/partiql-scribe/issues/60. As part of that rewrite, certain
+ * [bindings] can be marked with metas (e.g. "EXPAND" to indicate we should expand a projected struct) that we need to
+ * propagate to the corresponding [Rex.Op.Var]s in the projection list.
  */
 internal class RexOpVarTypeRewriter(
     private val bindings: List<Binding>,

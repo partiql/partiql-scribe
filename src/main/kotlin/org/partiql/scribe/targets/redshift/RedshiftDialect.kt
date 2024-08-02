@@ -84,18 +84,19 @@ public open class RedshiftDialect : SqlDialect() {
             //         <set path string n>, <set path value n>]
             // )
             fn is Identifier.Symbol && fn.symbol == "OBJECT_TRANSFORM" -> {
-                var t = tail
-                t = visitIdentifier(fn, t) concat "("
                 val input = node.args[0]
-                val keepPaths = list(start = " KEEP ", end = "" ) { (node.args[1] as Expr.Collection).values }
-                val setPathExprs = (node.args[2] as Expr.Collection).values
-                val setPaths = if (setPathExprs.isEmpty()) {
-                    // No empty structs, so no `SET` argument
-                    SqlBlock.Text("")
-                } else {
-                    list(start = " SET ", end = "") { setPathExprs }
+                val keepPaths = (node.args[1] as Expr.Collection).values
+                val setPaths = (node.args[2] as Expr.Collection).values
+
+                var t = tail
+                t = t concat "OBJECT_TRANSFORM("
+                t = visitExprWrapped(input, t)
+                t = t concat list(start = " KEEP ", end = "") { keepPaths }
+                if (setPaths.isNotEmpty()) {
+                    // no need for an empty block, just don't link it
+                    t = t concat list(start = " SET ", end = "") { setPaths }
                 }
-                t = visitExprWrapped(input, t) concat keepPaths concat setPaths concat ")"
+                t = t concat ")"
                 t
             }
             else -> super.visitExprCall(node, tail)

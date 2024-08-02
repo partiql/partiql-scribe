@@ -119,6 +119,7 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
                 )
             )
             val newProjections = node.projections.map { projection ->
+                // Propagate the modified bindings to each of the projection items' [Rex.Op.Var]s
                 RexOpVarTypeRewriter(newSchema).visitRex(projection, Unit) as Rex
             }
             relOpProject(

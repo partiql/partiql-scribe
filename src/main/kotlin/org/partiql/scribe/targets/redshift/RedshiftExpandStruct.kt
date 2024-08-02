@@ -22,13 +22,13 @@ private fun StaticType.shouldExpand() = this.metas["EXPAND"] == true
 // Output will be a pair of
 // 1. the output paths to KEEP
 // 2. the output paths to SET to empty structs
-private fun fieldToRedshiftPaths(field: StructType.Field, prefix: String): Pair<List<String>, List<String>> {
+private fun fieldToRedshiftPaths(field: StructType.Field, prefix: String?): Pair<List<String>, List<String>> {
     val fieldKey = field.key
     val fieldValue = field.value
     return if (fieldValue is StructType && fieldValue.shouldExpand()) {
         if (fieldValue.fields.isEmpty()) {
             // Empty struct (all fields excluded). Add the path to both the keepList and setList.
-            val setList = if (prefix.isEmpty()) {
+            val setList = if (prefix == null) {
                 listOf("\"${fieldKey}\"")
             } else {
                 listOf("${prefix}.\"${fieldKey}\"")
@@ -38,7 +38,7 @@ private fun fieldToRedshiftPaths(field: StructType.Field, prefix: String): Pair<
             // Non-empty struct. Generate the keep and set path(s) for each field and flatten two one pair of
             // keep list and set list.
             fieldValue.fields.fold(emptyList<String>() to emptyList()) { (keyAcc, setAcc), subField ->
-                val newPrefix = if (prefix.isEmpty()) {
+                val newPrefix = if (prefix == null) {
                     "\"${field.key}\""
                 } else {
                     "${prefix}.\"${field.key}\""
@@ -49,7 +49,7 @@ private fun fieldToRedshiftPaths(field: StructType.Field, prefix: String): Pair<
         }
     } else {
         // Not a struct OR is a struct with no excluded fields or subfields. Return back the field
-        if (prefix.isEmpty()) {
+        if (prefix == null) {
             listOf("\"${fieldKey}\"") to emptyList()
         } else {
             listOf("${prefix}.\"${fieldKey}\"") to emptyList()
@@ -88,7 +88,7 @@ internal fun rewriteToObjectTransform(op: Rex.Op, structType: StructType): Rex.O
             op = op
         )
         val (keepPaths, setPaths) = structType.fields.fold(emptyList<String>() to emptyList<String>()) { (keepAcc, setAcc), field ->
-            val (keepNew, setNew) = fieldToRedshiftPaths(field, prefix = "")
+            val (keepNew, setNew) = fieldToRedshiftPaths(field, prefix = null)
             keepAcc + keepNew to setAcc + setNew
         }
         // Second argument is a Rex.Op.Collection of the paths to keep
