@@ -160,6 +160,8 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     /**
+     * TODO consider changing to a simplified rewrite that we currently do for nested `EXCLUDE` queries
+     *  https://github.com/partiql/partiql-scribe/issues/60.
      * `EXCLUDE` comes right before `PROJECT`, so here we recreate a [Rel.Op] with all exclude paths applied.
      * We have full schema and since PlanTyper was run before this point, we know the schema after applying all
      * exclude paths. From this schema with the excluded struct and collection fields, we recreate the input

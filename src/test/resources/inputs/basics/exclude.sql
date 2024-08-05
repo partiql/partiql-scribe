@@ -201,3 +201,12 @@ FROM T_EXCLUDE_TOP_LEVEL AS t1 JOIN
     T_EXCLUDE_TOP_LEVEL AS t7
 WHERE
     t1.a AND t2.a;
+
+-- EXCLUDE all nested fields of a struct
+--#[exclude-47]
+SELECT * EXCLUDE t.flds.a.field_x, t.flds.a.field_y, t.flds.b.field_x, t.flds.b.field_y, t.flds.c.field_x, t.flds.c.field_y FROM EXCLUDE_T AS t;
+
+-- EXCLUDE all fields of a top-level struct column
+--#[exclude-48]
+SELECT * EXCLUDE t.flds.a, t.flds.b, t.flds.c FROM EXCLUDE_T AS t;
+

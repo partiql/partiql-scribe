@@ -67,6 +67,42 @@ public open class RedshiftDialect : SqlDialect() {
         return t
     }
 
+    override fun visitExprCall(node: Expr.Call, tail: SqlBlock): SqlBlock {
+        val fn = node.function
+        return when {
+            // https://docs.aws.amazon.com/redshift/latest/dg/r_object_transform_function.html
+            // Function has a special form:
+            // OBJECT_TRANSFORM(
+            //     <input SUPER OBJECT>                         // arg[0]
+            //     KEEP                                         // arg[1]
+            //         <keep path string 1>,
+            //         ...
+            //         <keep path string m>
+            //     [SET (optional)                              // arg[2]
+            //         <set path string 1>, <set path value 1>,
+            //         ...
+            //         <set path string n>, <set path value n>]
+            // )
+            fn is Identifier.Symbol && fn.symbol == "OBJECT_TRANSFORM" -> {
+                val input = node.args[0]
+                val keepPaths = (node.args[1] as Expr.Collection).values
+                val setPaths = (node.args[2] as Expr.Collection).values
+
+                var t = tail
+                t = t concat "OBJECT_TRANSFORM("
+                t = visitExprWrapped(input, t)
+                t = t concat list(start = " KEEP ", end = "") { keepPaths }
+                if (setPaths.isNotEmpty()) {
+                    // no need for an empty block, just don't link it
+                    t = t concat list(start = " SET ", end = "") { setPaths }
+                }
+                t = t concat ")"
+                t
+            }
+            else -> super.visitExprCall(node, tail)
+        }
+    }
+
     override fun visitExprTrim(node: Expr.Trim, tail: SqlBlock): SqlBlock {
         var t = tail
         t = t concat "TRIM("
