@@ -198,3 +198,7 @@ FROM
         "default"."T_EXCLUDE_TOP_LEVEL" AS "t6" ON "t6"."a" INNER JOIN
         "default"."T_EXCLUDE_TOP_LEVEL" AS "t7" ON true
 WHERE "t1"."a" AND "t2"."a";
+
+--#[exclude-49]
+-- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
+SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT (SELECT (SELECT (SELECT "t"."flds"."a"."field_x" AS field_x, "t"."flds"."a"."field_y" AS field_y) AS a, CAST(ROW("t"."flds"."c"."field_y") AS ROW(field_y VARCHAR)) AS c) AS flds, "t"."foo" AS foo) AS "t" FROM "default"."EXCLUDE_T_NULLABLE" AS "t") AS "$__EXCLUDE_ALIAS__";

@@ -65,7 +65,7 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
         val newArgs = mutableListOf<Rex>()
         newTupleUnion.args.forEach { arg ->
             val op = arg.op
-            val type = arg.type
+            val type = arg.type.asNonNullable()
             // For now, just support the expansion of variable references and paths
             if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                 newArgs.addAll(expandStruct(op, type))
@@ -82,7 +82,7 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
         val struct = super.visitRexOpStruct(node, ctx) as Rex.Op.Struct
         val newStruct = struct.fields.map { field ->
             val op = field.v.op
-            val type = field.v.type
+            val type = field.v.type.asNonNullable()
             val newOp = if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                 rewriteToObjectTransform(op, type)
             } else {
@@ -196,11 +196,11 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
     }
 
     private fun StaticType.exclude(steps: List<Rel.Op.Exclude.Step>): StaticType =
-        when (this) {
-            is StructType -> this.exclude(steps)
-            is CollectionType -> this.exclude(steps)
+        when (val nonNullType = this.asNonNullable()) {
+            is StructType -> nonNullType.exclude(steps)
+            is CollectionType -> nonNullType.exclude(steps)
             is AnyOfType -> StaticType.unionOf(
-                this.types.map { it.exclude(steps) }.toSet()
+                nonNullType.types.map { it.exclude(steps) }.toSet()
             )
             else -> this
         }.flatten()

@@ -36,7 +36,7 @@ internal class RexOpVarTypeRewriter(
                 val newPathKey = super.visitRexOp(node.op, ctx) as Rex.Op.Path.Key
                 val newRoot = newPathKey.root
                 val newKeyOp = newPathKey.key.op
-                val t = newRoot.type
+                val t = newRoot.type.asNonNullable()
                 if (t is StructType && newKeyOp is Rex.Op.Lit) {
                     if (newKeyOp.value.type != PartiQLValueType.STRING) {
                         error("Invalid literal along path: $newKeyOp")
@@ -54,7 +54,7 @@ internal class RexOpVarTypeRewriter(
                 val newPathSymbol = super.visitRexOp(node.op, ctx) as Rex.Op.Path.Symbol
                 val newRoot = newPathSymbol.root
                 val fieldName = newPathSymbol.key
-                val t = newRoot.type
+                val t = newRoot.type.asNonNullable()
                 if (t is StructType) {
                     val newType = t.fields.first { it.key.equals(fieldName, ignoreCase = true) }.value
                     node.copy(

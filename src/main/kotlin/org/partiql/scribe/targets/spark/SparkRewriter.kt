@@ -24,6 +24,7 @@ import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.VarToPathRewriter
+import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.expandStruct
 import org.partiql.types.CollectionType
 import org.partiql.types.StaticType
@@ -54,7 +55,7 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         val newArgs = mutableListOf<Rex>()
         newTupleUnion.args.forEach { arg ->
             val op = arg.op
-            val type = arg.type
+            val type = arg.type.asNonNullable()
             // For now, just support the expansion of variable references and paths
             if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                 newArgs.addAll(expandStruct(op, type))
@@ -73,7 +74,7 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Rel.Type?): PlanNode {
-        when (val type = node.constructor.type) {
+        when (val type = node.constructor.type.asNonNullable()) {
             is StructType -> {
                 val open = !(type.contentClosed && type.constraints.contains(TupleConstraint.Open(false)))
                 val unordered = !type.constraints.contains(TupleConstraint.Ordered)
@@ -266,14 +267,14 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     private fun StaticType.toRex(prefixPath: Rex): Rex {
-        return when (this) {
+        return when (val nonNullType = this.asNonNullable()) {
             is StructType -> Rex(
-                type = this,
-                op = this.toRexStruct(prefixPath),
+                type = nonNullType,
+                op = nonNullType.toRexStruct(prefixPath),
             )
             is CollectionType -> Rex(
-                type = this,
-                op = this.toRexCallTransform(prefixPath),
+                type = nonNullType,
+                op = nonNullType.toRexCallTransform(prefixPath),
             )
             else -> prefixPath
         }

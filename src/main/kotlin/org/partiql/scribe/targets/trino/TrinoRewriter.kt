@@ -74,7 +74,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         val newArgs = mutableListOf<Rex>()
         newTupleUnion.args.forEach { arg ->
             val op = arg.op
-            val type = arg.type
+            val type = arg.type.asNonNullable()
             // For now, just support the expansion of variable references and paths
             if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                 newArgs.addAll(expandStruct(op, type))
@@ -152,7 +152,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Rel.Type?): PlanNode {
-        when (val type = node.constructor.type) {
+        when (val type = node.constructor.type.asNonNullable()) {
             is StructType -> {
                 val open = !(type.contentClosed && type.constraints.contains(TupleConstraint.Open(false)))
                 val unordered = !type.constraints.contains(TupleConstraint.Ordered)
@@ -385,20 +385,20 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     private fun StaticType.toRex(prefixPath: Rex): Rex {
-        return when (this) {
+        return when (val nonNullType = this.asNonNullable()) {
             is StructType -> {
                 Rex(
-                    type = this,
-                    op = when (this.fields.size) {
+                    type = nonNullType,
+                    op = when (nonNullType.fields.size) {
                         0 -> kotlin.error("Currently Trino does not allow empty ROWs. Consider `EXCLUDE` on the outer struct")
-                        1 -> this.toRexCastRow(prefixPath)
-                        else -> this.toRexStruct(prefixPath)
+                        1 -> nonNullType.toRexCastRow(prefixPath)
+                        else -> nonNullType.toRexStruct(prefixPath)
                     },
                 )
             }
             is CollectionType -> Rex(
-                type = this,
-                op = this.toRexCallTransform(prefixPath),
+                type = nonNullType,
+                op = nonNullType.toRexCallTransform(prefixPath),
             )
             else -> prefixPath
         }
