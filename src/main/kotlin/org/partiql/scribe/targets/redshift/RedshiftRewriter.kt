@@ -196,11 +196,11 @@ public open class RedshiftRewriter(val onProblem: ProblemCallback) : PlanRewrite
     }
 
     private fun StaticType.exclude(steps: List<Rel.Op.Exclude.Step>): StaticType =
-        when (this) {
-            is StructType -> this.exclude(steps)
-            is CollectionType -> this.exclude(steps)
+        when (val nonNullType = this.asNonNullable()) {
+            is StructType -> nonNullType.exclude(steps)
+            is CollectionType -> nonNullType.exclude(steps)
             is AnyOfType -> StaticType.unionOf(
-                this.types.map { it.exclude(steps) }.toSet()
+                nonNullType.types.map { it.exclude(steps) }.toSet()
             )
             else -> this
         }.flatten()

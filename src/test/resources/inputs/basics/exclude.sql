@@ -210,3 +210,6 @@ SELECT * EXCLUDE t.flds.a.field_x, t.flds.a.field_y, t.flds.b.field_x, t.flds.b.
 --#[exclude-48]
 SELECT * EXCLUDE t.flds.a, t.flds.b, t.flds.c FROM EXCLUDE_T AS t;
 
+--#[exclude-49]
+-- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
+SELECT * EXCLUDE t.flds.b, t.flds.c.field_x FROM EXCLUDE_T_NULLABLE AS t;

@@ -109,3 +109,7 @@ SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"b"', '"c"' SET '"a"', OBJECT(),
 -- EXCLUDE all fields of a top-level struct column
 --#[exclude-48]
 SELECT OBJECT() AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
+
+--#[exclude-49]
+-- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
+SELECT OBJECT_TRANSFORM("t"."flds" KEEP '"a"', '"c"."field_y"') AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NULLABLE" AS "t";

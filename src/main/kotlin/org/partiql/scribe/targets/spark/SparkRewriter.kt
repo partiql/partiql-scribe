@@ -24,6 +24,7 @@ import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.ScribeProblem
 import org.partiql.scribe.VarToPathRewriter
+import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.expandStruct
 import org.partiql.types.CollectionType
 import org.partiql.types.StaticType
@@ -266,14 +267,14 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     private fun StaticType.toRex(prefixPath: Rex): Rex {
-        return when (this) {
+        return when (val nonNullType = this.asNonNullable()) {
             is StructType -> Rex(
-                type = this,
-                op = this.toRexStruct(prefixPath),
+                type = nonNullType,
+                op = nonNullType.toRexStruct(prefixPath),
             )
             is CollectionType -> Rex(
-                type = this,
-                op = this.toRexCallTransform(prefixPath),
+                type = nonNullType,
+                op = nonNullType.toRexCallTransform(prefixPath),
             )
             else -> prefixPath
         }
