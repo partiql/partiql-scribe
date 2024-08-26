@@ -74,7 +74,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         val newArgs = mutableListOf<Rex>()
         newTupleUnion.args.forEach { arg ->
             val op = arg.op
-            val type = arg.type
+            val type = arg.type.asNonNullable()
             // For now, just support the expansion of variable references and paths
             if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                 newArgs.addAll(expandStruct(op, type))
@@ -152,7 +152,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Rel.Type?): PlanNode {
-        when (val type = node.constructor.type) {
+        when (val type = node.constructor.type.asNonNullable()) {
             is StructType -> {
                 val open = !(type.contentClosed && type.constraints.contains(TupleConstraint.Open(false)))
                 val unordered = !type.constraints.contains(TupleConstraint.Ordered)

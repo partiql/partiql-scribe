@@ -25,6 +25,8 @@ public fun StaticType.asAbsent(): StaticType = unionOf(this, NULL, MissingType).
  *  Returns a non-nullable version of the current [StaticType].
  *
  *  If it already non-nullable, returns the original type.
+ *
+ *  Note: this extension function will not be needed post PLK 0.15+ with the deprecation of null and missing types.
  */
 public fun StaticType.asNonNullable(): StaticType = when (this.isNullable()) {
     false -> this
