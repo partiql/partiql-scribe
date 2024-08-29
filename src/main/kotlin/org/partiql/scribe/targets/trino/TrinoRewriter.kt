@@ -11,6 +11,7 @@ import org.partiql.plan.relOpScan
 import org.partiql.plan.relType
 import org.partiql.plan.rex
 import org.partiql.plan.rexOpCallStatic
+import org.partiql.plan.rexOpCollection
 import org.partiql.plan.rexOpLit
 import org.partiql.plan.rexOpPathIndex
 import org.partiql.plan.rexOpPathKey
@@ -26,6 +27,7 @@ import org.partiql.scribe.VarToPathRewriter
 import org.partiql.scribe.asNonNullable
 import org.partiql.scribe.expandStruct
 import org.partiql.types.AnyOfType
+import org.partiql.types.BagType
 import org.partiql.types.BoolType
 import org.partiql.types.CollectionType
 import org.partiql.types.DateType
@@ -355,31 +357,36 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         isNullCall = true
     )
 
-    // Due to subquery coercion we need to make the `ROW` construction explicit and not rely on subquery coercion
-    // when the number of fields in the struct is 1
+    // Use for reconstructing Trino `ROW`s. Simplified `ROW` construction syntax to not specify types using `SELECT`
+    // (https://github.com/trinodb/trino/discussions/7758) does not work for certain nested cases (e.g. within a
+    // lambda).
     @OptIn(PartiQLValueExperimental::class)
     private fun StructType.toRexCastRow(prefixPath: Rex): Rex.Op.Call.Static {
-        assert(this.fields.size == 1)
-        val field = this.fields.first()
-        val newPath = rexOpPathKey(
-            prefixPath,
-            rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
-        )
-        val newK = Rex(
+        val rowValues = this.fields.map { field ->
+            val newPath = rexOpPathKey(
+                prefixPath,
+                rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
+            )
+            val newV = field.value.toRex(
+                prefixPath = Rex(
+                    type = field.value,
+                    op = newPath
+                )
+            )
+            newV
+        }
+        val castType = Rex(
             type = StaticType.STRING,
             op = rexOpLit(stringValue(this.toTrinoString()))
-        )
-        val newV = field.value.toRex(
-            prefixPath = Rex(
-                type = field.value,
-                op = newPath
-            )
         )
         return rexOpCallStatic(
             fn = Fn(cast_row_fn_sig),
             args = listOf(
-                newV,
-                newK
+                Rex(
+                    type = StaticType.LIST,
+                    op = rexOpCollection(rowValues)
+                ),
+                castType
             )
         )
     }
@@ -391,8 +398,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
                     type = nonNullType,
                     op = when (nonNullType.fields.size) {
                         0 -> kotlin.error("Currently Trino does not allow empty ROWs. Consider `EXCLUDE` on the outer struct")
-                        1 -> nonNullType.toRexCastRow(prefixPath)
-                        else -> nonNullType.toRexStruct(prefixPath)
+                        else -> nonNullType.toRexCastRow(prefixPath)
                     },
                 )
             }
@@ -531,7 +537,12 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
             is ListType -> {
                 val head = "ARRAY<"
                 val elementType = elementType.toTrinoString()
-                head + elementType + ">"
+                "$head$elementType>"
+            }
+            is BagType -> { // map PartiQL bags to arrays
+                val head = "ARRAY<"
+                val elementType = elementType.toTrinoString()
+                "$head$elementType>"
             }
             is AnyOfType -> {
                 // Filter out unknown types. Trino types are nullable by default. Once Scribe uses PLK 0.15+,
@@ -545,32 +556,5 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
             }
             else -> TODO("Not able to convert StaticType $this to Trino")
         }
-    }
-
-    @OptIn(PartiQLValueExperimental::class)
-    private fun StructType.toRexStruct(prefixPath: Rex): Rex.Op.Struct {
-        assert(this.fields.size > 1)
-        val fieldsAsRexOpStructField: List<Rex.Op.Struct.Field> = this.fields.map { field ->
-            val newPath = rexOpPathKey(
-                prefixPath,
-                rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
-            )
-            val newV = field.value.toRex(
-                prefixPath = Rex(
-                    type = field.value,
-                    op = newPath
-                )
-            )
-            rexOpStructField(
-                k = Rex(
-                    type = StaticType.STRING,
-                    op = rexOpLit(stringValue(field.key))
-                ),
-                v = newV
-            )
-        }
-        return rexOpStruct(
-            fields = fieldsAsRexOpStructField
-        )
     }
 }

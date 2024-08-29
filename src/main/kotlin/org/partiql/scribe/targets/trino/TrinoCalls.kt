@@ -81,13 +81,12 @@ public open class TrinoCalls(private val log: ProblemCallback) : SqlCalls() {
 
     // Trino gives names to ROW fields by a call to `CAST`. See docs: https://trino.io/docs/current/language/types.html?highlight=row#row.
     // Here, we model this ROW cast as a custom type cast with the row field names encoded in the custom type string.
-    // Note this `CAST(ROW(...))` call is only performed when the `ROW` has one field.
     //
-    // CAST(ROW(<value>) AS <custom type with ROW field names>)
+    // CAST(ROW(<values list>) AS <custom type with ROW field names>)
     private fun castrow(args: SqlArgs): Expr {
-        val castValue = args.first().expr
+        val castValue = args.first().expr as Expr.Collection
         val rowCall = exprCall(
-            id("ROW"), listOf(castValue)
+            id("ROW"), castValue.values
         )
         val asType = ((((args.last().expr) as Expr.Lit).value) as StringValue).value!!
         val customType = typeCustom(name = asType)
