@@ -7,7 +7,7 @@
       {
         name: "a",
         type: {
-          type: "bag",
+          type: "list",
           items: {
             type: "struct",
             constraints: [ closed, ordered, unique ],

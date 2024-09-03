@@ -539,11 +539,6 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
                 val elementType = elementType.toTrinoString()
                 "$head$elementType>"
             }
-            is BagType -> { // map PartiQL bags to arrays
-                val head = "ARRAY<"
-                val elementType = elementType.toTrinoString()
-                "$head$elementType>"
-            }
             is AnyOfType -> {
                 // Filter out unknown types. Trino types are nullable by default. Once Scribe uses PLK 0.15+,
                 // `StaticType`s will be nullable + missable by default, so this branch will not be needed.
