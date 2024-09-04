@@ -62,7 +62,7 @@ public open class SparkCalls(private val log: ProblemCallback) : SqlCalls() {
         val convertTimeZone = id("convert_timezone")
         log.info("PartiQL `utcnow()` was replaced by Spark `convert_timezone('UTC', current_timestamp())`")
         val currentTimestamp = id("current_timestamp")
-        val targetTimezone = exprLit(stringValue("utc"))
+        val targetTimezone = exprLit(stringValue("UTC"))
         return exprCall(convertTimeZone, listOf(targetTimezone, exprCall(currentTimestamp, emptyList())))
     }
 
