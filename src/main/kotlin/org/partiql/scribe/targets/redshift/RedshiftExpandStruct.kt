@@ -18,7 +18,7 @@ import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.PartiQLValueType
 import org.partiql.value.stringValue
 
-private fun StaticType.shouldExpand() = this.metas["EXPAND"] == true
+private fun StaticType.expand() = this.metas["EXPAND"] == true
 
 // Output will be a pair of
 // 1. the output paths to KEEP
@@ -26,7 +26,7 @@ private fun StaticType.shouldExpand() = this.metas["EXPAND"] == true
 private fun fieldToRedshiftPaths(field: StructType.Field, prefix: String?): Pair<List<String>, List<String>> {
     val fieldKey = field.key
     val fieldValue = field.value.asNonNullable()
-    return if (fieldValue is StructType && fieldValue.shouldExpand()) {
+    return if (fieldValue is StructType && fieldValue.expand()) {
         if (fieldValue.fields.isEmpty()) {
             // Empty struct (all fields excluded). Add the path to both the keepList and setList.
             val setList = if (prefix == null) {
@@ -77,7 +77,7 @@ private val object_transform_fn_sig = FunctionSignature.Scalar(
  */
 @OptIn(PartiQLValueExperimental::class)
 internal fun rewriteToObjectTransform(op: Rex.Op, structType: StructType): Rex.Op {
-    return if (structType.shouldExpand()) {
+    return if (structType.expand()) {
         // Edge case when top-level struct has all fields omitted
         if (structType.fields.isEmpty()) {
             return rexOpStruct(emptyList())
@@ -138,17 +138,13 @@ internal fun rewriteToObjectTransform(op: Rex.Op, structType: StructType): Rex.O
 /**
  * Expand path wildcards as described in [RedshiftRewriter].
  *
- * This struct expansion differs from the general [org.partiql.scribe.expandStruct] function to account for nested
- * `EXCLUDE` paths that may omit certain nested fields from structs.
- *
  * Any [StaticType.STRUCT] with the "EXPAND" meta set to true will recreate the struct using the `OBJECT_TRANSFORM`
  * in Redshift with the explicit struct fields to keep.
  *
- * Any other type or [StaticType.STRUCT]s without the "EXPAND" meta set to true will recreate the struct using the same
- * struct expansion used in [org.partiql.scribe.expandStruct].
+ * Any types without the "EXPAND" meta set to true will recreate the struct without recursing into any nested values.
  */
 @OptIn(PartiQLValueExperimental::class)
-internal fun expandStruct(op: Rex.Op, structType: StructType): List<Rex> {
+internal fun expandStructRedshift(op: Rex.Op, structType: StructType): List<Rex> {
     return structType.fields.map { topLevelField ->
         val pathOp = rexOpPathKey(
             root = Rex(
@@ -159,7 +155,7 @@ internal fun expandStruct(op: Rex.Op, structType: StructType): List<Rex> {
         )
         val fieldValue = topLevelField.value.asNonNullable()
         // Create using OBJECT_TRANSFORM since the struct has excluded fields and/or nested excluded fields
-        if (fieldValue is StructType && fieldValue.shouldExpand()) {
+        if (fieldValue is StructType && fieldValue.expand()) {
             val newOp = rewriteToObjectTransform(pathOp, fieldValue)
             Rex(
                 type = StructType(

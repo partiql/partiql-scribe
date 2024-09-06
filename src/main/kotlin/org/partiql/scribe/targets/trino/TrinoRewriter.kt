@@ -1,75 +1,66 @@
 package org.partiql.scribe.targets.trino
 
-import org.partiql.plan.Fn
 import org.partiql.plan.PlanNode
 import org.partiql.plan.Rel
 import org.partiql.plan.Rex
-import org.partiql.plan.rel
-import org.partiql.plan.relBinding
 import org.partiql.plan.relOpProject
-import org.partiql.plan.relOpScan
-import org.partiql.plan.relType
 import org.partiql.plan.rex
-import org.partiql.plan.rexOpCallStatic
-import org.partiql.plan.rexOpCollection
 import org.partiql.plan.rexOpLit
 import org.partiql.plan.rexOpPathIndex
-import org.partiql.plan.rexOpPathKey
-import org.partiql.plan.rexOpSelect
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
 import org.partiql.plan.rexOpTupleUnion
-import org.partiql.plan.rexOpVar
 import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
+import org.partiql.scribe.RexOpVarTypeRewriter
 import org.partiql.scribe.ScribeProblem
-import org.partiql.scribe.VarToPathRewriter
 import org.partiql.scribe.asNonNullable
-import org.partiql.scribe.expandStruct
-import org.partiql.types.AnyOfType
-import org.partiql.types.BagType
-import org.partiql.types.BoolType
-import org.partiql.types.CollectionType
-import org.partiql.types.DateType
-import org.partiql.types.DecimalType
-import org.partiql.types.FloatType
-import org.partiql.types.IntType
+import org.partiql.scribe.excludeBindings
 import org.partiql.types.ListType
-import org.partiql.types.MissingType
-import org.partiql.types.NullType
-import org.partiql.types.NumberConstraint
 import org.partiql.types.SingleType
 import org.partiql.types.StaticType
 import org.partiql.types.StringType
 import org.partiql.types.StructType
-import org.partiql.types.TimeType
-import org.partiql.types.TimestampType
 import org.partiql.types.TupleConstraint
-import org.partiql.types.function.FunctionParameter
-import org.partiql.types.function.FunctionSignature
 import org.partiql.value.Int16Value
 import org.partiql.value.Int32Value
 import org.partiql.value.Int64Value
 import org.partiql.value.Int8Value
 import org.partiql.value.IntValue
-import org.partiql.value.PartiQLTimestampExperimental
 import org.partiql.value.PartiQLValueExperimental
-import org.partiql.value.PartiQLValueType
 import org.partiql.value.int32Value
-import org.partiql.value.stringValue
-import org.partiql.value.symbolValue
 
 /**
  * The [TrinoRewriter] holds the base logic for a PartiQL plan for translation to Trino SQL.
  */
 public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<Rel.Type?>() {
-
-    private val EXCLUDE_ALIAS = "\$__EXCLUDE_ALIAS__"
-
     /**
-     * Expand every wildcard including:
-     * - relation wildcards (e.g. SELECT tbl.*) and
-     * - struct/`ROW` wildcards (e.g. `SELECT tbl.foo.*`).
+     * For Trino, expand every wildcard, including relation wildcards (e.g. `SELECT tbl.*`) and
+     * struct/`ROW` wildcards (e.g. `SELECT tbl.foo.*`).
+     *
+     * For example, consider if tbl's schema is the following: tbl = { flds: Struct(a: int, b: boolean, c: string) }
+     * and a query with a relation wildcard
+     *      SELECT *
+     *      FROM tbl
+     * This query would be rewritten to something like
+     *      SELECT VALUE TUPLEUNION(varRef(0))
+     *      FROM tbl -- varRef(0)
+     * Rewrite the output query to something like:
+     *      SELECT tbl.flds
+     *      FROM tbl
+     *
+     * When there's a struct wildcard, we have
+     *      SELECT tbl.flds.*
+     *      FROM tbl
+     * Which gets rewritten to:
+     *      SELECT VALUE TUPLEUNION(varRef(0).flds)
+     *      FROM tbl -- varRef(0)
+     * We expand the struct wildcard to something like the following:
+     *      SELECT VALUE TUPLEUNION({ 'a': varRef(0).flds.a }, { 'b': varRef(0).flds.b }, { 'c': varRef(0).flds.c })
+     *      FROM tbl -- varRef(0)
+     * With a final output of:
+     *      SELECT tbl.flds.a, tbl.flds.b, tbl.flds.c
+     *      FROM tbl
      */
     override fun visitRexOpTupleUnion(node: Rex.Op.TupleUnion, ctx: Rel.Type?): PlanNode {
         val newTupleUnion = super.visitRexOpTupleUnion(node, ctx) as Rex.Op.TupleUnion
@@ -79,12 +70,34 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
             val type = arg.type.asNonNullable()
             // For now, just support the expansion of variable references and paths
             if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
-                newArgs.addAll(expandStruct(op, type))
+                newArgs.addAll(expandStructTrino(op, type))
             } else {
                 newArgs.add(arg)
             }
         }
         return rexOpTupleUnion(newArgs)
+    }
+
+    // Ensures we rewrite any [VarRef]s and [Path]s when the `SELECT` does not have a TUPLEUNION.
+    // E.g. `SELECT t.a.b FROM t`
+    override fun visitRexOpStruct(node: Rex.Op.Struct, ctx: Rel.Type?): PlanNode {
+        val struct = super.visitRexOpStruct(node, ctx) as Rex.Op.Struct
+        val newStruct = struct.fields.map { field ->
+            val op = field.v.op
+            val type = field.v.type.asNonNullable()
+            val newRex = if (op is Rex.Op.Var || op is Rex.Op.Path) {
+                type.toRexTrino(
+                    prefixPath = field.v
+                )
+            } else {
+                field.v
+            }
+            rexOpStructField(
+                k = field.k,
+                v = newRex
+            )
+        }
+        return rexOpStruct(newStruct)
     }
 
     override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
@@ -97,60 +110,28 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         }
         val inputOp = node.input.op
         val newNode = if (inputOp is Rel.Op.Exclude) {
-            // Check for special case involving just top-level column exclusions (i.e. # of steps is 1)
-            if (inputOp.items.all { it.steps.size == 1 }) {
-                node.copy(
-                    input = inputOp.input   // get rid of `EXCLUDE` in plan; pass in `EXCLUDE`'s input Rel
+            val inputToExclude = inputOp.input
+            val excludePaths = inputOp.items
+            // apply exclusions to the EXCLUDE's input schema
+            val initBindings = inputToExclude.type.schema
+            val newSchema = excludePaths.fold((initBindings)) { bindings, item -> excludeBindings(bindings, item) }
+            val newInput = inputToExclude.copy(
+                type = inputToExclude.type.copy(
+                    schema = newSchema
                 )
-            } else {
-                // `EXCLUDE` node with non-top-level column exclusions; run existing `EXCLUDE` logic
-                node
+            )
+            val newProjections = node.projections.map { projection ->
+                // Propagate the modified bindings to each of the projection items' [Rex.Op.Var]s
+                RexOpVarTypeRewriter(newSchema).visitRex(projection, Unit) as Rex
             }
+            relOpProject(
+                input = newInput,
+                projections = newProjections
+            )
         } else {
             node
         }
-        val project = super.visitRelOpProject(newNode, ctx) as Rel.Op.Project
-        return if (newNode.input.op is Rel.Op.Exclude) {
-            // When the Rel.Op.Project's input Rel.Op is Exclude and has deeper nested `EXCLUDE` paths
-            // 1. Rewrite the Rel's type schema to wrap the existing bindings in a new binding, `$__EXCLUDE_ALIAS__`
-            //    For example if schema was originally
-            //          [ <binding_name_1: type_1>, <binding_name_2: type_2> ]
-            //    Rewrite to:
-            //          [ <$__EXCLUDE_ALIAS__: Struct(Field(binding_name_1, type_1), Field(binding_name_2, type_2))> ]
-            // 2. Rewrite the projections' Rex.Op.Var to Rex.Op.Path with additional root of `$__EXCLUDE_ALIAS`
-            //    For example (for sake of demonstration subbing var refs with their symbol):
-            //          binding_name_1 + binding_name2
-            //    Rewrite to:
-            //          $__EXCLUDE_ALIAS.binding_name_1 + $__EXCLUDE_ALIAS.binding_name_2
-            val input = project.input
-            val inputOp = input.op as Rel.Op.Scan
-            val inputType = input.type
-            val newInputType = relType(
-                schema = listOf(
-                    relBinding(
-                        name = EXCLUDE_ALIAS,
-                        type = StructType(
-                            fields = inputType.schema.map { binding ->
-                                StructType.Field(binding.name, binding.type)
-                            }
-                        )
-                    )
-                ),
-                props = inputType.props
-            )
-            val varToPath = VarToPathRewriter(newVar = 0, inputType)
-            relOpProject(
-                input = rel(
-                    type = newInputType,
-                    op = inputOp
-                ),
-                projections = project.projections.map { projection ->
-                    varToPath.visitRex(projection, StaticType.ANY) as Rex
-                }
-            )
-        } else {
-            project
-        }
+        return super.visitRelOpProject(newNode, ctx) as Rel.Op.Project
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Rel.Type?): PlanNode {
@@ -237,319 +218,5 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
 
     override fun visitRel(node: Rel, ctx: Rel.Type?): PlanNode {
         return super.visitRel(node, node.type)
-    }
-
-    /**
-     * TODO consider changing to a simplified rewrite that we currently do for nested `EXCLUDE` queries
-     *  https://github.com/partiql/partiql-scribe/issues/60.
-     * `EXCLUDE` comes right before `PROJECT`, so here we recreate a [Rel.Op] with all exclude paths applied.
-     * We have full schema and since PlanTyper was run before this point, we know the schema after applying all
-     * exclude paths. From this schema with the excluded struct and collection fields, we recreate the input
-     * environment used by the final [Rel.Op.Project] through a combination of struct and collection constructors.
-     *
-     * For example, given input schema tbl = { flds: Struct(a: int, b: boolean, c: string) } and query
-     * SELECT t.*
-     * EXCLUDE t.flds.b
-     * FROM tbl AS t
-     *
-     * After the PlanTyper pass, we know the schema of `t` before the projection will be Struct(a: int, c: string)
-     * This rewrite will then output:
-     * SELECT $__EXCLUDE_ALIAS__.t.*    -- rewrite occurs in [Rel.Op.Project] after visiting [Rel.Op.Exclude]
-     * FROM (
-     *     SELECT { 't': { 'a': t.a, 'c': t.c } }
-     *     FROM tbl AS t
-     * ) AS $__EXCLUDE_ALIAS__
-     *
-     * The target dialect will then perform its own text rewrite depending on how struct and collections are
-     * represented.
-     */
-    @OptIn(PartiQLValueExperimental::class)
-    override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): PlanNode {
-        // Replace `EXCLUDE` with a subquery
-        assert(ctx != null)
-        val origInput = node.input
-        val bindings = ctx!!.schema
-        val structType = StructType(
-            fields = bindings.map { binding ->
-                StructType.Field(
-                    key = binding.name,
-                    value = binding.type
-                )
-            }
-        )
-        val rexOpStruct = rexOpStruct(
-            bindings.mapIndexed { index, binding ->
-                val type = binding.type
-                rexOpStructField(
-                    k = Rex(
-                        type = StaticType.STRING,
-                        op = rexOpLit(
-                            value = stringValue(binding.name)
-                        )
-                    ),
-                    v = type.toRex(
-                        prefixPath = Rex(
-                            type = type,
-                            op = rexOpVar(
-                                index
-                            )
-                        )
-                    )
-                )
-            }
-        )
-        val structWrappingBindings = StructType(
-            fields = listOf(
-                StructType.Field(
-                    EXCLUDE_ALIAS,
-                    structType
-                )
-            ),
-            constraints = setOf(
-                TupleConstraint.Ordered,
-                TupleConstraint.Open(false)
-            )
-        )
-        return relOpScan(
-            rex = Rex(
-                type = structWrappingBindings,
-                op = rexOpSelect(
-                    constructor = Rex(
-                        type = structWrappingBindings,
-                        op = rexOpVar(
-                            ref = 0
-                        )
-                    ),
-                    rel = Rel(
-                        type = Rel.Type(
-                            schema = listOf(
-                                relBinding(
-                                    name = EXCLUDE_ALIAS,
-                                    type = structType
-                                )
-                            ),
-                            props = emptySet()
-                        ),
-                        op = relOpProject(
-                            projections = listOf(
-                                Rex(
-                                    type = structType,
-                                    op = rexOpStruct
-                                )
-                            ),
-                            input = origInput
-                        )
-                    )
-                )
-            )
-        )
-    }
-
-    @OptIn(PartiQLValueExperimental::class)
-    private val cast_row_fn_sig = FunctionSignature.Scalar(
-        name = "cast_row",
-        returns = PartiQLValueType.ANY,
-        parameters = listOf(
-            FunctionParameter("cast_value", PartiQLValueType.ANY),
-            FunctionParameter("as_type", PartiQLValueType.ANY)
-        ),
-        isNullable = false,
-        isNullCall = true
-    )
-
-    // Use for reconstructing Trino `ROW`s. Simplified `ROW` construction syntax to not specify types using `SELECT`
-    // (https://github.com/trinodb/trino/discussions/7758) does not work for certain nested cases (e.g. within a
-    // lambda).
-    @OptIn(PartiQLValueExperimental::class)
-    private fun StructType.toRexCastRow(prefixPath: Rex): Rex.Op.Call.Static {
-        val rowValues = this.fields.map { field ->
-            val newPath = rexOpPathKey(
-                prefixPath,
-                rex(StaticType.STRING, rexOpLit(stringValue(field.key)))
-            )
-            val newV = field.value.toRex(
-                prefixPath = Rex(
-                    type = field.value,
-                    op = newPath
-                )
-            )
-            newV
-        }
-        val castType = Rex(
-            type = StaticType.STRING,
-            op = rexOpLit(stringValue(this.toTrinoString()))
-        )
-        return rexOpCallStatic(
-            fn = Fn(cast_row_fn_sig),
-            args = listOf(
-                Rex(
-                    type = StaticType.LIST,
-                    op = rexOpCollection(rowValues)
-                ),
-                castType
-            )
-        )
-    }
-
-    private fun StaticType.toRex(prefixPath: Rex): Rex {
-        return when (val nonNullType = this.asNonNullable()) {
-            is StructType -> {
-                Rex(
-                    type = nonNullType,
-                    op = when (nonNullType.fields.size) {
-                        0 -> kotlin.error("Currently Trino does not allow empty ROWs. Consider `EXCLUDE` on the outer struct")
-                        else -> nonNullType.toRexCastRow(prefixPath)
-                    },
-                )
-            }
-            is CollectionType -> Rex(
-                type = nonNullType,
-                op = nonNullType.toRexCallTransform(prefixPath),
-            )
-            else -> prefixPath
-        }
-    }
-
-    // https://trino.io/docs/current/functions/array.html#transform
-    @OptIn(PartiQLValueExperimental::class)
-    private val transform_fn_sig = FunctionSignature.Scalar(
-        name = "transform",
-        returns = PartiQLValueType.ANY,
-        parameters = listOf(
-            FunctionParameter("array_expr", PartiQLValueType.ANY),
-            FunctionParameter("element_var", PartiQLValueType.ANY),
-            FunctionParameter("element_expr", PartiQLValueType.ANY)
-        ),
-        isNullable = false,
-        isNullCall = true
-    )
-
-    @OptIn(PartiQLValueExperimental::class)
-    private fun CollectionType.toRexCallTransform(prefixPath: Rex): Rex.Op.Call.Static {
-        val elementType = this.elementType
-        val elementVar = Rex(
-            type = StaticType.ANY,
-            op = rexOpLit(
-                value = symbolValue("___coll_wildcard___")
-            )
-        )
-        return rexOpCallStatic(
-            fn = Fn(transform_fn_sig),
-            args = listOf(
-                prefixPath,
-                elementVar,
-                elementType.toRex(
-                    elementVar
-                )
-            )
-        )
-    }
-
-    @OptIn(PartiQLTimestampExperimental::class)
-    private fun StaticType.toTrinoString(): String {
-        return when (this) {
-            is IntType -> {
-                when (rangeConstraint) {
-                    // PartiQL IntType does not support 8-bit INT (Trino's TINYINT)
-                    IntType.IntRangeConstraint.SHORT -> "SMALLINT"
-                    IntType.IntRangeConstraint.INT4 -> "INTEGER"
-                    IntType.IntRangeConstraint.LONG -> "BIGINT"
-                    IntType.IntRangeConstraint.UNCONSTRAINED -> kotlin.error("Unconstrained int not supported in Trino")
-                }
-            }
-            is StringType -> {
-                when (val constraint = lengthConstraint) {
-                    StringType.StringLengthConstraint.Unconstrained -> "VARCHAR"
-                    is StringType.StringLengthConstraint.Constrained -> {
-                        when (val numConstraint = constraint.length) {
-                            is NumberConstraint.Equals -> {
-                                if (numConstraint.value < 0) {
-                                    kotlin.error("CHAR length must be non-negative ${numConstraint.value}")
-                                } else {
-                                    "CHAR(${numConstraint.value})"
-                                }
-                            }
-                            is NumberConstraint.UpTo -> {
-                                if (numConstraint.value < 0) {
-                                    kotlin.error("VARCHAR length must be non-negative ${numConstraint.value}")
-                                } else {
-                                    "VARCHAR(${numConstraint.value})"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            is StructType -> {
-                val head = "ROW("
-                val fieldsAsString = this.fields.foldIndexed("") { index, acc, field ->
-                    val fieldStr = acc + field.key + " " + field.value.toTrinoString()
-                    if (index < fields.size - 1) {
-                        "$fieldStr, "
-                    } else {
-                        fieldStr
-                    }
-                }
-                head + fieldsAsString + ")"
-            }
-            is BoolType -> "BOOLEAN"
-            is DecimalType -> {
-                when (val constraint = precisionScaleConstraint) {
-                    DecimalType.PrecisionScaleConstraint.Unconstrained -> kotlin.error("Unconstrained decimal not supported in Trino")
-                    is DecimalType.PrecisionScaleConstraint.Constrained -> {
-                        if (constraint.precision !in 1..38) {
-                            kotlin.error("DECIMAL precision not in range [1, 38]: ${constraint.precision}")
-                        } else if (constraint.scale !in 0..constraint.precision) {
-                            kotlin.error("DECIMAL scale not in range [0, ${constraint.precision}]: ${constraint.scale}")
-                        } else {
-                            "DECIMAL(${constraint.precision}, ${constraint.scale})"
-                        }
-                    }
-                }
-            }
-            is TimestampType -> {
-                when (precision) {
-                    null -> "TIMESTAMP"
-                    else -> {
-                        if (precision!! !in 0..12) {
-                            kotlin.error("TIMESTAMP precision not in range [0, 12]: $precision")
-                        } else {
-                            "TIMESTAMP($precision)"
-                        }
-                    }
-                }
-            }
-            is DateType -> "DATE"
-            is TimeType -> {
-                when (precision) {
-                    null -> "TIME"
-                    else -> {
-                        if (precision!! !in 0..12) {
-                            kotlin.error("TIME precision not in range [0, 12]: $precision")
-                        } else {
-                            "TIME($precision)"
-                        }
-                    }
-                }
-            }
-            is FloatType -> "DOUBLE"    // PartiQL FloatType does not have a constraint to differentiate between 32 and 64-bit floats. For now, mapping to DOUBLE.
-            is NullType -> "NULL"
-            is ListType -> {
-                val head = "ARRAY<"
-                val elementType = elementType.toTrinoString()
-                "$head$elementType>"
-            }
-            is AnyOfType -> {
-                // Filter out unknown types. Trino types are nullable by default. Once Scribe uses PLK 0.15+,
-                // `StaticType`s will be nullable + missable by default, so this branch will not be needed.
-                val typesWithoutUnknown = this.flatten().allTypes.filterNot { it is NullType || it is MissingType }
-                if (typesWithoutUnknown.size != 1) {
-                    error("Not able to convert StaticType $this to Trino")
-                }
-                val singleType = typesWithoutUnknown.first()
-                singleType.toTrinoString()
-            }
-            else -> TODO("Not able to convert StaticType $this to Trino")
-        }
     }
 }

@@ -5,39 +5,41 @@ SELECT `t`.`flds` AS `flds` FROM `default`.`EXCLUDE_T` AS `t`;
 SELECT `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-02]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t`.`flds`.`a`.`field_x` AS `field_x`, `t`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t`.`flds`.`c`.`field_x` AS `field_x`, `t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT STRUCT(`t`.`flds`.`a` AS `a`, `t`.`flds`.`c` AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-03]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t`.`flds`.`a`.`field_x` AS `field_x`, `t`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t`.`flds`.`b`.`field_x` AS `field_x`, `t`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT STRUCT(`t`.`flds`.`a` AS `a`, `t`.`flds`.`b` AS `b`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-04]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t`.`flds`.`a`.`field_x` AS `field_x`, `t`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT STRUCT(`t`.`flds`.`a` AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-05]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t`.`flds`.`a`.`field_x` AS `field_x`, `t`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t`.`flds`.`b`.`field_x` AS `field_x`, `t`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT(`t`.`flds`.`c`.`field_x` AS `field_x`) AS `c`) AS `flds`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT STRUCT(`t`.`flds`.`a` AS `a`, `t`.`flds`.`b` AS `b`, STRUCT(`t`.`flds`.`c`.`field_x` AS `field_x`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
---#[exclude-06]
--- Exclude all the fields of `t.flds.c`
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t`.`flds`.`a`.`field_x` AS `field_x`, `t`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t`.`flds`.`b`.`field_x` AS `field_x`, `t`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT() AS `c`) AS `flds`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+-- --#[exclude-06]
+-- Exclude all the fields of `t.flds.c`; Spark support for empty structs is confusing and varies across versions.
+-- See https://github.com/partiql/partiql-scribe/issues/65 for more discussion.
+-- Can just `EXCLUDE t.flds.c` rather than excluding all the fields individually
+-- SELECT * EXCLUDE t.flds.c.field_x, t.flds.c.field_y FROM EXCLUDE_T AS t;
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 --#[exclude-07]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`a` AS `a`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(`transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_y` AS `field_y`)) AS `a`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT `transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_y` AS `field_y`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`;
 
 --#[exclude-08]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`a` AS `a`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(`transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_x` AS `field_x`)) AS `a`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT `transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_x` AS `field_x`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`;
 
 --#[exclude-09]
 -- EXCLUDE with JOIN and WHERE clause
-SELECT `$__EXCLUDE_ALIAS__`.`t1`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t2`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t2`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t1`.`flds`.`a`.`field_x` AS `field_x`, `t1`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t1`.`flds`.`b`.`field_x` AS `field_x`, `t1`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT(`t1`.`flds`.`c`.`field_x` AS `field_x`, `t1`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`) AS `t1`, STRUCT(STRUCT(STRUCT(`t2`.`flds`.`a`.`field_x` AS `field_x`, `t2`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t2`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t2`.`foo` AS `foo`) AS `t2` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true WHERE `t1`.`foo` = `t2`.`foo`) AS `$__EXCLUDE_ALIAS__`;
+SELECT `t1`.`flds` AS `flds`, STRUCT(`t2`.`flds`.`a` AS `a`, STRUCT(`t2`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t2`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true WHERE `t1`.`foo` = `t2`.`foo`;
 
 --#[exclude-10]
 -- EXCLUDE with multiple JOIN and WHERE clause
-SELECT `$__EXCLUDE_ALIAS__`.`t1`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t1`.`foo` AS `foo`, `$__EXCLUDE_ALIAS__`.`t2`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t2`.`foo` AS `foo`, `$__EXCLUDE_ALIAS__`.`t3`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t3`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t1`.`flds`.`b`.`field_x` AS `field_x`, `t1`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT(`t1`.`flds`.`c`.`field_x` AS `field_x`, `t1`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t1`.`foo` AS `foo`) AS `t1`, STRUCT(STRUCT(STRUCT(`t2`.`flds`.`a`.`field_x` AS `field_x`, `t2`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t2`.`flds`.`c`.`field_x` AS `field_x`, `t2`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t2`.`foo` AS `foo`) AS `t2`, STRUCT(STRUCT(STRUCT(`t3`.`flds`.`a`.`field_x` AS `field_x`, `t3`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t3`.`flds`.`b`.`field_x` AS `field_x`, `t3`.`flds`.`b`.`field_y` AS `field_y`) AS `b`) AS `flds`, `t3`.`foo` AS `foo`) AS `t3` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`)) AS `$__EXCLUDE_ALIAS__`;
+SELECT STRUCT(STRUCT(`t1`.`flds`.`b`.`field_x` AS `field_x`, `t1`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT(`t1`.`flds`.`c`.`field_x` AS `field_x`, `t1`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t1`.`foo` AS `foo`, STRUCT(STRUCT(`t2`.`flds`.`a`.`field_x` AS `field_x`, `t2`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t2`.`flds`.`c`.`field_x` AS `field_x`, `t2`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t2`.`foo` AS `foo`, STRUCT(STRUCT(`t3`.`flds`.`a`.`field_x` AS `field_x`, `t3`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t3`.`flds`.`b`.`field_x` AS `field_x`, `t3`.`flds`.`b`.`field_y` AS `field_y`) AS `b`) AS `flds`, `t3`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`)
 
 --#[exclude-11]
 -- EXCLUDE with select projection list and multiple JOINs
-SELECT `$__EXCLUDE_ALIAS__`.`t1`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t2`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t3`.`flds` AS `flds` FROM (SELECT STRUCT(STRUCT(STRUCT(`t1`.`flds`.`b`.`field_x` AS `field_x`, `t1`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT(`t1`.`flds`.`c`.`field_x` AS `field_x`, `t1`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t1`.`foo` AS `foo`) AS `t1`, STRUCT(STRUCT(STRUCT(`t2`.`flds`.`a`.`field_x` AS `field_x`, `t2`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t2`.`flds`.`c`.`field_x` AS `field_x`, `t2`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t2`.`foo` AS `foo`) AS `t2`, STRUCT(STRUCT(STRUCT(`t3`.`flds`.`a`.`field_x` AS `field_x`, `t3`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t3`.`flds`.`b`.`field_x` AS `field_x`, `t3`.`flds`.`b`.`field_y` AS `field_y`) AS `b`) AS `flds`, `t3`.`foo` AS `foo`) AS `t3` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`)) AS `$__EXCLUDE_ALIAS__`;
+SELECT STRUCT(`t1`.`flds`.`b` AS `b`, `t1`.`flds`.`c` AS `c`) AS `flds`, STRUCT(`t2`.`flds`.`a` AS `a`, `t2`.`flds`.`c` AS `c`) AS `flds`, STRUCT(`t3`.`flds`.`a` AS `a`, `t3`.`flds`.`b` AS `b`) AS `flds` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`);
 
 -- Tests for EXCLUDE on top-level columns only --
 -- Baseline query without `EXCLUDE`
@@ -102,4 +104,16 @@ WHERE `t1`.`a` AND `t2`.`a`;
 
 --#[exclude-49]
 -- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
-SELECT `$__EXCLUDE_ALIAS__`.`t`.`flds` AS `flds`, `$__EXCLUDE_ALIAS__`.`t`.`foo` AS `foo` FROM (SELECT STRUCT(STRUCT(STRUCT(`t`.`flds`.`a`.`field_x` AS `field_x`, `t`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo`) AS `t` FROM `default`.`EXCLUDE_T_NULLABLE` AS `t`) AS `$__EXCLUDE_ALIAS__`;
+SELECT STRUCT(`t`.`flds`.`a` AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NULLABLE` AS `t`;
+
+--#[exclude-50]
+SELECT `transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_y` AS `field_y`, ___coll_wildcard___.`field_z` AS `field_z`, ___coll_wildcard___.`nested_list` AS `nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
+
+--#[exclude-51]
+SELECT `transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_x` AS `field_x`, ___coll_wildcard___.`field_z` AS `field_z`, ___coll_wildcard___.`nested_list` AS `nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
+
+--#[exclude-52]
+SELECT `transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_x` AS `field_x`, ___coll_wildcard___.`field_y` AS `field_y`, ___coll_wildcard___.`nested_list` AS `nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
+
+--#[exclude-53]
+SELECT `transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_x` AS `field_x`, ___coll_wildcard___.`field_y` AS `field_y`, ___coll_wildcard___.`field_z` AS `field_z`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;

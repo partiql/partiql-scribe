@@ -5,16 +5,16 @@ SELECT "t"."flds" AS "flds" FROM "default"."EXCLUDE_T" AS "t";
 SELECT "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-02]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t"."flds"."a"."field_x", "t"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t"."flds"."c"."field_x", "t"."flds"."c"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))), "t"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR)), foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."flds"."a", "t"."flds"."c") AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-03]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t"."flds"."a"."field_x", "t"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t"."flds"."b"."field_x", "t"."flds"."b"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))), "t"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR)), foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."flds"."a", "t"."flds"."b", CAST(ROW("t"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-04]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t"."flds"."a"."field_x", "t"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))), "t"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR)), foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."flds"."a", CAST(ROW("t"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-05]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t"."flds"."a"."field_x", "t"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t"."flds"."b"."field_x", "t"."flds"."b"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t"."flds"."c"."field_x") AS ROW(field_x INTEGER))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER))), "t"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER)), foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."flds"."a", "t"."flds"."b", CAST(ROW("t"."flds"."c"."field_x") AS ROW(field_x INTEGER))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 -- --#[exclude-06]
 -- Exclude all the fields of `t.flds.c`; unsure if Trino supports ROWs with no fields. Asked a question in discussion to see if feasible https://github.com/trinodb/trino/discussions/20558
@@ -23,38 +23,38 @@ SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo"
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 --#[exclude-07]
-SELECT "$__EXCLUDE_ALIAS__"."t"."a" AS "a", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y") AS ROW(field_y VARCHAR))), "t"."foo") AS ROW(a ARRAY<ROW(field_y VARCHAR)>, foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y") AS ROW(field_y VARCHAR))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
 --#[exclude-08]
-SELECT "$__EXCLUDE_ALIAS__"."t"."a" AS "a", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x") AS ROW(field_x INTEGER))), "t"."foo") AS ROW(a ARRAY<ROW(field_x INTEGER)>, foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x") AS ROW(field_x INTEGER))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
 --#[exclude-09]
-SELECT "$__EXCLUDE_ALIAS__"."t1"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t1"."flds"."a"."field_x", "t1"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t1"."flds"."b"."field_x", "t1"."flds"."b"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t1"."flds"."c"."field_x", "t1"."flds"."c"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR)))) AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR)))) AS "t1", CAST(ROW(CAST(ROW(CAST(ROW("t2"."flds"."a"."field_x", "t2"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t2"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))), "t2"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR)), foo VARCHAR)) AS "t2" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true WHERE "t1"."foo" = "t2"."foo") AS "$__EXCLUDE_ALIAS__";
+SELECT "t1"."flds" AS "flds", CAST(ROW("t2"."flds"."a", CAST(ROW("t2"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))) AS "flds", "t2"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true WHERE "t1"."foo" = "t2"."foo";
 
 --#[exclude-10]
 -- EXCLUDE with multiple JOIN and WHERE clause
-SELECT "$__EXCLUDE_ALIAS__"."t1"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t1"."foo" AS "foo", "$__EXCLUDE_ALIAS__"."t2"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."foo" AS "foo", "$__EXCLUDE_ALIAS__"."t3"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t3"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t1"."flds"."b"."field_x", "t1"."flds"."b"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t1"."flds"."c"."field_x", "t1"."flds"."c"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))), "t1"."foo") AS ROW(flds ROW(b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR)), foo VARCHAR)) AS "t1", CAST(ROW(CAST(ROW(CAST(ROW("t2"."flds"."a"."field_x", "t2"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t2"."flds"."c"."field_x", "t2"."flds"."c"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))), "t2"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR)), foo VARCHAR)) AS "t2", CAST(ROW(CAST(ROW(CAST(ROW("t3"."flds"."a"."field_x", "t3"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t3"."flds"."b"."field_x", "t3"."flds"."b"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR))), "t3"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR)), foo VARCHAR)) AS "t3" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo")) AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t1"."flds"."b", "t1"."flds"."c") AS ROW(b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))) AS "flds", "t1"."foo" AS "foo", CAST(ROW("t2"."flds"."a", "t2"."flds"."c") AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))) AS "flds", "t2"."foo" AS "foo", CAST(ROW("t3"."flds"."a", "t3"."flds"."b") AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR))) AS "flds", "t3"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo");
 
 --#[exclude-11]
 -- EXCLUDE with select projection list and multiple JOINs
-SELECT "$__EXCLUDE_ALIAS__"."t1"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t2"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t3"."flds" AS "flds" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t1"."flds"."b"."field_x", "t1"."flds"."b"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t1"."flds"."c"."field_x", "t1"."flds"."c"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))), "t1"."foo") AS ROW(flds ROW(b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR)), foo VARCHAR)) AS "t1", CAST(ROW(CAST(ROW(CAST(ROW("t2"."flds"."a"."field_x", "t2"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t2"."flds"."c"."field_x", "t2"."flds"."c"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))), "t2"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR)), foo VARCHAR)) AS "t2", CAST(ROW(CAST(ROW(CAST(ROW("t3"."flds"."a"."field_x", "t3"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t3"."flds"."b"."field_x", "t3"."flds"."b"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR))), "t3"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR)), foo VARCHAR)) AS "t3" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo")) AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t1"."flds"."b", "t1"."flds"."c") AS ROW(b ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))) AS "flds", CAST(ROW("t2"."flds"."a", "t2"."flds"."c") AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_x INTEGER, field_y VARCHAR))) AS "flds", CAST(ROW("t3"."flds"."a", "t3"."flds"."b") AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), b ROW(field_x INTEGER, field_y VARCHAR))) AS "flds" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo");
 
 -- EXCLUDE with different types
 -- bool
 --#[exclude-12]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep BOOLEAN))) AS ROW(foo ROW(keep BOOLEAN))) AS "t" FROM "default"."datatypes"."T_BOOL" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep BOOLEAN)) AS "foo" FROM "default"."datatypes"."T_BOOL" AS "t";
 
 -- int16
 --#[exclude-13]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep SMALLINT))) AS ROW(foo ROW(keep SMALLINT))) AS "t" FROM "default"."datatypes"."T_INT16" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep SMALLINT)) AS "foo" FROM "default"."datatypes"."T_INT16" AS "t";
 
 -- int32
 --#[exclude-14]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep INTEGER))) AS ROW(foo ROW(keep INTEGER))) AS "t" FROM "default"."datatypes"."T_INT32" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep INTEGER)) AS "foo" FROM "default"."datatypes"."T_INT32" AS "t";
 
 -- int64
 --#[exclude-15]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep BIGINT))) AS ROW(foo ROW(keep BIGINT))) AS "t" FROM "default"."datatypes"."T_INT64" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep BIGINT)) AS "foo" FROM "default"."datatypes"."T_INT64" AS "t";
 
 -- int (unconstrained)
 -- Trino does not support unconstrained int; error or give result of BIGINT
@@ -68,75 +68,75 @@ SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t
 
 -- float32
 --#[exclude-18]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep DOUBLE))) AS ROW(foo ROW(keep DOUBLE))) AS "t" FROM "default"."datatypes"."T_FLOAT32" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep DOUBLE)) AS "foo" FROM "default"."datatypes"."T_FLOAT32" AS "t";
 
 -- float64
 --#[exclude-19]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep DOUBLE))) AS ROW(foo ROW(keep DOUBLE))) AS "t" FROM "default"."datatypes"."T_FLOAT64" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep DOUBLE)) AS "foo" FROM "default"."datatypes"."T_FLOAT64" AS "t";
 
 -- string
 --#[exclude-20]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR))) AS ROW(foo ROW(keep VARCHAR))) AS "t" FROM "default"."datatypes"."T_STRING" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR)) AS "foo" FROM "default"."datatypes"."T_STRING" AS "t";
 
 -- date
 --#[exclude-21]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep DATE))) AS ROW(foo ROW(keep DATE))) AS "t" FROM "default"."datatypes"."T_DATE" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep DATE)) AS "foo" FROM "default"."datatypes"."T_DATE" AS "t";
 
 -- time
 --#[exclude-22]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep TIME))) AS ROW(foo ROW(keep TIME))) AS "t" FROM "default"."datatypes"."T_TIME" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep TIME)) AS "foo" FROM "default"."datatypes"."T_TIME" AS "t";
 
 -- timestamp
 --#[exclude-23]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep TIMESTAMP))) AS ROW(foo ROW(keep TIMESTAMP))) AS "t" FROM "default"."datatypes"."T_TIMESTAMP" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep TIMESTAMP)) AS "foo" FROM "default"."datatypes"."T_TIMESTAMP" AS "t";
 
 -- null
 --#[exclude-24]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep NULL))) AS ROW(foo ROW(keep NULL))) AS "t" FROM "default"."datatypes"."T_NULL" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep NULL)) AS "foo" FROM "default"."datatypes"."T_NULL" AS "t";
 
 -- struct
 --#[exclude-25]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t"."foo"."keep"."keep1", "t"."foo"."keep"."keep2") AS ROW(keep1 INTEGER, keep2 VARCHAR))) AS ROW(keep ROW(keep1 INTEGER, keep2 VARCHAR)))) AS ROW(foo ROW(keep ROW(keep1 INTEGER, keep2 VARCHAR)))) AS "t" FROM "default"."datatypes"."T_STRUCT" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep ROW(keep1 INTEGER, keep2 VARCHAR))) AS "foo" FROM "default"."datatypes"."T_STRUCT" AS "t";
 
 -- list
 --#[exclude-26]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(transform("t"."foo"."keep", ___coll_wildcard___ -> ___coll_wildcard___)) AS ROW(keep ARRAY<INTEGER>))) AS ROW(foo ROW(keep ARRAY<INTEGER>))) AS "t" FROM "default"."datatypes"."T_LIST" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep ARRAY<INTEGER>)) AS "foo" FROM "default"."datatypes"."T_LIST" AS "t";
 
 -- decimal(5, 2)
 --#[exclude-27]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep DECIMAL(5, 2)))) AS ROW(foo ROW(keep DECIMAL(5, 2)))) AS "t" FROM "default"."datatypes"."T_DECIMAL_5_2" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep DECIMAL(5, 2))) AS "foo" FROM "default"."datatypes"."T_DECIMAL_5_2" AS "t";
 
 -- varchar(16)
 --#[exclude-28]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR(16)))) AS ROW(foo ROW(keep VARCHAR(16)))) AS "t" FROM "default"."datatypes"."T_STRING_16" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR(16))) AS "foo" FROM "default"."datatypes"."T_STRING_16" AS "t";
 
 -- char(16)
 --#[exclude-29]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep CHAR(16)))) AS ROW(foo ROW(keep CHAR(16)))) AS "t" FROM "default"."datatypes"."T_CHAR_16" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep CHAR(16))) AS "foo" FROM "default"."datatypes"."T_CHAR_16" AS "t";
 
 -- time(6)
 --#[exclude-30]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep TIME(6)))) AS ROW(foo ROW(keep TIME(6)))) AS "t" FROM "default"."datatypes"."T_TIME_6" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep TIME(6))) AS "foo" FROM "default"."datatypes"."T_TIME_6" AS "t";
 
 -- timestamp(6)
 --#[exclude-31]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep TIMESTAMP(6)))) AS ROW(foo ROW(keep TIMESTAMP(6)))) AS "t" FROM "default"."datatypes"."T_TIMESTAMP_6" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep TIMESTAMP(6))) AS "foo" FROM "default"."datatypes"."T_TIMESTAMP_6" AS "t";
 
 -- union(string, null)
 --#[exclude-32]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR))) AS ROW(foo ROW(keep VARCHAR))) AS "t" FROM "default"."datatypes"."T_STRING_NULL" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR)) AS "foo" FROM "default"."datatypes"."T_STRING_NULL" AS "t";
 
 -- union(int32, null)
 --#[exclude-33]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep INTEGER))) AS ROW(foo ROW(keep INTEGER))) AS "t" FROM "default"."datatypes"."T_INT32_NULL" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep INTEGER)) AS "foo" FROM "default"."datatypes"."T_INT32_NULL" AS "t";
 
 -- union(varchar(16), null)
 --#[exclude-34]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR(16)))) AS ROW(foo ROW(keep VARCHAR(16)))) AS "t" FROM "default"."datatypes"."T_STRING_16_NULL" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep VARCHAR(16))) AS "foo" FROM "default"."datatypes"."T_STRING_16_NULL" AS "t";
 
 -- union(char(16), null)
 --#[exclude-35]
-SELECT "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW("t"."foo"."keep") AS ROW(keep CHAR(16)))) AS ROW(foo ROW(keep CHAR(16)))) AS "t" FROM "default"."datatypes"."T_CHAR_16_NULL" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW(keep CHAR(16))) AS "foo" FROM "default"."datatypes"."T_CHAR_16_NULL" AS "t";
 
 -- Tests for EXCLUDE on top-level columns only --
 -- Baseline query without `EXCLUDE`
@@ -201,16 +201,16 @@ WHERE "t1"."a" AND "t2"."a";
 
 --#[exclude-49]
 -- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
-SELECT "$__EXCLUDE_ALIAS__"."t"."flds" AS "flds", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(CAST(ROW(CAST(ROW("t"."flds"."a"."field_x", "t"."flds"."a"."field_y") AS ROW(field_x INTEGER, field_y VARCHAR)), CAST(ROW("t"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))), "t"."foo") AS ROW(flds ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR)), foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T_NULLABLE" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT CAST(ROW("t"."flds"."a", CAST(ROW("t"."flds"."c"."field_y") AS ROW(field_y VARCHAR))) AS ROW(a ROW(field_x INTEGER, field_y VARCHAR), c ROW(field_y VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NULLABLE" AS "t";
 
 --#[exclude-50]
-SELECT "$__EXCLUDE_ALIAS__"."t"."a" AS "a", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y", ___coll_wildcard___."field_z", transform(___coll_wildcard___."nested_list", ___coll_wildcard___ -> ___coll_wildcard___)) AS ROW(field_y VARCHAR, field_z VARCHAR, nested_list ARRAY<INTEGER>))), "t"."foo") AS ROW(a ARRAY<ROW(field_y VARCHAR, field_z VARCHAR, nested_list ARRAY<INTEGER>)>, foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y", ___coll_wildcard___."field_z", ___coll_wildcard___."nested_list") AS ROW(field_y VARCHAR, field_z VARCHAR, nested_list ARRAY<INTEGER>))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-51]
-SELECT "$__EXCLUDE_ALIAS__"."t"."a" AS "a", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_z", transform(___coll_wildcard___."nested_list", ___coll_wildcard___ -> ___coll_wildcard___)) AS ROW(field_x INTEGER, field_z VARCHAR, nested_list ARRAY<INTEGER>))), "t"."foo") AS ROW(a ARRAY<ROW(field_x INTEGER, field_z VARCHAR, nested_list ARRAY<INTEGER>)>, foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_z", ___coll_wildcard___."nested_list") AS ROW(field_x INTEGER, field_z VARCHAR, nested_list ARRAY<INTEGER>))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-52]
-SELECT "$__EXCLUDE_ALIAS__"."t"."a" AS "a", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", transform(___coll_wildcard___."nested_list", ___coll_wildcard___ -> ___coll_wildcard___)) AS ROW(field_x INTEGER, field_y VARCHAR, nested_list ARRAY<INTEGER>))), "t"."foo") AS ROW(a ARRAY<ROW(field_x INTEGER, field_y VARCHAR, nested_list ARRAY<INTEGER>)>, foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", ___coll_wildcard___."nested_list") AS ROW(field_x INTEGER, field_y VARCHAR, nested_list ARRAY<INTEGER>))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-53]
-SELECT "$__EXCLUDE_ALIAS__"."t"."a" AS "a", "$__EXCLUDE_ALIAS__"."t"."foo" AS "foo" FROM (SELECT CAST(ROW(transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", ___coll_wildcard___."field_z") AS ROW(field_x INTEGER, field_y VARCHAR, field_z VARCHAR))), "t"."foo") AS ROW(a ARRAY<ROW(field_x INTEGER, field_y VARCHAR, field_z VARCHAR)>, foo VARCHAR)) AS "t" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t") AS "$__EXCLUDE_ALIAS__";
+SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", ___coll_wildcard___."field_z") AS ROW(field_x INTEGER, field_y VARCHAR, field_z VARCHAR))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
