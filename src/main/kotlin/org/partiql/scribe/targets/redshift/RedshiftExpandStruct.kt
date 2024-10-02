@@ -9,7 +9,7 @@ import org.partiql.plan.rexOpLit
 import org.partiql.plan.rexOpPathKey
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
-import org.partiql.scribe.asNonNullable
+import org.partiql.scribe.asNonAbsent
 import org.partiql.types.StaticType
 import org.partiql.types.StructType
 import org.partiql.types.function.FunctionParameter
@@ -25,7 +25,7 @@ private fun StaticType.expand() = this.metas["EXPAND"] == true
 // 2. the output paths to SET to empty structs
 private fun fieldToRedshiftPaths(field: StructType.Field, prefix: String?): Pair<List<String>, List<String>> {
     val fieldKey = field.key
-    val fieldValue = field.value.asNonNullable()
+    val fieldValue = field.value.asNonAbsent()
     return if (fieldValue is StructType && fieldValue.expand()) {
         if (fieldValue.fields.isEmpty()) {
             // Empty struct (all fields excluded). Add the path to both the keepList and setList.
@@ -153,7 +153,7 @@ internal fun expandStructRedshift(op: Rex.Op, structType: StructType): List<Rex>
             ),
             key = rex(StaticType.STRING, rexOpLit(stringValue(topLevelField.key)))
         )
-        val fieldValue = topLevelField.value.asNonNullable()
+        val fieldValue = topLevelField.value.asNonAbsent()
         // Create using OBJECT_TRANSFORM since the struct has excluded fields and/or nested excluded fields
         if (fieldValue is StructType && fieldValue.expand()) {
             val newOp = rewriteToObjectTransform(pathOp, fieldValue)

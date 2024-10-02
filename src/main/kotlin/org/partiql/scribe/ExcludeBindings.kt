@@ -27,7 +27,7 @@ internal fun excludeBindings(bindings: List<Rel.Binding>, excludePath: Rel.Op.Ex
 }
 
 private fun StaticType.exclude(steps: List<Rel.Op.Exclude.Step>): StaticType =
-    when (val nonNullType = this.asNonNullable()) {
+    when (val nonNullType = this.asNonAbsent()) {
         is StructType -> nonNullType.exclude(steps)
         is CollectionType -> nonNullType.exclude(steps)
         is AnyOfType -> StaticType.unionOf(
