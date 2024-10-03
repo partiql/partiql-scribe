@@ -8,7 +8,7 @@ import org.partiql.plan.rexOpLit
 import org.partiql.plan.rexOpPathKey
 import org.partiql.plan.rexOpStruct
 import org.partiql.plan.rexOpStructField
-import org.partiql.scribe.asNonNullable
+import org.partiql.scribe.asNonAbsent
 import org.partiql.types.CollectionType
 import org.partiql.types.StaticType
 import org.partiql.types.StructType
@@ -25,7 +25,7 @@ internal fun StaticType.toRexSpark(prefixPath: Rex): Rex {
     if (!this.expand()) {
         return prefixPath
     }
-    return when (val nonNullType = this.asNonNullable()) {
+    return when (val nonNullType = this.asNonAbsent()) {
         is StructType -> Rex(
             type = nonNullType,
             op = when (nonNullType.fields.size) {
@@ -123,7 +123,7 @@ internal fun expandStructSpark(op: Rex.Op, structType: StructType): List<Rex> {
             ),
             key = rex(StaticType.STRING, rexOpLit(stringValue(topLevelField.key)))
         )
-        val fieldValue = topLevelField.value.asNonNullable()
+        val fieldValue = topLevelField.value.asNonAbsent()
         if (fieldValue.expand()) {
             val newOp = fieldValue.toRexSpark(
                 prefixPath = Rex(

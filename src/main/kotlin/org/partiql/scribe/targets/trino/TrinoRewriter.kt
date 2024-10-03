@@ -14,7 +14,7 @@ import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.RexOpVarTypeRewriter
 import org.partiql.scribe.ScribeProblem
-import org.partiql.scribe.asNonNullable
+import org.partiql.scribe.asNonAbsent
 import org.partiql.scribe.excludeBindings
 import org.partiql.types.ListType
 import org.partiql.types.SingleType
@@ -67,7 +67,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         val newArgs = mutableListOf<Rex>()
         newTupleUnion.args.forEach { arg ->
             val op = arg.op
-            val type = arg.type.asNonNullable()
+            val type = arg.type.asNonAbsent()
             // For now, just support the expansion of variable references and paths
             if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                 newArgs.addAll(expandStructTrino(op, type))
@@ -84,7 +84,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         val struct = super.visitRexOpStruct(node, ctx) as Rex.Op.Struct
         val newStruct = struct.fields.map { field ->
             val op = field.v.op
-            val type = field.v.type.asNonNullable()
+            val type = field.v.type.asNonAbsent()
             val newRex = if (op is Rex.Op.Var || op is Rex.Op.Path) {
                 type.toRexTrino(
                     prefixPath = field.v
@@ -103,7 +103,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
         // Make sure that the output type is homogeneous
         node.projections.forEachIndexed { index, projection ->
-            val type = projection.type.asNonNullable().flatten()
+            val type = projection.type.asNonAbsent().flatten()
             if (type !is SingleType) {
                 error("Projection item (index $index) is heterogeneous (${type.allTypes.joinToString(",")}) and cannot be coerced to a single type.")
             }
@@ -135,7 +135,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Rel.Type?): PlanNode {
-        when (val type = node.constructor.type.asNonNullable()) {
+        when (val type = node.constructor.type.asNonAbsent()) {
             is StructType -> {
                 val open = !(type.contentClosed && type.constraints.contains(TupleConstraint.Open(false)))
                 val unordered = !type.constraints.contains(TupleConstraint.Ordered)
@@ -149,7 +149,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: Rel.Type?): PlanNode {
-        if (node.root.type.asNonNullable() !is StructType) {
+        if (node.root.type.asNonAbsent() !is StructType) {
             error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${node.root.type}")
         }
         if (node.key.op !is Rex.Op.Lit) {
@@ -162,8 +162,8 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     override fun visitRexOpPathSymbol(node: Rex.Op.Path.Symbol, ctx: Rel.Type?): PlanNode {
-        if (node.root.op !is Rex.Op.Var) {
-            error("Trino does not support path expressions on non-variable values")
+        if (node.root.type.asNonAbsent() !is StructType) {
+            error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${node.root.type}")
         }
         return super.visitRexOpPathSymbol(node, ctx)
     }
@@ -182,7 +182,7 @@ public open class TrinoRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
 
         // Assert root type
         val type = node.root.type
-        if (type !is ListType || type.asNonNullable() !is ListType) {
+        if (type !is ListType || type.asNonAbsent() !is ListType) {
             error("Trino only supports indexing on `array` type data; found $type")
         }
 

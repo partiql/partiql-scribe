@@ -29,7 +29,7 @@ import org.partiql.plan.Rel
 import org.partiql.plan.Rex
 import org.partiql.plan.rexOpSelect
 import org.partiql.plan.visitor.PlanBaseVisitor
-import org.partiql.scribe.asNonNullable
+import org.partiql.scribe.asNonAbsent
 import org.partiql.types.BagType
 import org.partiql.types.ListType
 import org.partiql.types.SexpType
@@ -249,7 +249,7 @@ public open class RexConverter(
 
     // Adds the [TupleConstraint.Ordered] for [StructType]s
     private fun StaticType.asOrderedStruct(): StaticType {
-        return when (val type = this.asNonNullable()) {
+        return when (val type = this.asNonAbsent()) {
             is StructType -> type.copy(
                 constraints = type.constraints + setOf(TupleConstraint.Ordered)
             )

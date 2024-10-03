@@ -13,7 +13,7 @@ import org.partiql.plan.util.PlanRewriter
 import org.partiql.scribe.ProblemCallback
 import org.partiql.scribe.RexOpVarTypeRewriter
 import org.partiql.scribe.ScribeProblem
-import org.partiql.scribe.asNonNullable
+import org.partiql.scribe.asNonAbsent
 import org.partiql.scribe.excludeBindings
 import org.partiql.types.SingleType
 import org.partiql.types.StringType
@@ -57,7 +57,7 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         val newArgs = mutableListOf<Rex>()
         newTupleUnion.args.forEach { arg ->
             val op = arg.op
-            val type = arg.type.asNonNullable()
+            val type = arg.type.asNonAbsent()
             // For now, just support the expansion of variable references and paths
             if (type is StructType && (op is Rex.Op.Var || op is Rex.Op.Path)) {
                 newArgs.addAll(expandStructSpark(op, type))
@@ -74,7 +74,7 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
         val struct = super.visitRexOpStruct(node, ctx) as Rex.Op.Struct
         val newStruct = struct.fields.map { field ->
             val op = field.v.op
-            val type = field.v.type.asNonNullable()
+            val type = field.v.type.asNonAbsent()
             val newRex = if (op is Rex.Op.Var || op is Rex.Op.Path) {
                 type.toRexSpark(
                     prefixPath = field.v
@@ -98,7 +98,7 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     }
 
     override fun visitRexOpSelect(node: Rex.Op.Select, ctx: Rel.Type?): PlanNode {
-        when (val type = node.constructor.type.asNonNullable()) {
+        when (val type = node.constructor.type.asNonAbsent()) {
             is StructType -> {
                 val open = !(type.contentClosed && type.constraints.contains(TupleConstraint.Open(false)))
                 val unordered = !type.constraints.contains(TupleConstraint.Ordered)
@@ -128,7 +128,7 @@ public open class SparkRewriter(val onProblem: ProblemCallback) : PlanRewriter<R
     override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): PlanNode {
         // Make sure that the output type is homogeneous
         node.projections.forEachIndexed { index, projection ->
-            val type = projection.type.asNonNullable().flatten()
+            val type = projection.type.asNonAbsent().flatten()
             if (type !is SingleType) {
                 error("Projection item (index $index) is heterogeneous (${type.allTypes.joinToString(",")}) and cannot be coerced to a single type.")
             }
