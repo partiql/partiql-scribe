@@ -225,3 +225,6 @@ SELECT * EXCLUDE t.a[*].field_z FROM EXCLUDE_T_NESTED_LIST AS t;
 
 --#[exclude-53]
 SELECT * EXCLUDE t.a[*].nested_list FROM EXCLUDE_T_NESTED_LIST AS t;
+
+--#[exclude-54]
+SELECT * EXCLUDE t.flds."select".field_x FROM EXCLUDE_T_RESERVED_KEYWORDS AS t;
