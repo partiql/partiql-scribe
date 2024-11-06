@@ -177,7 +177,8 @@ private fun StaticType.toTrinoString(): String {
         is StructType -> {
             val head = "ROW("
             val fieldsAsString = this.fields.foldIndexed("") { index, acc, field ->
-                val fieldStr = acc + field.key + " " + field.value.toTrinoString()
+                // wrap `field.key` in double-quotes since the field name could be a reserved keyword
+                val fieldStr = acc + "\"${field.key}\"" + " " + field.value.toTrinoString()
                 if (index < fields.size - 1) {
                     "$fieldStr, "
                 } else {
