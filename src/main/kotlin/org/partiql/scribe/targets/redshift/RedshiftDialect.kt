@@ -28,8 +28,63 @@ public open class RedshiftDialect : SqlDialect() {
     override fun visitSelectProjectItemExpression(node: Select.Project.Item.Expression, tail: SqlBlock): SqlBlock {
         var t = tail
         t = visitExprWrapped(node.expr, t)
-        t = if (node.asAlias != null) t concat " AS \"${node.asAlias!!.symbol}\"" else t
+
+        // Check if we can omit the `AS` alias
+        val expr = node.expr
+        val asAlias = node.asAlias
+        if (asAlias != null) {
+            // only add the alias if the inferred alias is not equal to the `asName`
+            if (expr.inferredAlias() != asAlias.inferredAlias()) {
+                t = t concat " AS \"${asAlias.symbol}\""
+            }
+        }
         return t
+    }
+
+    // returns the string alias of an expr if an alias can be inferred. returns null when an alias cannot be inferred
+    // and must be generated
+    private fun Expr.inferredAlias(): String? {
+        return when (this) {
+            is Expr.Var -> this.identifier.inferredAlias()
+            is Expr.Path -> this.inferredAlias()
+            is Expr.Cast -> this.value.inferredAlias()
+            // ignore other exprs which are commonly generated; if we need to remove some more aliases, could
+            // get rid of `Expr.SessionAttribute`'s generated alias
+            else -> null
+        }
+    }
+
+    private fun Identifier.inferredAlias(): String {
+        return when (this) {
+            // get the last symbol in qualified path
+            is Identifier.Qualified -> when (steps.isEmpty()) {
+                true -> root.symbol
+                else -> steps.last().symbol
+            }
+            is Identifier.Symbol -> symbol
+        }
+    }
+
+    @OptIn(PartiQLValueExperimental::class)
+    private fun Expr.Path.inferredAlias(): String? {
+        if (steps.isEmpty()) return root.inferredAlias()
+        // get last step in a path expr
+        return when (val last = steps.last()) {
+            // get `aBc` from `t.foo.aBc`
+            is Expr.Path.Step.Symbol -> last.symbol.inferredAlias()
+            // get `aBc` from `t.foo['aBc']`
+            is Expr.Path.Step.Index -> {
+                val k = last.key
+                if (k is Expr.Lit && k.value is StringValue) {
+                    (k.value as StringValue).string
+                } else {
+                    // ignore generated aliases
+                    null
+                }
+            }
+            // ignore other path exprs
+            else -> null
+        }
     }
 
     /**

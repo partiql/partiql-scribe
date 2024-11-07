@@ -87,3 +87,7 @@ SELECT * FROM T WHERE NOT T.c LIKE 'abc';
 
 --#[select-29]
 SELECT * FROM T WHERE NOT T.c NOT LIKE 'abc';
+
+-- preserve aliases for A, "bB", and "C"; not for d or array index
+--#[select-30]
+SELECT a AS A, b AS "bB", "c" AS "C", d, "array"[1] FROM T;
