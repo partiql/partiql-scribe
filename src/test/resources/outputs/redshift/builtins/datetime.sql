@@ -22,25 +22,28 @@ SELECT DATEADD(MONTH, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
 SELECT DATEADD(YEAR, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-15]
-SELECT DATEDIFF(YEAR, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+SELECT DATEDIFF(YEAR, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
 
 --#[datetime-16]
-SELECT DATEDIFF(MONTH, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+SELECT DATEDIFF(MONTH, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
 
 --#[datetime-17]
-SELECT DATEDIFF(DAY, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+SELECT DATEDIFF(DAY, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
 
 --#[datetime-18]
-SELECT DATEDIFF(HOUR, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+SELECT DATEDIFF(HOUR, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
 
 --#[datetime-19]
-SELECT DATEDIFF(MINUTE, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+SELECT DATEDIFF(MINUTE, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
 
 --#[datetime-20]
-SELECT DATEDIFF(SECOND, "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
+SELECT DATEDIFF(SECOND, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
 
 --#[datetime-21]
 SELECT DATEADD(SECOND, 1, TIMESTAMP '2017-01-02 03:04:05.006') AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-22]
 SELECT DATEDIFF(SECOND, TIMESTAMP '2017-01-02 03:04:05.006', TIMESTAMP '2017-01-02 03:04:20.006') AS "_1" FROM "default"."T" AS "T";
+
+--#[datetime-24]
+SELECT "t"."foo" FROM "default"."datatypes"."T_TIMESTAMP" AS "t" WHERE CAST("t"."foo"."keep" AS TIMESTAMP) > DATEADD(DAY, -180, TIMESTAMP '2023-10-19 12:34:56');
