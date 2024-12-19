@@ -1,6 +1,69 @@
 package org.partiql.scribe.sql
 
 /**
+ * The [SqlQuery] node is most like the <cursor specification> of SQL-99.
+ *
+ * ```
+ * <cursor specification>
+ *      ::= <query expression> [ <order by clause> ] [ <limit clause> ] [ <offset clause ]
+ * ```
+ *
+ * Note: both limit and offset are not SQL-99 standard.
+ */
+public class SqlQuery private constructor(query: SqlQueryExpr) : SqlNode() {
+
+    public companion object {
+
+        @JvmStatic
+        public fun query(query: SqlQueryExpr): SqlQuery = SqlQuery(query)
+    }
+
+    private val query: SqlQueryExpr = query
+
+    // private val orderBy: SqlOrderBy? = null
+    // private val limit: SqlLimit? = null
+    // private val offset: SqlOffset? = null
+
+    public fun getQuery(): SqlQueryExpr = query
+
+    override fun getChildren(): List<SqlNode> = listOfNotNull(query)
+
+    override fun <R, C> accept(visitor: SqlVisitor<R, C>, ctx: C): R = visitor.visitQuery(this, ctx)
+}
+
+/**
+ * TODO
+ */
+public class SqlQueryExpr private constructor(with: SqlWith?, body: SqlQueryBody) : SqlNode() {
+
+    public companion object {
+
+        @JvmStatic
+        public fun with(with: SqlWith, body: SqlQueryBody): SqlQueryExpr = SqlQueryExpr(with, body)
+
+        @JvmStatic
+        public fun query(body: SqlQueryBody): SqlQueryExpr = SqlQueryExpr(null, body)
+    }
+
+    private val with: SqlWith? = null
+
+    private val body: SqlQueryBody? = null
+
+    public fun getWith(): SqlWith? = with
+
+    public fun getBody(): SqlQueryBody? = body
+
+    override fun getChildren(): List<SqlNode> = listOfNotNull(with, body)
+
+    override fun <R, C> accept(visitor: SqlVisitor<R, C>, ctx: C): R = visitor.visitQueryExpr(this, ctx)
+}
+
+/**
+ * This is the <query expression body> from the SQL-99 grammar.
+ */
+public sealed class SqlQueryBody : SqlNode()
+
+/**
  * This most closely resembles the query-specification of SQL-99 and the QueryBody.SFW from the PartiQL AST.
  *
  * Note that SQL splits the query-specification with a table expression, but SQL-99 does not use the table-expression
@@ -9,13 +72,13 @@ package org.partiql.scribe.sql
  *
  * The LET clause is purposely omitted because it out-of-scope.
  */
-public class SqlQuery private constructor(
+public class SqlQuerySpec private constructor(
     select: SqlSelection,
     from: SqlFrom? = null,
     // where: SqlWhere? = null,
     // groupBy: SqlGroupBy? = null,
     // having: SqlHaving? = null,
-) : SqlNode() {
+) : SqlQueryBody() {
 
     public companion object {
 
@@ -23,20 +86,23 @@ public class SqlQuery private constructor(
          * Create a SELECT query without a FROM.
          */
         @JvmStatic
-        public fun select(select: SqlSelection): SqlQuery = SqlQuery(select)
+        public fun select(select: SqlSelection): SqlQuerySpec = SqlQuerySpec(select)
 
         /**
          * Create a SELECT query with a FROM.
          */
         @JvmStatic
-        public fun selectFrom(select: SqlSelection, from: SqlFrom): SqlQuery = SqlQuery(select, from)
-
+        public fun selectFrom(select: SqlSelection, from: SqlFrom): SqlQuerySpec = SqlQuerySpec(select, from)
     }
 
     private val select: SqlSelection = select
+
     private val from: SqlFrom? = null
+
     // public val where: SqlWhere? = null
+
     // public val groupBy: SqlGroupBy? = null
+
     // public val having: SqlHaving? = null
 
     public fun getSelect(): SqlSelection = select

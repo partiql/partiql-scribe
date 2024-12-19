@@ -1,8 +1,14 @@
 package org.partiql.scribe.sql
 
+/**
+ * A base visitor for the Scribe IR.
+ *
+ * @param R
+ * @param C
+ */
 public abstract class SqlVisitor<R, C> {
 
-    public fun defaultVisit(node: SqlNode, ctx: C): R {
+    public open fun defaultVisit(node: SqlNode, ctx: C): R {
         for (child in node.getChildren()) {
             child.accept(this, ctx)
         }
@@ -11,79 +17,89 @@ public abstract class SqlVisitor<R, C> {
 
     public abstract fun defaultReturn(node: SqlNode?, ctx: C): R
 
-    // public fun visit(node: SqlNode, ctx: C): R {
+    // public open fun visit(node: SqlNode, ctx: C): R {
     //     return defaultVisit(node, ctx)
     // }
 
-    // IDENTIFIERS AND NAMES
+    // IDENTIFIERS & NAMES
 
-    // public fun visitIdentifier(node: SqlIdentifier, ctx: C): R {
+    // public open fun visitIdentifier(node: SqlIdentifier, ctx: C): R {
     //     return defaultVisit(node, ctx)
     // }
 
-    public fun visitName(node: SqlName, ctx: C): R {
+    public open fun visitName(node: SqlName, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
     // STATEMENTS
 
-    public fun visitStatement(node: SqlStatement, ctx: C): R {
+    public open fun visitStatement(node: SqlStatement, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    // STATEMENTS DQL
-
-    public fun visitSelect(node: SqlSelect, ctx: C): R {
+    public open fun visitSelect(node: SqlSelect, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    public fun visitQuery(node: SqlQuery, ctx: C): R {
+    //  [DML placeholder]
+
+    //  [DDL placeholder]
+
+    // QUERY
+
+    public open fun visitQuery(node: SqlQuery, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    // STATEMENTS DML
-
-    //  [placeholder]
-
-    // STATEMENTS DDL
-
-    //  [placeholder]
-
-    // SELECT
-
-    public fun visitSelection(node: SqlSelection, ctx: C): R {
+    public open fun visitQueryExpr(node: SqlQueryExpr, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    public fun visitSelectStar(node: SqlSelectStar, ctx: C): R {
+    public open fun visitQueryBody(node: SqlQueryBody, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    public fun visitSelectList(node: SqlSelectList, ctx: C): R {
+    public open fun visitQuerySpec(node: SqlQuerySpec, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    public fun visitSelectItem(node: SqlSelectItem, ctx: C): R {
+    public open fun visitWith(node: SqlWith, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    public fun visitSelectValue(node: SqlSelectValue, ctx: C): R {
+    public open fun visitSelection(node: SqlSelection, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
-    public fun visitSelectPivot(node: SqlSelectPivot, ctx: C): R {
+    public open fun visitSelectStar(node: SqlSelectStar, ctx: C): R {
+        return defaultVisit(node, ctx)
+    }
+
+    public open fun visitSelectList(node: SqlSelectList, ctx: C): R {
+        return defaultVisit(node, ctx)
+    }
+
+    public open fun visitSelectItem(node: SqlSelectItem, ctx: C): R {
+        return defaultVisit(node, ctx)
+    }
+
+    public open fun visitSelectValue(node: SqlSelectValue, ctx: C): R {
+        return defaultVisit(node, ctx)
+    }
+
+    public open fun visitSelectPivot(node: SqlSelectPivot, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
     // FROM
 
-    public fun visitFrom(node: SqlFrom, ctx: C): R {
+    public open fun visitFrom(node: SqlFrom, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
     // EXPRESSIONS
 
-    public fun visitExpr(node: SqlExpr, ctx: C): R {
+    public open fun visitExpr(node: SqlExpr, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 }

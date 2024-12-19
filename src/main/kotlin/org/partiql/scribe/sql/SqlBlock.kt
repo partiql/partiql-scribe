@@ -20,6 +20,22 @@ package org.partiql.scribe.sql
 public sealed class SqlBlock {
 
     /**
+     * Append to the linked-list with `tail .. next` syntax because it's cute.
+     */
+    public operator fun rangeTo(next: String): SqlBlock {
+        this.next = Text(next)
+        return this.next!!
+    }
+
+    /**
+     * Append to the linked-list with `tail .. next` syntax because it's cute.
+     */
+    public operator fun rangeTo(next: SqlBlock): SqlBlock {
+        this.next = next
+        return this.next!!
+    }
+
+    /**
      * Next token (if any) in the list.
      */
     public var next: SqlBlock? = null

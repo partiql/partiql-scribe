@@ -34,14 +34,10 @@ object Versions {
 }
 
 object Deps {
-    // deps
-    const val partiql = "org.partiql:partiql-lang:${Versions.partiql}"
-
     // shell
     const val jansi = "org.fusesource.jansi:jansi:${Versions.jansi}"
     const val jline = "org.jline:jline:${Versions.jline}"
     const val picoCli = "info.picocli:picocli:${Versions.picoCli}"
-
     // test
     const val junitParams = "org.junit.jupiter:junit-jupiter-params:${Versions.junit5}"
     const val kotlinTest = "org.jetbrains.kotlin:kotlin-test:${Versions.kotlin}"
@@ -54,7 +50,10 @@ repositories {
 }
 
 dependencies {
-    api(Deps.partiql)
+    api("org.partiql:partiql-spi:${Versions.partiql}")
+    implementation("org.partiql:partiql-ast:${Versions.partiql}")
+    implementation("org.partiql:partiql-parser:${Versions.partiql}")
+    // shell
     implementation(Deps.jansi)
     implementation(Deps.jline)
     implementation(Deps.picoCli)

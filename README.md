@@ -3,7 +3,7 @@
 ## Features
 
 * [ ] feature allow-list
-* [ ] error handling mechanisms
+* [ ] error handling mechanisms (I just panic)
 * [ ] tag with version/commit metadata
 * [ ] smithy ast model
 
@@ -13,6 +13,10 @@
 # generate support docs
 ./gradlew docs
 ```
+
+## Design Notes
+
+* Using sealed kotlin classes because Scribe core is internalized.
 
 ## Scribe IR
 
@@ -27,17 +31,22 @@ confusion; this term is also more generic and is borrowed from Calcite.
 
 ### SqlStatement
 
-| Statement    | Category | Class            |
-|--------------|----------|------------------|
-| SELECT       | DQL      | `SqlSelect`      |
-| INSERT       | DML      | `SqlInsert`      |
-| UPDATE       | DML      | `SqlUpdate`      |
-| DELETE       | DML      | `SqlDelete`      |
-| CREATE TABLE | DDL      | `SqlCreateTable` |
-| CREATE VIEW  | DDL      | `SqlCreateView`  |
+| Statement     | Category | Class            |
+|---------------|----------|------------------|
+| [WITH] SELECT | DQL      | `SqlSelect`      |
+| INSERT        | DML      | `SqlInsert`      |
+| UPDATE        | DML      | `SqlUpdate`      |
+| DELETE        | DML      | `SqlDelete`      |
+| CREATE TABLE  | DDL      | `SqlCreateTable` |
+| CREATE VIEW   | DDL      | `SqlCreateView`  |
 
 > SQL-99 does not define a SELECT statement under SQL-data statements (DQL), only `<select statement: single row>`.
 
 ### SqlSelect
 
 > For now, the Scribe SELECT statement does not support a top-level expression since this is not a requirement.
+
+### SqlQuery
+
+* SqlQuerySpec
+* SqlQuerySetOp

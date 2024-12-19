@@ -3,7 +3,7 @@ package org.partiql.scribe.sql
 /**
  * Abstract base class for all Scribe IR nodes.
  */
-public abstract class SqlNode {
+public sealed class SqlNode {
 
     private var tag: Int = 0
 
