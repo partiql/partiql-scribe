@@ -26,8 +26,8 @@ public interface SqlLayout {
         /**
          * Default SQL format.
          */
-        @JvmStatic
-        public val DEFAULT = object : SqlLayout {
+        @JvmField
+        public val DEFAULT: SqlLayout = object : SqlLayout {
 
             override fun format(head: SqlBlock): String {
                 val sb = StringBuilder()
@@ -51,8 +51,8 @@ public interface SqlLayout {
         /**
          * Write SQL statement on one line.
          */
-        @JvmStatic
-        public val ONELINE = object : SqlLayout {
+        @JvmField
+        public val ONELINE: SqlLayout = object : SqlLayout {
 
             override fun format(head: SqlBlock): String {
                 val sb = StringBuilder()

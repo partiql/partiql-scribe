@@ -1,11 +1,12 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.util.Properties
 
 plugins {
-    kotlin("jvm") version "1.6.20"
+    kotlin("jvm") version "1.9.20"
     application
     `maven-publish`
 }
@@ -13,29 +14,38 @@ plugins {
 val properties = "$buildDir/properties"
 
 object Versions {
-    // Language
-    const val kotlin = "1.6.20"
-    const val kotlinLanguage = "1.6"
-    const val kotlinApi = "1.6"
-    const val jvmTarget = "1.8"
 
-    // Deps
-    const val guava = "31.1-jre"
+    // language
+    const val kotlin = "1.9.20"
+    const val kotlinLanguage = "1.9"
+    const val kotlinApi = "1.9"
+    const val jvmTarget = "17"
+
+    // deps
+    const val partiql = "1.0.0-rc.3"
+
+    // shell
     const val jansi = "2.4.0"
     const val jline = "3.21.0"
-    const val junit5 = "5.9.3"
     const val picoCli = "4.7.0"
-    const val partiql = "0.14.6"
+
+    // test
+    const val junit5 = "5.9.3"
 }
 
 object Deps {
+    // deps
+    const val partiql = "org.partiql:partiql-lang:${Versions.partiql}"
+
+    // shell
     const val jansi = "org.fusesource.jansi:jansi:${Versions.jansi}"
     const val jline = "org.jline:jline:${Versions.jline}"
+    const val picoCli = "info.picocli:picocli:${Versions.picoCli}"
+
+    // test
     const val junitParams = "org.junit.jupiter:junit-jupiter-params:${Versions.junit5}"
     const val kotlinTest = "org.jetbrains.kotlin:kotlin-test:${Versions.kotlin}"
     const val kotlinTestJunit = "org.jetbrains.kotlin:kotlin-test-junit5:${Versions.kotlin}"
-    const val picoCli = "info.picocli:picocli:${Versions.picoCli}"
-    const val partiql = "org.partiql:partiql-lang-kotlin:${Versions.partiql}"
 }
 
 repositories {
@@ -48,7 +58,7 @@ dependencies {
     implementation(Deps.jansi)
     implementation(Deps.jline)
     implementation(Deps.picoCli)
-    // Test
+    // test
     testImplementation(Deps.kotlinTest)
     testImplementation(Deps.kotlinTestJunit)
     testImplementation(Deps.junitParams)
@@ -84,7 +94,7 @@ tasks.test {
 }
 
 kotlin {
-    explicitApi = null
+    explicitApi = ExplicitApiMode.Strict
 }
 
 sourceSets {
@@ -141,7 +151,7 @@ publishing {
 
                 packaging = "jar"
                 groupId = "org.partiql"
-                version = "0.1"
+                version = "0.2"
 
                 licenses {
                     license {

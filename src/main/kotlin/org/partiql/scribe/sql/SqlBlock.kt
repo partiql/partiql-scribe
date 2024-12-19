@@ -32,7 +32,7 @@ public sealed class SqlBlock {
     /**
      * A raw text token. Cannot be broken.
      */
-    public class Text(val text: String) : SqlBlock()
+    public class Text(public val text: String) : SqlBlock()
 
     /**
      * A nest token representing a (possible indented) token sublist.
@@ -42,12 +42,12 @@ public sealed class SqlBlock {
      * @property child
      */
     public class Nest(
-        val prefix: String?,
-        val postfix: String?,
-        val child: SqlBlock,
+        public val prefix: String?,
+        public val postfix: String?,
+        public val child: SqlBlock,
     ) : SqlBlock()
 
-    companion object {
+    public companion object {
 
         /**
          * Helper function to create root node (empty).
