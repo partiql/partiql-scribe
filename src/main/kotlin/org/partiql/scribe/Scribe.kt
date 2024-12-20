@@ -19,9 +19,9 @@ public class Scribe {
         val ir = analyzer.analyze(statement)
 
         // layout as sql text
-        // TODO
+        val sql = ir.sql()
 
-        return ""
+        return sql
     }
 
     private fun parse(source: String): Statement {

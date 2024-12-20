@@ -6,12 +6,19 @@
 * [ ] error handling mechanisms (I just panic)
 * [ ] tag with version/commit metadata
 * [ ] smithy ast model
+* [ ] repl needs persisting DDL
 
 ## Commands
 
 ```
 # generate support docs
 ./gradlew docs
+
+# use JDK 17
+./gradlew run
+
+# install bundles
+./gradlew install
 ```
 
 ## Design Notes

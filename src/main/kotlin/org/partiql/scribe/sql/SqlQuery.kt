@@ -47,11 +47,11 @@ public class SqlQueryExpr private constructor(with: SqlWith?, body: SqlQueryBody
 
     private val with: SqlWith? = null
 
-    private val body: SqlQueryBody? = null
+    private val body: SqlQueryBody = body
 
     public fun getWith(): SqlWith? = with
 
-    public fun getBody(): SqlQueryBody? = body
+    public fun getBody(): SqlQueryBody = body
 
     override fun getChildren(): List<SqlNode> = listOfNotNull(with, body)
 
@@ -73,11 +73,11 @@ public sealed class SqlQueryBody : SqlNode()
  * The LET clause is purposely omitted because it out-of-scope.
  */
 public class SqlQuerySpec private constructor(
-    select: SqlSelection,
-    from: SqlFrom? = null,
-    // where: SqlWhere? = null,
-    // groupBy: SqlGroupBy? = null,
-    // having: SqlHaving? = null,
+    private val select: SqlSelect,
+    private val from: SqlFrom? = null,
+    // private val where: SqlWhere? = null,
+    // private val groupBy: SqlGroupBy? = null,
+    // private val having: SqlHaving? = null,
 ) : SqlQueryBody() {
 
     public companion object {
@@ -86,26 +86,16 @@ public class SqlQuerySpec private constructor(
          * Create a SELECT query without a FROM.
          */
         @JvmStatic
-        public fun select(select: SqlSelection): SqlQuerySpec = SqlQuerySpec(select)
+        public fun select(select: SqlSelect): SqlQuerySpec = SqlQuerySpec(select)
 
         /**
          * Create a SELECT query with a FROM.
          */
         @JvmStatic
-        public fun selectFrom(select: SqlSelection, from: SqlFrom): SqlQuerySpec = SqlQuerySpec(select, from)
+        public fun selectFrom(select: SqlSelect, from: SqlFrom): SqlQuerySpec = SqlQuerySpec(select, from)
     }
 
-    private val select: SqlSelection = select
-
-    private val from: SqlFrom? = null
-
-    // public val where: SqlWhere? = null
-
-    // public val groupBy: SqlGroupBy? = null
-
-    // public val having: SqlHaving? = null
-
-    public fun getSelect(): SqlSelection = select
+    public fun getSelect(): SqlSelect = select
 
     public fun getFrom(): SqlFrom? = from
 

@@ -19,26 +19,24 @@ package org.partiql.scribe.sql
  */
 public sealed class SqlBlock {
 
-    /**
-     * Append to the linked-list with `tail .. next` syntax because it's cute.
-     */
-    public operator fun rangeTo(next: String): SqlBlock {
-        this.next = Text(next)
-        return this.next!!
-    }
+    public companion object {
 
-    /**
-     * Append to the linked-list with `tail .. next` syntax because it's cute.
-     */
-    public operator fun rangeTo(next: SqlBlock): SqlBlock {
-        this.next = next
-        return this.next!!
+        /**
+         * Helper function to create root node (empty).
+         */
+        @JvmStatic
+        public fun root(): SqlBlock = Text("")
     }
 
     /**
      * Next token (if any) in the list.
      */
     public var next: SqlBlock? = null
+
+    /**
+     * Layout the block tree as text with the given layout.
+     */
+    public fun sql(layout: SqlLayout): String = layout.format(this)
 
     /**
      * A newline / link break token.
@@ -63,12 +61,21 @@ public sealed class SqlBlock {
         public val child: SqlBlock,
     ) : SqlBlock()
 
-    public companion object {
+    public class Optional
 
-        /**
-         * Helper function to create root node (empty).
-         */
-        @JvmStatic
-        public fun root(): SqlBlock = Text("")
+    /**
+     * Append to the linked-list with `tail .. next` syntax because it's cute.
+     */
+    public operator fun rangeTo(next: String): SqlBlock {
+        this.next = Text(next)
+        return this.next!!
+    }
+
+    /**
+     * Append to the linked-list with `tail .. next` syntax because it's cute.
+     */
+    public operator fun rangeTo(next: SqlBlock): SqlBlock {
+        this.next = next
+        return this.next!!
     }
 }

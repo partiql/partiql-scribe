@@ -15,7 +15,7 @@ public abstract class SqlVisitor<R, C> {
         return defaultReturn(node, ctx)
     }
 
-    public abstract fun defaultReturn(node: SqlNode?, ctx: C): R
+    public abstract fun defaultReturn(node: SqlNode, ctx: C): R
 
     // public open fun visit(node: SqlNode, ctx: C): R {
     //     return defaultVisit(node, ctx)
@@ -33,11 +33,11 @@ public abstract class SqlVisitor<R, C> {
 
     // STATEMENTS
 
-    public open fun visitStatement(node: SqlStatement, ctx: C): R {
-        return defaultVisit(node, ctx)
+    public open fun visitStatement(node: SqlStatement, ctx: C): R = when (node) {
+        is SqlStatementSelect -> visitStatementSelect(node, ctx)
     }
 
-    public open fun visitSelect(node: SqlSelect, ctx: C): R {
+    public open fun visitStatementSelect(node: SqlStatementSelect, ctx: C): R {
         return defaultVisit(node, ctx)
     }
 
@@ -55,8 +55,8 @@ public abstract class SqlVisitor<R, C> {
         return defaultVisit(node, ctx)
     }
 
-    public open fun visitQueryBody(node: SqlQueryBody, ctx: C): R {
-        return defaultVisit(node, ctx)
+    public open fun visitQueryBody(node: SqlQueryBody, ctx: C): R = when (node) {
+        is SqlQuerySpec -> visitQuerySpec(node, ctx)
     }
 
     public open fun visitQuerySpec(node: SqlQuerySpec, ctx: C): R {
@@ -67,8 +67,11 @@ public abstract class SqlVisitor<R, C> {
         return defaultVisit(node, ctx)
     }
 
-    public open fun visitSelection(node: SqlSelection, ctx: C): R {
-        return defaultVisit(node, ctx)
+    public open fun visitSelect(node: SqlSelect, ctx: C): R = when (node) {
+        is SqlSelectList -> visitSelectList(node, ctx)
+        is SqlSelectPivot -> visitSelectPivot(node, ctx)
+        is SqlSelectStar -> visitSelectStar(node, ctx)
+        is SqlSelectValue -> visitSelectValue(node, ctx)
     }
 
     public open fun visitSelectStar(node: SqlSelectStar, ctx: C): R {

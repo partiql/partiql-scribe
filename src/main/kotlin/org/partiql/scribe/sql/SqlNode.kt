@@ -19,8 +19,11 @@ public sealed class SqlNode {
 
     public abstract fun <R, C> accept(visitor: SqlVisitor<R, C>, ctx: C): R
 
-    // public fun AstNode.sql(
-    //     layout: SqlLayout = SqlLayout.DEFAULT,
-    //     dialect: SqlDialect = SqlDialect.PARTIQL,
-    // ): String = dialect.apply(this).sql(layout)
+    /**
+     * Pretty-print this [SqlNode] as SQL text with the given [SqlLayout]
+     */
+    @JvmOverloads
+    public fun sql(layout: SqlLayout = SqlLayout.DEFAULT, dialect: SqlDialect = SqlDialect.DEFAULT): String {
+        return dialect.apply(this).sql(layout)
+    }
 }
