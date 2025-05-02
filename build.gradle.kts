@@ -3,8 +3,6 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.util.Properties
-import kotlin.io.path.relativeTo
-import kotlin.io.path.toPath
 
 plugins {
     kotlin("jvm") version "1.9.20"
