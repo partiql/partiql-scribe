@@ -1,0 +1,33 @@
+{
+  type: "bag",
+  items: {
+    type: "struct",
+    constraints: [ closed, ordered, unique ],
+    fields: [
+      {
+        name: "a",
+        type: {
+          type: "list",
+          items: {
+            type: "struct",
+            constraints: [ closed, ordered, unique ],
+            fields: [
+              {
+                name: "field_x",
+                type: "int32",
+              },
+              {
+                name: "field_y",
+                type: "string",
+              }
+            ]
+          }
+        }
+      },
+      {
+        name: "foo",
+        type: "string",
+      }
+    ]
+  }
+}

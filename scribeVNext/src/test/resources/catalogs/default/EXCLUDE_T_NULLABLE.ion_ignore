@@ -1,0 +1,86 @@
+// Same as `EXCLUDE_T` but every struct and field is nullable
+{
+  type: "bag",
+  items: {
+    type: "struct",
+    constraints: [ closed, ordered, unique ],
+    fields: [
+      {
+        name: "flds",
+        type: [
+          {
+            type: "struct",
+            constraints: [ closed, ordered, unique ],
+            fields: [
+              {
+                name: "a",
+                type: [
+                  {
+                    type: "struct",
+                    constraints: [ closed, ordered, unique ],
+                    fields: [
+                      {
+                        name: "field_x",
+                        type: ["int32", "null"],
+                      },
+                      {
+                        name: "field_y",
+                        type: ["string", "null"],
+                      }
+                    ]
+                  },
+                  "null"
+                ]
+              },
+              {
+                name: "b",
+                type: [
+                  {
+                    type: "struct",
+                    constraints: [ closed, ordered, unique ],
+                    fields: [
+                      {
+                        name: "field_x",
+                        type: ["int32", "null"],
+                      },
+                      {
+                        name: "field_y",
+                        type: ["string", "null"],
+                      }
+                    ]
+                  },
+                  "null"
+                ]
+              },
+              {
+                name: "c",
+                type: [
+                  {
+                    type: "struct",
+                    constraints: [ closed, ordered, unique ],
+                    fields: [
+                      {
+                        name: "field_x",
+                        type: ["int32", "null"],
+                      },
+                      {
+                        name: "field_y",
+                        type: ["string", "null"],
+                      }
+                    ]
+                  },
+                  "null"
+                ]
+              },
+            ]
+          },
+          "null"
+        ]
+      },
+      {
+        name: "foo",
+        type: ["string", "null"],
+      }
+    ]
+  }
+}
