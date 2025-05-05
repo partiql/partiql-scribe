@@ -10,6 +10,7 @@ plugins {
     application
     `maven-publish`
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
+    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
 }
 
 val properties = "$buildDir/properties"
