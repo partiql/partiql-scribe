@@ -16,5 +16,5 @@ public object PartiQLTarget : SqlTarget() {
 
     override val features: SqlFeatures = SqlFeatures.Permissive()
 
-    override fun rewrite(plan: Plan, context: ScribeContext) = plan
+    override fun rewrite(plan: Plan, context: ScribeContext): Plan = plan
 }

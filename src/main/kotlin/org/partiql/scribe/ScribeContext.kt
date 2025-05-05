@@ -2,11 +2,11 @@ package org.partiql.scribe
 
 import org.partiql.scribe.problems.ScribeProblemListener
 
-interface ScribeContext {
-    fun getErrorListener(): ScribeProblemListener
+public interface ScribeContext {
+    public fun getErrorListener(): ScribeProblemListener
 
-    companion object {
-        fun standard(): ScribeContext {
+    public companion object {
+        public fun standard(): ScribeContext {
             return object : ScribeContext {
                 override fun getErrorListener(): ScribeProblemListener {
                     return ScribeProblemListener.abortOnError()

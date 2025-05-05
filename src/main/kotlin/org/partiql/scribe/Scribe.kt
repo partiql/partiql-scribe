@@ -12,8 +12,8 @@ public class Scribe internal constructor(
     private val planner: PartiQLPlanner,
     private val scribeContext: ScribeContext,
 ){
-    companion object {
-        val STANDARD = Scribe(PartiQLParser.standard(), PartiQLPlanner.standard(), ScribeContext.standard())
+    public companion object {
+        public val STANDARD: Scribe = Scribe(PartiQLParser.standard(), PartiQLPlanner.standard(), ScribeContext.standard())
     }
 
     // entry point for converting text to other dialect's text
@@ -50,7 +50,7 @@ public class Scribe internal constructor(
     }
 
     public class Result<T>(
-        val input: Plan,
-        val output: ScribeOutput<T>,
+        public val input: Plan,
+        public val output: ScribeOutput<T>,
     )
 }

@@ -73,11 +73,11 @@ import java.time.format.DateTimeFormatter
 public typealias TypeEnv = List<PTypeField>
 
 public class Locals(
-    val env: TypeEnv,
-    val aggregations: List<Expr> = emptyList(),
+    public val env: TypeEnv,
+    public val aggregations: List<Expr> = emptyList(),
 ) {
-    companion object {
-        val EMPTY = Locals(env = emptyList(), aggregations = emptyList())
+    public companion object {
+        public val EMPTY: Locals = Locals(env = emptyList(), aggregations = emptyList())
     }
 }
 
@@ -106,7 +106,7 @@ public open class RexConverter(
         return defaultReturn(operator, ctx)
     }
 
-    fun visitRex(rex: Rex, ctx: Unit): Expr {
+    public fun visitRex(rex: Rex, ctx: Unit): Expr {
         return visit(rex, ctx)
     }
 

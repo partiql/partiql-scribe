@@ -9,5 +9,5 @@ public abstract class ScribeOutput<T> (
 ) {
     abstract override fun toString(): String
 
-    abstract fun toDebugString(): String
+    public abstract fun toDebugString(): String
 }

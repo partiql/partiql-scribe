@@ -9,16 +9,16 @@ import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
 import org.partiql.spi.catalog.Session
 
-open class RedshiftTarget : SqlTarget() {
+public open class RedshiftTarget : SqlTarget() {
     override val target: String = "Redshift"
 
     override val version: String = "0"
 
     override val features: SqlFeatures = RedshiftFeatures()
 
-    companion object {
+    public companion object {
         @JvmStatic
-        public val STANDARD = RedshiftTarget()
+        public val STANDARD: RedshiftTarget = RedshiftTarget()
     }
 
     override val dialect: SqlDialect = RedshiftDialect()

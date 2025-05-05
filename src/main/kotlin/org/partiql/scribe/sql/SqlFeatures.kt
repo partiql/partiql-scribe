@@ -8,7 +8,7 @@ import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 
 public abstract class SqlFeatures : OperatorVisitor<Unit, ScribeContext> {
-    fun validate(plan: Plan, context: ScribeContext) {
+    public fun validate(plan: Plan, context: ScribeContext) {
         when (val action = plan.action) {
             is Action.Query -> visit(action.rex, context)
             else -> context.getErrorListener().report(
@@ -21,7 +21,7 @@ public abstract class SqlFeatures : OperatorVisitor<Unit, ScribeContext> {
     }
 
     public open class Defensive : SqlFeatures() {
-        open val allow: Set<Class<*>> = emptySet()
+        public open val allow: Set<Class<*>> = emptySet()
 
         override fun defaultReturn(node: Operator, ctx: ScribeContext) {
             if (!allow.contains(node::class.java)) {
@@ -36,7 +36,7 @@ public abstract class SqlFeatures : OperatorVisitor<Unit, ScribeContext> {
     }
 
     public open class Permissive : SqlFeatures() {
-        override fun defaultReturn(node: Operator, ctx: ScribeContext) = Unit
+        override fun defaultReturn(node: Operator, ctx: ScribeContext): Unit = Unit
     }
 
     internal fun feature(node: Operator): String {

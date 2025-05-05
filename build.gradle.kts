@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.util.Properties
@@ -120,6 +121,10 @@ tasks.create("generateProperties") {
     properties.setProperty("version", version.toString())
     properties.setProperty("commit", commit.toString().trim())
     properties.store(FileOutputStream(propertiesFile), null)
+}
+
+kotlin {
+    explicitApi = ExplicitApiMode.Strict
 }
 
 publishing {

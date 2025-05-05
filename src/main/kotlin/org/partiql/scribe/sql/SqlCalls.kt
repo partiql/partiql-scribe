@@ -35,12 +35,12 @@ import org.partiql.spi.types.PType
 /**
  * Transform the call args to the special form.
  */
-typealias SqlCallFn = (SqlArgs) -> Expr
+public typealias SqlCallFn = (SqlArgs) -> Expr
 
 /**
  * List of arguments.
  */
-typealias SqlArgs = List<SqlArg>
+public typealias SqlArgs = List<SqlArg>
 
 /**
  * Pair an [Expr] with its resolved type.
@@ -58,9 +58,9 @@ public class SqlArg(
 public abstract class SqlCalls(context: ScribeContext) {
     private val listener = context.getErrorListener()
 
-    companion object {
+    public companion object {
 
-        public fun standard(context: ScribeContext) = object : SqlCalls(context) {}
+        public fun standard(context: ScribeContext): SqlCalls = object : SqlCalls(context) {}
     }
 
     /**

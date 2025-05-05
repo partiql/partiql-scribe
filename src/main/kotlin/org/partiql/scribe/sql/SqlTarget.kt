@@ -17,15 +17,15 @@ import org.partiql.spi.catalog.Session
  * Base [ScribeTarget] for SQL dialects.
  */
 public abstract class SqlTarget : ScribeTarget<String> {
-    open val dialect: SqlDialect = SqlDialect.STANDARD
+    public open val dialect: SqlDialect = SqlDialect.STANDARD
 
-    open val layout: SqlLayout = SqlLayout.STANDARD
+    public open val layout: SqlLayout = SqlLayout.STANDARD
 
-    open val features: SqlFeatures = SqlFeatures.Defensive()
+    public open val features: SqlFeatures = SqlFeatures.Defensive()
 
-    open fun getCalls(context: ScribeContext) = SqlCalls.standard(context)
+    public open fun getCalls(context: ScribeContext): SqlCalls = SqlCalls.standard(context)
 
-    abstract fun rewrite(plan: Plan, context: ScribeContext): Plan
+    public abstract fun rewrite(plan: Plan, context: ScribeContext): Plan
 
     override fun compile(plan: Plan, session:Session, context: ScribeContext): ScribeOutput<String> {
         // 1st validate the features used in the provided plan
@@ -44,7 +44,7 @@ public abstract class SqlTarget : ScribeTarget<String> {
         return SqlOutput(tag, sql, schema)
     }
 
-    open fun planToAst(newPlan: Plan, session: Session, context: ScribeContext): AstNode {
+    public open fun planToAst(newPlan: Plan, session: Session, context: ScribeContext): AstNode {
         val transform = PlanToAst(session, getCalls(context), context)
         val astStatement = transform.apply(newPlan)
         return astStatement

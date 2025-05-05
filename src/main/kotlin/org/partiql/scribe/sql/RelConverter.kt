@@ -68,21 +68,21 @@ public fun RelConverter.RelContext.toQueryBodySFW(): QueryBody.SFW {
     )
 }
 
-open class RelConverter (
+public open class RelConverter (
     private val transform: PlanToAst,
     private val context: ScribeContext
 ) : OperatorVisitor<RelConverter.RelContext, Unit> {
     private val listener = context.getErrorListener()
 
     public class RelContext(
-        var select: Select? = null,
-        var exclude: Exclude? = null,
-        var from: From? = null,
-        var let: Let? = null,
-        var where: Expr? = null,
-        var groupBy: GroupBy? = null,
-        var having: Expr? = null,
-        var aggregations: List<Expr>? = null
+        public var select: Select? = null,
+        public var exclude: Exclude? = null,
+        public var from: From? = null,
+        public var let: Let? = null,
+        public var where: Expr? = null,
+        public var groupBy: GroupBy? = null,
+        public var having: Expr? = null,
+        public var aggregations: List<Expr>? = null
     )
 
     public fun apply(rel: Rel, ctx: Unit): RelContext {
@@ -102,7 +102,7 @@ open class RelConverter (
         return defaultReturn(operator, ctx)
     }
 
-    fun visitRel(node: Rel, ctx: Unit): RelContext = visit(node, ctx)
+    public fun visitRel(node: Rel, ctx: Unit): RelContext = visit(node, ctx)
 
     // --[Rel]-----------------------------------------------------------------------------------------------------------
     override fun visitAggregate(rel: RelAggregate, ctx: Unit): RelContext {

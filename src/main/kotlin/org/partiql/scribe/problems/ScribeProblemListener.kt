@@ -1,16 +1,16 @@
 package org.partiql.scribe.problems
 
-interface ScribeProblemListener {
-    fun report(problem: ScribeProblem)
+public interface ScribeProblemListener {
+    public fun report(problem: ScribeProblem)
 
-    fun reportAndThrow(problem: ScribeProblem): Nothing {
+    public fun reportAndThrow(problem: ScribeProblem): Nothing {
         report(problem)
         throw ScribeException(problem)
     }
 
-    companion object {
+    public companion object {
         @JvmStatic
-        fun abortOnError(): ScribeProblemListener {
+        public fun abortOnError(): ScribeProblemListener {
             return object : ScribeProblemListener {
                 override fun report(problem: ScribeProblem) {
                     if (problem.severity.code() == Severity.ERROR) {

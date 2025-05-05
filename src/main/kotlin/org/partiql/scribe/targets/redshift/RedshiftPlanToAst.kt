@@ -8,10 +8,10 @@ import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.spi.catalog.Session
 
-class RedshiftPlanToAst(
-    val session: Session,
-    val calls: SqlCalls,
-    val context: ScribeContext
+public class RedshiftPlanToAst(
+    public val session: Session,
+    public val calls: SqlCalls,
+    public val context: ScribeContext
 ): PlanToAst(session, calls, context) {
     override fun getRexConverter(locals: Locals): RexConverter {
         return RedshiftRexConverter(this, locals, context)

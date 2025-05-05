@@ -3,7 +3,7 @@ package org.partiql.scribe.problems
 import org.partiql.spi.Enum
 import org.partiql.spi.UnsupportedCodeException
 
-class ScribeProblem(
+public class ScribeProblem(
     public val code: Int,
     public val severity: Severity,
     public val properties: Map<String, Any>
@@ -18,28 +18,28 @@ class ScribeProblem(
         }
     }
 
-    companion object {
+    public companion object {
         @JvmStatic
-        fun simpleError(code: Int, message: String): ScribeProblem {
+        public fun simpleError(code: Int, message: String): ScribeProblem {
             return ScribeProblem(
                 code,
-                Severity.ERROR(),
+                Severity.error(),
                 mapOf("MESSAGE" to message)
             )
         }
 
         // Static constants
         @JvmStatic
-        public final val INTERNAL_ERROR = 1
+        public val INTERNAL_ERROR: Int = 1
 
         @JvmStatic
-        public final val UNSUPPORTED_OPERATION = 2
+        public val UNSUPPORTED_OPERATION: Int = 2
 
         @JvmStatic
-        public final val UNSUPPORTED_PLAN_TO_AST_CONVERSION = 3
+        public val UNSUPPORTED_PLAN_TO_AST_CONVERSION: Int = 3
 
         @JvmStatic
-        public final val INVALID_PLAN = 4
+        public val INVALID_PLAN: Int = 4
     }
 
     ///
@@ -48,12 +48,12 @@ class ScribeProblem(
     ///
     ///
     @Throws(java.lang.ClassCastException::class)
-    fun <T> get(key: String, clazz: Class<T>): T? {
+    public fun <T> get(key: String, clazz: Class<T>): T? {
         val value: Any = properties[key] ?: return null
         return clazz.cast(value)
     }
 
-    fun <T> getOrNull(key: String, clazz: Class<T>): T? {
+    public fun <T> getOrNull(key: String, clazz: Class<T>): T? {
         return try {
             get(key, clazz)
         } catch (ex: ClassCastException) {
