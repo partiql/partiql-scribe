@@ -63,14 +63,13 @@ public fun RelConverter.RelContext.toQueryBodySFW(): QueryBody.SFW {
         let = this.let,
         where = this.where,
         groupBy = this.groupBy,
-        having = this.having
-
+        having = this.having,
     )
 }
 
-public open class RelConverter (
+public open class RelConverter(
     private val transform: PlanToAst,
-    private val context: ScribeContext
+    private val context: ScribeContext,
 ) : OperatorVisitor<RelConverter.RelContext, Unit> {
     private val listener = context.getErrorListener()
 
@@ -82,82 +81,110 @@ public open class RelConverter (
         public var where: Expr? = null,
         public var groupBy: GroupBy? = null,
         public var having: Expr? = null,
-        public var aggregations: List<Expr>? = null
+        public var aggregations: List<Expr>? = null,
     )
 
-    public fun apply(rel: Rel, ctx: Unit): RelContext {
+    public fun apply(
+        rel: Rel,
+        ctx: Unit,
+    ): RelContext {
         return visitRel(rel, ctx)
     }
 
-    override fun defaultReturn(operator: Operator, ctx: Unit): RelContext {
+    override fun defaultReturn(
+        operator: Operator,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "$operator is not yet supported"
-            )
+                message = "$operator is not yet supported",
+            ),
         )
     }
 
-    override fun defaultVisit(operator: Operator, ctx: Unit): RelContext {
+    override fun defaultVisit(
+        operator: Operator,
+        ctx: Unit,
+    ): RelContext {
         return defaultReturn(operator, ctx)
     }
 
-    public fun visitRel(node: Rel, ctx: Unit): RelContext = visit(node, ctx)
+    public fun visitRel(
+        node: Rel,
+        ctx: Unit,
+    ): RelContext = visit(node, ctx)
 
     // --[Rel]-----------------------------------------------------------------------------------------------------------
-    override fun visitAggregate(rel: RelAggregate, ctx: Unit): RelContext {
+    override fun visitAggregate(
+        rel: RelAggregate,
+        ctx: Unit,
+    ): RelContext {
         val sfw = visitRel(rel.input, ctx)
         val rexToSql = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
         if (rel.groups.isNotEmpty()) {
-            sfw.groupBy = groupBy(
-                strategy = GroupByStrategy.FULL(),
-                keys = rel.groups.mapIndexed { i, rex ->
-                    groupByKey(
-                        expr = rexToSql.apply(rex)
-                    )
-                },
-                asAlias = null
-            )
+            sfw.groupBy =
+                groupBy(
+                    strategy = GroupByStrategy.FULL(),
+                    keys =
+                        rel.groups.mapIndexed { i, rex ->
+                            groupByKey(
+                                expr = rexToSql.apply(rex),
+                            )
+                        },
+                    asAlias = null,
+                )
         }
-        val aggregations = rel.measures.map { agg ->
-            val args = agg.args.map { rexToSql.apply(it) }
-            exprCall(
-                function = Identifier.regular(agg.agg.signature.name),
-                args = args,
-                setq = when (agg.isDistinct) {
-                    true -> SetQuantifier.DISTINCT()
-                    false -> null
-                }
-            )
-        }
+        val aggregations =
+            rel.measures.map { agg ->
+                val args = agg.args.map { rexToSql.apply(it) }
+                exprCall(
+                    function = Identifier.regular(agg.agg.signature.name),
+                    args = args,
+                    setq =
+                        when (agg.isDistinct) {
+                            true -> SetQuantifier.DISTINCT()
+                            false -> null
+                        },
+                )
+            }
         sfw.aggregations = aggregations
         return sfw
     }
-    
-    override fun visitCorrelate(rel: RelCorrelate, ctx: Unit): RelContext {
+
+    override fun visitCorrelate(
+        rel: RelCorrelate,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "CORRELATE is not yet supported"
-            )
+                message = "CORRELATE is not yet supported",
+            ),
         )
     }
 
-    override fun visitDistinct(rel: RelDistinct, ctx: Unit): RelContext {
+    override fun visitDistinct(
+        rel: RelDistinct,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "DISTINCT is not yet supported"
-            )
+                message = "DISTINCT is not yet supported",
+            ),
         )
     }
 
-    override fun visitExcept(rel: RelExcept, ctx: Unit): RelContext {
+    override fun visitExcept(
+        rel: RelExcept,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "EXCEPT is not yet supported"
-            )
+                message = "EXCEPT is not yet supported",
+            ),
         )
     }
 
@@ -173,13 +200,16 @@ public open class RelConverter (
                     ScribeProblem.simpleError(
                         code = ScribeProblem.UNSUPPORTED_OPERATION,
                         message = "Unexpected exclusion item: $this",
-                    )
+                    ),
                 )
             }
         }
     }
 
-    private fun exclusionToExcludePaths(exclusion: Exclusion, rexToSql: RexConverter): List<ExcludePath> {
+    private fun exclusionToExcludePaths(
+        exclusion: Exclusion,
+        rexToSql: RexConverter,
+    ): List<ExcludePath> {
         val res = mutableListOf<ExcludePath>()
         val root = rexToSql.visitRex(exclusion.getVar(), Unit) as ExprVarRef
         val stack = ArrayDeque<Pair<Exclusion.Item, List<ExcludeStep>>>()
@@ -192,15 +222,14 @@ public open class RelConverter (
                 res.add(
                     excludePath(
                         varRef = root,
-                        excludeSteps = curSteps
-                    )
+                        excludeSteps = curSteps,
+                    ),
                 )
-            }
-            else {
+            } else {
                 // Use `.reversed()` here to preserve original order
                 item.getItems().reversed().forEach { subItem ->
                     stack.addLast(
-                        subItem to curSteps + subItem.toExcludeStep()
+                        subItem to curSteps + subItem.toExcludeStep(),
                     )
                 }
             }
@@ -208,18 +237,25 @@ public open class RelConverter (
         return res
     }
 
-    override fun visitExclude(rel: RelExclude, ctx: Unit): RelContext {
+    override fun visitExclude(
+        rel: RelExclude,
+        ctx: Unit,
+    ): RelContext {
         val relCtx = visitRel(rel.input, ctx)
         val rexToSql = transform.getRexConverter(Locals(rel.type.fields.toList()))
-        relCtx.exclude = exclude(
-            rel.exclusions.flatMap { exclusion ->
-                exclusionToExcludePaths(exclusion, rexToSql)
-            }
-        )
+        relCtx.exclude =
+            exclude(
+                rel.exclusions.flatMap { exclusion ->
+                    exclusionToExcludePaths(exclusion, rexToSql)
+                },
+            )
         return relCtx
     }
 
-    override fun visitFilter(rel: RelFilter, ctx: Unit): RelContext {
+    override fun visitFilter(
+        rel: RelFilter,
+        ctx: Unit,
+    ): RelContext {
         val sfw = visitRel(rel.input, ctx)
         // validate filter type
         val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
@@ -227,21 +263,27 @@ public open class RelConverter (
         return sfw
     }
 
-    override fun visitIntersect(rel: RelIntersect, ctx: Unit): RelContext {
+    override fun visitIntersect(
+        rel: RelIntersect,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "INTERSECT is not yet supported"
-            )
+                message = "INTERSECT is not yet supported",
+            ),
         )
     }
 
-    override fun visitIterate(rel: RelIterate, ctx: Unit): RelContext {
+    override fun visitIterate(
+        rel: RelIterate,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "ITERATE is not yet supported"
-            )
+                message = "ITERATE is not yet supported",
+            ),
         )
     }
 
@@ -250,14 +292,17 @@ public open class RelConverter (
             listener.report(
                 ScribeProblem.simpleError(
                     code = ScribeProblem.INTERNAL_ERROR,
-                    "Expect value to not be `null`"
-                )
+                    "Expect value to not be `null`",
+                ),
             )
         }
         return v!!
     }
 
-    override fun visitJoin(rel: RelJoin, ctx: Unit): RelContext {
+    override fun visitJoin(
+        rel: RelJoin,
+        ctx: Unit,
+    ): RelContext {
         val lhs = visitRel(rel.left, ctx)
         val lhsFrom = assertNotNull(lhs.from)
         assert(lhsFrom.tableRefs.size == 1)
@@ -266,60 +311,73 @@ public open class RelConverter (
         assert(rhsFrom.tableRefs.size == 1)
         val locals = Locals(rel.left.type.fields.toList() + rel.right.type.fields.toList())
         val condition = transform.getRexConverter(locals).apply(rel.condition)
-        val joinType = when (rel.joinType.code()) {
-            JoinType.LEFT -> org.partiql.ast.JoinType.LEFT()
-            JoinType.RIGHT -> org.partiql.ast.JoinType.RIGHT()
-            JoinType.FULL -> org.partiql.ast.JoinType.FULL()
-            JoinType.INNER -> org.partiql.ast.JoinType.INNER()
-            else -> {
-                listener.reportAndThrow(
-                    ScribeProblem.simpleError(
-                        code = ScribeProblem.INTERNAL_ERROR,
-                        "Unsupported join type: ${rel.joinType}"
+        val joinType =
+            when (rel.joinType.code()) {
+                JoinType.LEFT -> org.partiql.ast.JoinType.LEFT()
+                JoinType.RIGHT -> org.partiql.ast.JoinType.RIGHT()
+                JoinType.FULL -> org.partiql.ast.JoinType.FULL()
+                JoinType.INNER -> org.partiql.ast.JoinType.INNER()
+                else -> {
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.INTERNAL_ERROR,
+                            "Unsupported join type: ${rel.joinType}",
+                        ),
                     )
-                )
+                }
             }
-        }
-        lhs.from = from(
-            tableRefs = listOf(
-                fromJoin(
-                    lhs = lhsFrom.tableRefs.first(),
-                    rhs = rhsFrom.tableRefs.first(),
-                    joinType = joinType,
-                    condition = condition
-                )
+        lhs.from =
+            from(
+                tableRefs =
+                    listOf(
+                        fromJoin(
+                            lhs = lhsFrom.tableRefs.first(),
+                            rhs = rhsFrom.tableRefs.first(),
+                            joinType = joinType,
+                            condition = condition,
+                        ),
+                    ),
             )
-        )
         return lhs
     }
 
-    override fun visitLimit(rel: RelLimit, ctx: Unit): RelContext {
+    override fun visitLimit(
+        rel: RelLimit,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "Limit is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitOffset(rel: RelOffset, ctx: Unit): RelContext {
+    override fun visitOffset(
+        rel: RelOffset,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "Offset is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitProject(rel: RelProject, ctx: Unit): RelContext {
+    override fun visitProject(
+        rel: RelProject,
+        ctx: Unit,
+    ): RelContext {
         val input = rel.input
         val projections = rel.projections
         val sfw = visitRel(rel.input, ctx)
 
-        val locals = Locals(
-            env = input.type.fields.toList(),
-            aggregations = sfw.aggregations ?: emptyList(),
-        )
+        val locals =
+            Locals(
+                env = input.type.fields.toList(),
+                aggregations = sfw.aggregations ?: emptyList(),
+            )
 
         val rexConverter = transform.getRexConverter(locals)
         val type = rel.type
@@ -327,75 +385,93 @@ public open class RelConverter (
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     code = ScribeProblem.INVALID_PLAN,
-                    message = "Malformed plan, relation output types does not match projections"
-                )
+                    message = "Malformed plan, relation output types does not match projections",
+                ),
             )
         }
-        sfw.select = selectValue(
-            constructor = rexConverter.apply(projections.first()),
-            setq = null
-        )
+        sfw.select =
+            selectValue(
+                constructor = rexConverter.apply(projections.first()),
+                setq = null,
+            )
         return sfw
     }
 
-    override fun visitScan(rel: RelScan, ctx: Unit): RelContext {
+    override fun visitScan(
+        rel: RelScan,
+        ctx: Unit,
+    ): RelContext {
         val fromRex = rel.rex
 
         // Init a new SFW context
         val sfw = RelContext()
         // Validate scan type
         val type = rel.type
-        if  (type.fields.size != 1) {
+        if (type.fields.size != 1) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     code = ScribeProblem.INVALID_PLAN,
-                    message = "Invalid SCAN schema, expected a single PTypeField but found ${type.dump()}"
-                )
+                    message = "Invalid SCAN schema, expected a single PTypeField but found ${type.dump()}",
+                ),
             )
         }
-        val rexConverter = transform.getRexConverter(
-            Locals(
-                env = type.fields.toList(),
-                aggregations = emptyList() // no projections
+        val rexConverter =
+            transform.getRexConverter(
+                Locals(
+                    env = type.fields.toList(),
+                    aggregations = emptyList(),
+                    // no projections
+                ),
             )
-        )
         // convert to FROM clause
-        sfw.from = from(
-            tableRefs = listOf(
-                fromExpr(
-                    expr = rexConverter.apply(fromRex), // FROM <rex>
-                    fromType = FromType.SCAN(),
-                    asAlias = Identifier.Simple.delimited(type.fields[0].name)
-                )
+        sfw.from =
+            from(
+                tableRefs =
+                    listOf(
+                        fromExpr(
+                            expr = rexConverter.apply(fromRex),
+                            // FROM <rex>
+                            fromType = FromType.SCAN(),
+                            asAlias = Identifier.Simple.delimited(type.fields[0].name),
+                        ),
+                    ),
             )
-        )
         return sfw
     }
 
-    override fun visitSort(rel: RelSort, ctx: Unit): RelContext {
+    override fun visitSort(
+        rel: RelSort,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "SORT is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitUnion(rel: RelUnion, ctx: Unit): RelContext {
+    override fun visitUnion(
+        rel: RelUnion,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "UNION is not yet supported"
-            )
+                message = "UNION is not yet supported",
+            ),
         )
     }
 
-    override fun visitUnpivot(rel: RelUnpivot, ctx: Unit): RelContext {
+    override fun visitUnpivot(
+        rel: RelUnpivot,
+        ctx: Unit,
+    ): RelContext {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "UNPIVOT is not yet supported"
-            )
+                message = "UNPIVOT is not yet supported",
+            ),
         )
     }
 

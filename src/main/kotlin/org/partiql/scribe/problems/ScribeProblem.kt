@@ -6,8 +6,8 @@ import org.partiql.spi.UnsupportedCodeException
 public class ScribeProblem(
     public val code: Int,
     public val severity: Severity,
-    public val properties: Map<String, Any>
-): Enum(code) {
+    public val properties: Map<String, Any>,
+) : Enum(code) {
     override fun name(): String {
         return when (code) {
             INTERNAL_ERROR -> "INTERNAL_ERROR"
@@ -20,11 +20,14 @@ public class ScribeProblem(
 
     public companion object {
         @JvmStatic
-        public fun simpleError(code: Int, message: String): ScribeProblem {
+        public fun simpleError(
+            code: Int,
+            message: String,
+        ): ScribeProblem {
             return ScribeProblem(
                 code,
                 Severity.error(),
-                mapOf("MESSAGE" to message)
+                mapOf("MESSAGE" to message),
             )
         }
 
@@ -42,18 +45,24 @@ public class ScribeProblem(
         public val INVALID_PLAN: Int = 4
     }
 
-    ///
-    ///
-    /// PUBLIC METHODS
-    ///
-    ///
+    // /
+    // /
+    // / PUBLIC METHODS
+    // /
+    // /
     @Throws(java.lang.ClassCastException::class)
-    public fun <T> get(key: String, clazz: Class<T>): T? {
+    public fun <T> get(
+        key: String,
+        clazz: Class<T>,
+    ): T? {
         val value: Any = properties[key] ?: return null
         return clazz.cast(value)
     }
 
-    public fun <T> getOrNull(key: String, clazz: Class<T>): T? {
+    public fun <T> getOrNull(
+        key: String,
+        clazz: Class<T>,
+    ): T? {
         return try {
             get(key, clazz)
         } catch (ex: ClassCastException) {
@@ -62,15 +71,16 @@ public class ScribeProblem(
     }
 
     override fun toString(): String {
-        val name = try {
-            name()
-        } catch (e: UnsupportedCodeException) {
-            code().toString()
-        }
+        val name =
+            try {
+                name()
+            } catch (e: UnsupportedCodeException) {
+                code().toString()
+            }
         return "ScribeError{" +
-                "code=" + name +
-                ", severity=" + severity +
-                ", properties=" + properties +
-                '}'
+            "code=" + name +
+            ", severity=" + severity +
+            ", properties=" + properties +
+            '}'
     }
 }

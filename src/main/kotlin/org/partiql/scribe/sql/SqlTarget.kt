@@ -7,10 +7,10 @@ import org.partiql.ast.sql.sql
 import org.partiql.plan.Action
 import org.partiql.plan.Plan
 import org.partiql.plan.rex.Rex
+import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.ScribeOutput
 import org.partiql.scribe.ScribeTag
 import org.partiql.scribe.ScribeTarget
-import org.partiql.scribe.ScribeContext
 import org.partiql.spi.catalog.Session
 
 /**
@@ -25,9 +25,16 @@ public abstract class SqlTarget : ScribeTarget<String> {
 
     public open fun getCalls(context: ScribeContext): SqlCalls = SqlCalls.standard(context)
 
-    public abstract fun rewrite(plan: Plan, context: ScribeContext): Plan
+    public abstract fun rewrite(
+        plan: Plan,
+        context: ScribeContext,
+    ): Plan
 
-    override fun compile(plan: Plan, session:Session, context: ScribeContext): ScribeOutput<String> {
+    override fun compile(
+        plan: Plan,
+        session: Session,
+        context: ScribeContext,
+    ): ScribeOutput<String> {
         // 1st validate the features used in the provided plan
         features.validate(plan, context)
         // 2nd rewrite plan according to plan -> plan' rewrites; get schema from the plan
@@ -44,7 +51,11 @@ public abstract class SqlTarget : ScribeTarget<String> {
         return SqlOutput(tag, sql, schema)
     }
 
-    public open fun planToAst(newPlan: Plan, session: Session, context: ScribeContext): AstNode {
+    public open fun planToAst(
+        newPlan: Plan,
+        session: Session,
+        context: ScribeContext,
+    ): AstNode {
         val transform = PlanToAst(session, getCalls(context), context)
         val astStatement = transform.apply(newPlan)
         return astStatement

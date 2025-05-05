@@ -1,35 +1,35 @@
 // TODO see if these tests are needed anymore
-//package org.partiql.scribe.targets
+// package org.partiql.scribe.targets
 //
-//import com.amazon.ionelement.api.ionString
-//import com.amazon.ionelement.api.ionStructOf
-//import org.junit.jupiter.api.DynamicNode
-//import org.junit.jupiter.api.DynamicTest.dynamicTest
-//import org.junit.jupiter.api.Test
-//import org.junit.jupiter.api.TestFactory
-//import org.junit.jupiter.api.fail
-//import org.partiql.plugins.local.LocalConnector
-//import org.partiql.plugins.local.LocalPlugin
-//import org.partiql.scribe.Scribe
-//import org.partiql.scribe.ScribeCompiler
-//import org.partiql.scribe.ScribeException
-//import org.partiql.scribe.sql.NewSqlTarget
-//import org.partiql.scribe.sql.SqlTarget
-//import org.partiql.scribe.targets.partiql.PartiQLTarget
-//import org.partiql.scribe.test.ScribeTest
-//import org.partiql.scribe.test.ScribeTestProvider
-//import org.partiql.scribe.test.SessionProvider
-//import org.partiql.spi.connector.ConnectorSession
-//import java.lang.StringBuilder
-//import java.util.stream.Stream
-//import kotlin.io.path.toPath
-//import kotlin.streams.asStream
-//import kotlin.test.Ignore
+// import com.amazon.ionelement.api.ionString
+// import com.amazon.ionelement.api.ionStructOf
+// import org.junit.jupiter.api.DynamicNode
+// import org.junit.jupiter.api.DynamicTest.dynamicTest
+// import org.junit.jupiter.api.Test
+// import org.junit.jupiter.api.TestFactory
+// import org.junit.jupiter.api.fail
+// import org.partiql.plugins.local.LocalConnector
+// import org.partiql.plugins.local.LocalPlugin
+// import org.partiql.scribe.Scribe
+// import org.partiql.scribe.ScribeCompiler
+// import org.partiql.scribe.ScribeException
+// import org.partiql.scribe.sql.NewSqlTarget
+// import org.partiql.scribe.sql.SqlTarget
+// import org.partiql.scribe.targets.partiql.PartiQLTarget
+// import org.partiql.scribe.test.ScribeTest
+// import org.partiql.scribe.test.ScribeTestProvider
+// import org.partiql.scribe.test.SessionProvider
+// import org.partiql.spi.connector.ConnectorSession
+// import java.lang.StringBuilder
+// import java.util.stream.Stream
+// import kotlin.io.path.toPath
+// import kotlin.streams.asStream
+// import kotlin.test.Ignore
 //
-///**
+// /**
 // * This is a special non-test suite which runs *EVERY* input query against the target for inspection purposes.
 // */
-//class SqlTargetInspect {
+// class SqlTargetInspect {
 //
 //    /**
 //     * CHANGE ME
@@ -137,4 +137,4 @@
 //        }
 //        println(message)
 //    }
-//}
+// }

@@ -93,108 +93,147 @@ public open class RexConverter(
      */
     public fun apply(rex: Rex): Expr = rex.accept(this, Unit)
 
-    override fun defaultReturn(operator: Operator, ctx: Unit): Expr {
+    override fun defaultReturn(
+        operator: Operator,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "$operator is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun defaultVisit(operator: Operator, ctx: Unit): Expr {
+    override fun defaultVisit(
+        operator: Operator,
+        ctx: Unit,
+    ): Expr {
         return defaultReturn(operator, ctx)
     }
 
-    public fun visitRex(rex: Rex, ctx: Unit): Expr {
+    public fun visitRex(
+        rex: Rex,
+        ctx: Unit,
+    ): Expr {
         return visit(rex, ctx)
     }
 
-    override fun visitArray(rex: RexArray, ctx: Unit): Expr {
+    override fun visitArray(
+        rex: RexArray,
+        ctx: Unit,
+    ): Expr {
         val values = rex.values.map { visitRex(it, ctx) }
         return exprArray(values)
     }
 
-    override fun visitBag(rex: RexBag, ctx: Unit): Expr {
+    override fun visitBag(
+        rex: RexBag,
+        ctx: Unit,
+    ): Expr {
         val values = rex.values.map { visitRex(it, ctx) }
         return exprBag(values)
     }
 
-    override fun visitCall(rex: RexCall, ctx: Unit): Expr {
+    override fun visitCall(
+        rex: RexCall,
+        ctx: Unit,
+    ): Expr {
         val fn = rex.function
         val args = rex.args.map { SqlArg(visitRex(it, ctx), it.type.pType) }
         return transform.getFunction(fn.signature.name, args)
     }
 
-    override fun visitCase(rex: RexCase, ctx: Unit): Expr {
+    override fun visitCase(
+        rex: RexCase,
+        ctx: Unit,
+    ): Expr {
         val matchExpr = rex.match?.let { visitRex(it, ctx) }
         val default = rex.default?.let { visitRex(it, ctx) }
-        val branches = rex.branches.map {
-            val condition = visitRex(it.condition, ctx)
-            val result = visitRex(it.result, ctx)
-            exprCaseBranch(condition, result)
-        }
+        val branches =
+            rex.branches.map {
+                val condition = visitRex(it.condition, ctx)
+                val result = visitRex(it.result, ctx)
+                exprCaseBranch(condition, result)
+            }
         return exprCase(matchExpr, branches, default)
     }
 
     // TODO support CAST parameters
-    override fun visitCast(rex: RexCast, ctx: Unit): Expr {
+    override fun visitCast(
+        rex: RexCast,
+        ctx: Unit,
+    ): Expr {
         val value = visitRex(rex.operand, ctx)
-        val targetType = when (rex.target.code()) {
-            // BOOL type
-            PType.BOOL -> DataType.BOOL()
-            // INTEGER types
-            PType.TINYINT -> DataType.TINYINT()
-            PType.SMALLINT -> DataType.SMALLINT()
-            PType.INTEGER -> DataType.INT()
-            PType.BIGINT -> DataType.BIGINT()
-            // DECIMAL types
-            PType.NUMERIC -> DataType.NUMERIC()
-            PType.DECIMAL -> DataType.DECIMAL()
-            // Approximate numeric types
-            PType.REAL -> DataType.REAL()
-            PType.DOUBLE -> DataType.DOUBLE_PRECISION()
-            // String types
-            PType.CHAR -> DataType.CHAR()
-            PType.VARCHAR -> DataType.VARCHAR()
-            PType.STRING -> DataType.STRING()
-            // Dynamic type
-            PType.DYNAMIC -> return value // TODO possibly move into separate rewrite
-            PType.BAG -> return value
-            else -> listener.reportAndThrow(
-                ScribeProblem.simpleError(
-                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                    message = "CAST with type ${rex.target.code()} is not yet supported",
-                )
-            )
-        }
+        val targetType =
+            when (rex.target.code()) {
+                // BOOL type
+                PType.BOOL -> DataType.BOOL()
+                // INTEGER types
+                PType.TINYINT -> DataType.TINYINT()
+                PType.SMALLINT -> DataType.SMALLINT()
+                PType.INTEGER -> DataType.INT()
+                PType.BIGINT -> DataType.BIGINT()
+                // DECIMAL types
+                PType.NUMERIC -> DataType.NUMERIC()
+                PType.DECIMAL -> DataType.DECIMAL()
+                // Approximate numeric types
+                PType.REAL -> DataType.REAL()
+                PType.DOUBLE -> DataType.DOUBLE_PRECISION()
+                // String types
+                PType.CHAR -> DataType.CHAR()
+                PType.VARCHAR -> DataType.VARCHAR()
+                PType.STRING -> DataType.STRING()
+                // Dynamic type
+                PType.DYNAMIC -> return value // TODO possibly move into separate rewrite
+                PType.BAG -> return value
+                else ->
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                            message = "CAST with type ${rex.target.code()} is not yet supported",
+                        ),
+                    )
+            }
         return exprCast(
             value = value,
-            asType = targetType
+            asType = targetType,
         )
     }
 
-    override fun visitCoalesce(rex: RexCoalesce, ctx: Unit): Expr {
+    override fun visitCoalesce(
+        rex: RexCoalesce,
+        ctx: Unit,
+    ): Expr {
         val args = rex.args.map { visitRex(it, ctx) }
         return exprCoalesce(args)
     }
 
-    override fun visitDispatch(rex: RexDispatch, ctx: Unit): Expr {
+    override fun visitDispatch(
+        rex: RexDispatch,
+        ctx: Unit,
+    ): Expr {
         val fn = rex.functions.first()
         val args = rex.args.map { SqlArg(visitRex(it, ctx), it.type.pType) }
         return transform.getFunction(fn.signature.name, args)
     }
 
-    override fun visitError(rex: RexError, ctx: Unit): Expr {
+    override fun visitError(
+        rex: RexError,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "ERROR is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitLit(rex: RexLit, ctx: Unit): Expr {
+    override fun visitLit(
+        rex: RexLit,
+        ctx: Unit,
+    ): Expr {
         // convert plan literal Rex to ast literal Expr
         val datum = rex.datum
         return exprLit(datum.toLiteral())
@@ -221,7 +260,6 @@ public open class RexConverter(
                     0 -> Literal.intNum(this.bigDecimal.unscaledValue())
                     else -> Literal.exactNum(this.bigDecimal)
                 }
-
             }
             // Approximate numeric literals
             PType.REAL -> Literal.approxNum(this.float.toString()) // TODO some possible data loss here?
@@ -231,39 +269,58 @@ public open class RexConverter(
             // Date literal
             PType.DATE -> Literal.typedString(DataType.DATE(), this.localDate.toString())
             PType.TIME -> Literal.typedString(DataType.TIME(), this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
-            PType.TIMESTAMP -> Literal.typedString(DataType.TIMESTAMP(), "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}")
+            PType.TIMESTAMP ->
+                Literal.typedString(
+                    DataType.TIMESTAMP(),
+                    "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}",
+                )
             PType.TIMEZ -> {
                 // TODO precision
-                val offsetString = when (val offset = this.offsetTime.offset) {
-                    ZoneOffset.UTC -> "+00:00"
-                    else -> offset.toString()
-                }
-                Literal.typedString(DataType.TIME_WITH_TIME_ZONE(), "${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}${offsetString}")
+                val offsetString =
+                    when (val offset = this.offsetTime.offset) {
+                        ZoneOffset.UTC -> "+00:00"
+                        else -> offset.toString()
+                    }
+                Literal.typedString(
+                    DataType.TIME_WITH_TIME_ZONE(),
+                    "${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}$offsetString",
+                )
             }
             PType.TIMESTAMPZ -> {
                 // TODO precision
-                val offsetString = when (val offset = this.offsetTime.offset) {
-                    ZoneOffset.UTC -> "+00:00"
-                    else -> offset.toString()
-                }
-                Literal.typedString(DataType.TIMESTAMP_WITH_TIME_ZONE(), "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}${offsetString}")
-            }
-            else -> listener.reportAndThrow(
-                ScribeProblem.simpleError(
-                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                    message = "LITERAL with type ${this.type.code()} is not yet supported",
+                val offsetString =
+                    when (val offset = this.offsetTime.offset) {
+                        ZoneOffset.UTC -> "+00:00"
+                        else -> offset.toString()
+                    }
+                Literal.typedString(
+                    DataType.TIMESTAMP_WITH_TIME_ZONE(),
+                    "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}$offsetString",
                 )
-            )
+            }
+            else ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                        message = "LITERAL with type ${this.type.code()} is not yet supported",
+                    ),
+                )
         }
     }
 
-    override fun visitNullIf(rex: RexNullIf, ctx: Unit): Expr {
+    override fun visitNullIf(
+        rex: RexNullIf,
+        ctx: Unit,
+    ): Expr {
         val v1 = visitRex(rex.v1, ctx)
         val v2 = visitRex(rex.v2, ctx)
         return exprNullIf(v1, v2)
     }
 
-    override fun visitPathIndex(rex: RexPathIndex, ctx: Unit): Expr {
+    override fun visitPathIndex(
+        rex: RexPathIndex,
+        ctx: Unit,
+    ): Expr {
         val prev = visitRex(rex.operand, ctx)
         val step = exprPathStepElement(visitRex(rex.index, ctx))
         return if (prev is ExprPath) {
@@ -273,7 +330,10 @@ public open class RexConverter(
         }
     }
 
-    override fun visitPathKey(rex: RexPathKey, ctx: Unit): Expr {
+    override fun visitPathKey(
+        rex: RexPathKey,
+        ctx: Unit,
+    ): Expr {
         val prev = visitRex(rex.operand, ctx)
         val step = exprPathStepElement(visitRex(rex.key, ctx))
         return if (prev is ExprPath) {
@@ -283,7 +343,10 @@ public open class RexConverter(
         }
     }
 
-    override fun visitPathSymbol(rex: RexPathSymbol, ctx: Unit): Expr {
+    override fun visitPathSymbol(
+        rex: RexPathSymbol,
+        ctx: Unit,
+    ): Expr {
         val prev = visitRex(rex.operand, ctx)
         val step = exprPathStepField(regular(rex.symbol))
         return if (prev is ExprPath) {
@@ -293,43 +356,60 @@ public open class RexConverter(
         }
     }
 
-    override fun visitPivot(rex: RexPivot, ctx: Unit): Expr {
+    override fun visitPivot(
+        rex: RexPivot,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "PIVOT is not yet supported",
-            )
+            ),
         )
     }
 
-    private fun relSetOpToBagOp(left: Rel, right: Rel, isAll: Boolean, setOpType: SetOpType, ctx: Unit): Expr {
-        val leftRex = RexSelect.create(
-            left,
-            RexVar.create(0, 0, left.type.fields.first().type)
-        )
-        val rightRex = RexSelect.create(
-            right,
-            RexVar.create(0, 0, right.type.fields.first().type)
-        )
+    private fun relSetOpToBagOp(
+        left: Rel,
+        right: Rel,
+        isAll: Boolean,
+        setOpType: SetOpType,
+        ctx: Unit,
+    ): Expr {
+        val leftRex =
+            RexSelect.create(
+                left,
+                RexVar.create(0, 0, left.type.fields.first().type),
+            )
+        val rightRex =
+            RexSelect.create(
+                right,
+                RexVar.create(0, 0, right.type.fields.first().type),
+            )
         val lhsExpr = visitRex(leftRex, ctx)
         val rhsExpr = visitRex(rightRex, ctx)
         return exprQuerySet(
-            body = queryBodySetOp(
-                type = setOp(
-                    setOpType = setOpType,
-                    setq = when (isAll) {
-                        true -> SetQuantifier.ALL()
-                        false -> SetQuantifier.DISTINCT()
-                    },
+            body =
+                queryBodySetOp(
+                    type =
+                        setOp(
+                            setOpType = setOpType,
+                            setq =
+                                when (isAll) {
+                                    true -> SetQuantifier.ALL()
+                                    false -> SetQuantifier.DISTINCT()
+                                },
+                        ),
+                    lhs = lhsExpr,
+                    rhs = rhsExpr,
+                    isOuter = false,
                 ),
-                lhs = lhsExpr,
-                rhs = rhsExpr,
-                isOuter = false
-            )
         )
     }
 
-    override fun visitSelect(rex: RexSelect, ctx: Unit): Expr {
+    override fun visitSelect(
+        rex: RexSelect,
+        ctx: Unit,
+    ): Expr {
         val inputRel = rex.input
         val constructor = rex.constructor
         return when (inputRel) {
@@ -343,123 +423,164 @@ public open class RexConverter(
                 val rewrittenSelect = convertSelectValueToSqlSelect(sfw.select!!, inputRel)
                 sfw.select = rewrittenSelect
                 return exprQuerySet(
-                    body = sfw.toQueryBodySFW()
+                    body = sfw.toQueryBodySFW(),
                 )
             }
-            else -> listener.reportAndThrow(
-                ScribeProblem.simpleError(
-                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                    message = "$inputRel is not yet supported",
+            else ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                        message = "$inputRel is not yet supported",
+                    ),
                 )
-            )
         }
     }
 
-    private fun convertSelectValueToSqlSelect(select: Select, project: RelProject): Select {
+    private fun convertSelectValueToSqlSelect(
+        select: Select,
+        project: RelProject,
+    ): Select {
         val rexConverter = RexConverter(transform, Locals(project.input.type.fields.toList()), context)
         return when (select) {
             is SelectValue -> {
                 val constructor = select.constructor
-                val projectionItems = if (constructor is ExprStruct) {
-                    constructor.fields.map { field ->
-                        val key = field.name
-                        val value = field.value
-                        if (key !is ExprLit || key.lit.code() != Literal.STRING) {
-                            return select
+                val projectionItems =
+                    if (constructor is ExprStruct) {
+                        constructor.fields.map { field ->
+                            val key = field.name
+                            val value = field.value
+                            if (key !is ExprLit || key.lit.code() != Literal.STRING) {
+                                return select
+                            }
+                            val keyName = key.lit.stringValue()
+                            // valid key-value pair
+                            selectItemExpr(
+                                expr = value,
+                                asAlias = Identifier.Simple.delimited(keyName),
+                            )
                         }
-                        val keyName = key.lit.stringValue()
-                        // valid key-value pair
-                        selectItemExpr(
-                            expr = value,
-                            asAlias = Identifier.Simple.delimited(keyName)
-                        )
+                    } else {
+                        return select
                     }
-                } else {
-                    return select
-                }
                 selectList(
                     items = projectionItems,
-                    setq = select.setq
+                    setq = select.setq,
                 )
             }
             else -> select
         }
     }
 
-    override fun visitStruct(rex: RexStruct, ctx: Unit): Expr {
-        val fields = rex.fields.map {
-            exprStructField(
-                name = visitRex(it.key, ctx),
-                value = visitRex(it.value, ctx)
-            )
-        }
+    override fun visitStruct(
+        rex: RexStruct,
+        ctx: Unit,
+    ): Expr {
+        val fields =
+            rex.fields.map {
+                exprStructField(
+                    name = visitRex(it.key, ctx),
+                    value = visitRex(it.value, ctx),
+                )
+            }
         return exprStruct(fields)
     }
 
-    override fun visitSubquery(rex: RexSubquery, ctx: Unit): Expr {
+    override fun visitSubquery(
+        rex: RexSubquery,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "SUBQUERY is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitSubqueryComp(rex: RexSubqueryComp, ctx: Unit): Expr {
+    override fun visitSubqueryComp(
+        rex: RexSubqueryComp,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "SUBQUERYCOMP is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitSubqueryIn(rex: RexSubqueryIn, ctx: Unit): Expr {
+    override fun visitSubqueryIn(
+        rex: RexSubqueryIn,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "SUBQUERYIN is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitSubqueryTest(rex: RexSubqueryTest, ctx: Unit): Expr {
+    override fun visitSubqueryTest(
+        rex: RexSubqueryTest,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "SUBQUERYTEST is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitSpread(rex: RexSpread, ctx: Unit): Expr {
+    override fun visitSpread(
+        rex: RexSpread,
+        ctx: Unit,
+    ): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
                 message = "SPREAD is not yet supported",
-            )
+            ),
         )
     }
 
-    override fun visitTable(rex: RexTable, ctx: Unit): Expr {
+    override fun visitTable(
+        rex: RexTable,
+        ctx: Unit,
+    ): Expr {
         val tableName = rex.table.getName()
         val parts = tableName.getNamespace().getLevels() + tableName.getName()
-        val global = transform.getGlobal(org.partiql.spi.catalog.Identifier.delimited(parts.toList()))
-            ?: listener.reportAndThrow(ScribeProblem.simpleError(ScribeProblem.INVALID_PLAN, "Malformed plan, resolved global (\$global ${rex.table.getName()}) does not exist"))
+        val global =
+            transform.getGlobal(org.partiql.spi.catalog.Identifier.delimited(parts.toList()))
+                ?: listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.INVALID_PLAN,
+                        "Malformed plan, resolved global (\$global ${rex.table.getName()}) does not exist",
+                    ),
+                )
         return exprVarRef(global, isQualified = false)
     }
 
-    override fun visitVar(rex: RexVar, ctx: Unit): Expr {
+    override fun visitVar(
+        rex: RexVar,
+        ctx: Unit,
+    ): Expr {
         val scope = rex.scope // TODO currently unused
         val offset = rex.offset
         if (0 <= offset && offset < locals.aggregations.size) {
             return locals.aggregations[offset]
         }
-        val binding = locals.env.getOrNull(offset) ?: listener.reportAndThrow(ScribeProblem.simpleError(ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var ${offset}) not in ${locals.dump()}"))
+        val binding =
+            locals.env.getOrNull(offset) ?: listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
+                ),
+            )
         val identifier = binder(binding.name)
         return exprVarRef(
             identifier = identifier,
-            isQualified = false
+            isQualified = false,
         )
     }
 

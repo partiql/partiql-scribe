@@ -25,12 +25,19 @@ public open class RedshiftTarget : SqlTarget() {
 
     override fun getCalls(context: ScribeContext): SqlCalls = RedshiftCalls(context)
 
-    override fun rewrite(plan: Plan, context: ScribeContext): Plan {
+    override fun rewrite(
+        plan: Plan,
+        context: ScribeContext,
+    ): Plan {
         RedshiftRewriter(context)
         TODO()
     }
 
-    override fun planToAst(newPlan: Plan, session: Session, context: ScribeContext): AstNode {
+    override fun planToAst(
+        newPlan: Plan,
+        session: Session,
+        context: ScribeContext,
+    ): AstNode {
         val transform = RedshiftPlanToAst(session, getCalls(context), context)
         val astStatement = transform.apply(newPlan)
         return astStatement

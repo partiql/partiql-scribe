@@ -8,5 +8,9 @@ public interface ScribeTarget<T> {
 
     public val version: String
 
-    public fun compile(plan: Plan, session: Session, context: ScribeContext): ScribeOutput<T>
+    public fun compile(
+        plan: Plan,
+        session: Session,
+        context: ScribeContext,
+    ): ScribeOutput<T>
 }

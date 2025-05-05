@@ -10,7 +10,6 @@ public data class ScribeTest(
     public val key: Key,
     public val statement: String,
 ) {
-
     /**
      * Unique test identifier.
      *
@@ -21,7 +20,6 @@ public data class ScribeTest(
         public val group: String,
         public val name: String,
     ) {
-
         override fun toString(): String {
             return "${group}__$name"
         }

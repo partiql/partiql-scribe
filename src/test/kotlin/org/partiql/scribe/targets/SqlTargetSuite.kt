@@ -21,7 +21,6 @@ import java.util.stream.Stream
  * Produces a junit suite from a directory of expected outputs.
  */
 abstract class SqlTargetSuite {
-
     /**
      * The [SqlTarget] to compile with.
      */
@@ -59,37 +58,48 @@ abstract class SqlTargetSuite {
             .stream()
     }
 
-    private fun load(parent: File, file: File): DynamicNode? = when {
-        file.isDirectory -> loadD(parent, file)
-        file.extension == "sql" -> loadF(parent, file)
-        else -> null
-    }
+    private fun load(
+        parent: File,
+        file: File,
+    ): DynamicNode? =
+        when {
+            file.isDirectory -> loadD(parent, file)
+            file.extension == "sql" -> loadF(parent, file)
+            else -> null
+        }
 
-    private fun loadD(parent: File, file: File): DynamicContainer {
+    private fun loadD(
+        parent: File,
+        file: File,
+    ): DynamicContainer {
         val name = file.name
         val children = file.listFiles()!!.map { load(file, it) }
         return dynamicContainer(name, children)
     }
 
     // load all tests in a file
-    private fun loadF(parent: File, file: File): DynamicContainer {
+    private fun loadF(
+        parent: File,
+        file: File,
+    ): DynamicContainer {
         val group = parent.name
         val tests = parse(group, file)
         val scribe = Scribe.STANDARD
 
-        val children = tests.map { test ->
-            // Prepare
-            val displayName = test.key.toString()
+        val children =
+            tests.map { test ->
+                // Prepare
+                val displayName = test.key.toString()
 //            val session = sessions.get(test.key)
-            val session = sessions.getSession()
-            val statement = (inputs[test.key] ?: error("No test with key ${test.key}")).statement
+                val session = sessions.getSession()
+                val statement = (inputs[test.key] ?: error("No test with key ${test.key}")).statement
 
-            // Assert
-            dynamicTest(displayName) {
-                try {
-                    val result = scribe.compile(statement, target, session)
-                    val actual = result.output.value
-                    val expected = test.statement
+                // Assert
+                dynamicTest(displayName) {
+                    try {
+                        val result = scribe.compile(statement, target, session)
+                        val actual = result.output.value
+                        val expected = test.statement
                     /*
                     val problems = result.problems.filter { it.level == ScribeProblem.Level.ERROR }
                     if (problems.isNotEmpty()) {
@@ -103,31 +113,34 @@ abstract class SqlTargetSuite {
                         }
                     }
                      */
-                    comparator.assertEquals(expected, actual) {
-                        this.appendLine("Input Query: $statement")
-                        this.appendLine("Expected result: $expected")
-                        this.appendLine("Actual result: $actual")
-                        // debug dump
+                        comparator.assertEquals(expected, actual) {
+                            this.appendLine("Input Query: $statement")
+                            this.appendLine("Expected result: $expected")
+                            this.appendLine("Actual result: $actual")
+                            // debug dump
 //                        PlanPrinter.append(this, result.input)
-                    }
-                } catch (ex: ScribeException) {
-                    fail {
-                        buildString {
-                            appendLine(ex.message)
+                        }
+                    } catch (ex: ScribeException) {
+                        fail {
+                            buildString {
+                                appendLine(ex.message)
 //                            for (problem in ex.problems) {
 //                                appendLine(problem)
 //                            }
+                            }
                         }
                     }
                 }
             }
-        }
         //
         return dynamicContainer(file.nameWithoutExtension, children)
     }
 
     // from org.partiql.planner.testFixtures
-    private fun parse(group: String, file: File): List<ScribeTest> {
+    private fun parse(
+        group: String,
+        file: File,
+    ): List<ScribeTest> {
         val tests = mutableListOf<ScribeTest>()
         var name = ""
         val statement = StringBuilder()

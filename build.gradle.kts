@@ -9,34 +9,28 @@ plugins {
     kotlin("jvm") version "1.9.20"
     application
     `maven-publish`
+    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
 }
 
 val properties = "$buildDir/properties"
 
 object Versions {
     // Language
-    const val kotlin = "1.9.20"
-    const val kotlinLanguage = "1.9"
-    const val kotlinApi = "1.9"
-    const val jvmTarget = "1.8"
+    const val KOTLIN = "1.9.20"
+    const val KOTLIN_LANGUAGE = "1.9"
+    const val KOTLIN_API = "1.9"
+    const val JVM_TARGET = "1.8"
 
     // Deps
-    const val guava = "31.1-jre"
-    const val jansi = "2.4.0"
-    const val jline = "3.21.0"
-    const val junit5 = "5.9.3"
-    const val picoCli = "4.7.0"
-    const val partiql = "1.2.0-scribe"
+    const val JUNIT_5 = "5.9.3"
+    const val PARTIQL = "1.2.0-scribe"
 }
 
 object Deps {
-    const val jansi = "org.fusesource.jansi:jansi:${Versions.jansi}"
-    const val jline = "org.jline:jline:${Versions.jline}"
-    const val junitParams = "org.junit.jupiter:junit-jupiter-params:${Versions.junit5}"
-    const val kotlinTest = "org.jetbrains.kotlin:kotlin-test:${Versions.kotlin}"
-    const val kotlinTestJunit = "org.jetbrains.kotlin:kotlin-test-junit5:${Versions.kotlin}"
-    const val picoCli = "info.picocli:picocli:${Versions.picoCli}"
-    const val partiql = "org.partiql:partiql-lang:${Versions.partiql}"
+    const val JUNIT_PARAMS = "org.junit.jupiter:junit-jupiter-params:${Versions.JUNIT_5}"
+    const val KOTLIN_TEST = "org.jetbrains.kotlin:kotlin-test:${Versions.KOTLIN}"
+    const val KOTLIN_TEST_JUNIT = "org.jetbrains.kotlin:kotlin-test-junit5:${Versions.KOTLIN}"
+    const val PARTIQL = "org.partiql:partiql-lang:${Versions.PARTIQL}"
 }
 
 repositories {
@@ -45,34 +39,31 @@ repositories {
 }
 
 dependencies {
-    api(Deps.partiql)
-    implementation(Deps.jansi)
-    implementation(Deps.jline)
-    implementation(Deps.picoCli)
+    api(Deps.PARTIQL)
     // Test
-    testImplementation(Deps.kotlinTest)
-    testImplementation(Deps.kotlinTestJunit)
-    testImplementation(Deps.junitParams)
+    testImplementation(Deps.KOTLIN_TEST)
+    testImplementation(Deps.KOTLIN_TEST_JUNIT)
+    testImplementation(Deps.JUNIT_PARAMS)
 }
 
 java {
-    sourceCompatibility = JavaVersion.toVersion(Versions.jvmTarget)
-    targetCompatibility = JavaVersion.toVersion(Versions.jvmTarget)
+    sourceCompatibility = JavaVersion.toVersion(Versions.JVM_TARGET)
+    targetCompatibility = JavaVersion.toVersion(Versions.JVM_TARGET)
     withJavadocJar()
     withSourcesJar()
 }
 
 tasks.compileKotlin {
-    kotlinOptions.jvmTarget = Versions.jvmTarget
-    kotlinOptions.apiVersion = Versions.kotlinApi
-    kotlinOptions.languageVersion = Versions.kotlinLanguage
+    kotlinOptions.jvmTarget = Versions.JVM_TARGET
+    kotlinOptions.apiVersion = Versions.KOTLIN_API
+    kotlinOptions.languageVersion = Versions.KOTLIN_LANGUAGE
     kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
 }
 
 tasks.compileTestKotlin {
-    kotlinOptions.jvmTarget = Versions.jvmTarget
-    kotlinOptions.apiVersion = Versions.kotlinApi
-    kotlinOptions.languageVersion = Versions.kotlinLanguage
+    kotlinOptions.jvmTarget = Versions.JVM_TARGET
+    kotlinOptions.apiVersion = Versions.KOTLIN_API
+    kotlinOptions.languageVersion = Versions.KOTLIN_LANGUAGE
     kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
 }
 
@@ -109,12 +100,13 @@ tasks.processResources {
 
 tasks.create("generateProperties") {
     val propertiesFile = file("$properties/scribe.properties")
-    val commit = ByteArrayOutputStream().apply {
-        exec {
-            commandLine = listOf("git", "rev-parse", "--short", "HEAD")
-            standardOutput = this@apply
+    val commit =
+        ByteArrayOutputStream().apply {
+            exec {
+                commandLine = listOf("git", "rev-parse", "--short", "HEAD")
+                standardOutput = this@apply
+            }
         }
-    }
     // write properties
     propertiesFile.parentFile.mkdirs()
     val properties = Properties()

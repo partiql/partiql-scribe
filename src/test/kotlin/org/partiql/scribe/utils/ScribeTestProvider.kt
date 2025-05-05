@@ -15,7 +15,6 @@ import kotlin.io.path.toPath
  *
  */
 class ScribeTestProvider {
-
     /**
      * Backing map for test input lookup.
      */
@@ -58,20 +57,26 @@ class ScribeTestProvider {
      * @param name
      * @return
      */
-    public fun get(group: String, name: String): ScribeTest? = get(ScribeTest.Key(group, name))
+    public fun get(
+        group: String,
+        name: String,
+    ): ScribeTest? = get(ScribeTest.Key(group, name))
 
     // load all tests in a directory
-    private fun load(dir: File) = dir.listFiles()!!
-        .filter { it.extension == "sql" }
-        .flatMap { load(dir.name, it) }
+    private fun load(dir: File) =
+        dir.listFiles()!!
+            .filter { it.extension == "sql" }
+            .flatMap { load(dir.name, it) }
 
     // load all tests in a file
-    private fun load(group: String, file: File): List<ScribeTest> {
+    private fun load(
+        group: String,
+        file: File,
+    ): List<ScribeTest> {
         val tests = mutableListOf<ScribeTest>()
         var name = ""
         val statement = StringBuilder()
         for (line in file.readLines()) {
-
             // start of test
             if (line.startsWith("--#[") and line.endsWith("]")) {
                 name = line.substring(4, line.length - 1)

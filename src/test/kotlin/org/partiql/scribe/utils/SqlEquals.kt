@@ -7,16 +7,22 @@ package org.partiql.scribe.utils
  * place to advance our SQL string comparison logic .. such as ignoring keyword case.
  */
 interface SqlEquals {
-
-    fun assertEquals(expected: String, actual: String, debugMessage: StringBuilder.() -> Unit)
+    fun assertEquals(
+        expected: String,
+        actual: String,
+        debugMessage: StringBuilder.() -> Unit,
+    )
 }
 
 /**
  * A simple SQL string comparator
  */
 object SqlEqualsNaive : SqlEquals {
-
-    override fun assertEquals(expected: String, actual: String, debugMessage: StringBuilder.() -> Unit) {
+    override fun assertEquals(
+        expected: String,
+        actual: String,
+        debugMessage: StringBuilder.() -> Unit,
+    ) {
         val e = expected.clean()
         val a = actual.clean()
         // TODO some nicely formatted error message w/ comparison failures

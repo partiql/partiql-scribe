@@ -8,15 +8,15 @@ public class SqlOutput(
     tag: ScribeTag,
     value: String,
     schema: PType,
-
-    ) : ScribeOutput<String>(tag, value, schema) {
+) : ScribeOutput<String>(tag, value, schema) {
     override fun toString(): String = value
 
-    override fun toDebugString(): String = buildString {
-        appendLine("SQL: ")
-        appendLine(value)
-        appendLine()
-        appendLine("Schema: ")
-        appendLine(schema)
-    }
+    override fun toDebugString(): String =
+        buildString {
+            appendLine("SQL: ")
+            appendLine(value)
+            appendLine()
+            appendLine("Schema: ")
+            appendLine(schema)
+        }
 }

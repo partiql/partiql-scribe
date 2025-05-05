@@ -1,13 +1,13 @@
 // TODO see if these tests are needed anymore
-//package org.partiql.scribe.targets.trino
+// package org.partiql.scribe.targets.trino
 //
-//import org.junit.jupiter.api.Test
-//import org.partiql.scribe.asAbsent
-//import org.partiql.scribe.asMissable
-//import org.partiql.types.StaticType
-//import kotlin.test.assertTrue
+// import org.junit.jupiter.api.Test
+// import org.partiql.scribe.asAbsent
+// import org.partiql.scribe.asMissable
+// import org.partiql.types.StaticType
+// import kotlin.test.assertTrue
 //
-//class TrinoTypesTest {
+// class TrinoTypesTest {
 //
 //    private fun test(t1: StaticType, t2: StaticType) {
 //        // t1 = t2
@@ -98,4 +98,4 @@
 //        test(StaticType.unionOf(StaticType.unionOf(StaticType.unionOf(StaticType.INT, StaticType.INT2))), StaticType.DECIMAL)
 //        test(StaticType.unionOf(StaticType.unionOf(StaticType.unionOf(StaticType.INT))), StaticType.DECIMAL)
 //    }
-//}
+// }

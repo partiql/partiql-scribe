@@ -21,46 +21,47 @@ import org.partiql.spi.types.PTypeField
 internal fun IonElement.toPType(): PType = LocalSchema.load(this)
 
 private object LocalSchema {
-
     @JvmStatic
-    fun load(ion: IonElement): PType = when (ion) {
-        is StringElement -> ion.atomic()
-        is ListElement -> ion.union()
-        is StructElement -> ion.type()
-        else -> error("Invalid element type, expected Ion StringElement, ListElement, or StructElement")
-    }
+    fun load(ion: IonElement): PType =
+        when (ion) {
+            is StringElement -> ion.atomic()
+            is ListElement -> ion.union()
+            is StructElement -> ion.type()
+            else -> error("Invalid element type, expected Ion StringElement, ListElement, or StructElement")
+        }
 
     /**
      * Atomic type `a` is just a string "a".
      */
-    private fun StringElement.atomic(): PType = when (textValue) {
-        "any" -> PType.dynamic()
-        "bool" -> PType.bool()
-        "int8" -> PType.tinyint()
-        "int16" -> PType.smallint()
-        "int32" -> PType.integer()
-        "int64" -> PType.integer()
-        "decimal" -> PType.decimal()
-        "float32" -> PType.real()
-        "float64" -> PType.doublePrecision()
-        "string" -> PType.string()
-        "blob" -> PType.blob()
-        "clob" -> PType.clob()
-        "date" -> PType.date()
-        "time" -> PType.time()
-        "timestamp" -> PType.timestamp()
-        "bag" -> error("`bag` is not an atomic type")
-        "list" -> error("`list` is not an atomic type")
-        "sexp" -> error("`sexp` is not an atomic type")
-        "struct" -> error("`struct` is not an atomic type")
-        // unsupported
-        "interval" -> error("`interval` is currently not supported")
-        "symbol" -> error("`symbol` is currently not supported")
-        "binary" -> error("`binary` is currently not supported")
-        "byte" -> error("`byte` is currently not supported")
-        "null", "missing" -> PType.unknown()
-        else -> error("Invalid type `$textValue`")
-    }
+    private fun StringElement.atomic(): PType =
+        when (textValue) {
+            "any" -> PType.dynamic()
+            "bool" -> PType.bool()
+            "int8" -> PType.tinyint()
+            "int16" -> PType.smallint()
+            "int32" -> PType.integer()
+            "int64" -> PType.integer()
+            "decimal" -> PType.decimal()
+            "float32" -> PType.real()
+            "float64" -> PType.doublePrecision()
+            "string" -> PType.string()
+            "blob" -> PType.blob()
+            "clob" -> PType.clob()
+            "date" -> PType.date()
+            "time" -> PType.time()
+            "timestamp" -> PType.timestamp()
+            "bag" -> error("`bag` is not an atomic type")
+            "list" -> error("`list` is not an atomic type")
+            "sexp" -> error("`sexp` is not an atomic type")
+            "struct" -> error("`struct` is not an atomic type")
+            // unsupported
+            "interval" -> error("`interval` is currently not supported")
+            "symbol" -> error("`symbol` is currently not supported")
+            "binary" -> error("`binary` is currently not supported")
+            "byte" -> error("`byte` is currently not supported")
+            "null", "missing" -> PType.unknown()
+            else -> error("Invalid type `$textValue`")
+        }
 
     /**
      * Union (a|b) is represented by Ion list [ a, b ].
@@ -73,40 +74,40 @@ private object LocalSchema {
         }
     }
 
-    private fun IonElement.type(): PType = when (this) {
-        is StringElement -> atomic()
-        is ListElement -> union()
-        is StructElement -> {
-            when (val type = getAngry<StringElement>("type").textValue) {
-                "bool" -> bool()
-                "int8" -> int8()
-                "int16" -> int16()
-                "int32" -> int32()
-                "int64" -> int64()
-                "decimal" -> decimal()
-                "float32" -> float32()
-                "float64" -> float64()
-                "char" -> char()
-                "string" -> string()
-                "binary" -> binary()
-                "byte" -> byte()
-                "blob" -> blob()
-                "clob" -> clob()
-                "date" -> date()
-                "time" -> time()
-                "timestamp" -> timestamp()
-                "interval" -> interval()
-                "bag" -> bag()
-                "list" -> list()
-                "struct" -> struct()
-                "any" -> PType.dynamic()
-                "null", "missing" -> PType.unknown()
-                else -> error("Invalid type `$this`")
+    private fun IonElement.type(): PType =
+        when (this) {
+            is StringElement -> atomic()
+            is ListElement -> union()
+            is StructElement -> {
+                when (val type = getAngry<StringElement>("type").textValue) {
+                    "bool" -> bool()
+                    "int8" -> int8()
+                    "int16" -> int16()
+                    "int32" -> int32()
+                    "int64" -> int64()
+                    "decimal" -> decimal()
+                    "float32" -> float32()
+                    "float64" -> float64()
+                    "char" -> char()
+                    "string" -> string()
+                    "binary" -> binary()
+                    "byte" -> byte()
+                    "blob" -> blob()
+                    "clob" -> clob()
+                    "date" -> date()
+                    "time" -> time()
+                    "timestamp" -> timestamp()
+                    "interval" -> interval()
+                    "bag" -> bag()
+                    "list" -> list()
+                    "struct" -> struct()
+                    "any" -> PType.dynamic()
+                    "null", "missing" -> PType.unknown()
+                    else -> error("Invalid type `$this`")
+                }
             }
+            else -> error("Invalid element type, expected Ion StringElement, ListElement, or StructElement")
         }
-        else -> error("Invalid element type, expected Ion StringElement, ListElement, or StructElement")
-    }
-
 
     // constraints?
     private fun StructElement.bool(): PType = PType.bool()
@@ -175,14 +176,16 @@ private object LocalSchema {
         val precision = getMaybe<IntElement>("precision")?.longValue?.toInt()
         val withTimeZone = getMaybe<BoolElement>("withTimeZone")?.booleanValue ?: false
         return when (precision) {
-            null -> when (withTimeZone) {
-                true -> PType.timez()
-                false -> PType.time()
-            }
-            else -> when (withTimeZone) {
-                true -> PType.timez(precision)
-                false -> PType.time(precision)
-            }
+            null ->
+                when (withTimeZone) {
+                    true -> PType.timez()
+                    false -> PType.time()
+                }
+            else ->
+                when (withTimeZone) {
+                    true -> PType.timez(precision)
+                    false -> PType.time(precision)
+                }
         }
     }
 
@@ -191,14 +194,16 @@ private object LocalSchema {
         val precision = getMaybe<IntElement>("precision")?.longValue?.toInt()
         val withTimeZone = getMaybe<BoolElement>("withTimeZone")?.booleanValue ?: false
         return when (precision) {
-            null -> when (withTimeZone) {
-                true -> PType.timestampz()
-                false -> PType.timestamp()
-            }
-            else -> when (withTimeZone) {
-                true -> PType.timestampz(precision)
-                false -> PType.timestamp(precision)
-            }
+            null ->
+                when (withTimeZone) {
+                    true -> PType.timestampz()
+                    false -> PType.timestamp()
+                }
+            else ->
+                when (withTimeZone) {
+                    true -> PType.timestampz(precision)
+                    false -> PType.timestamp(precision)
+                }
         }
     }
 
@@ -206,14 +211,16 @@ private object LocalSchema {
     private fun StructElement.interval(): PType = error("Interval not supported")
 
     // constraints?
-    private fun StructElement.bag(): PType = PType.bag(
-        load(getAngry<IonElement>("items")),
-    )
+    private fun StructElement.bag(): PType =
+        PType.bag(
+            load(getAngry<IonElement>("items")),
+        )
 
     // constraints?
-    private fun StructElement.list(): PType = PType.array(
-        load(getAngry<IonElement>("items")),
-    )
+    private fun StructElement.list(): PType =
+        PType.array(
+            load(getAngry<IonElement>("items")),
+        )
 
     private fun StructElement.struct(): PType {
 // Constraints
@@ -234,13 +241,14 @@ private object LocalSchema {
         }
         // Fields
         val fieldsE = getAngry<ListElement>("fields")
-        val fields = fieldsE.values.map {
-            assert(it is StructElement) { "field definition must be as struct" }
-            it as StructElement
-            val name = it.getAngry<StringElement>("name").textValue
-            val type = it.getAngry<IonElement>("type").toPType()
-            PTypeField.of(name, type)
-        }
+        val fields =
+            fieldsE.values.map {
+                assert(it is StructElement) { "field definition must be as struct" }
+                it as StructElement
+                val name = it.getAngry<StringElement>("name").textValue
+                val type = it.getAngry<IonElement>("type").toPType()
+                PTypeField.of(name, type)
+            }
         return if (isClosed && isOrdered) {
             PType.row(fields)
         } else {

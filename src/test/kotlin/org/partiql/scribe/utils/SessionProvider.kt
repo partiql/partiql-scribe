@@ -13,9 +13,8 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
 import kotlin.io.path.toPath
 
-
 class SessionProvider(
-    val scalarOverloads: Map<String, FnOverload> = emptyMap()
+    val scalarOverloads: Map<String, FnOverload> = emptyMap(),
 ) {
     private val catalogs: List<Catalog> by lazy {
         // Make a map from catalog name to tables.
@@ -40,22 +39,24 @@ class SessionProvider(
             }
         }
         // Make a catalogs list
-        val catalogList = map.map { (catalog, tables) ->
-            TestCatalog.builder()
-                .name(catalog)
-                .createTables(tables)
-                .scalarOverloads(scalarOverloads)
-                .build()
-        }
+        val catalogList =
+            map.map { (catalog, tables) ->
+                TestCatalog.builder()
+                    .name(catalog)
+                    .createTables(tables)
+                    .scalarOverloads(scalarOverloads)
+                    .build()
+            }
         catalogList
     }
 
     fun getSession(): Session {
-        val session = Session.builder()
-            .catalog("default")
-            .catalogs(*catalogs.toTypedArray())
-            .namespace(emptyList())
-            .build()
+        val session =
+            Session.builder()
+                .catalog("default")
+                .catalogs(*catalogs.toTypedArray())
+                .namespace(emptyList())
+                .build()
         return session
     }
 }
