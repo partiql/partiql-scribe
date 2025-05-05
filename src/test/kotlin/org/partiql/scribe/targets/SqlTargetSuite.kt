@@ -6,13 +6,22 @@ import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
+import org.partiql.parser.PartiQLParser
+import org.partiql.plan.Plan
+import org.partiql.planner.PartiQLPlanner
 import org.partiql.scribe.Scribe
+import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeException
+import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.SqlTarget
+import org.partiql.scribe.utils.PErrorCollector
 import org.partiql.scribe.utils.ScribeTest
 import org.partiql.scribe.utils.ScribeTestProvider
 import org.partiql.scribe.utils.SessionProvider
 import org.partiql.scribe.utils.SqlEqualsNaive
+import org.partiql.spi.Context
+import org.partiql.spi.catalog.Session
+import org.partiql.spi.errors.Severity
 import java.io.File
 import java.nio.file.Path
 import java.util.stream.Stream
@@ -45,6 +54,9 @@ abstract class SqlTargetSuite {
      * [SqlEquals] for assertions
      */
     private val comparator = SqlEqualsNaive
+    private val parser = PartiQLParser.standard()
+    private val planner = PartiQLPlanner.standard()
+    private val scribeContext = ScribeContext.standard()
 
     /**
      * Each dir becomes a container and file becomes a container; each expected output is a test node.
@@ -84,56 +96,80 @@ abstract class SqlTargetSuite {
     ): DynamicContainer {
         val group = parent.name
         val tests = parse(group, file)
-        val scribe = Scribe.STANDARD
+        val scribe = Scribe(scribeContext = scribeContext)
 
         val children =
             tests.map { test ->
                 // Prepare
                 val displayName = test.key.toString()
-//            val session = sessions.get(test.key)
                 val session = sessions.getSession()
                 val statement = (inputs[test.key] ?: error("No test with key ${test.key}")).statement
 
                 // Assert
                 dynamicTest(displayName) {
                     try {
-                        val result = scribe.compile(statement, target, session)
+                        val plan = partiqlStatementToPlan(statement, session)
+                        // PLAN -> AST -> DIALECT TEXT
+                        val result = scribe.compile(plan, session, target)
                         val actual = result.output.value
                         val expected = test.statement
-                    /*
-                    val problems = result.problems.filter { it.level == ScribeProblem.Level.ERROR }
-                    if (problems.isNotEmpty()) {
-                        fail {
-                            buildString {
-                                for (error in problems) {
-                                    appendLine(error)
-                                }
-                                PlanPrinter.append(this, result.input)
-                            }
-                        }
-                    }
-                     */
+
                         comparator.assertEquals(expected, actual) {
                             this.appendLine("Input Query: $statement")
                             this.appendLine("Expected result: $expected")
                             this.appendLine("Actual result: $actual")
-                            // debug dump
-//                        PlanPrinter.append(this, result.input)
                         }
                     } catch (ex: ScribeException) {
                         fail {
                             buildString {
                                 appendLine(ex.message)
-//                            for (problem in ex.problems) {
-//                                appendLine(problem)
-//                            }
                             }
                         }
                     }
                 }
             }
-        //
         return dynamicContainer(file.nameWithoutExtension, children)
+    }
+
+    private fun partiqlStatementToPlan(
+        statement: String,
+        session: Session,
+    ): Plan {
+        val problemCollector = PErrorCollector()
+        val partiqlContext = Context.of(problemCollector)
+
+        // TEXT -> AST
+        val parserResult = parser.parse(statement, partiqlContext)
+        val parsedStatements = parserResult.statements
+
+        if (parsedStatements.size != 1) {
+            scribeContext.getErrorListener().report(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Only one statement is supported at a time.",
+                ),
+            )
+        }
+        val ast = parsedStatements[0]
+
+        // AST -> PLAN
+        val plannerResult = planner.plan(ast, session, partiqlContext)
+        val plan = plannerResult.plan
+
+        // Check for errors
+        val problems = problemCollector.problems.filter { it.severity == Severity.ERROR() }
+        if (problems.isNotEmpty()) {
+            fail {
+                buildString {
+                    appendLine("Encountered error(s) for query:")
+                    appendLine(statement)
+                    for (error in problems) {
+                        appendLine(error)
+                    }
+                }
+            }
+        }
+        return plan
     }
 
     // from org.partiql.planner.testFixtures

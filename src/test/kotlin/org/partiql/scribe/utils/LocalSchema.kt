@@ -11,12 +11,10 @@ import com.amazon.ionelement.api.ionListOf
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
 
-// Use some generated serde eventually
-
 /**
- * Parses an IonElement to a StaticType.
- *
+ * Parses an IonElement to a [PType].
  * The format used is effectively Avro JSON, but with PartiQL type names.
+ * TODO eventually use some generated serde
  */
 internal fun IonElement.toPType(): PType = LocalSchema.load(this)
 

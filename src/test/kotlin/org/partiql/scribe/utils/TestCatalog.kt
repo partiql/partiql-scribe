@@ -9,7 +9,7 @@ import org.partiql.spi.function.FnOverload
 import org.partiql.spi.types.PType
 
 /**
- * Basic catalog implementation used for testing; consider merging with MemoryConnector?
+ * Basic catalog implementation used for testing. Largely taken from PLK-planner's TestCatalog.
  */
 class TestCatalog private constructor(
     private val name: String,

@@ -13,6 +13,13 @@ import org.partiql.spi.catalog.Session
 import org.partiql.ast.Identifier as AstIdentifier
 import org.partiql.spi.catalog.Identifier as SpiIdentifier
 
+/**
+ * Translates a [Plan] to an [AstNode].
+ *
+ * @param session the current session
+ * @param calls the [SqlCalls] to use for translating function calls
+ * @param context the [ScribeContext] to use for error reporting and other Scribe-specific context fields
+ */
 public open class PlanToAst(
     private val session: Session,
     private val calls: SqlCalls,

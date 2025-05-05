@@ -12,7 +12,6 @@ import org.partiql.ast.Ast.fromExpr
 import org.partiql.ast.Ast.fromJoin
 import org.partiql.ast.Ast.groupBy
 import org.partiql.ast.Ast.groupByKey
-import org.partiql.ast.Ast.queryBodySFW
 import org.partiql.ast.Ast.selectValue
 import org.partiql.ast.Exclude
 import org.partiql.ast.ExcludePath
@@ -23,7 +22,6 @@ import org.partiql.ast.GroupBy
 import org.partiql.ast.GroupByStrategy
 import org.partiql.ast.Identifier
 import org.partiql.ast.Let
-import org.partiql.ast.QueryBody
 import org.partiql.ast.Select
 import org.partiql.ast.SetQuantifier
 import org.partiql.ast.expr.Expr
@@ -52,20 +50,6 @@ import org.partiql.plan.rel.RelUnion
 import org.partiql.plan.rel.RelUnpivot
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
-
-// TODO move to utils
-public fun RelConverter.RelContext.toQueryBodySFW(): QueryBody.SFW {
-    assert(this.select != null)
-    return queryBodySFW(
-        select = this.select!!,
-        exclude = this.exclude,
-        from = this.from!!,
-        let = this.let,
-        where = this.where,
-        groupBy = this.groupBy,
-        having = this.having,
-    )
-}
 
 public open class RelConverter(
     private val transform: PlanToAst,

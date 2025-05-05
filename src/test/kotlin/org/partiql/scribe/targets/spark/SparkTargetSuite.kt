@@ -6,7 +6,7 @@ import org.partiql.scribe.utils.SessionProvider
 import kotlin.io.path.toPath
 
 class SparkTargetSuite : SqlTargetSuite() {
-    override val target = TODO()
+    override val target = SparkTarget()
 
     override val root = this::class.java.getResource("/outputs/spark")!!.toURI().toPath()
 

@@ -3,10 +3,17 @@ package org.partiql.scribe.problems
 import org.partiql.spi.Enum
 import org.partiql.spi.UnsupportedCodeException
 
+/**
+ * Represents a problem that is encountered during transpilation.
+ *
+ * @property code
+ * @property severity The severity of the problem.
+ * @property properties The properties of the problem.
+ */
 public class ScribeProblem(
-    public val code: Int,
+    private val code: Int,
     public val severity: Severity,
-    public val properties: Map<String, Any>,
+    private val properties: Map<String, Any>,
 ) : Enum(code) {
     override fun name(): String {
         return when (code) {

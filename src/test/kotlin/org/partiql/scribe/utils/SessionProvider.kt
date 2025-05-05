@@ -13,6 +13,10 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
 import kotlin.io.path.toPath
 
+/**
+ * Test class utility to create a [Session] from a directory of catalog schemas. Currently, the paths and naming is
+ * hard-coded to match the schema in the `resources/catalogs` directory. We can change this more flexible if needed.
+ */
 class SessionProvider(
     val scalarOverloads: Map<String, FnOverload> = emptyMap(),
 ) {

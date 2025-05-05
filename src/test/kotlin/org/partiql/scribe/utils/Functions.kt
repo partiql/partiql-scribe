@@ -4,6 +4,9 @@ import org.partiql.spi.function.FnOverload
 import org.partiql.spi.function.Parameter
 import org.partiql.spi.types.PType
 
+/**
+ * Utility class for test function definitions.
+ */
 class Functions {
     companion object {
         val scalarSplit =

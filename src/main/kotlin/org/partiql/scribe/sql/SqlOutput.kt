@@ -4,6 +4,9 @@ import org.partiql.scribe.ScribeOutput
 import org.partiql.scribe.ScribeTag
 import org.partiql.spi.types.PType
 
+/**
+ * Transpilation output as a SQL string.
+ */
 public class SqlOutput(
     tag: ScribeTag,
     value: String,

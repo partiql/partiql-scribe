@@ -1,3 +1,3 @@
 --#[sandbox-00]
-SELECT ;
+SELECT FOO() FROM T;
 -- 1;

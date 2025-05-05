@@ -6,7 +6,7 @@ import org.partiql.scribe.utils.SessionProvider
 import kotlin.io.path.toPath
 
 class TrinoTargetSuite : SqlTargetSuite() {
-    override val target = TODO()
+    override val target = TrinoTarget()
 
     override val root = this::class.java.getResource("/outputs/trinio")!!.toURI().toPath()
 

@@ -1,12 +1,7 @@
 public final class org/partiql/scribe/Scribe {
-	public static final field Companion Lorg/partiql/scribe/Scribe$Companion;
-	public final fun compile (Ljava/lang/String;Lorg/partiql/scribe/ScribeTarget;Lorg/partiql/spi/catalog/Session;Lorg/partiql/spi/Context;)Lorg/partiql/scribe/Scribe$Result;
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 	public final fun compile (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeTarget;)Lorg/partiql/scribe/Scribe$Result;
-	public static synthetic fun compile$default (Lorg/partiql/scribe/Scribe;Ljava/lang/String;Lorg/partiql/scribe/ScribeTarget;Lorg/partiql/spi/catalog/Session;Lorg/partiql/spi/Context;ILjava/lang/Object;)Lorg/partiql/scribe/Scribe$Result;
-}
-
-public final class org/partiql/scribe/Scribe$Companion {
-	public final fun getSTANDARD ()Lorg/partiql/scribe/Scribe;
+	public final fun getScribeContext ()Lorg/partiql/scribe/ScribeContext;
 }
 
 public final class org/partiql/scribe/Scribe$Result {
@@ -53,11 +48,9 @@ public final class org/partiql/scribe/problems/ScribeProblem : org/partiql/spi/E
 	public static final field Companion Lorg/partiql/scribe/problems/ScribeProblem$Companion;
 	public fun <init> (ILorg/partiql/scribe/problems/Severity;Ljava/util/Map;)V
 	public final fun get (Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
-	public final fun getCode ()I
 	public static final fun getINTERNAL_ERROR ()I
 	public static final fun getINVALID_PLAN ()I
 	public final fun getOrNull (Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
-	public final fun getProperties ()Ljava/util/Map;
 	public final fun getSeverity ()Lorg/partiql/scribe/problems/Severity;
 	public static final fun getUNSUPPORTED_OPERATION ()I
 	public static final fun getUNSUPPORTED_PLAN_TO_AST_CONVERSION ()I
@@ -189,10 +182,6 @@ public final class org/partiql/scribe/sql/RelConverter$RelContext {
 	public final fun setLet (Lorg/partiql/ast/Let;)V
 	public final fun setSelect (Lorg/partiql/ast/Select;)V
 	public final fun setWhere (Lorg/partiql/ast/expr/Expr;)V
-}
-
-public final class org/partiql/scribe/sql/RelConverterKt {
-	public static final fun toQueryBodySFW (Lorg/partiql/scribe/sql/RelConverter$RelContext;)Lorg/partiql/ast/QueryBody$SFW;
 }
 
 public class org/partiql/scribe/sql/RexConverter : org/partiql/plan/OperatorVisitor {
@@ -330,6 +319,10 @@ public abstract class org/partiql/scribe/sql/SqlTarget : org/partiql/scribe/Scri
 	public abstract fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
 }
 
+public final class org/partiql/scribe/sql/utils/ConversionUtilsKt {
+	public static final fun toQueryBodySFW (Lorg/partiql/scribe/sql/RelConverter$RelContext;)Lorg/partiql/ast/QueryBody$SFW;
+}
+
 public final class org/partiql/scribe/targets/partiql/PartiQLTarget : org/partiql/scribe/sql/SqlTarget {
 	public static final field INSTANCE Lorg/partiql/scribe/targets/partiql/PartiQLTarget;
 	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
@@ -386,5 +379,105 @@ public class org/partiql/scribe/targets/redshift/RedshiftTarget : org/partiql/sc
 
 public final class org/partiql/scribe/targets/redshift/RedshiftTarget$Companion {
 	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/redshift/RedshiftTarget;
+}
+
+public final class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkDialect : org/partiql/ast/sql/SqlDialect {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkPlanToAst : org/partiql/scribe/sql/PlanToAst {
+	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
+	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
+	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
+}
+
+public final class org/partiql/scribe/targets/spark/SparkRelConverter : org/partiql/scribe/sql/RelConverter {
+	public fun <init> (Lorg/partiql/scribe/targets/spark/SparkPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkRewriter : org/partiql/plan/OperatorRewriter {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkRexConverter : org/partiql/scribe/sql/RexConverter {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public class org/partiql/scribe/targets/spark/SparkTarget : org/partiql/scribe/sql/SqlTarget {
+	public static final field Companion Lorg/partiql/scribe/targets/spark/SparkTarget$Companion;
+	public fun <init> ()V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/spark/SparkTarget;
+	public fun getTarget ()Ljava/lang/String;
+	public fun getVersion ()Ljava/lang/String;
+	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
+	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/targets/spark/SparkTarget$Companion {
+	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/spark/SparkTarget;
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoDialect : org/partiql/ast/sql/SqlDialect {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoPlanToAst : org/partiql/scribe/sql/PlanToAst {
+	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
+	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
+	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoRelConverter : org/partiql/scribe/sql/RelConverter {
+	public fun <init> (Lorg/partiql/scribe/targets/trino/TrinoPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoRewriter : org/partiql/plan/OperatorRewriter {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoRexConverter : org/partiql/scribe/sql/RexConverter {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public class org/partiql/scribe/targets/trino/TrinoTarget : org/partiql/scribe/sql/SqlTarget {
+	public static final field Companion Lorg/partiql/scribe/targets/trino/TrinoTarget$Companion;
+	public fun <init> ()V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/trino/TrinoTarget;
+	public fun getTarget ()Ljava/lang/String;
+	public fun getVersion ()Ljava/lang/String;
+	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
+	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoTarget$Companion {
+	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/trino/TrinoTarget;
 }
 

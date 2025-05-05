@@ -3,7 +3,9 @@ package org.partiql.scribe.problems
 import org.partiql.spi.Enum
 
 /**
- * Differs from partiql-lang-kotlin's Severity class to provide additional control.
+ * Severity of a problem encountered during transpilation.
+ *
+ * This class is purposely separate from partiql-lang-kotlin's Severity class to provide additional control.
  */
 public class Severity(private val code: Int) : Enum(code) {
     override fun name(): String {
