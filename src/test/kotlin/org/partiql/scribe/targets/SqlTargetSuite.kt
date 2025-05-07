@@ -122,7 +122,7 @@ abstract class SqlTargetSuite {
                     } catch (ex: ScribeException) {
                         fail {
                             buildString {
-                                appendLine(ex.message)
+                                appendLine(ex.toString())
                             }
                         }
                     }
