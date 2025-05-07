@@ -24,7 +24,7 @@ object Versions {
 
     // Deps
     const val JUNIT_5 = "5.9.3"
-    const val PARTIQL = "1.2.0-scribe"
+    const val PARTIQL = "1.2.1"
 }
 
 object Deps {
