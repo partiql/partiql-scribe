@@ -22,7 +22,7 @@ true;
 'hello';
 
 --#[sanity-lit-04]
-('a', 'b', 'c');
+['a', 'b', 'c'];
 
 --#[sanity-lit-05]
 <<'a', 'b', 'c'>>;
@@ -111,10 +111,10 @@ NOT ("default"."T1");
 "default"."T1" IS NOT DECIMAL;
 
 --#[expr-24]
-"default"."T1" IS DOUBLE PRECISION;
+"default"."T1" IS FLOAT;
 
 --#[expr-25]
-"default"."T1" IS NOT DOUBLE PRECISION;
+"default"."T1" IS NOT FLOAT;
 
 --#[expr-26]
 "default"."T1" IS BOOL;
@@ -122,11 +122,12 @@ NOT ("default"."T1");
 --#[expr-27]
 "default"."T1" IS NOT BOOL;
 
---#[expr-28]
-"default"."T1" IS SYMBOL;
-
---#[expr-29]
-"default"."T1" IS NOT SYMBOL;
+-- `IS SYMBOL` is not support in PLK 1.x
+-- --#[expr-28]
+-- "default"."T1" IS SYMBOL;
+--
+-- --#[expr-29]
+-- "default"."T1" IS NOT SYMBOL;
 
 --#[expr-30]
 "default"."T1" IS DATE;
@@ -170,11 +171,12 @@ NOT ("default"."T1");
 --#[expr-43]
 "default"."T1" IS NOT LIST;
 
---#[expr-44]
-"default"."T1" IS SEXP;
-
---#[expr-45]
-"default"."T1" IS NOT SEXP;
+-- SEXP data type not in PLK 1.x
+-- --#[expr-44]
+-- "default"."T1" IS SEXP;
+--
+-- --#[expr-45]
+-- "default"."T1" IS NOT SEXP;
 
 --#[expr-46]
 "default"."T1" IS STRUCT;

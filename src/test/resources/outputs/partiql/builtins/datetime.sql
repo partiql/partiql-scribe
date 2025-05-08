@@ -2,13 +2,13 @@
 CURRENT_DATE;
 
 --#[datetime-01]
-DATE_ADD(SECOND, 5, CURRENT_DATE);
+DATE_ADD(SECOND, 5, TIME '12:34:56');
 
 --#[datetime-02]
-DATE_ADD(MINUTE, 5, CURRENT_DATE);
+DATE_ADD(MINUTE, 5, TIME '12:34:56');
 
 --#[datetime-03]
-DATE_ADD(HOUR, 5, CURRENT_DATE);
+DATE_ADD(HOUR, 5, TIME '12:34:56');
 
 --#[datetime-04]
 DATE_ADD(DAY, 5, CURRENT_DATE);
@@ -26,13 +26,13 @@ DATE_DIFF(DAY, CURRENT_DATE, CURRENT_DATE);
 SELECT CURRENT_DATE AS "CURRENT_DATE" FROM "default"."T" AS "T";
 
 --#[datetime-09]
-SELECT DATE_ADD(SECOND, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATE_ADD(SECOND, 5, "T"['timestamp_1']) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-10]
-SELECT DATE_ADD(MINUTE, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATE_ADD(MINUTE, 5, "T"['timestamp_1']) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-11]
-SELECT DATE_ADD(HOUR, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATE_ADD(HOUR, 5, "T"['timestamp_1']) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-12]
 SELECT DATE_ADD(DAY, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";

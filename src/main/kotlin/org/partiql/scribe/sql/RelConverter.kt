@@ -1,269 +1,468 @@
 package org.partiql.scribe.sql
 
-import org.partiql.ast.Expr
+import org.partiql.ast.Ast.exclude
+import org.partiql.ast.Ast.excludePath
+import org.partiql.ast.Ast.excludeStepCollIndex
+import org.partiql.ast.Ast.excludeStepCollWildcard
+import org.partiql.ast.Ast.excludeStepStructField
+import org.partiql.ast.Ast.excludeStepStructWildcard
+import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.from
+import org.partiql.ast.Ast.fromExpr
+import org.partiql.ast.Ast.fromJoin
+import org.partiql.ast.Ast.groupBy
+import org.partiql.ast.Ast.groupByKey
+import org.partiql.ast.Ast.selectValue
+import org.partiql.ast.Exclude
+import org.partiql.ast.ExcludePath
+import org.partiql.ast.ExcludeStep
 import org.partiql.ast.From
+import org.partiql.ast.FromType
 import org.partiql.ast.GroupBy
+import org.partiql.ast.GroupByStrategy
 import org.partiql.ast.Identifier
+import org.partiql.ast.Let
 import org.partiql.ast.Select
-import org.partiql.ast.builder.ExprSfwBuilder
-import org.partiql.ast.exclude
-import org.partiql.ast.excludeItem
-import org.partiql.ast.excludeStepCollIndex
-import org.partiql.ast.excludeStepCollWildcard
-import org.partiql.ast.excludeStepStructField
-import org.partiql.ast.excludeStepStructWildcard
-import org.partiql.ast.exprAgg
-import org.partiql.ast.fromJoin
-import org.partiql.ast.fromValue
-import org.partiql.ast.groupBy
-import org.partiql.ast.groupByKey
-import org.partiql.ast.identifierSymbol
-import org.partiql.ast.selectProject
-import org.partiql.ast.selectProjectItemExpression
-import org.partiql.plan.Agg
-import org.partiql.plan.PlanNode
-import org.partiql.plan.Rel
-import org.partiql.plan.visitor.PlanBaseVisitor
-import org.partiql.types.StaticType
+import org.partiql.ast.SetQuantifier
+import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprVarRef
+import org.partiql.plan.Exclusion
+import org.partiql.plan.JoinType
+import org.partiql.plan.Operator
+import org.partiql.plan.OperatorVisitor
+import org.partiql.plan.rel.Rel
+import org.partiql.plan.rel.RelAggregate
+import org.partiql.plan.rel.RelCorrelate
+import org.partiql.plan.rel.RelDistinct
+import org.partiql.plan.rel.RelExcept
+import org.partiql.plan.rel.RelExclude
+import org.partiql.plan.rel.RelFilter
+import org.partiql.plan.rel.RelIntersect
+import org.partiql.plan.rel.RelIterate
+import org.partiql.plan.rel.RelJoin
+import org.partiql.plan.rel.RelLimit
+import org.partiql.plan.rel.RelOffset
+import org.partiql.plan.rel.RelProject
+import org.partiql.plan.rel.RelScan
+import org.partiql.plan.rel.RelSort
+import org.partiql.plan.rel.RelType
+import org.partiql.plan.rel.RelUnion
+import org.partiql.plan.rel.RelUnpivot
+import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeProblem
 
-/**
- * This class transforms a relational expression tree to a PartiQL [Expr.SFW].
- *
- * !!! IMPORTANT !!!
- *
- * TODO This is naive and simple.
- * TODO This only targets the basic SFW; so we assume the Plan of the form: SCAN -> FILTER -> PROJECT.
- * TODO This will require non-trivial rework to handle arbitrary plans.
- * TODO See Calcite's RelToSql and SqlImplementor
- * TODO https://github.com/apache/calcite/blob/main/core/src/main/java/org/apache/calcite/rel/rel2sql/RelToSqlConverter.java
- *
- * !!! IMPORTANT !!!
- */
-open class RelConverter(
-    private val transform: SqlTransform,
-) : PlanBaseVisitor<ExprSfwBuilder, Rel.Type?>() {
+public open class RelConverter(
+    private val transform: PlanToAst,
+    private val context: ScribeContext,
+) : OperatorVisitor<RelConverter.RelContext, Unit> {
+    private val listener = context.getErrorListener()
 
-    /**
-     * This MUST return a mutable SFW builder because we'll need to inspect and/or replace the SELECT.
-     */
-    public fun apply(rel: Rel): ExprSfwBuilder {
-        // assertClauses(rel)
-        return visitRel(rel, null)
+    public class RelContext(
+        public var select: Select? = null,
+        public var exclude: Exclude? = null,
+        public var from: From? = null,
+        public var let: Let? = null,
+        public var where: Expr? = null,
+        public var groupBy: GroupBy? = null,
+        public var having: Expr? = null,
+        public var aggregations: List<Expr>? = null,
+    )
+
+    public fun apply(
+        rel: Rel,
+        ctx: Unit,
+    ): RelContext {
+        return visitRel(rel, ctx)
     }
 
-    /**
-     * TODO TEMPORARY — REMOVE ME, this could be made generic but honestly this is fine.
-     */
-    private fun assertClauses(rel: Rel) {
-        val op1 = rel.op
-        if (op1 !is Rel.Op.Project) {
-            error("Invalid SELECT-FROM-WHERE, expected Rel.Op.Project but found $op1")
-        }
-        val op2 = op1.input.op
-        if (op2 is Rel.Op.Scan) {
-            return // done
-        }
-        if (op2 is Rel.Op.Join) {
-            return
-        }
-        if (op2 !is Rel.Op.Filter) {
-            error("Invalid SELECT-FROM-WHERE, expected Rel.Op.Filter but found $op2")
-        }
-        val op3 = op2.input.op
-        if (op3 !is Rel.Op.Scan) {
-            error("Invalid SELECT-FROM-WHERE, expected Rel.Op.Scan but found $op3")
-        }
-    }
-
-    /**
-     * Default behavior is considered unsupported.
-     */
-    override fun defaultReturn(node: PlanNode, ctx: Rel.Type?) =
-        throw UnsupportedOperationException("Cannot translate rel $node")
-
-    override fun defaultVisit(node: PlanNode, ctx: Rel.Type?) = defaultReturn(node, ctx)
-
-    /**
-     * Pass along the Rel.Type?.
-     */
-    override fun visitRel(node: Rel, ctx: Rel.Type?) = visitRelOp(node.op, node.type)
-
-    /**
-     * Logical Scan -> FROM Clause
-     */
-    override fun visitRelOpScan(node: Rel.Op.Scan, ctx: Rel.Type?): ExprSfwBuilder {
-        val sfw = ExprSfwBuilder()
-        // validate scan type
-        val type = ctx!!
-        assert(type.schema.size == 1) { "Invalid SCAN schema, expected a single binding but found ${ctx.dump()}" }
-        val rexToSql = transform.getRexConverter(Locals(type.schema))
-        // unpack to FROM clause
-        sfw.from = fromValue(
-            expr = rexToSql.apply(node.rex), // FROM <rex>,
-            type = From.Value.Type.SCAN,
-            asAlias = binder(type.schema[0].name),
-            atAlias = null,
-            byAlias = null,
+    override fun defaultReturn(
+        operator: Operator,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "$operator is not yet supported",
+            ),
         )
-        return sfw
     }
 
-    /**
-     * Filter -> WHERE or HAVING Clause
-     *
-     * TODO this assumes WHERE!
-     */
-    override fun visitRelOpFilter(node: Rel.Op.Filter, ctx: Rel.Type?): ExprSfwBuilder {
-        val sfw = visitRel(node.input, ctx)
-        // validate filter type
-        val type = ctx!!
-        // translate to AST
-        val rexToSql = transform.getRexConverter(Locals(type.schema))
-        sfw.where = rexToSql.apply(node.predicate)
-        return sfw
+    override fun defaultVisit(
+        operator: Operator,
+        ctx: Unit,
+    ): RelContext {
+        return defaultReturn(operator, ctx)
     }
 
-    override fun visitRelOpExclude(node: Rel.Op.Exclude, ctx: Rel.Type?): ExprSfwBuilder {
-        val sfw = visitRel(node.input, ctx)
-        // validate exclude type
-        val type = ctx!!
-        // translate to AST
-        val rexToSql = transform.getRexConverter(Locals(type.schema))
-        sfw.exclude = exclude(node.items.map { item ->
-            excludeItem(root = rexToSql.visitRexOpVar(item.root, StaticType.ANY) as Expr.Var,
-                steps = item.steps.map { step ->
-                    when (step) {
-                        is Rel.Op.Exclude.Step.CollWildcard -> excludeStepCollWildcard()
-                        is Rel.Op.Exclude.Step.StructField -> {
-                            val case = when (step.symbol.caseSensitivity) {
-                                org.partiql.plan.Identifier.CaseSensitivity.SENSITIVE -> Identifier.CaseSensitivity.SENSITIVE
-                                org.partiql.plan.Identifier.CaseSensitivity.INSENSITIVE -> Identifier.CaseSensitivity.INSENSITIVE
-                            }
-                            excludeStepStructField(
-                                Identifier.Symbol(
-                                    symbol = step.symbol.symbol, caseSensitivity = case
-                                )
+    public fun visitRel(
+        node: Rel,
+        ctx: Unit,
+    ): RelContext = visit(node, ctx)
+
+    // --[Rel]-----------------------------------------------------------------------------------------------------------
+    override fun visitAggregate(
+        rel: RelAggregate,
+        ctx: Unit,
+    ): RelContext {
+        val sfw = visitRel(rel.input, ctx)
+        val rexToSql = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
+        if (rel.groups.isNotEmpty()) {
+            sfw.groupBy =
+                groupBy(
+                    strategy = GroupByStrategy.FULL(),
+                    keys =
+                        rel.groups.mapIndexed { i, rex ->
+                            groupByKey(
+                                expr = rexToSql.apply(rex),
                             )
-                        }
-                        is Rel.Op.Exclude.Step.CollIndex -> excludeStepCollIndex(step.index)
-                        is Rel.Op.Exclude.Step.StructWildcard -> excludeStepStructWildcard()
-                    }
-                })
-        })
+                        },
+                    asAlias = null,
+                )
+        }
+        val aggregations =
+            rel.measures.map { agg ->
+                val args = agg.args.map { rexToSql.apply(it) }
+                exprCall(
+                    function = Identifier.regular(agg.agg.signature.name),
+                    args = args,
+                    setq =
+                        when (agg.isDistinct) {
+                            true -> SetQuantifier.DISTINCT()
+                            false -> null
+                        },
+                )
+            }
+        sfw.aggregations = aggregations
         return sfw
     }
 
-    /**
-     * Project -> SELECT Clause
-     */
-    override fun visitRelOpProject(node: Rel.Op.Project, ctx: Rel.Type?): ExprSfwBuilder {
-        val sfw = visitRel(node.input, null)
+    override fun visitCorrelate(
+        rel: RelCorrelate,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "CORRELATE is not yet supported",
+            ),
+        )
+    }
 
-        // we had projections from the aggregation
+    override fun visitDistinct(
+        rel: RelDistinct,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "DISTINCT is not yet supported",
+            ),
+        )
+    }
 
-        // we want to replace all existing vars with what's in sfw.select
-        // HACK!!!
-        val projections = sfw.select?.let { select ->
-            (select as Select.Project).items.map {
-                when (it) {
-                    is Select.Project.Item.All -> TODO()
-                    is Select.Project.Item.Expression -> it.expr
+    override fun visitExcept(
+        rel: RelExcept,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "EXCEPT is not yet supported",
+            ),
+        )
+    }
+
+    private fun Exclusion.Item.toExcludeStep(): ExcludeStep {
+        return when (this) {
+            is Exclusion.CollWildcard -> excludeStepCollWildcard()
+            is Exclusion.CollIndex -> excludeStepCollIndex(this.getIndex())
+            is Exclusion.StructKey -> excludeStepStructField(Identifier.Simple.delimited(this.getKey()))
+            is Exclusion.StructSymbol -> excludeStepStructField(Identifier.Simple.regular(this.getSymbol()))
+            is Exclusion.StructWildcard -> excludeStepStructWildcard()
+            else -> {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_OPERATION,
+                        message = "Unexpected exclusion item: $this",
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun exclusionToExcludePaths(
+        exclusion: Exclusion,
+        rexToSql: RexConverter,
+    ): List<ExcludePath> {
+        val res = mutableListOf<ExcludePath>()
+        val root = rexToSql.visitRex(exclusion.getVar(), Unit) as ExprVarRef
+        val stack = ArrayDeque<Pair<Exclusion.Item, List<ExcludeStep>>>()
+        exclusion.getItems().forEach { item ->
+            stack.addLast(item to listOf(item.toExcludeStep()))
+        }
+        while (stack.isNotEmpty()) {
+            val (item, curSteps) = stack.removeLast()
+            if (!item.hasItems()) {
+                res.add(
+                    excludePath(
+                        varRef = root,
+                        excludeSteps = curSteps,
+                    ),
+                )
+            } else {
+                // Use `.reversed()` here to preserve original order
+                item.getItems().reversed().forEach { subItem ->
+                    stack.addLast(
+                        subItem to curSteps + subItem.toExcludeStep(),
+                    )
                 }
             }
-        } ?: emptyList()
-        val locals = Locals(
-            env = node.input.type.schema,
-            projections = projections,
-        )
+        }
+        return res
+    }
 
-        val rexToSql = transform.getRexConverter(locals)
-        val type = ctx!!
-        assert(type.schema.size == node.projections.size) { "Malformed plan, relation output type does not match projections" }
+    override fun visitExclude(
+        rel: RelExclude,
+        ctx: Unit,
+    ): RelContext {
+        val relCtx = visitRel(rel.input, ctx)
+        val rexToSql = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        relCtx.exclude =
+            exclude(
+                rel.exclusions.flatMap { exclusion ->
+                    exclusionToExcludePaths(exclusion, rexToSql)
+                },
+            )
+        return relCtx
+    }
 
-        sfw.select = selectProject(
-            items = node.projections.mapIndexed { i, rex ->
-                selectProjectItemExpression(
-                    expr = rexToSql.apply(rex),
-                    asAlias = identifierSymbol(type.schema[i].name, Identifier.CaseSensitivity.SENSITIVE),
-                )
-            },
-            setq = null,
-        )
+    override fun visitFilter(
+        rel: RelFilter,
+        ctx: Unit,
+    ): RelContext {
+        val sfw = visitRel(rel.input, ctx)
+        // validate filter type
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        sfw.where = rexConverter.apply(rel.predicate)
         return sfw
     }
 
-    override fun visitRelOpJoin(node: Rel.Op.Join, ctx: Rel.Type?): ExprSfwBuilder {
-        val lhs = visitRel(node.lhs, null)
-        val rhs = visitRel(node.rhs, null)
-        val schema = Locals(node.lhs.type.schema + node.rhs.type.schema)
-        val condition = transform.getRexConverter(schema).apply(node.rex)
-        val type = when (node.type) {
-            Rel.Op.Join.Type.INNER -> From.Join.Type.INNER
-            Rel.Op.Join.Type.LEFT -> From.Join.Type.LEFT_OUTER
-            Rel.Op.Join.Type.RIGHT -> From.Join.Type.RIGHT_OUTER
-            Rel.Op.Join.Type.FULL -> From.Join.Type.FULL_OUTER
-        }
-        lhs.from = fromJoin(
-            lhs = lhs.from!!, rhs = rhs.from!!, type = type, condition = condition
+    override fun visitIntersect(
+        rel: RelIntersect,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "INTERSECT is not yet supported",
+            ),
         )
+    }
+
+    override fun visitIterate(
+        rel: RelIterate,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "ITERATE is not yet supported",
+            ),
+        )
+    }
+
+    private fun <T> assertNotNull(v: T?): T {
+        if (v == null) {
+            listener.report(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.INTERNAL_ERROR,
+                    "Expect value to not be `null`",
+                ),
+            )
+        }
+        return v!!
+    }
+
+    override fun visitJoin(
+        rel: RelJoin,
+        ctx: Unit,
+    ): RelContext {
+        val lhs = visitRel(rel.left, ctx)
+        val lhsFrom = assertNotNull(lhs.from)
+        assert(lhsFrom.tableRefs.size == 1)
+        val rhs = visitRel(rel.right, ctx)
+        val rhsFrom = assertNotNull(rhs.from)
+        assert(rhsFrom.tableRefs.size == 1)
+        val locals = Locals(rel.left.type.fields.toList() + rel.right.type.fields.toList())
+        val condition = transform.getRexConverter(locals).apply(rel.condition)
+        val joinType =
+            when (rel.joinType.code()) {
+                JoinType.LEFT -> org.partiql.ast.JoinType.LEFT()
+                JoinType.RIGHT -> org.partiql.ast.JoinType.RIGHT()
+                JoinType.FULL -> org.partiql.ast.JoinType.FULL()
+                JoinType.INNER -> org.partiql.ast.JoinType.INNER()
+                else -> {
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.INTERNAL_ERROR,
+                            "Unsupported join type: ${rel.joinType}",
+                        ),
+                    )
+                }
+            }
+        lhs.from =
+            from(
+                tableRefs =
+                    listOf(
+                        fromJoin(
+                            lhs = lhsFrom.tableRefs.first(),
+                            rhs = rhsFrom.tableRefs.first(),
+                            joinType = joinType,
+                            condition = condition,
+                        ),
+                    ),
+            )
         return lhs
     }
 
-    override fun visitRelOpAggregate(node: Rel.Op.Aggregate, ctx: Rel.Type?): ExprSfwBuilder {
-        val sfw = visitRel(node.input, null)
-        val rexToSql = transform.getRexConverter(Locals(node.input.type.schema))
-        if (node.groups.isNotEmpty()) {
-            sfw.groupBy = groupBy(
-                strategy = GroupBy.Strategy.FULL,
-                keys = node.groups.mapIndexed { i, rex ->
-                    groupByKey(
-                        expr = rexToSql.apply(rex),
-                        asAlias = null,
-                    )
-                },
-                asAlias = null,
-            )
-        }
-        // Aggregations hack!!
-        sfw.select = selectProject(setq = null, items = node.calls.map {
-            selectProjectItemExpression(
-                expr = visitAgg(rexToSql, it),
-                asAlias = null,
-            )
-        })
-        return sfw
-    }
-
-    private fun visitAgg(transform: RexConverter, agg: Rel.Op.Aggregate.Call): Expr.Agg {
-        val args = agg.args.map { transform.apply(it) }
-        val call = agg.agg
-        return exprAgg(
-            function = aggCallName(call),
-            args = args,
-            setq = null,
+    override fun visitLimit(
+        rel: RelLimit,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "Limit is not yet supported",
+            ),
         )
     }
 
-    private fun aggCallName(call: Agg): Identifier {
-        return when (call.signature.name) {
-            "count_star" -> id("COUNT_STAR")
-            else -> id(call.signature.name)
-        }
+    override fun visitOffset(
+        rel: RelOffset,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "Offset is not yet supported",
+            ),
+        )
     }
 
-    private fun id(symbol: String): Identifier.Symbol = identifierSymbol(
-        symbol = symbol,
-        caseSensitivity = Identifier.CaseSensitivity.INSENSITIVE,
-    )
+    override fun visitProject(
+        rel: RelProject,
+        ctx: Unit,
+    ): RelContext {
+        val input = rel.input
+        val projections = rel.projections
+        val sfw = visitRel(rel.input, ctx)
 
-    private fun binder(symbol: String): Identifier.Symbol = identifierSymbol(
-        symbol = symbol,
-        caseSensitivity = Identifier.CaseSensitivity.SENSITIVE,
-    )
+        val locals =
+            Locals(
+                env = input.type.fields.toList(),
+                aggregations = sfw.aggregations ?: emptyList(),
+            )
 
-    private fun Rel.Type.dump(): String {
-        if (this.schema.isEmpty()) return "< empty >"
-        val pairs = this.schema.joinToString { "${it.name}: ${it.type}" }
+        val rexConverter = transform.getRexConverter(locals)
+        val type = rel.type
+        if (type.fields.size != projections.size) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.INVALID_PLAN,
+                    message = "Malformed plan, relation output types does not match projections",
+                ),
+            )
+        }
+        sfw.select =
+            selectValue(
+                constructor = rexConverter.apply(projections.first()),
+                setq = null,
+            )
+        return sfw
+    }
+
+    override fun visitScan(
+        rel: RelScan,
+        ctx: Unit,
+    ): RelContext {
+        val fromRex = rel.rex
+
+        // Init a new SFW context
+        val sfw = RelContext()
+        // Validate scan type
+        val type = rel.type
+        if (type.fields.size != 1) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.INVALID_PLAN,
+                    message = "Invalid SCAN schema, expected a single PTypeField but found ${type.dump()}",
+                ),
+            )
+        }
+        val rexConverter =
+            transform.getRexConverter(
+                Locals(
+                    env = type.fields.toList(),
+                    aggregations = emptyList(),
+                    // no projections
+                ),
+            )
+        // convert to FROM clause
+        sfw.from =
+            from(
+                tableRefs =
+                    listOf(
+                        fromExpr(
+                            expr = rexConverter.apply(fromRex),
+                            // FROM <rex>
+                            fromType = FromType.SCAN(),
+                            asAlias = Identifier.Simple.delimited(type.fields[0].name),
+                        ),
+                    ),
+            )
+        return sfw
+    }
+
+    override fun visitSort(
+        rel: RelSort,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "SORT is not yet supported",
+            ),
+        )
+    }
+
+    override fun visitUnion(
+        rel: RelUnion,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "UNION is not yet supported",
+            ),
+        )
+    }
+
+    override fun visitUnpivot(
+        rel: RelUnpivot,
+        ctx: Unit,
+    ): RelContext {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "UNPIVOT is not yet supported",
+            ),
+        )
+    }
+
+    // Private helpers
+    private fun RelType.dump(): String {
+        if (this.fields.isEmpty()) return "< empty >"
+        val pairs = this.fields.joinToString { "${it.name}: ${it.type}" }
         return "< $pairs >"
     }
 }

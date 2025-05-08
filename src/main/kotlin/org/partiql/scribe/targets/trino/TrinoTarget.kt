@@ -1,44 +1,45 @@
 package org.partiql.scribe.targets.trino
 
-import org.partiql.plan.PartiQLPlan
-import org.partiql.scribe.ProblemCallback
+import org.partiql.ast.AstNode
+import org.partiql.ast.sql.SqlDialect
+import org.partiql.plan.Plan
+import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
+import org.partiql.spi.catalog.Session
 
-/**
- * Experimental Trino SQL transpilation target.
- */
 public open class TrinoTarget : SqlTarget() {
+    override val target: String = "Redshift"
 
-    override val target: String = "Trino"
+    override val version: String = "0"
 
-    override val version: String = "3"
-
-    companion object {
-
-        @JvmStatic
-        public val DEFAULT = TrinoTarget()
-    }
-
-    /**
-     * Trino SQL dialect.
-     */
-    override val dialect = TrinoDialect()
-
-    /**
-     * Wire the Trino call rewrite rules.
-     */
-    override fun getCalls(onProblem: ProblemCallback): SqlCalls = TrinoCalls(onProblem)
-
-    /**
-     * Trino feature set allow list.
-     */
     override val features: SqlFeatures = TrinoFeatures()
 
-    /**
-     * Apply the base Trino rewriter logic.
-     */
-    override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback) =
-        TrinoRewriter(onProblem).visitPartiQLPlan(plan, ctx = null) as PartiQLPlan
+    public companion object {
+        @JvmStatic
+        public val STANDARD: TrinoTarget = TrinoTarget()
+    }
+
+    override val dialect: SqlDialect = TrinoDialect()
+
+    override fun getCalls(context: ScribeContext): SqlCalls = TrinoCalls(context)
+
+    override fun rewrite(
+        plan: Plan,
+        context: ScribeContext,
+    ): Plan {
+        TrinoRewriter(context)
+        TODO()
+    }
+
+    override fun planToAst(
+        newPlan: Plan,
+        session: Session,
+        context: ScribeContext,
+    ): AstNode {
+        val transform = TrinoPlanToAst(session, getCalls(context), context)
+        val astStatement = transform.apply(newPlan)
+        return astStatement
+    }
 }

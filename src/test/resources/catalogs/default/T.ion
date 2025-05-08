@@ -38,7 +38,7 @@
         name: "array",
         type: {
           type: "list",
-          items: "int",
+          items: "int32",
         },
       },
       {

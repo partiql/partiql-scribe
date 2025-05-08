@@ -1,0 +1,483 @@
+public final class org/partiql/scribe/Scribe {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public final fun compile (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeTarget;)Lorg/partiql/scribe/Scribe$Result;
+	public final fun getScribeContext ()Lorg/partiql/scribe/ScribeContext;
+}
+
+public final class org/partiql/scribe/Scribe$Result {
+	public fun <init> (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeOutput;)V
+	public final fun getInput ()Lorg/partiql/plan/Plan;
+	public final fun getOutput ()Lorg/partiql/scribe/ScribeOutput;
+}
+
+public abstract interface class org/partiql/scribe/ScribeContext {
+	public static final field Companion Lorg/partiql/scribe/ScribeContext$Companion;
+	public abstract fun getErrorListener ()Lorg/partiql/scribe/problems/ScribeProblemListener;
+}
+
+public final class org/partiql/scribe/ScribeContext$Companion {
+	public final fun standard ()Lorg/partiql/scribe/ScribeContext;
+}
+
+public abstract class org/partiql/scribe/ScribeOutput {
+	public fun <init> (Lorg/partiql/scribe/ScribeTag;Ljava/lang/Object;Lorg/partiql/spi/types/PType;)V
+	public final fun getSchema ()Lorg/partiql/spi/types/PType;
+	public final fun getTag ()Lorg/partiql/scribe/ScribeTag;
+	public final fun getValue ()Ljava/lang/Object;
+	public abstract fun toDebugString ()Ljava/lang/String;
+	public abstract fun toString ()Ljava/lang/String;
+}
+
+public final class org/partiql/scribe/ScribeTag {
+	public fun <init> ()V
+}
+
+public abstract interface class org/partiql/scribe/ScribeTarget {
+	public abstract fun compile (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/ScribeOutput;
+	public abstract fun getTarget ()Ljava/lang/String;
+	public abstract fun getVersion ()Ljava/lang/String;
+}
+
+public final class org/partiql/scribe/problems/ScribeException : java/lang/RuntimeException {
+	public fun <init> (Lorg/partiql/scribe/problems/ScribeProblem;)V
+	public final fun getError ()Lorg/partiql/scribe/problems/ScribeProblem;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/partiql/scribe/problems/ScribeProblem : org/partiql/spi/Enum {
+	public static final field Companion Lorg/partiql/scribe/problems/ScribeProblem$Companion;
+	public fun <init> (ILorg/partiql/scribe/problems/Severity;Ljava/util/Map;)V
+	public final fun get (Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
+	public static final fun getINTERNAL_ERROR ()I
+	public static final fun getINVALID_PLAN ()I
+	public final fun getOrNull (Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
+	public final fun getSeverity ()Lorg/partiql/scribe/problems/Severity;
+	public static final fun getUNSUPPORTED_OPERATION ()I
+	public static final fun getUNSUPPORTED_PLAN_TO_AST_CONVERSION ()I
+	public fun name ()Ljava/lang/String;
+	public static final fun simpleError (ILjava/lang/String;)Lorg/partiql/scribe/problems/ScribeProblem;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/partiql/scribe/problems/ScribeProblem$Companion {
+	public final fun getINTERNAL_ERROR ()I
+	public final fun getINVALID_PLAN ()I
+	public final fun getUNSUPPORTED_OPERATION ()I
+	public final fun getUNSUPPORTED_PLAN_TO_AST_CONVERSION ()I
+	public final fun simpleError (ILjava/lang/String;)Lorg/partiql/scribe/problems/ScribeProblem;
+}
+
+public abstract interface class org/partiql/scribe/problems/ScribeProblemListener {
+	public static final field Companion Lorg/partiql/scribe/problems/ScribeProblemListener$Companion;
+	public static fun abortOnError ()Lorg/partiql/scribe/problems/ScribeProblemListener;
+	public abstract fun report (Lorg/partiql/scribe/problems/ScribeProblem;)V
+	public abstract fun reportAndThrow (Lorg/partiql/scribe/problems/ScribeProblem;)Ljava/lang/Void;
+}
+
+public final class org/partiql/scribe/problems/ScribeProblemListener$Companion {
+	public final fun abortOnError ()Lorg/partiql/scribe/problems/ScribeProblemListener;
+}
+
+public final class org/partiql/scribe/problems/ScribeProblemListener$DefaultImpls {
+	public static fun reportAndThrow (Lorg/partiql/scribe/problems/ScribeProblemListener;Lorg/partiql/scribe/problems/ScribeProblem;)Ljava/lang/Void;
+}
+
+public final class org/partiql/scribe/problems/Severity : org/partiql/spi/Enum {
+	public static final field Companion Lorg/partiql/scribe/problems/Severity$Companion;
+	public fun <init> (I)V
+	public static final fun error ()Lorg/partiql/scribe/problems/Severity;
+	public static final fun getERROR ()I
+	public static final fun getWARNING ()I
+	public fun name ()Ljava/lang/String;
+	public static final fun warning ()Lorg/partiql/scribe/problems/Severity;
+}
+
+public final class org/partiql/scribe/problems/Severity$Companion {
+	public final fun error ()Lorg/partiql/scribe/problems/Severity;
+	public final fun getERROR ()I
+	public final fun getWARNING ()I
+	public final fun warning ()Lorg/partiql/scribe/problems/Severity;
+}
+
+public final class org/partiql/scribe/sql/Locals {
+	public static final field Companion Lorg/partiql/scribe/sql/Locals$Companion;
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAggregations ()Ljava/util/List;
+	public final fun getEnv ()Ljava/util/List;
+}
+
+public final class org/partiql/scribe/sql/Locals$Companion {
+	public final fun getEMPTY ()Lorg/partiql/scribe/sql/Locals;
+}
+
+public class org/partiql/scribe/sql/PlanToAst {
+	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
+	public fun apply (Lorg/partiql/plan/Plan;)Lorg/partiql/ast/AstNode;
+	public fun getFunction (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun getGlobal (Lorg/partiql/spi/catalog/Identifier;)Lorg/partiql/ast/Identifier;
+	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
+}
+
+public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisitor {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun apply (Lorg/partiql/plan/rel/Rel;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultReturn (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun defaultVisit (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultVisit (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitAggregate (Lorg/partiql/plan/rel/RelAggregate;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitAggregate (Lorg/partiql/plan/rel/RelAggregate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitDistinct (Lorg/partiql/plan/rel/RelDistinct;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitDistinct (Lorg/partiql/plan/rel/RelDistinct;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitExcept (Lorg/partiql/plan/rel/RelExcept;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExcept (Lorg/partiql/plan/rel/RelExcept;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitExclude (Lorg/partiql/plan/rel/RelExclude;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExclude (Lorg/partiql/plan/rel/RelExclude;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitFilter (Lorg/partiql/plan/rel/RelFilter;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitFilter (Lorg/partiql/plan/rel/RelFilter;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitIntersect (Lorg/partiql/plan/rel/RelIntersect;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntersect (Lorg/partiql/plan/rel/RelIntersect;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitIterate (Lorg/partiql/plan/rel/RelIterate;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIterate (Lorg/partiql/plan/rel/RelIterate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitJoin (Lorg/partiql/plan/rel/RelJoin;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitJoin (Lorg/partiql/plan/rel/RelJoin;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitLimit (Lorg/partiql/plan/rel/RelLimit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitLimit (Lorg/partiql/plan/rel/RelLimit;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitOffset (Lorg/partiql/plan/rel/RelOffset;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitOffset (Lorg/partiql/plan/rel/RelOffset;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public final fun visitRel (Lorg/partiql/plan/rel/Rel;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitScan (Lorg/partiql/plan/rel/RelScan;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitScan (Lorg/partiql/plan/rel/RelScan;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitSort (Lorg/partiql/plan/rel/RelSort;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSort (Lorg/partiql/plan/rel/RelSort;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+	public synthetic fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+}
+
+public final class org/partiql/scribe/sql/RelConverter$RelContext {
+	public fun <init> ()V
+	public fun <init> (Lorg/partiql/ast/Select;Lorg/partiql/ast/Exclude;Lorg/partiql/ast/From;Lorg/partiql/ast/Let;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/GroupBy;Lorg/partiql/ast/expr/Expr;Ljava/util/List;)V
+	public synthetic fun <init> (Lorg/partiql/ast/Select;Lorg/partiql/ast/Exclude;Lorg/partiql/ast/From;Lorg/partiql/ast/Let;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/GroupBy;Lorg/partiql/ast/expr/Expr;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAggregations ()Ljava/util/List;
+	public final fun getExclude ()Lorg/partiql/ast/Exclude;
+	public final fun getFrom ()Lorg/partiql/ast/From;
+	public final fun getGroupBy ()Lorg/partiql/ast/GroupBy;
+	public final fun getHaving ()Lorg/partiql/ast/expr/Expr;
+	public final fun getLet ()Lorg/partiql/ast/Let;
+	public final fun getSelect ()Lorg/partiql/ast/Select;
+	public final fun getWhere ()Lorg/partiql/ast/expr/Expr;
+	public final fun setAggregations (Ljava/util/List;)V
+	public final fun setExclude (Lorg/partiql/ast/Exclude;)V
+	public final fun setFrom (Lorg/partiql/ast/From;)V
+	public final fun setGroupBy (Lorg/partiql/ast/GroupBy;)V
+	public final fun setHaving (Lorg/partiql/ast/expr/Expr;)V
+	public final fun setLet (Lorg/partiql/ast/Let;)V
+	public final fun setSelect (Lorg/partiql/ast/Select;)V
+	public final fun setWhere (Lorg/partiql/ast/expr/Expr;)V
+}
+
+public class org/partiql/scribe/sql/RexConverter : org/partiql/plan/OperatorVisitor {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun apply (Lorg/partiql/plan/rex/Rex;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultReturn (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun defaultVisit (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultVisit (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitArray (Lorg/partiql/plan/rex/RexArray;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitArray (Lorg/partiql/plan/rex/RexArray;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitBag (Lorg/partiql/plan/rex/RexBag;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitBag (Lorg/partiql/plan/rex/RexBag;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitCall (Lorg/partiql/plan/rex/RexCall;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCall (Lorg/partiql/plan/rex/RexCall;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitCase (Lorg/partiql/plan/rex/RexCase;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCase (Lorg/partiql/plan/rex/RexCase;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitCast (Lorg/partiql/plan/rex/RexCast;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCast (Lorg/partiql/plan/rex/RexCast;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitCoalesce (Lorg/partiql/plan/rex/RexCoalesce;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCoalesce (Lorg/partiql/plan/rex/RexCoalesce;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitDispatch (Lorg/partiql/plan/rex/RexDispatch;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitDispatch (Lorg/partiql/plan/rex/RexDispatch;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitError (Lorg/partiql/plan/rex/RexError;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitError (Lorg/partiql/plan/rex/RexError;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitLit (Lorg/partiql/plan/rex/RexLit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitLit (Lorg/partiql/plan/rex/RexLit;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitNullIf (Lorg/partiql/plan/rex/RexNullIf;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitNullIf (Lorg/partiql/plan/rex/RexNullIf;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitPivot (Lorg/partiql/plan/rex/RexPivot;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPivot (Lorg/partiql/plan/rex/RexPivot;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public final fun visitRex (Lorg/partiql/plan/rex/Rex;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitSelect (Lorg/partiql/plan/rex/RexSelect;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSelect (Lorg/partiql/plan/rex/RexSelect;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitSpread (Lorg/partiql/plan/rex/RexSpread;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSpread (Lorg/partiql/plan/rex/RexSpread;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitSubquery (Lorg/partiql/plan/rex/RexSubquery;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSubquery (Lorg/partiql/plan/rex/RexSubquery;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitSubqueryComp (Lorg/partiql/plan/rex/RexSubqueryComp;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSubqueryComp (Lorg/partiql/plan/rex/RexSubqueryComp;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitSubqueryIn (Lorg/partiql/plan/rex/RexSubqueryIn;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSubqueryIn (Lorg/partiql/plan/rex/RexSubqueryIn;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitSubqueryTest (Lorg/partiql/plan/rex/RexSubqueryTest;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSubqueryTest (Lorg/partiql/plan/rex/RexSubqueryTest;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitTable (Lorg/partiql/plan/rex/RexTable;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitTable (Lorg/partiql/plan/rex/RexTable;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitVar (Lorg/partiql/plan/rex/RexVar;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitVar (Lorg/partiql/plan/rex/RexVar;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+}
+
+public final class org/partiql/scribe/sql/SqlArg {
+	public fun <init> (Lorg/partiql/ast/expr/Expr;Lorg/partiql/spi/types/PType;)V
+	public final fun getExpr ()Lorg/partiql/ast/expr/Expr;
+	public final fun getType ()Lorg/partiql/spi/types/PType;
+}
+
+public abstract class org/partiql/scribe/sql/SqlCalls {
+	public static final field Companion Lorg/partiql/scribe/sql/SqlCalls$Companion;
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public fun andFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun between (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun binary (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun bitwiseAnd (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun concatFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun default (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun divFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun eqFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun getRules ()Ljava/util/Map;
+	public fun gtFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun gteFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun inCollection (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun like (Ljava/util/List;Z)Lorg/partiql/ast/expr/Expr;
+	public fun ltFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun lteFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun minusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun modFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun neFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun negFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun notFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun orFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun posFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public final fun retarget (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun timesFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun trim (Ljava/util/List;Lorg/partiql/ast/expr/TrimSpec;)Lorg/partiql/ast/expr/Expr;
+	public fun unary (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+}
+
+public final class org/partiql/scribe/sql/SqlCalls$Companion {
+	public final fun standard (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+}
+
+public abstract class org/partiql/scribe/sql/SqlFeatures : org/partiql/plan/OperatorVisitor {
+	public fun <init> ()V
+	public final fun validate (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public class org/partiql/scribe/sql/SqlFeatures$Defensive : org/partiql/scribe/sql/SqlFeatures {
+	public fun <init> ()V
+	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultReturn (Lorg/partiql/plan/Operator;Lorg/partiql/scribe/ScribeContext;)V
+	public fun getAllow ()Ljava/util/Set;
+}
+
+public class org/partiql/scribe/sql/SqlFeatures$Permissive : org/partiql/scribe/sql/SqlFeatures {
+	public fun <init> ()V
+	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultReturn (Lorg/partiql/plan/Operator;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/sql/SqlOutput : org/partiql/scribe/ScribeOutput {
+	public fun <init> (Lorg/partiql/scribe/ScribeTag;Ljava/lang/String;Lorg/partiql/spi/types/PType;)V
+	public fun toDebugString ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class org/partiql/scribe/sql/SqlTarget : org/partiql/scribe/ScribeTarget {
+	public fun <init> ()V
+	public fun compile (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/ScribeOutput;
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public fun getLayout ()Lorg/partiql/ast/sql/SqlLayout;
+	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
+	public abstract fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/sql/utils/ConversionUtilsKt {
+	public static final fun toQueryBodySFW (Lorg/partiql/scribe/sql/RelConverter$RelContext;)Lorg/partiql/ast/QueryBody$SFW;
+}
+
+public final class org/partiql/scribe/targets/partiql/PartiQLTarget : org/partiql/scribe/sql/SqlTarget {
+	public static final field INSTANCE Lorg/partiql/scribe/targets/partiql/PartiQLTarget;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public fun getTarget ()Ljava/lang/String;
+	public fun getVersion ()Ljava/lang/String;
+	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftDialect : org/partiql/ast/sql/SqlDialect {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftPlanToAst : org/partiql/scribe/sql/PlanToAst {
+	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
+	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
+	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftRelConverter : org/partiql/scribe/sql/RelConverter {
+	public fun <init> (Lorg/partiql/scribe/targets/redshift/RedshiftPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftRewriter : org/partiql/plan/OperatorRewriter {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftRexConverter : org/partiql/scribe/sql/RexConverter {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public class org/partiql/scribe/targets/redshift/RedshiftTarget : org/partiql/scribe/sql/SqlTarget {
+	public static final field Companion Lorg/partiql/scribe/targets/redshift/RedshiftTarget$Companion;
+	public fun <init> ()V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/redshift/RedshiftTarget;
+	public fun getTarget ()Ljava/lang/String;
+	public fun getVersion ()Ljava/lang/String;
+	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
+	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/targets/redshift/RedshiftTarget$Companion {
+	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/redshift/RedshiftTarget;
+}
+
+public final class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkDialect : org/partiql/ast/sql/SqlDialect {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkPlanToAst : org/partiql/scribe/sql/PlanToAst {
+	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
+	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
+	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
+}
+
+public final class org/partiql/scribe/targets/spark/SparkRelConverter : org/partiql/scribe/sql/RelConverter {
+	public fun <init> (Lorg/partiql/scribe/targets/spark/SparkPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkRewriter : org/partiql/plan/OperatorRewriter {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/spark/SparkRexConverter : org/partiql/scribe/sql/RexConverter {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public class org/partiql/scribe/targets/spark/SparkTarget : org/partiql/scribe/sql/SqlTarget {
+	public static final field Companion Lorg/partiql/scribe/targets/spark/SparkTarget$Companion;
+	public fun <init> ()V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/spark/SparkTarget;
+	public fun getTarget ()Ljava/lang/String;
+	public fun getVersion ()Ljava/lang/String;
+	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
+	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/targets/spark/SparkTarget$Companion {
+	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/spark/SparkTarget;
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoDialect : org/partiql/ast/sql/SqlDialect {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
+	public fun <init> ()V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoPlanToAst : org/partiql/scribe/sql/PlanToAst {
+	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
+	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
+	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoRelConverter : org/partiql/scribe/sql/RelConverter {
+	public fun <init> (Lorg/partiql/scribe/targets/trino/TrinoPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoRewriter : org/partiql/plan/OperatorRewriter {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoRexConverter : org/partiql/scribe/sql/RexConverter {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+}
+
+public class org/partiql/scribe/targets/trino/TrinoTarget : org/partiql/scribe/sql/SqlTarget {
+	public static final field Companion Lorg/partiql/scribe/targets/trino/TrinoTarget$Companion;
+	public fun <init> ()V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/trino/TrinoTarget;
+	public fun getTarget ()Ljava/lang/String;
+	public fun getVersion ()Ljava/lang/String;
+	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
+	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/targets/trino/TrinoTarget$Companion {
+	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/trino/TrinoTarget;
+}
+

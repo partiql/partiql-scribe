@@ -1,448 +1,597 @@
 package org.partiql.scribe.sql
 
-import org.partiql.ast.Expr
+import org.partiql.ast.Ast.exprArray
+import org.partiql.ast.Ast.exprBag
+import org.partiql.ast.Ast.exprCase
+import org.partiql.ast.Ast.exprCaseBranch
+import org.partiql.ast.Ast.exprCast
+import org.partiql.ast.Ast.exprCoalesce
+import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.Ast.exprNullIf
+import org.partiql.ast.Ast.exprPath
+import org.partiql.ast.Ast.exprPathStepElement
+import org.partiql.ast.Ast.exprPathStepField
+import org.partiql.ast.Ast.exprQuerySet
+import org.partiql.ast.Ast.exprStruct
+import org.partiql.ast.Ast.exprStructField
+import org.partiql.ast.Ast.exprVarRef
+import org.partiql.ast.Ast.queryBodySetOp
+import org.partiql.ast.Ast.selectItemExpr
+import org.partiql.ast.Ast.selectList
+import org.partiql.ast.Ast.setOp
+import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
+import org.partiql.ast.Identifier.Simple.regular
+import org.partiql.ast.Literal
 import org.partiql.ast.Select
-import org.partiql.ast.SetOp
+import org.partiql.ast.SelectValue
+import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
-import org.partiql.ast.exprBagOp
-import org.partiql.ast.exprCall
-import org.partiql.ast.exprCase
-import org.partiql.ast.exprCaseBranch
-import org.partiql.ast.exprCoalesce
-import org.partiql.ast.exprLit
-import org.partiql.ast.exprNullIf
-import org.partiql.ast.exprPath
-import org.partiql.ast.exprPathStepIndex
-import org.partiql.ast.exprPathStepSymbol
-import org.partiql.ast.exprStruct
-import org.partiql.ast.exprStructField
-import org.partiql.ast.exprVar
-import org.partiql.ast.identifierSymbol
-import org.partiql.ast.selectProject
-import org.partiql.ast.selectProjectItemAll
-import org.partiql.ast.selectProjectItemExpression
-import org.partiql.ast.selectValue
-import org.partiql.ast.setOp
-import org.partiql.plan.PlanNode
-import org.partiql.plan.Rel
-import org.partiql.plan.Rex
-import org.partiql.plan.rexOpSelect
-import org.partiql.plan.visitor.PlanBaseVisitor
-import org.partiql.scribe.asNonAbsent
-import org.partiql.types.BagType
-import org.partiql.types.ListType
-import org.partiql.types.SexpType
-import org.partiql.types.StaticType
-import org.partiql.types.StructType
-import org.partiql.types.TupleConstraint
-import org.partiql.value.PartiQLValueExperimental
-import org.partiql.value.StringValue
+import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprPath
+import org.partiql.ast.expr.ExprStruct
+import org.partiql.plan.Operator
+import org.partiql.plan.OperatorVisitor
+import org.partiql.plan.rel.Rel
+import org.partiql.plan.rel.RelExcept
+import org.partiql.plan.rel.RelIntersect
+import org.partiql.plan.rel.RelProject
+import org.partiql.plan.rel.RelUnion
+import org.partiql.plan.rex.Rex
+import org.partiql.plan.rex.RexArray
+import org.partiql.plan.rex.RexBag
+import org.partiql.plan.rex.RexCall
+import org.partiql.plan.rex.RexCase
+import org.partiql.plan.rex.RexCast
+import org.partiql.plan.rex.RexCoalesce
+import org.partiql.plan.rex.RexDispatch
+import org.partiql.plan.rex.RexError
+import org.partiql.plan.rex.RexLit
+import org.partiql.plan.rex.RexNullIf
+import org.partiql.plan.rex.RexPathIndex
+import org.partiql.plan.rex.RexPathKey
+import org.partiql.plan.rex.RexPathSymbol
+import org.partiql.plan.rex.RexPivot
+import org.partiql.plan.rex.RexSelect
+import org.partiql.plan.rex.RexSpread
+import org.partiql.plan.rex.RexStruct
+import org.partiql.plan.rex.RexSubquery
+import org.partiql.plan.rex.RexSubqueryComp
+import org.partiql.plan.rex.RexSubqueryIn
+import org.partiql.plan.rex.RexSubqueryTest
+import org.partiql.plan.rex.RexTable
+import org.partiql.plan.rex.RexVar
+import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.sql.utils.toQueryBodySFW
+import org.partiql.spi.types.PType
+import org.partiql.spi.types.PTypeField
+import org.partiql.spi.value.Datum
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
-/**
- * Local scope.
- */
-public typealias TypeEnv = List<Rel.Binding>
+public typealias TypeEnv = List<PTypeField>
 
-/**
- * Locals, checking projections before then TypeEnv. This needs to be more deeply thought about.
- */
 public class Locals(
-    val env: TypeEnv,
-    val projections: List<Expr> = emptyList(),
-)
+    public val env: TypeEnv,
+    public val aggregations: List<Expr> = emptyList(),
+) {
+    public companion object {
+        public val EMPTY: Locals = Locals(env = emptyList(), aggregations = emptyList())
+    }
+}
 
-/**
- * RexConverter translates a [Rex] tree in the given local scope.
- */
 public open class RexConverter(
-    private val transform: SqlTransform,
+    private val transform: PlanToAst,
     private val locals: Locals,
-) : PlanBaseVisitor<Expr, StaticType>() {
+    private val context: ScribeContext,
+) : OperatorVisitor<Expr, Unit> {
+    private val listener = context.getErrorListener()
 
     /**
      * Convert a [Rex] to an [Expr].
      */
-    public fun apply(rex: Rex): Expr = rex.accept(this, StaticType.ANY)
+    public fun apply(rex: Rex): Expr = rex.accept(this, Unit)
 
-    /**
-     * Default behavior is considered unsupported.
-     */
-    override fun defaultReturn(node: PlanNode, ctx: StaticType): Expr =
-        throw UnsupportedOperationException("Cannot translate rex $node")
-
-    override fun defaultVisit(node: PlanNode, ctx: StaticType) = defaultReturn(node, ctx)
-
-    /**
-     * Pass along the Rex [StaticType]
-     */
-    override fun visitRex(node: Rex, ctx: StaticType) = super.visitRexOp(node.op, node.type)
-
-    @OptIn(PartiQLValueExperimental::class)
-    override fun visitRexOpLit(node: Rex.Op.Lit, ctx: StaticType): Expr {
-        return exprLit(node.value)
-    }
-
-    override fun visitRexOpTupleUnion(node: Rex.Op.TupleUnion, ctx: StaticType): Expr {
-        if (node.args.isEmpty()) {
-            error("TupleUnion $node has no args")
-        }
-        val args = node.args.map { arg -> visitRex(arg, ctx) }
-        return exprCall(
-            identifierSymbol("TUPLEUNION", Identifier.CaseSensitivity.INSENSITIVE), args = args
+    override fun defaultReturn(
+        operator: Operator,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "$operator is not yet supported",
+            ),
         )
     }
 
-    override fun visitRexOpVar(node: Rex.Op.Var, ctx: StaticType): Expr {
-        if (0 <= node.ref && node.ref < locals.projections.size) {
-            return locals.projections[node.ref]
-        }
-        val binding = locals.env.getOrNull(node.ref)
-            ?: error("Malformed plan, resolved local (\$var ${node.ref}) not in ${locals.dump()}")
-        val identifier = binder(binding.name)
-        val scope = Expr.Var.Scope.DEFAULT
-        return exprVar(identifier, scope)
+    override fun defaultVisit(
+        operator: Operator,
+        ctx: Unit,
+    ): Expr {
+        return defaultReturn(operator, ctx)
     }
 
-    override fun visitRexOpGlobal(node: Rex.Op.Global, ctx: StaticType): Expr {
-        val global = transform.getGlobal(node.ref)
-        if (global == null) {
-            error("Malformed plan, resolved global (\$global ${node.ref}) does not exist")
-        }
-        val scope = Expr.Var.Scope.DEFAULT
-        return exprVar(global, scope)
+    public fun visitRex(
+        rex: Rex,
+        ctx: Unit,
+    ): Expr {
+        return visit(rex, ctx)
     }
 
-    override fun visitRexOpPath(node: Rex.Op.Path, ctx: StaticType): Expr = when (node) {
-        is Rex.Op.Path.Index -> visitRexOpPathIndex(node, ctx)
-        is Rex.Op.Path.Key -> visitRexOpPathKey(node, ctx)
-        is Rex.Op.Path.Symbol -> visitRexOpPathSymbol(node, ctx)
+    override fun visitArray(
+        rex: RexArray,
+        ctx: Unit,
+    ): Expr {
+        val values = rex.values.map { visitRex(it, ctx) }
+        return exprArray(values)
     }
 
-    override fun visitRexOpPathIndex(node: Rex.Op.Path.Index, ctx: StaticType): Expr {
-        val prev = visitRex(node.root, ctx)
-        val step = exprPathStepIndex(visitRex(node.key, ctx))
-        return if (prev is Expr.Path) {
-            exprPath(prev.root, prev.steps + step)
-        } else {
-            exprPath(visitRex(node.root, ctx), listOf(step))
-        }
+    override fun visitBag(
+        rex: RexBag,
+        ctx: Unit,
+    ): Expr {
+        val values = rex.values.map { visitRex(it, ctx) }
+        return exprBag(values)
     }
 
-    override fun visitRexOpPathKey(node: Rex.Op.Path.Key, ctx: StaticType): Expr {
-        val prev = visitRex(node.root, ctx)
-        val step = exprPathStepIndex(visitRex(node.key, ctx))
-        return if (prev is Expr.Path) {
-            exprPath(prev.root, prev.steps + step)
-        } else {
-            exprPath(visitRex(node.root, ctx), listOf(step))
-        }
+    override fun visitCall(
+        rex: RexCall,
+        ctx: Unit,
+    ): Expr {
+        val fn = rex.function
+        val args = rex.args.map { SqlArg(visitRex(it, ctx), it.type.pType) }
+        return transform.getFunction(fn.signature.name, args)
     }
 
-    override fun visitRexOpPathSymbol(node: Rex.Op.Path.Symbol, ctx: StaticType): Expr {
-        val prev = visitRex(node.root, ctx)
-        val step = exprPathStepSymbol(id(node.key))
-        return if (prev is Expr.Path) {
-            exprPath(prev.root, prev.steps + step)
-        } else {
-            exprPath(visitRex(node.root, ctx), listOf(step))
-        }
+    override fun visitCase(
+        rex: RexCase,
+        ctx: Unit,
+    ): Expr {
+        val matchExpr = rex.match?.let { visitRex(it, ctx) }
+        val default = rex.default?.let { visitRex(it, ctx) }
+        val branches =
+            rex.branches.map {
+                val condition = visitRex(it.condition, ctx)
+                val result = visitRex(it.result, ctx)
+                exprCaseBranch(condition, result)
+            }
+        return exprCase(matchExpr, branches, default)
     }
 
-    override fun visitRexOpCollection(node: Rex.Op.Collection, ctx: StaticType): Expr {
-        val values = node.values.map { visitRex(it, ctx) }
-        return when (ctx) {
-            is ListType -> Expr.Collection(Expr.Collection.Type.LIST, values)
-            is SexpType -> Expr.Collection(Expr.Collection.Type.SEXP, values)
-            is BagType -> Expr.Collection(Expr.Collection.Type.BAG, values)
-            else -> throw UnsupportedOperationException("unsupported collection type $ctx")
-        }
+    // TODO support CAST parameters
+    override fun visitCast(
+        rex: RexCast,
+        ctx: Unit,
+    ): Expr {
+        val value = visitRex(rex.operand, ctx)
+        val targetType =
+            when (rex.target.code()) {
+                // BOOL type
+                PType.BOOL -> DataType.BOOL()
+                // INTEGER types
+                PType.TINYINT -> DataType.TINYINT()
+                PType.SMALLINT -> DataType.SMALLINT()
+                PType.INTEGER -> DataType.INT()
+                PType.BIGINT -> DataType.BIGINT()
+                // DECIMAL types
+                PType.NUMERIC -> DataType.NUMERIC()
+                PType.DECIMAL -> DataType.DECIMAL()
+                // Approximate numeric types
+                PType.REAL -> DataType.REAL()
+                PType.DOUBLE -> DataType.DOUBLE_PRECISION()
+                // String types
+                PType.CHAR -> DataType.CHAR()
+                PType.VARCHAR -> DataType.VARCHAR()
+                PType.STRING -> DataType.STRING()
+                // Dynamic type
+                PType.DYNAMIC -> return value // TODO possibly move into separate rewrite
+                PType.BAG -> return value
+                else ->
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                            message = "CAST with type ${rex.target.code()} is not yet supported",
+                        ),
+                    )
+            }
+        return exprCast(
+            value = value,
+            asType = targetType,
+        )
     }
 
-    override fun visitRexOpStruct(node: Rex.Op.Struct, ctx: StaticType): Expr {
-        val fields = node.fields.map {
-            exprStructField(
-                name = visitRex(it.k, StaticType.ANY),
-                value = visitRex(it.v, StaticType.ANY),
-            )
-        }
-        return exprStruct(fields)
-    }
-
-    override fun visitRexOpCase(node: Rex.Op.Case, ctx: StaticType): Expr {
-        val default = node.default.let { visitRex(it, it.type) }
-        val branches = node.branches.map {
-            val condition = visitRex(it.condition, StaticType.ANY)
-            val result = visitRex(it.rex, StaticType.ANY)
-            exprCaseBranch(condition, result)
-        }
-        return when (branches.isEmpty()) {
-            true -> default
-            false -> exprCase(expr = null, branches = branches, default = default)
-        }
-    }
-
-    override fun visitRexOpNullif(node: Rex.Op.Nullif, ctx: StaticType): Expr {
-        val value = visitRex(node.value, StaticType.ANY)
-        val nullifier = visitRex(node.nullifier, StaticType.ANY)
-        return exprNullIf(value, nullifier)
-    }
-
-    override fun visitRexOpCoalesce(node: Rex.Op.Coalesce, ctx: StaticType): Expr {
-        val args = node.args.map { visitRex(it, it.type) }
+    override fun visitCoalesce(
+        rex: RexCoalesce,
+        ctx: Unit,
+    ): Expr {
+        val args = rex.args.map { visitRex(it, ctx) }
         return exprCoalesce(args)
     }
 
-    override fun visitRexOpCall(node: Rex.Op.Call, ctx: StaticType): Expr {
-
-        val (name, args) = when (node) {
-            is Rex.Op.Call.Static -> {
-                val name = node.fn.signature.name
-                val args = node.args.map { SqlArg(visitRex(it, StaticType.ANY), it.type) }
-                name to args
-            }
-            is Rex.Op.Call.Dynamic -> {
-                val name = node.candidates.first().fn.signature.name
-                val args = node.args.map { SqlArg(visitRex(it, StaticType.ANY), it.type) }
-                name to args
-            }
-        }
-
-        return transform.getFunction(name, args)
+    override fun visitDispatch(
+        rex: RexDispatch,
+        ctx: Unit,
+    ): Expr {
+        val fn = rex.functions.first()
+        val args = rex.args.map { SqlArg(visitRex(it, ctx), it.type.pType) }
+        return transform.getFunction(fn.signature.name, args)
     }
 
-    private fun planToAstSetQ(setQuantifier: org.partiql.plan.SetQuantifier?): org.partiql.ast.SetQuantifier {
-        return when (setQuantifier) {
-            null, org.partiql.plan.SetQuantifier.DISTINCT -> SetQuantifier.DISTINCT
-            org.partiql.plan.SetQuantifier.ALL -> SetQuantifier.ALL
-        }
-    }
-
-    /**
-     * Create an ast [Expr.BagOp] from two plan [Rel] nodes (coming from a plan SQL set op).
-     */
-    private fun relSetOpToBagOp(lhs: Rel, rhs: Rel, setq: org.partiql.plan.SetQuantifier, opType: SetOp.Type, ctx: StaticType): Expr.BagOp {
-        // Since the args to a SQL set op are both SFW queries, re-create an [Expr.SFW]
-        val lhsRex = rexOpSelect(
-            constructor = Rex(
-                type = lhs.type.schema.first().type.asOrderedStruct(),
-                Rex.Op.Var(0)
+    override fun visitError(
+        rex: RexError,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message =
+                    "ERROR Rex node indicates there was an error in the plan. " +
+                        "Check the PErrorListener used during planning for more error details.",
             ),
-            rel = lhs
-        )
-        val lhsExpr = visitRexOp(node = lhsRex, ctx = ctx)
-        val rhsRex = rexOpSelect(
-            constructor = Rex(
-                type = rhs.type.schema.first().type.asOrderedStruct(),
-                Rex.Op.Var(0)
-            ),
-            rel = rhs
-        )
-        val rhsExpr = visitRexOp(node = rhsRex, ctx = ctx)
-        return exprBagOp(
-            type = setOp(type = opType, setq = planToAstSetQ(setq)),
-            lhs = lhsExpr,
-            rhs = rhsExpr,
-            outer = false
         )
     }
 
-    // Adds the [TupleConstraint.Ordered] for [StructType]s
-    private fun StaticType.asOrderedStruct(): StaticType {
-        return when (val type = this.asNonAbsent()) {
-            is StructType -> type.copy(
-                constraints = type.constraints + setOf(TupleConstraint.Ordered)
-            )
-            else -> this
+    override fun visitLit(
+        rex: RexLit,
+        ctx: Unit,
+    ): Expr {
+        // convert plan literal Rex to ast literal Expr
+        val datum = rex.datum
+        return exprLit(datum.toLiteral())
+    }
+
+    private fun Datum.toLiteral(): Literal {
+        if (this.isNull) {
+            return Literal.nul()
         }
-    }
-
-    override fun visitRexOpSelect(node: Rex.Op.Select, ctx: StaticType): Expr {
-        val rel = node.rel
-        return when (val op = rel.op) {
-            // SQL sets modeled as a Rel node taking in two Rels
-            is Rel.Op.Except -> relSetOpToBagOp(op.lhs, op.rhs, op.setq, SetOp.Type.EXCEPT, ctx)
-            is Rel.Op.Intersect -> relSetOpToBagOp(op.lhs, op.rhs, op.setq, SetOp.Type.INTERSECT, ctx)
-            is Rel.Op.Union -> relSetOpToBagOp(op.lhs, op.rhs, op.setq, SetOp.Type.UNION, ctx)
-            else -> {
-                val relToSql = transform.getRelConverter()
-                val rexToSql = transform.getRexConverter(locals)
-                val sfw = relToSql.apply(rel)
-                assert(sfw.select != null) { "SELECT from RelConverter should never be null" }
-                val setq = getSetQuantifier(sfw.select!!)
-                val select = convertSelectValueToSqlSelect(sfw.select, node.constructor, node.rel, setq) ?: convertSelectValue(
-                    node.constructor,
-                    node.rel,
-                    setq
-                ) ?: selectValue(rexToSql.apply(node.constructor), setq)
-                sfw.select = select
-                return sfw.build()
+        if (this.isMissing) {
+            return Literal.missing()
+        }
+        return when (this.type.code()) {
+            // BOOL literal
+            PType.BOOL -> Literal.bool(this.boolean)
+            // INTEGER literals
+            PType.TINYINT -> Literal.intNum(this.byte.toInt()) // TODO define byte fn version in PLK Literal?
+            PType.SMALLINT -> Literal.intNum(this.short.toInt()) // TODO define short fn version in PLK Literal?
+            PType.INTEGER -> Literal.intNum(this.int)
+            PType.BIGINT -> Literal.intNum(this.long)
+            // DECIMAL literals
+            PType.NUMERIC, PType.DECIMAL -> {
+                when (this.type.scale) {
+                    0 -> Literal.intNum(this.bigDecimal.unscaledValue())
+                    else -> Literal.exactNum(this.bigDecimal)
+                }
             }
-        }
-    }
-
-    override fun visitRexOpSubquery(node: Rex.Op.Subquery, ctx: StaticType): Expr {
-        return visitRexOpSelect(node.select, StaticType.ANY)
-    }
-
-    /**
-     * Grabs the [SetQuantifier] of a [Select].
-     */
-    private fun getSetQuantifier(select: Select): SetQuantifier? = when (select) {
-        is Select.Project -> select.setq
-        is Select.Value -> select.setq
-        is Select.Star -> select.setq
-        is Select.Pivot -> null
-    }
-
-    /**
-     * Attempts to convert a SELECT VALUE to a SELECT LIST. Returns NULL if unable.
-     *
-     * For SELECT VALUE <v> FROM queries, the <v> gets pushed into the PROJECT, and it gets replaced with a variable
-     * reference to the single projection. Therefore, if there was a SELECT * (which gets converted into a SELECT VALUE TUPLEUNION),
-     * then the TUPLEUNION will be placed in the [Rel.Op.Project], and the [Rex.Op.Select.constructor] will be a
-     * [Rex.Op.Var.Resolved] referencing the single projection. With that in mind, we can reconstruct the AST by looking
-     * at the [constructor]. If it's a [Rex.Op.Var.Resolved], and it references a [Rex.Op.Struct], we can pull
-     * out those struct's attributes and create a SQL-style select.
-     *
-     * NOTE: [Rex.Op.TupleUnion]'s get constant folded in the [org.partiql.planner.typer.PlanTyper].
-     *
-     * Example:
-     * ```
-     * SELECT t.* FROM t
-     * -- Gets converted into
-     * SELECT VALUE TUPLEUNION({ 'a': <INT>, 'b': <DECIMAL> }) FROM t
-     * -- Gets constant folded (in the PlanTyper) into:
-     * SELECT VALUE { 'a': <INT>, 'b': <DECIMAL> } FROM t
-     * -- Gets converted into:
-     * SELECT VALUE $__x
-     * -> PROJECT < $__x: TUPLEUNION(...) >
-     * -> SCAN t
-     * -- Gets converted into:
-     * SELECT a, b, c FROM t
-     * -- Equivalent
-     * SELECT "t".a, "t.b, "t".c FROM t AS "t"
-     * ```
-     *
-     * If unable to convert into SQL-style projections (due to open content structs, non-struct arguments, etc), we
-     * return null.
-     */
-    @OptIn(PartiQLValueExperimental::class)
-    private fun convertSelectValueToSqlSelect(
-        curr: Select?,
-        constructor: Rex,
-        input: Rel,
-        setq: SetQuantifier?,
-    ): Select? {
-        val relProject = input.op as? Rel.Op.Project ?: return null
-        val structOp = getConstructorFromProjection(constructor, relProject)?.op as? Rex.Op.Struct ?: return null
-        val newRexConverter = RexConverter(transform, Locals(relProject.input.type.schema))
-        val type = constructor.type as? StructType ?: return null
-        if (type.constraints.contains(TupleConstraint.Open(false))
-                .not() || type.constraints.contains(TupleConstraint.Ordered).not()
-        ) {
-            return null
-        }
-
-        // AGG HACK; this is terrible!
-        val projections = if (curr != null && curr is Select.Project) {
-            val first = curr.items.first() as Select.Project.Item.Expression
-            val struct = first.expr as Expr.Struct
-            struct.fields.map {
-                val expr = it.value
-                val asAlias = binder(((it.name as Expr.Lit).value as StringValue).value ?: "")
-                selectProjectItemExpression(expr, asAlias)
+            // Approximate numeric literals
+            PType.REAL -> Literal.approxNum(this.float.toString()) // TODO some possible data loss here?
+            PType.DOUBLE -> Literal.approxNum(this.double.toString()) // TODO some possible data loss here?
+            // String literals
+            PType.CHAR, PType.VARCHAR, PType.STRING -> Literal.string(this.string)
+            // Date literal
+            PType.DATE -> Literal.typedString(DataType.DATE(), this.localDate.toString())
+            PType.TIME -> Literal.typedString(DataType.TIME(), this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+            PType.TIMESTAMP ->
+                Literal.typedString(
+                    DataType.TIMESTAMP(),
+                    "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}",
+                )
+            PType.TIMEZ -> {
+                // TODO precision
+                val offsetString =
+                    when (val offset = this.offsetTime.offset) {
+                        ZoneOffset.UTC -> "+00:00"
+                        else -> offset.toString()
+                    }
+                Literal.typedString(
+                    DataType.TIME_WITH_TIME_ZONE(),
+                    "${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}$offsetString",
+                )
             }
+            PType.TIMESTAMPZ -> {
+                // TODO precision
+                val offsetString =
+                    when (val offset = this.offsetTime.offset) {
+                        ZoneOffset.UTC -> "+00:00"
+                        else -> offset.toString()
+                    }
+                Literal.typedString(
+                    DataType.TIMESTAMP_WITH_TIME_ZONE(),
+                    "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}$offsetString",
+                )
+            }
+            else ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                        message = "LITERAL with type ${this.type.code()} is not yet supported",
+                    ),
+                )
+        }
+    }
+
+    override fun visitNullIf(
+        rex: RexNullIf,
+        ctx: Unit,
+    ): Expr {
+        val v1 = visitRex(rex.v1, ctx)
+        val v2 = visitRex(rex.v2, ctx)
+        return exprNullIf(v1, v2)
+    }
+
+    override fun visitPathIndex(
+        rex: RexPathIndex,
+        ctx: Unit,
+    ): Expr {
+        val prev = visitRex(rex.operand, ctx)
+        val step = exprPathStepElement(visitRex(rex.index, ctx))
+        return if (prev is ExprPath) {
+            exprPath(prev.root, prev.steps + step)
         } else {
-            structOp.fields.map { field ->
-                val key = field.k.op
-                if (key !is Rex.Op.Lit || key.value !is StringValue) {
-                    return null
-                }
-                val fieldName = (key.value as StringValue).value ?: return null
-                //
-                val expr = newRexConverter.apply(field.v)
-                val asAlias = binder(fieldName)
-                selectProjectItemExpression(expr, asAlias)
-            }
+            exprPath(prev, listOf(step))
         }
+    }
 
-        return selectProject(
-            items = projections, setq = setq
+    override fun visitPathKey(
+        rex: RexPathKey,
+        ctx: Unit,
+    ): Expr {
+        val prev = visitRex(rex.operand, ctx)
+        val step = exprPathStepElement(visitRex(rex.key, ctx))
+        return if (prev is ExprPath) {
+            exprPath(prev.root, prev.steps + step)
+        } else {
+            exprPath(prev, listOf(step))
+        }
+    }
+
+    override fun visitPathSymbol(
+        rex: RexPathSymbol,
+        ctx: Unit,
+    ): Expr {
+        val prev = visitRex(rex.operand, ctx)
+        val step = exprPathStepField(regular(rex.symbol))
+        return if (prev is ExprPath) {
+            exprPath(prev.root, prev.steps + step)
+        } else {
+            exprPath(prev, listOf(step))
+        }
+    }
+
+    override fun visitPivot(
+        rex: RexPivot,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "PIVOT is not yet supported",
+            ),
         )
     }
 
-    /**
-     * Since the <v> in SELECT VALUE <v> gets pulled into the [Rel.Op.Project], we attempt to recuperate the [Rex] and
-     * convert it to SQL. If we are unable to, return NULL.
-     */
-    private fun convertSelectValue(constructor: Rex, input: Rel, setq: SetQuantifier?): Select? {
-        val relProject = input.op as? Rel.Op.Project ?: return null
-        val projection = getConstructorFromProjection(constructor, relProject) ?: return null
-        val rexToSql = RexConverter(transform, Locals(relProject.input.type.schema))
-        return when (val op = projection.op) {
-            is Rex.Op.TupleUnion -> {
-                val items = op.args.map {
-                    getProjectionItemFromSingleItemStruct(it, rexToSql) ?: selectProjectItemAll(rexToSql.apply(it))
-                }
-                selectProject(items, setq)
+    private fun relSetOpToBagOp(
+        left: Rel,
+        right: Rel,
+        isAll: Boolean,
+        setOpType: SetOpType,
+        ctx: Unit,
+    ): Expr {
+        val leftRex =
+            RexSelect.create(
+                left,
+                RexVar.create(0, 0, left.type.fields.first().type),
+            )
+        val rightRex =
+            RexSelect.create(
+                right,
+                RexVar.create(0, 0, right.type.fields.first().type),
+            )
+        val lhsExpr = visitRex(leftRex, ctx)
+        val rhsExpr = visitRex(rightRex, ctx)
+        return exprQuerySet(
+            body =
+                queryBodySetOp(
+                    type =
+                        setOp(
+                            setOpType = setOpType,
+                            setq =
+                                when (isAll) {
+                                    true -> SetQuantifier.ALL()
+                                    false -> SetQuantifier.DISTINCT()
+                                },
+                        ),
+                    lhs = lhsExpr,
+                    rhs = rhsExpr,
+                    isOuter = false,
+                ),
+        )
+    }
+
+    override fun visitSelect(
+        rex: RexSelect,
+        ctx: Unit,
+    ): Expr {
+        val inputRel = rex.input
+        val constructor = rex.constructor
+        return when (inputRel) {
+            is RelExcept -> relSetOpToBagOp(inputRel.left, inputRel.right, inputRel.isAll, SetOpType.EXCEPT(), ctx)
+            is RelIntersect -> relSetOpToBagOp(inputRel.left, inputRel.right, inputRel.isAll, SetOpType.INTERSECT(), ctx)
+            is RelUnion -> relSetOpToBagOp(inputRel.left, inputRel.right, inputRel.isAll, SetOpType.UNION(), ctx)
+            is RelProject -> {
+                val relConverter = transform.getRelConverter()
+                val rexConverter = transform.getRexConverter(locals)
+                val sfw = relConverter.apply(inputRel, ctx)
+                val rewrittenSelect = convertSelectValueToSqlSelect(sfw.select!!, inputRel)
+                sfw.select = rewrittenSelect
+                return exprQuerySet(
+                    body = sfw.toQueryBodySFW(),
+                )
             }
-            else -> selectValue(rexToSql.apply(projection), setq)
+            else ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                        message = "$inputRel is not yet supported",
+                    ),
+                )
         }
     }
 
-    @OptIn(PartiQLValueExperimental::class)
-    private fun getProjectionItemFromSingleItemStruct(rex: Rex, rexToSql: RexConverter): Select.Project.Item? {
-        val op = rex.op as? Rex.Op.Struct ?: return null
-        if (op.fields.size != 1) {
-            return null
+    private fun convertSelectValueToSqlSelect(
+        select: Select,
+        project: RelProject,
+    ): Select {
+        val rexConverter = RexConverter(transform, Locals(project.input.type.fields.toList()), context)
+        return when (select) {
+            is SelectValue -> {
+                val constructor = select.constructor
+                val projectionItems =
+                    if (constructor is ExprStruct) {
+                        constructor.fields.map { field ->
+                            val key = field.name
+                            val value = field.value
+                            if (key !is ExprLit || key.lit.code() != Literal.STRING) {
+                                return select
+                            }
+                            val keyName = key.lit.stringValue()
+                            // valid key-value pair
+                            selectItemExpr(
+                                expr = value,
+                                asAlias = Identifier.Simple.delimited(keyName),
+                            )
+                        }
+                    } else {
+                        return select
+                    }
+                selectList(
+                    items = projectionItems,
+                    setq = select.setq,
+                )
+            }
+            else -> select
         }
-        val key = op.fields[0].k.op
-        if (key !is Rex.Op.Lit || key.value !is StringValue) {
-            return null
-        }
-        val fieldName = (key.value as StringValue).value ?: return null
-        //
-        val expr = rexToSql.apply(op.fields[0].v)
-        val asAlias = binder(fieldName)
-        return selectProjectItemExpression(expr, asAlias)
     }
 
-    /**
-     * Grabs the first projection from [Rel.Op.Project] if the [constructor] is referencing it. If unable to
-     * grab, return null.
-     */
-    private fun getConstructorFromProjection(constructor: Rex, relProject: Rel.Op.Project): Rex? {
-        val constructorOp = constructor.op as? Rex.Op.Var ?: return null
-        if (constructorOp.ref != 0) {
-            return null
-        }
-        if (relProject.projections.size != 1) {
-            return null
-        }
-        return relProject.projections[0]
+    override fun visitStruct(
+        rex: RexStruct,
+        ctx: Unit,
+    ): Expr {
+        val fields =
+            rex.fields.map {
+                exprStructField(
+                    name = visitRex(it.key, ctx),
+                    value = visitRex(it.value, ctx),
+                )
+            }
+        return exprStruct(fields)
     }
 
-    private fun id(symbol: String): Identifier.Symbol = identifierSymbol(
-        symbol = symbol,
-        caseSensitivity = Identifier.CaseSensitivity.INSENSITIVE,
-    )
+    override fun visitSubquery(
+        rex: RexSubquery,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "SUBQUERY is not yet supported",
+            ),
+        )
+    }
 
-    private fun binder(symbol: String): Identifier.Symbol = identifierSymbol(
-        symbol = symbol,
-        caseSensitivity = Identifier.CaseSensitivity.SENSITIVE,
-    )
+    override fun visitSubqueryComp(
+        rex: RexSubqueryComp,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "SUBQUERYCOMP is not yet supported",
+            ),
+        )
+    }
 
+    override fun visitSubqueryIn(
+        rex: RexSubqueryIn,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "SUBQUERYIN is not yet supported",
+            ),
+        )
+    }
+
+    override fun visitSubqueryTest(
+        rex: RexSubqueryTest,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "SUBQUERYTEST is not yet supported",
+            ),
+        )
+    }
+
+    override fun visitSpread(
+        rex: RexSpread,
+        ctx: Unit,
+    ): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "SPREAD is not yet supported",
+            ),
+        )
+    }
+
+    override fun visitTable(
+        rex: RexTable,
+        ctx: Unit,
+    ): Expr {
+        val tableName = rex.table.getName()
+        val parts = tableName.getNamespace().getLevels() + tableName.getName()
+        val global =
+            transform.getGlobal(org.partiql.spi.catalog.Identifier.delimited(parts.toList()))
+                ?: listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.INVALID_PLAN,
+                        "Malformed plan, resolved global (\$global ${rex.table.getName()}) does not exist",
+                    ),
+                )
+        return exprVarRef(global, isQualified = false)
+    }
+
+    override fun visitVar(
+        rex: RexVar,
+        ctx: Unit,
+    ): Expr {
+        val scope = rex.scope // TODO currently unused
+        val offset = rex.offset
+        if (0 <= offset && offset < locals.aggregations.size) {
+            return locals.aggregations[offset]
+        }
+        val binding =
+            locals.env.getOrNull(offset) ?: listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
+                ),
+            )
+        val identifier = binder(binding.name)
+        return exprVarRef(
+            identifier = identifier,
+            isQualified = false,
+        )
+    }
+
+    // Private helpers
     private fun Locals.dump(): String {
         val pairs = this.env.joinToString { "${it.name}: ${it.type}" }
         return "< $pairs >"
     }
 
-    internal fun Identifier.sql(): String = when (this) {
-        is Identifier.Qualified -> (listOf(this.root.sql()) + this.steps.map { it.sql() }).joinToString(".")
-        is Identifier.Symbol -> when (this.caseSensitivity) {
-            Identifier.CaseSensitivity.SENSITIVE -> "\"$symbol\""
-            Identifier.CaseSensitivity.INSENSITIVE -> symbol
-        }
-    }
+    private fun binder(symbol: String): Identifier = Identifier.delimited(symbol)
 }

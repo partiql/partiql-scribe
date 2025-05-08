@@ -1,94 +1,67 @@
 package org.partiql.scribe.sql
 
 import org.partiql.ast.AstNode
-import org.partiql.plan.PartiQLPlan
-import org.partiql.scribe.ProblemCallback
+import org.partiql.ast.sql.SqlDialect
+import org.partiql.ast.sql.SqlLayout
+import org.partiql.ast.sql.sql
+import org.partiql.plan.Action
+import org.partiql.plan.Plan
+import org.partiql.plan.rex.Rex
+import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.ScribeOutput
 import org.partiql.scribe.ScribeTag
 import org.partiql.scribe.ScribeTarget
-import org.partiql.scribe.VersionProvider
-import org.partiql.types.StaticType
-import org.partiql.plan.Statement as PlanStatement
-
-public class SqlOutput(
-    tag: ScribeTag,
-    value: String,
-    schema: StaticType,
-) : ScribeOutput<String>(tag, value, schema) {
-
-    override fun toString(): String = value
-
-    override fun toDebugString(): String = buildString {
-        appendLine("SQL: ")
-        appendLine(value)
-        appendLine()
-        appendLine("Schema: ")
-        appendLine(schema)
-    }
-}
+import org.partiql.spi.catalog.Session
 
 /**
- * This is a base [ScribeTarget] for SQL dialects.
+ * Base [ScribeTarget] for SQL dialects.
  */
 public abstract class SqlTarget : ScribeTarget<String> {
+    public open val dialect: SqlDialect = SqlDialect.STANDARD
 
-    /**
-     * Default SQL dialect for AST -> SQL.
-     */
-    open val dialect: SqlDialect = SqlDialect.PARTIQL
+    public open val layout: SqlLayout = SqlLayout.STANDARD
 
-    /**
-     * Default SQL formatting layout.
-     */
-    open val layout: SqlLayout = SqlLayout.DEFAULT
+    public open val features: SqlFeatures = SqlFeatures.Defensive()
 
-    /**
-     * Default validator after planning. This is invoked after planning and before the [rewrite].
-     *
-     * @see [SqlFeatures]
-     */
-    open val features: SqlFeatures = SqlFeatures.Defensive()
+    public open fun getCalls(context: ScribeContext): SqlCalls = SqlCalls.standard(context)
 
-    /**
-     * Default SQL call transformation logic.
-     */
-    open fun getCalls(onProblem: ProblemCallback) = SqlCalls.DEFAULT
+    public abstract fun rewrite(
+        plan: Plan,
+        context: ScribeContext,
+    ): Plan
 
-    /**
-     * Entry-point for manipulations of the [PartiQLPlan] tree.
-     */
-    abstract fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback): PartiQLPlan
-
-    /**
-     * Apply the plan rewrite, then use the given [SqlDialect] to output SQL text.
-     */
-    override fun compile(plan: PartiQLPlan, onProblem: ProblemCallback): ScribeOutput<String> {
-        features.validate(plan, onProblem)
-        val newPlan = rewrite(plan, onProblem)
-        if (newPlan.statement !is PlanStatement.Query) {
-            error("Scribe currently only supports query statements")
-        }
-        val schema = (newPlan.statement as PlanStatement.Query).root.type
-        val newAst = unplan(newPlan, onProblem)
-        val block = dialect.apply(newAst)
+    override fun compile(
+        plan: Plan,
+        session: Session,
+        context: ScribeContext,
+    ): ScribeOutput<String> {
+        // 1st validate the features used in the provided plan
+        features.validate(plan, context)
+        // 2nd rewrite plan according to plan -> plan' rewrites; get schema from the plan
+        val newPlan = rewrite(plan, context)
+        val topLevelRexType = newPlan.topLevelRex().type
+        val schema = topLevelRexType.pType
+        // 3rd convert plan into ast
+        val newAst = planToAst(newPlan, session, context)
+        // 4th convert ast into sql text
+        val block = dialect.transform(newAst)
         val sql = block.sql(layout)
-
-        val tag = ScribeTag(
-            scribeVersion = VersionProvider.version,
-            scribeCommit = VersionProvider.commit,
-            target = this.target,
-            targetVersion = this.version,
-        )
-
+        // 5th generate final output
+        val tag = ScribeTag()
         return SqlOutput(tag, sql, schema)
     }
 
-    /**
-     * Default Plan to AST translation. This method is only for potential edge cases
-     */
-    open fun unplan(plan: PartiQLPlan, onProblem: ProblemCallback): AstNode {
-        val transform = SqlTransform(plan.catalogs, getCalls(onProblem), onProblem)
-        val statement = transform.apply(plan.statement)
-        return statement
+    public open fun planToAst(
+        newPlan: Plan,
+        session: Session,
+        context: ScribeContext,
+    ): AstNode {
+        val transform = PlanToAst(session, getCalls(context), context)
+        val astStatement = transform.apply(newPlan)
+        return astStatement
+    }
+
+    private fun Plan.topLevelRex(): Rex {
+        return ((this.action) as Action.Query).rex
     }
 }

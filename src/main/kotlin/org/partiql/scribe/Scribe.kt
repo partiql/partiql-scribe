@@ -1,59 +1,23 @@
 package org.partiql.scribe
 
-import org.partiql.plan.PartiQLPlan
+import org.partiql.plan.Plan
+import org.partiql.spi.catalog.Session
 
-/**
- * PartiQL Scribe compiler plan->T part.
- */
-public class Scribe {
-
-    /**
-     * Entry-point for the scribe compiler.
-     *
-     * @param T         Return type of target output (eg. SQL Targets return a string)
-     * @param plan      Input PartiQL Plan to compile.
-     * @param target    Compilation target.
-     * @return
-     */
-    @Throws(ScribeException::class)
-    public fun <T> compile(plan: PartiQLPlan, target: ScribeTarget<T>): Result<T> {
-        try {
-            val collector = ProblemCollector()
-
-            // Assert zero planning problems
-            plan.validate(collector::callback)
-            if (collector.problems.isNotEmpty()) {
-                // don't try to compile if planning encountered errors
-                throw ScribeException("PartiQL query plan has errors", null, collector.problems)
-            }
-
-            // Plan OK, compile to desired target
-            val output = target.compile(plan, collector::callback)
-
-            return Result(plan, output, collector.problems)
-        } catch (e: ScribeException) {
-            throw e
-        } catch (cause: Throwable) {
-            throw ScribeException(cause.message, cause)
-        }
+public class Scribe(
+    public val scribeContext: ScribeContext,
+) {
+    public fun <T> compile(
+        plan: Plan,
+        session: Session,
+        target: ScribeTarget<T>,
+    ): Result<T> {
+        // TODO run plan validation pass to ensure no error nodes
+        val output = target.compile(plan, session, context = scribeContext)
+        return Result(plan, output)
     }
 
-    public data class Result<T>(
-        val input: PartiQLPlan,
-        val output: ScribeOutput<T>,
-        val problems: List<ScribeProblem>,
+    public class Result<T>(
+        public val input: Plan,
+        public val output: ScribeOutput<T>,
     )
-
-    private class ProblemCollector {
-        //
-        internal val problems = mutableListOf<ScribeProblem>()
-
-        internal fun callback(problem: ScribeProblem) {
-            problems.add(problem)
-        }
-    }
-
-    private fun PartiQLPlan.validate(callback: ProblemCallback) {
-        this.statement.accept(ScribePlanValidator, callback)
-    }
 }

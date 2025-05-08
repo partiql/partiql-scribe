@@ -118,11 +118,12 @@ t1 IS BOOL;
 --#[expr-27]
 t1 IS NOT BOOL;
 
---#[expr-28]
-t1 IS SYMBOL;
-
---#[expr-29]
-t1 IS NOT SYMBOL;
+-- `IS SYMBOL` is not support in PLK 1.x
+-- --#[expr-28]
+-- t1 IS SYMBOL;
+--
+-- --#[expr-29]
+-- t1 IS NOT SYMBOL;
 
 --#[expr-30]
 t1 IS DATE;
@@ -166,11 +167,12 @@ t1 IS LIST;
 --#[expr-43]
 t1 IS NOT LIST;
 
---#[expr-44]
-t1 IS SEXP;
-
---#[expr-45]
-t1 IS NOT SEXP;
+-- SEXP data type not in PLK 1.x
+-- --#[expr-44]
+-- t1 IS SEXP;
+--
+-- --#[expr-45]
+-- t1 IS NOT SEXP;
 
 --#[expr-46]
 t1 IS STRUCT;
