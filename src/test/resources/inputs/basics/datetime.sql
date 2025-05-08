@@ -13,7 +13,7 @@ SELECT TIME '01:02:03' FROM T;
 SELECT TIME '01:02:03.456' FROM T;
 
 -- --#[datetime-04]
--- previous test includes timezone offset for TIME
+-- previous test includes timezone offset for TIME and negative timezone offset is not supported
 -- SELECT TIME '01:02:03.456-00:00' FROM T;
 
 --#[datetime-05]
@@ -30,7 +30,7 @@ SELECT TIME WITH TIME ZONE '01:02:03.456-00:30' FROM T;
 SELECT TIMESTAMP '0001-02-03 04:05:06.78' FROM T;
 
 -- --#[datetime-09]
--- previous test includes timezone offset for TIMESTAMP
+-- previous test includes timezone offset for TIMESTAMP and negative timezone offset is not supported
 -- SELECT TIMESTAMP '0001-02-03 04:05:06.78-00:00' FROM T;
 
 --#[datetime-10]

@@ -4,7 +4,6 @@ import org.partiql.ast.Ast.queryBodySFW
 import org.partiql.ast.QueryBody
 import org.partiql.scribe.sql.RelConverter
 
-// TODO move to utils
 public fun RelConverter.RelContext.toQueryBodySFW(): QueryBody.SFW {
     assert(this.select != null)
     return queryBodySFW(

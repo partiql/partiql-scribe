@@ -12,6 +12,7 @@ class PartiQLTargetSuite : SqlTargetSuite() {
 
     override val sessions =
         SessionProvider(
+            // some additional function overloads to test transpilation of UDFs
             scalarOverloads =
                 mapOf(
                     "split" to Functions.scalarSplit,

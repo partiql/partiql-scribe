@@ -226,7 +226,9 @@ public open class RexConverter(
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "ERROR is not yet supported",
+                message =
+                    "ERROR Rex node indicates there was an error in the plan. " +
+                        "Check the PErrorListener used during planning for more error details.",
             ),
         )
     }

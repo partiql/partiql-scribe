@@ -24,6 +24,9 @@ public abstract class SqlFeatures : OperatorVisitor<Unit, ScribeContext> {
         }
     }
 
+    /**
+     * An [SqlFeatures] which denies all features (rel.op and rex.op) by default; thereby requiring explicit opt-in.
+     */
     public open class Defensive : SqlFeatures() {
         public open val allow: Set<Class<*>> = emptySet()
 

@@ -9,6 +9,9 @@ import org.partiql.spi.types.PType
  */
 class Functions {
     companion object {
+        /**
+         * Function overload to test that a UDF (`split`) can be transpiled.
+         */
         val scalarSplit =
             FnOverload.Builder("split")
                 .addParameters(
