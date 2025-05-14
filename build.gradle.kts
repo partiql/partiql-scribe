@@ -13,6 +13,11 @@ plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
 }
 
+configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+    version.set("1.1.0")
+    ignoreFailures.set(false)
+}
+
 val properties = "$buildDir/properties"
 
 object Versions {
@@ -24,7 +29,7 @@ object Versions {
 
     // Deps
     const val JUNIT_5 = "5.9.3"
-    const val PARTIQL = "1.2.1"
+    const val PARTIQL = "1.2.2-SCRIBE"
 }
 
 object Deps {

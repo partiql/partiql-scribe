@@ -30,7 +30,7 @@ public open class SparkTarget : SqlTarget() {
         context: ScribeContext,
     ): Plan {
         SparkRewriter(context)
-        TODO()
+        return plan
     }
 
     override fun planToAst(
