@@ -4,23 +4,15 @@
 Scribe is a compiler framework for the PartiQL SQL dialect.
 It is considered experimental and is under active development.
 
-=== Upgrading PartiQL
+=== Local Build
 
-Scribe will depend on a PartiQL major-version, but for now we shadow partiql-lang-kotlin to a single dependency.
+This project uses a https://git-scm.com/book/en/v2/Git-Tools-Submodules[git-submodule] to pull in
+https://github.com/partiql/partiql-lang-kotlin[partiql-lang-kotlin]. The easiest way to pull everything in is to clone the
+repository recursively:
 
 [source,shell]
 ----
-# From partiql-lang-kotlin produce a JAR
-
-./gradlew :partiql-lang:shadowJar
-
-cp ./partiql-lang/build/libs/partiql-lang-kotlin-version.jar ./path/to/Scribe/libs
-
-# Also copy the local plugin (we should consider bundling with SPI)
-
-./gradlew :plugins:partiql-local:installDist
-
-cp ./plugins/partiql-local/build/libs/partiql-local-version.jar ./path/to/Scribe/libs
+git clone --recursive https://github.com/partiql/partiql-scribe.git
 ----
 
 == Terms

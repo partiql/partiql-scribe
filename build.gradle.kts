@@ -24,7 +24,7 @@ object Versions {
 
     // Deps
     const val JUNIT_5 = "5.9.3"
-    const val PARTIQL = "1.2.1"
+    const val PARTIQL = "1.2.2-SNAPSHOT"
 }
 
 object Deps {
@@ -40,7 +40,7 @@ repositories {
 }
 
 dependencies {
-    api(Deps.PARTIQL)
+    implementation(Deps.PARTIQL)
     // Test
     testImplementation(Deps.KOTLIN_TEST)
     testImplementation(Deps.KOTLIN_TEST_JUNIT)
