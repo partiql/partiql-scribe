@@ -9,8 +9,8 @@ plugins {
     kotlin("jvm") version "1.9.20"
     application
     `maven-publish`
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
-    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
+//    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
+//    id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
 }
 
 val properties = "$buildDir/properties"
@@ -40,7 +40,7 @@ repositories {
 }
 
 dependencies {
-    api(Deps.PARTIQL)
+//    api(Deps.PARTIQL)
     // Test
     testImplementation(Deps.KOTLIN_TEST)
     testImplementation(Deps.KOTLIN_TEST_JUNIT)
@@ -86,76 +86,76 @@ sourceSets {
     }
 }
 
-application {
-    applicationName = "scribe"
-    mainClass.set("org.partiql.scribe.shell.Main")
-}
+//application {
+//    applicationName = "scribe"
+//    mainClass.set("org.partiql.scribe.shell.Main")
+//}
+//
+//tasks.register<GradleBuild>("install") {
+//    tasks = listOf("assembleDist", "distZip", "installDist")
+//}
+//
+//tasks.processResources {
+//    dependsOn(tasks.findByName("generateProperties"))
+//}
 
-tasks.register<GradleBuild>("install") {
-    tasks = listOf("assembleDist", "distZip", "installDist")
-}
+//tasks.create("generateProperties") {
+//    val propertiesFile = file("$properties/scribe.properties")
+//    val commit =
+//        ByteArrayOutputStream().apply {
+//            exec {
+//                commandLine = listOf("git", "rev-parse", "--short", "HEAD")
+//                standardOutput = this@apply
+//            }
+//        }
+//    // write properties
+//    propertiesFile.parentFile.mkdirs()
+//    val properties = Properties()
+//    properties.setProperty("version", version.toString())
+//    properties.setProperty("commit", commit.toString().trim())
+//    properties.store(FileOutputStream(propertiesFile), null)
+//}
 
-tasks.processResources {
-    dependsOn(tasks.findByName("generateProperties"))
-}
+//kotlin {
+//    explicitApi = ExplicitApiMode.Strict
+//}
 
-tasks.create("generateProperties") {
-    val propertiesFile = file("$properties/scribe.properties")
-    val commit =
-        ByteArrayOutputStream().apply {
-            exec {
-                commandLine = listOf("git", "rev-parse", "--short", "HEAD")
-                standardOutput = this@apply
-            }
-        }
-    // write properties
-    propertiesFile.parentFile.mkdirs()
-    val properties = Properties()
-    properties.setProperty("version", version.toString())
-    properties.setProperty("commit", commit.toString().trim())
-    properties.store(FileOutputStream(propertiesFile), null)
-}
-
-kotlin {
-    explicitApi = ExplicitApiMode.Strict
-}
-
-publishing {
-    repositories {
-        maven {
-            url = uri(layout.buildDirectory.dir("import"))
-        }
-    }
-    publications {
-        create<MavenPublication>("main") {
-
-            artifactId = "scribe"
-            from(components["java"])
-
-            pom {
-                name = "PartiQL Scribe"
-                description = "The PartiQL Scribe query transpiler framework."
-                url = "https://partiql.org"
-
-                packaging = "jar"
-                groupId = "org.partiql"
-                version = "0.1"
-
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        name.set("PartiQL Team")
-                        email.set("partiql-dev@amazon.com")
-                        organization.set("PartiQL")
-                        organizationUrl.set("https://github.com/partiql")
-                    }
-                }
-            }
-        }
-    }
-}
+//publishing {
+//    repositories {
+//        maven {
+//            url = uri(layout.buildDirectory.dir("import"))
+//        }
+//    }
+//    publications {
+//        create<MavenPublication>("main") {
+//
+//            artifactId = "scribe"
+//            from(components["java"])
+//
+//            pom {
+//                name = "PartiQL Scribe"
+//                description = "The PartiQL Scribe query transpiler framework."
+//                url = "https://partiql.org"
+//
+//                packaging = "jar"
+//                groupId = "org.partiql"
+//                version = "0.1"
+//
+//                licenses {
+//                    license {
+//                        name.set("The Apache License, Version 2.0")
+//                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        name.set("PartiQL Team")
+//                        email.set("partiql-dev@amazon.com")
+//                        organization.set("PartiQL")
+//                        organizationUrl.set("https://github.com/partiql")
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
