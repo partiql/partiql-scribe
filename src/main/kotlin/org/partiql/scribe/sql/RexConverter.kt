@@ -87,7 +87,7 @@ public open class RexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : OperatorVisitor<Expr, Unit> {
-    private val listener = context.getErrorListener()
+    private val listener = context.getProblemListener()
 
     /**
      * Convert a [Rex] to an [Expr].

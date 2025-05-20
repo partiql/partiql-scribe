@@ -15,7 +15,7 @@ public abstract class SqlFeatures : OperatorVisitor<Unit, ScribeContext> {
         when (val action = plan.action) {
             is Action.Query -> visit(action.rex, context)
             else ->
-                context.getErrorListener().report(
+                context.getProblemListener().report(
                     ScribeProblem.simpleError(
                         ScribeProblem.UNSUPPORTED_OPERATION,
                         "Can only transform a query statement",
@@ -35,7 +35,7 @@ public abstract class SqlFeatures : OperatorVisitor<Unit, ScribeContext> {
             ctx: ScribeContext,
         ) {
             if (!allow.contains(node::class.java)) {
-                ctx.getErrorListener().report(
+                ctx.getProblemListener().report(
                     ScribeProblem.simpleError(
                         ScribeProblem.UNSUPPORTED_OPERATION,
                         "PartiQL feature (${feature(node)}) is not supported.",

@@ -143,7 +143,7 @@ abstract class SqlTargetSuite {
         val parsedStatements = parserResult.statements
 
         if (parsedStatements.size != 1) {
-            scribeContext.getErrorListener().report(
+            scribeContext.getProblemListener().report(
                 ScribeProblem.simpleError(
                     code = ScribeProblem.UNSUPPORTED_OPERATION,
                     "Only one statement is supported at a time.",

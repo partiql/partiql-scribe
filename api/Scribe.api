@@ -12,7 +12,7 @@ public final class org/partiql/scribe/Scribe$Result {
 
 public abstract interface class org/partiql/scribe/ScribeContext {
 	public static final field Companion Lorg/partiql/scribe/ScribeContext$Companion;
-	public abstract fun getErrorListener ()Lorg/partiql/scribe/problems/ScribeProblemListener;
+	public abstract fun getProblemListener ()Lorg/partiql/scribe/problems/ScribeProblemListener;
 }
 
 public final class org/partiql/scribe/ScribeContext$Companion {
@@ -52,19 +52,25 @@ public final class org/partiql/scribe/problems/ScribeProblem : org/partiql/spi/E
 	public static final fun getINVALID_PLAN ()I
 	public final fun getOrNull (Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
 	public final fun getSeverity ()Lorg/partiql/scribe/problems/Severity;
+	public static final fun getTRANSLATION_INFO ()I
+	public static final fun getUNSUPPORTED_AST_TO_TEXT_CONVERSION ()I
 	public static final fun getUNSUPPORTED_OPERATION ()I
 	public static final fun getUNSUPPORTED_PLAN_TO_AST_CONVERSION ()I
 	public fun name ()Ljava/lang/String;
 	public static final fun simpleError (ILjava/lang/String;)Lorg/partiql/scribe/problems/ScribeProblem;
+	public static final fun simpleInfo (ILjava/lang/String;)Lorg/partiql/scribe/problems/ScribeProblem;
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/partiql/scribe/problems/ScribeProblem$Companion {
 	public final fun getINTERNAL_ERROR ()I
 	public final fun getINVALID_PLAN ()I
+	public final fun getTRANSLATION_INFO ()I
+	public final fun getUNSUPPORTED_AST_TO_TEXT_CONVERSION ()I
 	public final fun getUNSUPPORTED_OPERATION ()I
 	public final fun getUNSUPPORTED_PLAN_TO_AST_CONVERSION ()I
 	public final fun simpleError (ILjava/lang/String;)Lorg/partiql/scribe/problems/ScribeProblem;
+	public final fun simpleInfo (ILjava/lang/String;)Lorg/partiql/scribe/problems/ScribeProblem;
 }
 
 public abstract interface class org/partiql/scribe/problems/ScribeProblemListener {
@@ -87,7 +93,9 @@ public final class org/partiql/scribe/problems/Severity : org/partiql/spi/Enum {
 	public fun <init> (I)V
 	public static final fun error ()Lorg/partiql/scribe/problems/Severity;
 	public static final fun getERROR ()I
+	public static final fun getINFO ()I
 	public static final fun getWARNING ()I
+	public static final fun info ()Lorg/partiql/scribe/problems/Severity;
 	public fun name ()Ljava/lang/String;
 	public static final fun warning ()Lorg/partiql/scribe/problems/Severity;
 }
@@ -95,8 +103,15 @@ public final class org/partiql/scribe/problems/Severity : org/partiql/spi/Enum {
 public final class org/partiql/scribe/problems/Severity$Companion {
 	public final fun error ()Lorg/partiql/scribe/problems/Severity;
 	public final fun getERROR ()I
+	public final fun getINFO ()I
 	public final fun getWARNING ()I
+	public final fun info ()Lorg/partiql/scribe/problems/Severity;
 	public final fun warning ()Lorg/partiql/scribe/problems/Severity;
+}
+
+public abstract class org/partiql/scribe/sql/AstToSql : org/partiql/ast/sql/SqlDialect {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
 }
 
 public final class org/partiql/scribe/sql/Locals {
@@ -311,8 +326,8 @@ public final class org/partiql/scribe/sql/SqlOutput : org/partiql/scribe/ScribeO
 public abstract class org/partiql/scribe/sql/SqlTarget : org/partiql/scribe/ScribeTarget {
 	public fun <init> ()V
 	public fun compile (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/ScribeOutput;
+	public fun getAstToSql (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/AstToSql;
 	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
-	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
 	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
 	public fun getLayout ()Lorg/partiql/ast/sql/SqlLayout;
 	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
@@ -331,12 +346,12 @@ public final class org/partiql/scribe/targets/partiql/PartiQLTarget : org/partiq
 	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scribe/sql/SqlCalls {
+public class org/partiql/scribe/targets/redshift/RedshiftAstToSql : org/partiql/scribe/sql/AstToSql {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftDialect : org/partiql/ast/sql/SqlDialect {
-	public fun <init> ()V
+public final class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 }
 
 public final class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -367,8 +382,8 @@ public final class org/partiql/scribe/targets/redshift/RedshiftRexConverter : or
 public class org/partiql/scribe/targets/redshift/RedshiftTarget : org/partiql/scribe/sql/SqlTarget {
 	public static final field Companion Lorg/partiql/scribe/targets/redshift/RedshiftTarget$Companion;
 	public fun <init> ()V
+	public fun getAstToSql (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/AstToSql;
 	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
-	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
 	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
 	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/redshift/RedshiftTarget;
 	public fun getTarget ()Ljava/lang/String;
@@ -381,12 +396,12 @@ public final class org/partiql/scribe/targets/redshift/RedshiftTarget$Companion 
 	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/redshift/RedshiftTarget;
 }
 
-public final class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sql/SqlCalls {
+public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe/sql/AstToSql {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 }
 
-public final class org/partiql/scribe/targets/spark/SparkDialect : org/partiql/ast/sql/SqlDialect {
-	public fun <init> ()V
+public final class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 }
 
 public final class org/partiql/scribe/targets/spark/SparkFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -417,8 +432,8 @@ public final class org/partiql/scribe/targets/spark/SparkRexConverter : org/part
 public class org/partiql/scribe/targets/spark/SparkTarget : org/partiql/scribe/sql/SqlTarget {
 	public static final field Companion Lorg/partiql/scribe/targets/spark/SparkTarget$Companion;
 	public fun <init> ()V
+	public fun getAstToSql (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/AstToSql;
 	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
-	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
 	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
 	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/spark/SparkTarget;
 	public fun getTarget ()Ljava/lang/String;
@@ -431,12 +446,12 @@ public final class org/partiql/scribe/targets/spark/SparkTarget$Companion {
 	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/spark/SparkTarget;
 }
 
-public final class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sql/SqlCalls {
+public class org/partiql/scribe/targets/trino/TrinoAstToSql : org/partiql/scribe/sql/AstToSql {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 }
 
-public final class org/partiql/scribe/targets/trino/TrinoDialect : org/partiql/ast/sql/SqlDialect {
-	public fun <init> ()V
+public final class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 }
 
 public final class org/partiql/scribe/targets/trino/TrinoFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -467,8 +482,8 @@ public final class org/partiql/scribe/targets/trino/TrinoRexConverter : org/part
 public class org/partiql/scribe/targets/trino/TrinoTarget : org/partiql/scribe/sql/SqlTarget {
 	public static final field Companion Lorg/partiql/scribe/targets/trino/TrinoTarget$Companion;
 	public fun <init> ()V
+	public fun getAstToSql (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/AstToSql;
 	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
-	public fun getDialect ()Lorg/partiql/ast/sql/SqlDialect;
 	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
 	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/trino/TrinoTarget;
 	public fun getTarget ()Ljava/lang/String;

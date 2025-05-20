@@ -25,7 +25,7 @@ public open class PlanToAst(
     private val calls: SqlCalls,
     private val context: ScribeContext,
 ) {
-    private val listener = context.getErrorListener()
+    private val listener = context.getProblemListener()
 
     public open fun apply(plan: Plan): AstNode {
         when (val action = plan.action) {

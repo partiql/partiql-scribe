@@ -20,7 +20,9 @@ public class ScribeProblem(
             INTERNAL_ERROR -> "INTERNAL_ERROR"
             UNSUPPORTED_OPERATION -> "UNSUPPORTED_OPERATION"
             UNSUPPORTED_PLAN_TO_AST_CONVERSION -> "UNSUPPORTED_PLAN_TO_AST_CONVERSION"
+            UNSUPPORTED_AST_TO_TEXT_CONVERSION -> "UNSUPPORTED_AST_TO_TEXT_CONVERSION"
             INVALID_PLAN -> "INVALID_PLAN"
+            TRANSLATION_INFO -> "TRANSLATION_INFO"
             else -> throw UnsupportedCodeException(code)
         }
     }
@@ -38,6 +40,18 @@ public class ScribeProblem(
             )
         }
 
+        @JvmStatic
+        public fun simpleInfo(
+            code: Int,
+            message: String,
+        ): ScribeProblem {
+            return ScribeProblem(
+                code,
+                Severity.info(),
+                mapOf("MESSAGE" to message),
+            )
+        }
+
         // Static constants
         @JvmStatic
         public val INTERNAL_ERROR: Int = 1
@@ -49,7 +63,13 @@ public class ScribeProblem(
         public val UNSUPPORTED_PLAN_TO_AST_CONVERSION: Int = 3
 
         @JvmStatic
-        public val INVALID_PLAN: Int = 4
+        public val UNSUPPORTED_AST_TO_TEXT_CONVERSION: Int = 4
+
+        @JvmStatic
+        public val INVALID_PLAN: Int = 5
+
+        @JvmStatic
+        public val TRANSLATION_INFO: Int = 6
     }
 
     // /
