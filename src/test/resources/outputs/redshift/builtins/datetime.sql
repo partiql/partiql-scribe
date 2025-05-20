@@ -4,13 +4,13 @@
 SELECT CURRENT_DATE AS "CURRENT_DATE" FROM "default"."T" AS "T";
 
 --#[datetime-09]
-SELECT DATEADD(SECOND, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATEADD(SECOND, 5, CAST("T"."timestamp_1" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-10]
-SELECT DATEADD(MINUTE, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATEADD(MINUTE, 5, CAST("T"."timestamp_1" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-11]
-SELECT DATEADD(HOUR, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT DATEADD(HOUR, 5, CAST("T"."timestamp_1" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-12]
 SELECT DATEADD(DAY, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";

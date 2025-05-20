@@ -8,7 +8,7 @@ import org.partiql.scribe.sql.RexConverter
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.spi.catalog.Session
 
-public class RedshiftPlanToAst(
+public open class RedshiftPlanToAst(
     public val session: Session,
     public val calls: SqlCalls,
     public val context: ScribeContext,

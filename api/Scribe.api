@@ -348,17 +348,30 @@ public final class org/partiql/scribe/targets/partiql/PartiQLTarget : org/partiq
 
 public class org/partiql/scribe/targets/redshift/RedshiftAstToSql : org/partiql/scribe/sql/AstToSql {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitDataType (Lorg/partiql/ast/DataType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitDataType (Lorg/partiql/ast/DataType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scribe/sql/SqlCalls {
+public class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scribe/sql/SqlCalls {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun getRules ()Ljava/util/Map;
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
+public class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
 	public fun <init> ()V
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftPlanToAst : org/partiql/scribe/sql/PlanToAst {
+public class org/partiql/scribe/targets/redshift/RedshiftPlanToAst : org/partiql/scribe/sql/PlanToAst {
 	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
 	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
@@ -367,16 +380,24 @@ public final class org/partiql/scribe/targets/redshift/RedshiftPlanToAst : org/p
 	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftRelConverter : org/partiql/scribe/sql/RelConverter {
+public class org/partiql/scribe/targets/redshift/RedshiftRelConverter : org/partiql/scribe/sql/RelConverter {
 	public fun <init> (Lorg/partiql/scribe/targets/redshift/RedshiftPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftRewriter : org/partiql/plan/OperatorRewriter {
+public class org/partiql/scribe/targets/redshift/RedshiftRewriter : org/partiql/plan/OperatorRewriter {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 }
 
-public final class org/partiql/scribe/targets/redshift/RedshiftRexConverter : org/partiql/scribe/sql/RexConverter {
+public class org/partiql/scribe/targets/redshift/RedshiftRexConverter : org/partiql/scribe/sql/RexConverter {
 	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitCall (Lorg/partiql/plan/rex/RexCall;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCall (Lorg/partiql/plan/rex/RexCall;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitCase (Lorg/partiql/plan/rex/RexCase;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCase (Lorg/partiql/plan/rex/RexCase;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitDispatch (Lorg/partiql/plan/rex/RexDispatch;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitDispatch (Lorg/partiql/plan/rex/RexDispatch;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitNullIf (Lorg/partiql/plan/rex/RexNullIf;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitNullIf (Lorg/partiql/plan/rex/RexNullIf;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/redshift/RedshiftTarget : org/partiql/scribe/sql/SqlTarget {
