@@ -3,4 +3,4 @@ package org.partiql.scribe.targets.redshift
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.sql.RelConverter
 
-public class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext) : RelConverter(transform, context)
+public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext) : RelConverter(transform, context)
