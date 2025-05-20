@@ -13,6 +13,11 @@ plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
 }
 
+configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+    version.set("1.1.0")
+    ignoreFailures.set(false)
+}
+
 val properties = "$buildDir/properties"
 
 object Versions {

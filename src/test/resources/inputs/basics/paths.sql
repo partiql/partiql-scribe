@@ -139,7 +139,7 @@ SELECT t.x[0 + 1] AS v FROM t;
 -- SELECT t.x[ABS(1)] AS v FROM t;
 
 --#[paths-sfw-16]
-SELECT t.array[0] AS v FROM t;
+SELECT t."array"[0] AS v FROM t;
 
 -- Additional path exprs
 --#[paths-sfw-17]
@@ -157,12 +157,12 @@ SELECT "t"."flds"."a"."field_x" AS v FROM EXCLUDE_T AS t;
 
 -- nullable fields
 --#[paths-sfw-21]
-SELECT t.flds.a.field_x AS v FROM EXCLUDE_T_NULLABLE AS t;
+SELECT t.flds.a.field_x AS v FROM EXCLUDE_T AS t;
 
 -- nullable fields + qualified path
 --#[paths-sfw-22]
-SELECT "t"."flds"."a"."field_x" AS v FROM EXCLUDE_T_NULLABLE AS t;
+SELECT "t"."flds"."a"."field_x" AS v FROM EXCLUDE_T AS t;
 
 -- nullable fields + mix of qualified and unqualified path components
 --#[paths-sfw-23]
-SELECT "t".flds."a".field_x AS v FROM EXCLUDE_T_NULLABLE AS t;
+SELECT "t".flds."a".field_x AS v FROM EXCLUDE_T AS t;

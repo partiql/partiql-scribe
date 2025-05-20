@@ -30,7 +30,7 @@ public open class RedshiftTarget : SqlTarget() {
         context: ScribeContext,
     ): Plan {
         RedshiftRewriter(context)
-        TODO()
+        return plan
     }
 
     override fun planToAst(
