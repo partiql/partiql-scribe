@@ -2,13 +2,13 @@
 SELECT CURRENT_DATE AS `CURRENT_DATE` FROM `default`.`T` AS `T`;
 
 --#[datetime-09]
-SELECT CURRENT_DATE + `make_interval`(0, 0, 0, 0, 0, 0, 5) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, 0, 0, 0, 5) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-10]
-SELECT CURRENT_DATE + `make_interval`(0, 0, 0, 0, 0, 5, 0) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, 0, 0, 5, 0) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-11]
-SELECT CURRENT_DATE + `make_interval`(0, 0, 0, 0, 5, 0, 0) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, 0, 5, 0, 0) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-12]
 SELECT CURRENT_DATE + `make_interval`(0, 0, 0, 5, 0, 0, 0) AS `_1` FROM `default`.`T` AS `T`;
