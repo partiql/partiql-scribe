@@ -1,7 +1,6 @@
 package org.partiql.scribe.sql
 
 import org.partiql.ast.AstNode
-import org.partiql.ast.sql.SqlDialect
 import org.partiql.ast.sql.SqlLayout
 import org.partiql.ast.sql.sql
 import org.partiql.plan.Action
@@ -17,7 +16,7 @@ import org.partiql.spi.catalog.Session
  * Base [ScribeTarget] for SQL dialects.
  */
 public abstract class SqlTarget : ScribeTarget<String> {
-    public open val dialect: SqlDialect = SqlDialect.STANDARD
+    public open fun getAstToSql(context: ScribeContext): AstToSql = object : AstToSql(context) {}
 
     public open val layout: SqlLayout = SqlLayout.STANDARD
 
@@ -44,7 +43,7 @@ public abstract class SqlTarget : ScribeTarget<String> {
         // 3rd convert plan into ast
         val newAst = planToAst(newPlan, session, context)
         // 4th convert ast into sql text
-        val block = dialect.transform(newAst)
+        val block = getAstToSql(context).transform(newAst)
         val sql = block.sql(layout)
         // 5th generate final output
         val tag = ScribeTag()

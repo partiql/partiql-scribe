@@ -55,7 +55,7 @@ public open class RelConverter(
     private val transform: PlanToAst,
     private val context: ScribeContext,
 ) : OperatorVisitor<RelConverter.RelContext, Unit> {
-    private val listener = context.getErrorListener()
+    private val listener = context.getProblemListener()
 
     public class RelContext(
         public var select: Select? = null,

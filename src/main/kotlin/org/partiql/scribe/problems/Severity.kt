@@ -10,9 +10,10 @@ import org.partiql.spi.Enum
 public class Severity(private val code: Int) : Enum(code) {
     override fun name(): String {
         return when (code) {
-            ERROR -> return "ERROR"
-            WARNING -> return "WARNING"
-            else -> return "UNKNOWN"
+            ERROR -> "ERROR"
+            WARNING -> "WARNING"
+            INFO -> "INFO"
+            else -> "UNKNOWN"
         }
     }
 
@@ -24,9 +25,15 @@ public class Severity(private val code: Int) : Enum(code) {
         public val WARNING: Int = 2
 
         @JvmStatic
+        public val INFO: Int = 3
+
+        @JvmStatic
         public fun error(): Severity = Severity(ERROR)
 
         @JvmStatic
         public fun warning(): Severity = Severity(WARNING)
+
+        @JvmStatic
+        public fun info(): Severity = Severity(INFO)
     }
 }

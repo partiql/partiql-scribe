@@ -56,7 +56,7 @@ public class SqlArg(
  * For target implementors, extend this and leverage the type-annotated function arguments to perform desired rewrite.
  */
 public abstract class SqlCalls(context: ScribeContext) {
-    private val listener = context.getErrorListener()
+    private val listener = context.getProblemListener()
 
     public companion object {
         public fun standard(context: ScribeContext): SqlCalls = object : SqlCalls(context) {}

@@ -1,9 +1,9 @@
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.ast.AstNode
-import org.partiql.ast.sql.SqlDialect
 import org.partiql.plan.Plan
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
@@ -21,7 +21,7 @@ public open class RedshiftTarget : SqlTarget() {
         public val STANDARD: RedshiftTarget = RedshiftTarget()
     }
 
-    override val dialect: SqlDialect = RedshiftDialect()
+    override fun getAstToSql(context: ScribeContext): AstToSql = RedshiftAstToSql(context)
 
     override fun getCalls(context: ScribeContext): SqlCalls = RedshiftCalls(context)
 
@@ -30,7 +30,7 @@ public open class RedshiftTarget : SqlTarget() {
         context: ScribeContext,
     ): Plan {
         RedshiftRewriter(context)
-        TODO()
+        return plan
     }
 
     override fun planToAst(

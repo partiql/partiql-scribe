@@ -1,9 +1,9 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.AstNode
-import org.partiql.ast.sql.SqlDialect
 import org.partiql.plan.Plan
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
@@ -21,7 +21,7 @@ public open class SparkTarget : SqlTarget() {
         public val STANDARD: SparkTarget = SparkTarget()
     }
 
-    override val dialect: SqlDialect = SparkDialect()
+    override fun getAstToSql(context: ScribeContext): AstToSql = SparkAstToSql(context)
 
     override fun getCalls(context: ScribeContext): SqlCalls = SparkCalls(context)
 
@@ -30,7 +30,7 @@ public open class SparkTarget : SqlTarget() {
         context: ScribeContext,
     ): Plan {
         SparkRewriter(context)
-        TODO()
+        return plan
     }
 
     override fun planToAst(
