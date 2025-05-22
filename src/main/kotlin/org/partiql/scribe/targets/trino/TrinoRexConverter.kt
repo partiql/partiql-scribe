@@ -5,7 +5,7 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
 
-public class TrinoRexConverter(
+public open class TrinoRexConverter(
     private val transform: PlanToAst,
     private val locals: Locals,
     private val context: ScribeContext,

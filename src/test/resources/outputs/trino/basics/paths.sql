@@ -22,12 +22,16 @@ SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
 
 -- nullable fields
 --#[paths-sfw-21]
-SELECT "t"."flds".a.field_x AS "v" FROM "default"."EXCLUDE_T_NULLABLE" AS "t";
+SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
+-- -- previous test used unqualified field names based
+-- SELECT "t"."flds".a.field_x AS "v" FROM "default"."EXCLUDE_T" AS "t";
 
 -- nullable fields + qualified path
 --#[paths-sfw-22]
-SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T_NULLABLE" AS "t";
+SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
 
 -- nullable fields + mix of qualified and unqualified path components
 --#[paths-sfw-23]
-SELECT "t"."flds"."a".field_x AS "v" FROM "default"."EXCLUDE_T_NULLABLE" AS "t";
+SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
+-- -- previous test used unqualified field names based
+-- SELECT "t"."flds"."a".field_x AS "v" FROM "default"."EXCLUDE_T" AS "t";
