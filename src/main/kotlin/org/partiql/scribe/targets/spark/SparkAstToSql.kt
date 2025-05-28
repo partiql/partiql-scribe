@@ -31,6 +31,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
             when (node.fromType.code()) {
                 FromType.SCAN -> h
                 else ->
+                    // Filter out unsupported `FromType`s such as `FromType.UNPIVOT`
                     listener.reportAndThrow(
                         ScribeProblem.simpleError(
                             ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
@@ -44,6 +45,9 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         return h
     }
 
+    /**
+     * For quoted identifiers change the rewriter to use backticks rather than double-quotes.
+     */
     override fun visitIdentifier(
         node: Identifier,
         tail: SqlBlock,
@@ -69,6 +73,9 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         return h
     }
 
+    /**
+     * Spark does not support x['y'] syntax; replace with x.y
+     */
     override fun visitPathStepElement(
         node: PathStep.Element,
         tail: SqlBlock,
@@ -134,7 +141,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
                 listener.reportAndThrow(
                     ScribeProblem.simpleError(
                         ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
-                        "Attempting to print ${node.stringValue()}. Time type is not supported in Spark.",
+                        "Time type is not supported in Spark. Trying to convert literal ${node.stringValue()}",
                     ),
                 )
             }

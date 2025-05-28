@@ -57,7 +57,8 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL: date_add(part: datetime_part, quantity: int, date: date|timestamp) -> date|timestamp`
      * Spark:   date + interval
      *
-     * We perform the conversion by a
+     * We perform the conversion by converting the datetime part and quantity into an interval value, which we add to
+     * the date value.
      *
      * Notes:
      *  > https://spark.apache.org/docs/2.3.0/api/sql/index.html#date_add
