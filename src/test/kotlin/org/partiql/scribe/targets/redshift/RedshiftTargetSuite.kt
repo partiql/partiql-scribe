@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:standard:no-empty-file")
-
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.scribe.targets.SqlTargetSuite
