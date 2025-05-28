@@ -12,7 +12,12 @@ import org.partiql.ast.Ast.fromExpr
 import org.partiql.ast.Ast.fromJoin
 import org.partiql.ast.Ast.groupBy
 import org.partiql.ast.Ast.groupByKey
+import org.partiql.ast.Ast.orderBy
+import org.partiql.ast.Ast.selectItemExpr
+import org.partiql.ast.Ast.selectList
+import org.partiql.ast.Ast.selectStar
 import org.partiql.ast.Ast.selectValue
+import org.partiql.ast.Ast.sort
 import org.partiql.ast.Exclude
 import org.partiql.ast.ExcludePath
 import org.partiql.ast.ExcludeStep
@@ -22,10 +27,25 @@ import org.partiql.ast.GroupBy
 import org.partiql.ast.GroupByStrategy
 import org.partiql.ast.Identifier
 import org.partiql.ast.Let
+import org.partiql.ast.Literal
+import org.partiql.ast.Nulls
+import org.partiql.ast.Order
+import org.partiql.ast.OrderBy
+import org.partiql.ast.QueryBody
 import org.partiql.ast.Select
+import org.partiql.ast.SelectList
+import org.partiql.ast.SelectStar
+import org.partiql.ast.SelectValue
+import org.partiql.ast.SetOp
+import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
+import org.partiql.ast.With
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprQuerySet
+import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.expr.ExprVarRef
+import org.partiql.plan.Collation
 import org.partiql.plan.Exclusion
 import org.partiql.plan.JoinType
 import org.partiql.plan.Operator
@@ -54,10 +74,45 @@ import org.partiql.scribe.problems.ScribeProblem
 public open class RelConverter(
     private val transform: PlanToAst,
     private val context: ScribeContext,
-) : OperatorVisitor<RelConverter.RelContext, Unit> {
+) : OperatorVisitor<RelConverter.ExprQuerySetBuilder, Unit> {
     private val listener = context.getProblemListener()
 
-    public class RelContext(
+    // TODO ALAN make this internal and make the `RelConverter` return an interface that implements `toExprQuerySet`
+    public data class ExprQuerySetBuilder(
+        /*
+        QueryBody
+        - Set
+            - LHS (ExprQuerySet | Expr)
+            - RHS (ExprQuerySet | Expr)
+        - SFW
+            - SELECT
+            - FROM
+            - WHERE
+            ...
+         */
+        public var queryBody: QueryBodyBuilder,
+        public val limit: Expr? = null,
+        public val offset: Expr? = null,
+        public val orderBy: OrderBy? = null,
+        public val with: With? = null,
+    ) {
+        internal fun toExprQuerySet(): ExprQuerySet {
+            return ExprQuerySet.builder()
+                .body(queryBody.toQueryBody())
+                .limit(limit)
+                .offset(offset)
+                .orderBy(orderBy)
+                .with(with)
+                .build()
+        }
+    }
+
+    // QueryBodyBuilder
+    public abstract class QueryBodyBuilder() {
+        public abstract fun toQueryBody(): QueryBody
+    }
+
+    internal data class QueryBodyBuilderSFW(
         public var select: Select? = null,
         public var exclude: Exclude? = null,
         public var from: From? = null,
@@ -66,19 +121,45 @@ public open class RelConverter(
         public var groupBy: GroupBy? = null,
         public var having: Expr? = null,
         public var aggregations: List<Expr>? = null,
-    )
+    ) : QueryBodyBuilder() {
+        override fun toQueryBody(): QueryBody {
+            return QueryBody.SFW.builder()
+                .select(select!!)
+                .exclude(exclude)
+                .from(from!!)
+                .let(let)
+                .where(where)
+                .groupBy(groupBy)
+                .having(having)
+                .build()
+        }
+    }
+
+    internal class QueryBodyBuilderSetOp(
+        public var lhs: ExprQuerySet,
+        public var rhs: ExprQuerySet,
+        public var setOp: SetOp,
+    ) : QueryBodyBuilder() {
+        override fun toQueryBody(): QueryBody {
+            return QueryBody.SetOp.builder()
+                .lhs(lhs)
+                .rhs(rhs)
+                .type(setOp)
+                .build()
+        }
+    }
 
     public fun apply(
         rel: Rel,
         ctx: Unit,
-    ): RelContext {
-        return visitRel(rel, ctx)
+    ): ExprQuerySetBuilder {
+        return visit(rel, ctx)
     }
 
     override fun defaultReturn(
         operator: Operator,
         ctx: Unit,
-    ): RelContext {
+    ): ExprQuerySetBuilder {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
@@ -90,21 +171,24 @@ public open class RelConverter(
     override fun defaultVisit(
         operator: Operator,
         ctx: Unit,
-    ): RelContext {
+    ): ExprQuerySetBuilder {
         return defaultReturn(operator, ctx)
     }
 
-    public fun visitRel(
+    private fun visitRelSFW(
         node: Rel,
         ctx: Unit,
-    ): RelContext = visit(node, ctx)
+    ): QueryBodyBuilderSFW {
+        val exprQuerySetBuilder = visit(node, ctx)
+        return exprQuerySetBuilder.queryBody as QueryBodyBuilderSFW
+    }
 
     // --[Rel]-----------------------------------------------------------------------------------------------------------
     override fun visitAggregate(
         rel: RelAggregate,
         ctx: Unit,
-    ): RelContext {
-        val sfw = visitRel(rel.input, ctx)
+    ): ExprQuerySetBuilder {
+        val sfw = visitRelSFW(rel.input, ctx)
         val rexToSql = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
         if (rel.groups.isNotEmpty()) {
             sfw.groupBy =
@@ -133,13 +217,15 @@ public open class RelConverter(
                 )
             }
         sfw.aggregations = aggregations
-        return sfw
+        return ExprQuerySetBuilder(
+            queryBody = sfw,
+        )
     }
 
     override fun visitCorrelate(
         rel: RelCorrelate,
         ctx: Unit,
-    ): RelContext {
+    ): ExprQuerySetBuilder {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
@@ -151,25 +237,30 @@ public open class RelConverter(
     override fun visitDistinct(
         rel: RelDistinct,
         ctx: Unit,
-    ): RelContext {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "DISTINCT is not yet supported",
-            ),
-        )
+    ): ExprQuerySetBuilder {
+        val inputQuerySet = visit(rel.input, ctx)
+        val sfw = inputQuerySet.queryBody as QueryBodyBuilderSFW
+        sfw.select =
+            when (val initSelect = sfw.select) {
+                is SelectValue -> selectValue(constructor = initSelect.constructor, setq = SetQuantifier.DISTINCT())
+                is SelectList -> selectList(items = initSelect.items, setq = SetQuantifier.DISTINCT())
+                is SelectStar -> selectStar(setq = SetQuantifier.DISTINCT())
+                else ->
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                            message = "Unsupported select node for DISTINCT ${rel.input}",
+                        ),
+                    )
+            }
+        return inputQuerySet
     }
 
     override fun visitExcept(
         rel: RelExcept,
         ctx: Unit,
-    ): RelContext {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "EXCEPT is not yet supported",
-            ),
-        )
+    ): ExprQuerySetBuilder {
+        return visitSetOp(rel.left, rel.right, rel.isAll, SetOpType.EXCEPT())
     }
 
     private fun Exclusion.Item.toExcludeStep(): ExcludeStep {
@@ -224,8 +315,8 @@ public open class RelConverter(
     override fun visitExclude(
         rel: RelExclude,
         ctx: Unit,
-    ): RelContext {
-        val relCtx = visitRel(rel.input, ctx)
+    ): ExprQuerySetBuilder {
+        val relCtx = visitRelSFW(rel.input, ctx)
         val rexToSql = transform.getRexConverter(Locals(rel.type.fields.toList()))
         relCtx.exclude =
             exclude(
@@ -233,36 +324,39 @@ public open class RelConverter(
                     exclusionToExcludePaths(exclusion, rexToSql)
                 },
             )
-        return relCtx
+        return ExprQuerySetBuilder(
+            queryBody = relCtx,
+        )
     }
 
     override fun visitFilter(
         rel: RelFilter,
         ctx: Unit,
-    ): RelContext {
-        val sfw = visitRel(rel.input, ctx)
-        // validate filter type
-        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
-        sfw.where = rexConverter.apply(rel.predicate)
-        return sfw
+    ): ExprQuerySetBuilder {
+        val sfw = visitRelSFW(rel.input, ctx)
+        if (rel.input is RelAggregate) {
+            val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList(), sfw.aggregations ?: emptyList()))
+            sfw.having = rexConverter.apply(rel.predicate)
+        } else {
+            val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+            sfw.where = rexConverter.apply(rel.predicate)
+        }
+        return ExprQuerySetBuilder(
+            queryBody = sfw,
+        )
     }
 
     override fun visitIntersect(
         rel: RelIntersect,
         ctx: Unit,
-    ): RelContext {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "INTERSECT is not yet supported",
-            ),
-        )
+    ): ExprQuerySetBuilder {
+        return visitSetOp(rel.left, rel.right, rel.isAll, SetOpType.INTERSECT())
     }
 
     override fun visitIterate(
         rel: RelIterate,
         ctx: Unit,
-    ): RelContext {
+    ): ExprQuerySetBuilder {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
@@ -286,11 +380,11 @@ public open class RelConverter(
     override fun visitJoin(
         rel: RelJoin,
         ctx: Unit,
-    ): RelContext {
-        val lhs = visitRel(rel.left, ctx)
+    ): ExprQuerySetBuilder {
+        val lhs = visitRelSFW(rel.left, ctx)
         val lhsFrom = assertNotNull(lhs.from)
         assert(lhsFrom.tableRefs.size == 1)
-        val rhs = visitRel(rel.right, ctx)
+        val rhs = visitRelSFW(rel.right, ctx)
         val rhsFrom = assertNotNull(rhs.from)
         assert(rhsFrom.tableRefs.size == 1)
         val locals = Locals(rel.left.type.fields.toList() + rel.right.type.fields.toList())
@@ -322,40 +416,40 @@ public open class RelConverter(
                         ),
                     ),
             )
-        return lhs
+        return ExprQuerySetBuilder(
+            queryBody = lhs,
+        )
     }
 
     override fun visitLimit(
         rel: RelLimit,
         ctx: Unit,
-    ): RelContext {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "Limit is not yet supported",
-            ),
+    ): ExprQuerySetBuilder {
+        val input = visit(rel.input, Unit)
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        return input.copy(
+            limit = rexConverter.visit(rel.limit, Unit),
         )
     }
 
     override fun visitOffset(
         rel: RelOffset,
         ctx: Unit,
-    ): RelContext {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "Offset is not yet supported",
-            ),
+    ): ExprQuerySetBuilder {
+        val input = visit(rel.input, Unit)
+        return input.copy(
+            offset = transform.getRexConverter(Locals.EMPTY).visit(rel.offset, Unit),
         )
     }
 
     override fun visitProject(
         rel: RelProject,
         ctx: Unit,
-    ): RelContext {
+    ): ExprQuerySetBuilder {
         val input = rel.input
         val projections = rel.projections
-        val sfw = visitRel(rel.input, ctx)
+        val inputQuerySet = visit(rel.input, ctx)
+        val sfw = inputQuerySet.queryBody as QueryBodyBuilderSFW
 
         val locals =
             Locals(
@@ -373,22 +467,55 @@ public open class RelConverter(
                 ),
             )
         }
-        sfw.select =
+        val selectValue =
             selectValue(
                 constructor = rexConverter.apply(projections.first()),
                 setq = null,
             )
-        return sfw
+        val rewrittenSelect = convertSelectValueToSqlSelect(selectValue)
+        sfw.select = rewrittenSelect
+        return inputQuerySet
+    }
+
+    private fun convertSelectValueToSqlSelect(select: Select): Select {
+        return when (select) {
+            is SelectValue -> {
+                val constructor = select.constructor
+                val projectionItems =
+                    if (constructor is ExprStruct) {
+                        constructor.fields.map { field ->
+                            val key = field.name
+                            val value = field.value
+                            if (key !is ExprLit || key.lit.code() != Literal.STRING) {
+                                return select
+                            }
+                            val keyName = key.lit.stringValue()
+                            // valid key-value pair
+                            selectItemExpr(
+                                expr = value,
+                                asAlias = Identifier.Simple.delimited(keyName),
+                            )
+                        }
+                    } else {
+                        return select
+                    }
+                selectList(
+                    items = projectionItems,
+                    setq = select.setq,
+                )
+            }
+            else -> select
+        }
     }
 
     override fun visitScan(
         rel: RelScan,
         ctx: Unit,
-    ): RelContext {
+    ): ExprQuerySetBuilder {
         val fromRex = rel.rex
 
         // Init a new SFW context
-        val sfw = RelContext()
+        val sfw = QueryBodyBuilderSFW()
         // Validate scan type
         val type = rel.type
         if (type.fields.size != 1) {
@@ -420,37 +547,92 @@ public open class RelConverter(
                         ),
                     ),
             )
-        return sfw
+        return ExprQuerySetBuilder(
+            queryBody = sfw,
+        )
     }
 
     override fun visitSort(
         rel: RelSort,
         ctx: Unit,
-    ): RelContext {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "SORT is not yet supported",
+    ): ExprQuerySetBuilder {
+        val input = visit(rel.input, Unit)
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        val sorts =
+            rel.collations.map { collation ->
+                val orderByField = rexConverter.apply(collation.column)
+                val order =
+                    when (collation.order.code()) {
+                        Collation.Order.ASC -> Order.ASC()
+                        Collation.Order.DESC -> Order.DESC()
+                        else ->
+                            listener.reportAndThrow(
+                                ScribeProblem.simpleError(
+                                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                    message = "Unsupported ORDER BY order direction ${collation.order}",
+                                ),
+                            )
+                    }
+                val nullOrder =
+                    when (collation.nulls.code()) {
+                        Collation.Nulls.FIRST -> Nulls.FIRST()
+                        Collation.Nulls.LAST -> Nulls.LAST()
+                        else ->
+                            listener.reportAndThrow(
+                                ScribeProblem.simpleError(
+                                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                    message = "Unsupported ORDER BY null ordering ${collation.nulls}",
+                                ),
+                            )
+                    }
+                sort(orderByField, order, nullOrder)
+            }
+        return input.copy(
+            orderBy = orderBy(sorts),
+        )
+    }
+
+    private fun visitSetOp(
+        left: Rel,
+        right: Rel,
+        isAll: Boolean,
+        setOpType: SetOpType,
+    ): ExprQuerySetBuilder {
+        val lhs = visit(left, Unit) // ctx as second arg
+        val rhs = visit(right, Unit) // ctx as second arg
+        val setq =
+            when (isAll) {
+                true -> SetQuantifier.ALL()
+                false -> SetQuantifier.DISTINCT()
+            }
+        return ExprQuerySetBuilder(
+            QueryBodyBuilderSetOp(
+                lhs = lhs.toExprQuerySet(),
+                rhs = rhs.toExprQuerySet(),
+                setOp =
+                    SetOp.builder()
+                        .setOpType(setOpType)
+                        .setq(setq)
+                        .build(),
             ),
+            limit = null,
+            offset = null,
+            orderBy = null,
+            with = null,
         )
     }
 
     override fun visitUnion(
         rel: RelUnion,
         ctx: Unit,
-    ): RelContext {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "UNION is not yet supported",
-            ),
-        )
+    ): ExprQuerySetBuilder {
+        return visitSetOp(rel.left, rel.right, rel.isAll, SetOpType.UNION())
     }
 
     override fun visitUnpivot(
         rel: RelUnpivot,
         ctx: Unit,
-    ): RelContext {
+    ): ExprQuerySetBuilder {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,

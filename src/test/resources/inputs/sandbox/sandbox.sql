@@ -1,4 +1,14 @@
 -- Stores the input query for basic testing of a single query
 -- See resources/outputs/sandbox/sandbox/sandbox.sql for the expected output
 --#[sandbox-00]
-1;
+
+-- SELECT DISTINCT a FROM T AS T1 LIMIT 1;
+-- (SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true ORDER BY a LIMIT 1 OFFSET 2) UNION (SELECT a FROM <<{'a': 2}>> ORDER BY a LIMIT 3 OFFSET 4) UNION (SELECT a FROM <<{'a': 3}>> ORDER BY a LIMIT 5 OFFSET 6) ORDER BY a LIMIT 7 OFFSET 8;
+-- (SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true LIMIT 1 OFFSET 2) UNION (SELECT a FROM <<{'a': 2}>> LIMIT 3 OFFSET 4) UNION (SELECT a FROM <<{'a': 3}>> LIMIT 5 OFFSET 6) LIMIT 7 OFFSET 8;
+-- (SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true LIMIT 1 OFFSET 2) UNION (SELECT a FROM <<{'a': 2}>> LIMIT 3 OFFSET 4);
+-- SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true LIMIT 1 OFFSET 2;
+-- SELECT a
+-- FROM <<{'a': true}>> AS t1
+-- WHERE a IN (SELECT a FROM T);
+-- (SELECT * FROM <<{'a': 1}>> AS t1 UNION SELECT * FROM <<{'a': 2}>> AS t2) LIMIT 3;
+-- SELECT * FROM <<{'a': 1}>> AS t1 LIMIT 1;

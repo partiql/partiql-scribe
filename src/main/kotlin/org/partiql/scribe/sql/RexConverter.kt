@@ -16,28 +16,18 @@ import org.partiql.ast.Ast.exprStruct
 import org.partiql.ast.Ast.exprStructField
 import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.Ast.queryBodySetOp
-import org.partiql.ast.Ast.selectItemExpr
-import org.partiql.ast.Ast.selectList
 import org.partiql.ast.Ast.setOp
 import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Identifier.Simple.regular
 import org.partiql.ast.Literal
-import org.partiql.ast.Select
-import org.partiql.ast.SelectValue
 import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
 import org.partiql.ast.expr.Expr
-import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprPath
-import org.partiql.ast.expr.ExprStruct
 import org.partiql.plan.Operator
 import org.partiql.plan.OperatorVisitor
 import org.partiql.plan.rel.Rel
-import org.partiql.plan.rel.RelExcept
-import org.partiql.plan.rel.RelIntersect
-import org.partiql.plan.rel.RelProject
-import org.partiql.plan.rel.RelUnion
 import org.partiql.plan.rex.Rex
 import org.partiql.plan.rex.RexArray
 import org.partiql.plan.rex.RexBag
@@ -64,7 +54,6 @@ import org.partiql.plan.rex.RexTable
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
-import org.partiql.scribe.sql.utils.toQueryBodySFW
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
 import org.partiql.spi.value.Datum
@@ -415,63 +404,8 @@ public open class RexConverter(
     ): Expr {
         val inputRel = rex.input
         val constructor = rex.constructor
-        return when (inputRel) {
-            is RelExcept -> relSetOpToBagOp(inputRel.left, inputRel.right, inputRel.isAll, SetOpType.EXCEPT(), ctx)
-            is RelIntersect -> relSetOpToBagOp(inputRel.left, inputRel.right, inputRel.isAll, SetOpType.INTERSECT(), ctx)
-            is RelUnion -> relSetOpToBagOp(inputRel.left, inputRel.right, inputRel.isAll, SetOpType.UNION(), ctx)
-            is RelProject -> {
-                val relConverter = transform.getRelConverter()
-                val rexConverter = transform.getRexConverter(locals)
-                val sfw = relConverter.apply(inputRel, ctx)
-                val rewrittenSelect = convertSelectValueToSqlSelect(sfw.select!!, inputRel)
-                sfw.select = rewrittenSelect
-                return exprQuerySet(
-                    body = sfw.toQueryBodySFW(),
-                )
-            }
-            else ->
-                listener.reportAndThrow(
-                    ScribeProblem.simpleError(
-                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                        message = "$inputRel is not yet supported",
-                    ),
-                )
-        }
-    }
-
-    private fun convertSelectValueToSqlSelect(
-        select: Select,
-        project: RelProject,
-    ): Select {
-        val rexConverter = RexConverter(transform, Locals(project.input.type.fields.toList()), context)
-        return when (select) {
-            is SelectValue -> {
-                val constructor = select.constructor
-                val projectionItems =
-                    if (constructor is ExprStruct) {
-                        constructor.fields.map { field ->
-                            val key = field.name
-                            val value = field.value
-                            if (key !is ExprLit || key.lit.code() != Literal.STRING) {
-                                return select
-                            }
-                            val keyName = key.lit.stringValue()
-                            // valid key-value pair
-                            selectItemExpr(
-                                expr = value,
-                                asAlias = Identifier.Simple.delimited(keyName),
-                            )
-                        }
-                    } else {
-                        return select
-                    }
-                selectList(
-                    items = projectionItems,
-                    setq = select.setq,
-                )
-            }
-            else -> select
-        }
+        val relConverter = RelConverter(transform, context)
+        return relConverter.apply(inputRel, ctx).toExprQuerySet()
     }
 
     override fun visitStruct(
