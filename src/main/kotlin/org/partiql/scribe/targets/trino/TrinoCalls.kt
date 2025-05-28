@@ -33,7 +33,9 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         listener.report(
             ScribeProblem.simpleInfo(
                 ScribeProblem.TRANSLATION_INFO,
-                "arg0 of date_add went from type `symbol` to `string`",
+                "PartiQL's `date_add` has been modified for translation to Trino. Converted first argument " +
+                    "of `date_add` from an unquoted keyword to a string literal (${part.name()} -> " +
+                    "'${part.name().lowercase()}').",
             ),
         )
         val arg0 = exprLit(Literal.string(part.name().lowercase()))
@@ -53,7 +55,9 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         listener.report(
             ScribeProblem.simpleInfo(
                 ScribeProblem.TRANSLATION_INFO,
-                "arg0 of date_diff went from type `symbol` to `string`",
+                "PartiQL's `date_diff` has been modified for translation to Trino. Converted first argument " +
+                    "of `date_add` from an unquoted keyword to a string literal (${part.name()} -> " +
+                    "'${part.name().lowercase()}').",
             ),
         )
         val arg0 = exprLit(Literal.string(part.name().lowercase()))
