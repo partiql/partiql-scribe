@@ -11,6 +11,7 @@ import org.partiql.ast.expr.ExprTrim
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
 import org.partiql.scribe.sql.utils.inferredAlias
@@ -18,6 +19,8 @@ import org.partiql.scribe.sql.utils.list
 import org.partiql.scribe.sql.utils.type
 
 public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
+    private val listener = context.getProblemListener()
+
     /**
      * Redshift does not support x['y'] syntax; replace with x.y
      */
@@ -27,6 +30,14 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
     ): SqlBlock {
         val key = node.element
         return if (key is ExprLit && key.lit.code() == Literal.STRING) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "Redshift does not support PartiQL's path element syntax (e.g. x['y']). " +
+                            "Replaced with path step field syntax (e.g. x.y)",
+                ),
+            )
             val elemString = key.lit.stringValue()
             val stepField = exprPathStepField(Identifier.Simple.delimited(elemString))
             visitPathStepField(stepField, tail)

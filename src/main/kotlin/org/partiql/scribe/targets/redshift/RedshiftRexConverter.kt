@@ -40,7 +40,7 @@ public open class RedshiftRexConverter(
         ctx: Unit,
     ): Expr {
         val fn = rex.function
-        val args = rex.args.map { SqlArg(wrapInDateTimeCast(it), it.type.pType) }
+        val args = rex.args.map { SqlArg(normalizeArgument(it), it.type.pType) }
         return transform.getFunction(fn.signature.name, args)
     }
 
@@ -49,7 +49,7 @@ public open class RedshiftRexConverter(
         ctx: Unit,
     ): Expr {
         val fn = rex.functions.first()
-        val args = rex.args.map { SqlArg(wrapInDateTimeCast(it), it.type.pType) }
+        val args = rex.args.map { SqlArg(normalizeArgument(it), it.type.pType) }
         return transform.getFunction(fn.signature.name, args)
     }
 
@@ -57,8 +57,8 @@ public open class RedshiftRexConverter(
         rex: RexNullIf,
         ctx: Unit,
     ): Expr {
-        val v1 = wrapInDateTimeCast(rex.v1)
-        val v2 = wrapInDateTimeCast(rex.v2)
+        val v1 = normalizeArgument(rex.v1)
+        val v2 = normalizeArgument(rex.v2)
         return exprNullIf(v1, v2)
     }
 
@@ -66,22 +66,25 @@ public open class RedshiftRexConverter(
         rex: RexCase,
         ctx: Unit,
     ): Expr {
-        val matchExpr = rex.match?.let { wrapInDateTimeCast(it) }
-        val default = rex.default?.let { wrapInDateTimeCast(it) }
+        val matchExpr = rex.match?.let { normalizeArgument(it) }
+        val default = rex.default?.let { normalizeArgument(it) }
         val branches =
             rex.branches.map {
-                val condition = wrapInDateTimeCast(it.condition)
-                val result = wrapInDateTimeCast(it.result)
+                val condition = normalizeArgument(it.condition)
+                val result = normalizeArgument(it.result)
                 exprCaseBranch(condition, result)
             }
         return exprCase(matchExpr, branches, default)
     }
 
-    private fun wrapInDateTimeCast(rex: Rex): Expr {
+    /**
+     * Wrap the [rex] in an explicit cast if the [rex] is a date time type.
+     */
+    private fun normalizeArgument(rex: Rex): Expr {
         val expr = visitRex(rex, Unit)
         val type = rex.type
         if (rex is RexCast && type.pType.code() == PType.DYNAMIC) {
-            return wrapInDateTimeCast(rex.operand)
+            return normalizeArgument(rex.operand)
         }
         return when (rex) {
             is RexPathKey, is RexPathIndex, is RexPathSymbol, is RexVar -> {
