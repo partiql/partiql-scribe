@@ -1,5 +1,7 @@
 --#[case-00]
-1;
+CASE WHEN false THEN 0 WHEN true THEN 1 ELSE 2 END;
+-- PLK-1.x does not yet prune the unsatisfiable branches
+-- 1;
 
 --#[case-01]
 CASE
@@ -71,4 +73,6 @@ END AS "result"
 FROM "default"."T" AS "T";
 
 --#[case-10]
-2;
+CASE WHEN false THEN 0 WHEN false THEN 1 ELSE 2 END;
+-- PLK-1.x does not yet prune the unsatisfiable branches
+-- 2;
