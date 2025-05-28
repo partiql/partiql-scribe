@@ -75,6 +75,14 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     ): SqlBlock {
         val key = node.element
         return if (key is ExprLit && key.lit.code() == Literal.STRING) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                    "SparkSQL does not support PartiQL's path element syntax (e.g. x['y']). " +
+                            "Replaced with path step field syntax (e.g. x.y)",
+                ),
+            )
             val elemString = key.lit.stringValue()
             val stepField = exprPathStepField(Identifier.Simple.regular(elemString))
             visitPathStepField(stepField, tail)
