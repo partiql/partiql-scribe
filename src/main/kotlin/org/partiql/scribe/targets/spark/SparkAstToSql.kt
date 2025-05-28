@@ -79,7 +79,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
                 ScribeProblem.simpleInfo(
                     code = ScribeProblem.TRANSLATION_INFO,
                     message =
-                    "SparkSQL does not support PartiQL's path element syntax (e.g. x['y']). " +
+                        "SparkSQL does not support PartiQL's path element syntax (e.g. x['y']). " +
                             "Replaced with path step field syntax (e.g. x.y)",
                 ),
             )
