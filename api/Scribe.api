@@ -533,6 +533,12 @@ public class org/partiql/scribe/targets/trino/TrinoRewriter : org/partiql/plan/O
 	public synthetic fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Ljava/lang/Object;)Ljava/lang/Object;
 	public synthetic fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
 	public fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
 }
 
 public class org/partiql/scribe/targets/trino/TrinoRexConverter : org/partiql/scribe/sql/RexConverter {
