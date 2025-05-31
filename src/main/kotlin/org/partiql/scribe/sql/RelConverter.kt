@@ -15,6 +15,7 @@ import org.partiql.ast.Ast.groupByKey
 import org.partiql.ast.Ast.orderBy
 import org.partiql.ast.Ast.selectItemExpr
 import org.partiql.ast.Ast.selectList
+import org.partiql.ast.Ast.selectStar
 import org.partiql.ast.Ast.selectValue
 import org.partiql.ast.Exclude
 import org.partiql.ast.ExcludePath
@@ -29,6 +30,8 @@ import org.partiql.ast.Literal
 import org.partiql.ast.OrderBy
 import org.partiql.ast.QueryBody
 import org.partiql.ast.Select
+import org.partiql.ast.SelectList
+import org.partiql.ast.SelectStar
 import org.partiql.ast.SelectValue
 import org.partiql.ast.SetOp
 import org.partiql.ast.SetOpType
@@ -243,12 +246,22 @@ public open class RelConverter(
         rel: RelDistinct,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "DISTINCT is not yet supported",
-            ),
-        )
+        val inputQuerySet = visit(rel.input, ctx)
+        val sfw = inputQuerySet.queryBody as QueryBodySFWFactory
+        sfw.select =
+            when (val initSelect = sfw.select) {
+                is SelectValue -> selectValue(constructor = initSelect.constructor, setq = SetQuantifier.DISTINCT())
+                is SelectList -> selectList(items = initSelect.items, setq = SetQuantifier.DISTINCT())
+                is SelectStar -> selectStar(setq = SetQuantifier.DISTINCT())
+                else ->
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                            message = "Unsupported select node for DISTINCT ${rel.input}",
+                        ),
+                    )
+            }
+        return inputQuerySet
     }
 
     override fun visitExcept(
