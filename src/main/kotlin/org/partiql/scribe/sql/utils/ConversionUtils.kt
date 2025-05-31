@@ -1,12 +1,10 @@
 package org.partiql.scribe.sql.utils
 
 import org.partiql.ast.Ast.exprVarRef
-import org.partiql.ast.Ast.queryBodySFW
 import org.partiql.ast.AstNode
 import org.partiql.ast.AstVisitor
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
-import org.partiql.ast.QueryBody
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprCast
 import org.partiql.ast.expr.ExprLit
@@ -14,20 +12,6 @@ import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprVarRef
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
-import org.partiql.scribe.sql.RelConverter
-
-public fun RelConverter.RelContext.toQueryBodySFW(): QueryBody.SFW {
-    assert(this.select != null)
-    return queryBodySFW(
-        select = this.select!!,
-        exclude = this.exclude,
-        from = this.from!!,
-        let = this.let,
-        where = this.where,
-        groupBy = this.groupBy,
-        having = this.having,
-    )
-}
 
 // ////////////////////////////// AST -> Text utils
 
