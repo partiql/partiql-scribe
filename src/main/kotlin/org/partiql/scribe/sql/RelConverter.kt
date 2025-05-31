@@ -342,8 +342,13 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val sfw = visitRelSFW(rel.input, ctx)
-        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
-        sfw.where = rexConverter.apply(rel.predicate)
+        if (rel.input is RelAggregate) {
+            val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList(), sfw.aggregations ?: emptyList()))
+            sfw.having = rexConverter.apply(rel.predicate)
+        } else {
+            val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+            sfw.where = rexConverter.apply(rel.predicate)
+        }
         return ExprQuerySetFactory(
             queryBody = sfw,
         )
