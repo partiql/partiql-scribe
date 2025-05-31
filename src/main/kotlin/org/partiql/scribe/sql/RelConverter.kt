@@ -409,11 +409,10 @@ public open class RelConverter(
         rel: RelLimit,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "Limit is not yet supported",
-            ),
+        val input = visit(rel.input, Unit)
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        return input.copy(
+            limit = rexConverter.visit(rel.limit, Unit),
         )
     }
 
@@ -421,11 +420,9 @@ public open class RelConverter(
         rel: RelOffset,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "Offset is not yet supported",
-            ),
+        val input = visit(rel.input, Unit)
+        return input.copy(
+            offset = transform.getRexConverter(Locals.EMPTY).visit(rel.offset, Unit),
         )
     }
 
