@@ -114,6 +114,32 @@ public abstract class org/partiql/scribe/sql/AstToSql : org/partiql/ast/sql/SqlD
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
 }
 
+public final class org/partiql/scribe/sql/ExprQuerySetFactory {
+	public fun <init> (Lorg/partiql/scribe/sql/QueryBodyFactory;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/OrderBy;Lorg/partiql/ast/With;)V
+	public synthetic fun <init> (Lorg/partiql/scribe/sql/QueryBodyFactory;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/OrderBy;Lorg/partiql/ast/With;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lorg/partiql/scribe/sql/QueryBodyFactory;
+	public final fun component2 ()Lorg/partiql/ast/expr/Expr;
+	public final fun component3 ()Lorg/partiql/ast/expr/Expr;
+	public final fun component4 ()Lorg/partiql/ast/OrderBy;
+	public final fun component5 ()Lorg/partiql/ast/With;
+	public final fun copy (Lorg/partiql/scribe/sql/QueryBodyFactory;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/OrderBy;Lorg/partiql/ast/With;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public static synthetic fun copy$default (Lorg/partiql/scribe/sql/ExprQuerySetFactory;Lorg/partiql/scribe/sql/QueryBodyFactory;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/OrderBy;Lorg/partiql/ast/With;ILjava/lang/Object;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLimit ()Lorg/partiql/ast/expr/Expr;
+	public final fun getOffset ()Lorg/partiql/ast/expr/Expr;
+	public final fun getOrderBy ()Lorg/partiql/ast/OrderBy;
+	public final fun getQueryBody ()Lorg/partiql/scribe/sql/QueryBodyFactory;
+	public final fun getWith ()Lorg/partiql/ast/With;
+	public fun hashCode ()I
+	public final fun setLimit (Lorg/partiql/ast/expr/Expr;)V
+	public final fun setOffset (Lorg/partiql/ast/expr/Expr;)V
+	public final fun setOrderBy (Lorg/partiql/ast/OrderBy;)V
+	public final fun setQueryBody (Lorg/partiql/scribe/sql/QueryBodyFactory;)V
+	public final fun setWith (Lorg/partiql/ast/With;)V
+	public final fun toExprQuerySet ()Lorg/partiql/ast/expr/ExprQuerySet;
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class org/partiql/scribe/sql/Locals {
 	public static final field Companion Lorg/partiql/scribe/sql/Locals$Companion;
 	public fun <init> (Ljava/util/List;Ljava/util/List;)V
@@ -135,68 +161,49 @@ public class org/partiql/scribe/sql/PlanToAst {
 	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
 }
 
-public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisitor {
-	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;)V
-	public final fun apply (Lorg/partiql/plan/rel/Rel;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun defaultReturn (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun defaultVisit (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun defaultVisit (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitAggregate (Lorg/partiql/plan/rel/RelAggregate;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitAggregate (Lorg/partiql/plan/rel/RelAggregate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitDistinct (Lorg/partiql/plan/rel/RelDistinct;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitDistinct (Lorg/partiql/plan/rel/RelDistinct;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitExcept (Lorg/partiql/plan/rel/RelExcept;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitExcept (Lorg/partiql/plan/rel/RelExcept;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitExclude (Lorg/partiql/plan/rel/RelExclude;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitExclude (Lorg/partiql/plan/rel/RelExclude;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitFilter (Lorg/partiql/plan/rel/RelFilter;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitFilter (Lorg/partiql/plan/rel/RelFilter;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitIntersect (Lorg/partiql/plan/rel/RelIntersect;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitIntersect (Lorg/partiql/plan/rel/RelIntersect;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitIterate (Lorg/partiql/plan/rel/RelIterate;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitIterate (Lorg/partiql/plan/rel/RelIterate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitJoin (Lorg/partiql/plan/rel/RelJoin;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitJoin (Lorg/partiql/plan/rel/RelJoin;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitLimit (Lorg/partiql/plan/rel/RelLimit;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitLimit (Lorg/partiql/plan/rel/RelLimit;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitOffset (Lorg/partiql/plan/rel/RelOffset;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitOffset (Lorg/partiql/plan/rel/RelOffset;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public final fun visitRel (Lorg/partiql/plan/rel/Rel;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitScan (Lorg/partiql/plan/rel/RelScan;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitScan (Lorg/partiql/plan/rel/RelScan;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitSort (Lorg/partiql/plan/rel/RelSort;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitSort (Lorg/partiql/plan/rel/RelSort;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
-	public synthetic fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Lkotlin/Unit;)Lorg/partiql/scribe/sql/RelConverter$RelContext;
+public abstract interface class org/partiql/scribe/sql/QueryBodyFactory {
+	public abstract fun toQueryBody ()Lorg/partiql/ast/QueryBody;
 }
 
-public final class org/partiql/scribe/sql/RelConverter$RelContext {
-	public fun <init> ()V
-	public fun <init> (Lorg/partiql/ast/Select;Lorg/partiql/ast/Exclude;Lorg/partiql/ast/From;Lorg/partiql/ast/Let;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/GroupBy;Lorg/partiql/ast/expr/Expr;Ljava/util/List;)V
-	public synthetic fun <init> (Lorg/partiql/ast/Select;Lorg/partiql/ast/Exclude;Lorg/partiql/ast/From;Lorg/partiql/ast/Let;Lorg/partiql/ast/expr/Expr;Lorg/partiql/ast/GroupBy;Lorg/partiql/ast/expr/Expr;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getAggregations ()Ljava/util/List;
-	public final fun getExclude ()Lorg/partiql/ast/Exclude;
-	public final fun getFrom ()Lorg/partiql/ast/From;
-	public final fun getGroupBy ()Lorg/partiql/ast/GroupBy;
-	public final fun getHaving ()Lorg/partiql/ast/expr/Expr;
-	public final fun getLet ()Lorg/partiql/ast/Let;
-	public final fun getSelect ()Lorg/partiql/ast/Select;
-	public final fun getWhere ()Lorg/partiql/ast/expr/Expr;
-	public final fun setAggregations (Ljava/util/List;)V
-	public final fun setExclude (Lorg/partiql/ast/Exclude;)V
-	public final fun setFrom (Lorg/partiql/ast/From;)V
-	public final fun setGroupBy (Lorg/partiql/ast/GroupBy;)V
-	public final fun setHaving (Lorg/partiql/ast/expr/Expr;)V
-	public final fun setLet (Lorg/partiql/ast/Let;)V
-	public final fun setSelect (Lorg/partiql/ast/Select;)V
-	public final fun setWhere (Lorg/partiql/ast/expr/Expr;)V
+public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisitor {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun apply (Lorg/partiql/plan/rel/Rel;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultReturn (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun defaultVisit (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun defaultVisit (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitAggregate (Lorg/partiql/plan/rel/RelAggregate;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitAggregate (Lorg/partiql/plan/rel/RelAggregate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitDistinct (Lorg/partiql/plan/rel/RelDistinct;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitDistinct (Lorg/partiql/plan/rel/RelDistinct;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitExcept (Lorg/partiql/plan/rel/RelExcept;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExcept (Lorg/partiql/plan/rel/RelExcept;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitExclude (Lorg/partiql/plan/rel/RelExclude;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExclude (Lorg/partiql/plan/rel/RelExclude;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitFilter (Lorg/partiql/plan/rel/RelFilter;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitFilter (Lorg/partiql/plan/rel/RelFilter;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitIntersect (Lorg/partiql/plan/rel/RelIntersect;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntersect (Lorg/partiql/plan/rel/RelIntersect;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitIterate (Lorg/partiql/plan/rel/RelIterate;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIterate (Lorg/partiql/plan/rel/RelIterate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitJoin (Lorg/partiql/plan/rel/RelJoin;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitJoin (Lorg/partiql/plan/rel/RelJoin;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitLimit (Lorg/partiql/plan/rel/RelLimit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitLimit (Lorg/partiql/plan/rel/RelLimit;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitOffset (Lorg/partiql/plan/rel/RelOffset;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitOffset (Lorg/partiql/plan/rel/RelOffset;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitScan (Lorg/partiql/plan/rel/RelScan;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitScan (Lorg/partiql/plan/rel/RelScan;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitSort (Lorg/partiql/plan/rel/RelSort;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSort (Lorg/partiql/plan/rel/RelSort;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 }
 
 public class org/partiql/scribe/sql/RexConverter : org/partiql/plan/OperatorVisitor {
@@ -332,10 +339,6 @@ public abstract class org/partiql/scribe/sql/SqlTarget : org/partiql/scribe/Scri
 	public fun getLayout ()Lorg/partiql/ast/sql/SqlLayout;
 	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
 	public abstract fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
-}
-
-public final class org/partiql/scribe/sql/utils/ConversionUtilsKt {
-	public static final fun toQueryBodySFW (Lorg/partiql/scribe/sql/RelConverter$RelContext;)Lorg/partiql/ast/QueryBody$SFW;
 }
 
 public final class org/partiql/scribe/targets/partiql/PartiQLTarget : org/partiql/scribe/sql/SqlTarget {
