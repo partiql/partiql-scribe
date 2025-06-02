@@ -98,6 +98,9 @@ public interface QueryBodyFactory {
     public fun toQueryBody(): QueryBody
 }
 
+/**
+ * Holds the state to create a [QueryBody.SFW].
+ */
 internal data class QueryBodySFWFactory(
     var select: Select? = null,
     var exclude: Exclude? = null,
@@ -121,6 +124,9 @@ internal data class QueryBodySFWFactory(
     }
 }
 
+/**
+ * Holds the state to create a [QueryBody.SetOp].
+ */
 internal class QueryBodySetOpFactory(
     var lhs: ExprQuerySet,
     var rhs: ExprQuerySet,
@@ -421,8 +427,9 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val input = visit(rel.input, Unit)
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
         return input.copy(
-            offset = transform.getRexConverter(Locals.EMPTY).visit(rel.offset, Unit),
+            offset = rexConverter.visit(rel.offset, Unit),
         )
     }
 
