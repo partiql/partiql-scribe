@@ -1,14 +1,19 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Ast.exprPathStepField
+import org.partiql.ast.Ast.exprQuerySet
+import org.partiql.ast.Ast.orderBy
+import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
 import org.partiql.ast.FromExpr
 import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
+import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprTrim
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.expr.TrimSpec
@@ -18,6 +23,7 @@ import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
 import org.partiql.scribe.sql.utils.list
+import org.partiql.scribe.sql.utils.removePathRoot
 
 public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
@@ -174,6 +180,40 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         t = visitExprWrapped(node.value, t)
         t = t concat ")"
         return t
+    }
+
+    /**
+     * The PartiQL plan and thus AST will fully-qualify ORDER BY variable references and paths with an implicit
+     * binding tuple name for set operations. For Spark, there is no implicit binding tuple name for the set ops. So
+     * we must remove the prefix binding tuple name from paths.
+     *
+     * For example, the query
+     *   (SELECT a FROM ...) UNION (SELECT a FROM ...) ORDER BY a
+     * will have an extra qualification
+     *   (SELECT a FROM ...) UNION (SELECT a FROM ...) ORDER BY "_1".a
+     * The additional qualification is invalid SparkSQL, hence why we remove it.
+     */
+    override fun visitExprQuerySet(
+        node: ExprQuerySet,
+        tail: SqlBlock,
+    ): SqlBlock {
+        if (node.body is QueryBody.SetOp && node.orderBy != null) {
+            val orderBy = node.orderBy!!
+            val newSorts =
+                orderBy.sorts.map { sort ->
+                    val newExpr = removePathRoot(sort.expr)
+                    sort(newExpr, sort.order, sort.nulls)
+                }
+            val newNode =
+                exprQuerySet(
+                    body = node.body,
+                    limit = node.limit,
+                    offset = node.offset,
+                    orderBy = orderBy(newSorts),
+                )
+            return super.visitExprQuerySet(newNode, tail)
+        }
+        return super.visitExprQuerySet(node, tail)
     }
 
     // Spark, has no notion of case sensitivity

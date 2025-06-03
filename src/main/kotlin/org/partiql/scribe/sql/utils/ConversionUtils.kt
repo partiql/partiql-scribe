@@ -1,5 +1,6 @@
 package org.partiql.scribe.sql.utils
 
+import org.partiql.ast.Ast.exprPath
 import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.AstNode
 import org.partiql.ast.AstVisitor
@@ -112,4 +113,36 @@ internal fun list(
         postfix = end,
         child = h,
     )
+}
+
+/**
+ * If the [expr] is an [ExprPath], removes the path's root and return the remaining [Expr] or [ExprPath].
+ *
+ * For example,
+ * T['a'] -> "a"
+ * T['a']['b'] -> "a"['b']
+ */
+internal fun removePathRoot(expr: Expr): Expr {
+    return when (expr) {
+        is ExprPath -> {
+            val steps = expr.steps
+            val first = expr.steps.first()
+            if (first is PathStep.Element && first.element is ExprLit) {
+                val newFirst = exprVarRef(Identifier.delimited((first.element as ExprLit).lit.stringValue()), isQualified = false)
+                if (steps.size == 1) {
+                    // One path step so just return that expr
+                    newFirst
+                } else {
+                    // Create a new path
+                    exprPath(
+                        newFirst,
+                        steps.drop(1),
+                    )
+                }
+            } else {
+                expr
+            }
+        }
+        else -> expr
+    }
 }

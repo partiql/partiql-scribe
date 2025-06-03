@@ -355,6 +355,8 @@ public class org/partiql/scribe/targets/redshift/RedshiftAstToSql : org/partiql/
 	public fun visitDataType (Lorg/partiql/ast/DataType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Ljava/lang/Object;)Ljava/lang/Object;
@@ -426,6 +428,8 @@ public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe
 	public fun visitDataType (Lorg/partiql/ast/DataType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitFromExpr (Lorg/partiql/ast/FromExpr;Ljava/lang/Object;)Ljava/lang/Object;
@@ -501,6 +505,8 @@ public class org/partiql/scribe/targets/trino/TrinoAstToSql : org/partiql/scribe
 	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Ljava/lang/Object;)Ljava/lang/Object;

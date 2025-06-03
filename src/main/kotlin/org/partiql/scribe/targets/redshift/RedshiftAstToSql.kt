@@ -1,12 +1,18 @@
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.ast.Ast.exprPathStepField
+import org.partiql.ast.Ast.exprQuerySet
+import org.partiql.ast.Ast.orderBy
+import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
+import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
+import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprTrim
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
@@ -16,6 +22,7 @@ import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
 import org.partiql.scribe.sql.utils.inferredAlias
 import org.partiql.scribe.sql.utils.list
+import org.partiql.scribe.sql.utils.removePathRoot
 import org.partiql.scribe.sql.utils.type
 
 public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
@@ -122,5 +129,39 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat type("TIMESTAMPTZ", node.precision, gap = true)
             else -> super.visitDataType(node, tail)
         }
+    }
+
+    /**
+     * The PartiQL plan and thus AST will fully-qualify ORDER BY variable references and paths with an implicit
+     * binding tuple name for set operations. For Redshift, there is no implicit binding tuple name for the set ops. So
+     * we must remove the prefix binding tuple name from paths.
+     *
+     * For example, the query
+     *   (SELECT a FROM ...) UNION (SELECT a FROM ...) ORDER BY a
+     * will have an extra qualification
+     *   (SELECT a FROM ...) UNION (SELECT a FROM ...) ORDER BY "_1".a
+     * The additional qualification is invalid Redshift, hence why we remove it.
+     */
+    override fun visitExprQuerySet(
+        node: ExprQuerySet,
+        tail: SqlBlock,
+    ): SqlBlock {
+        if (node.body is QueryBody.SetOp && node.orderBy != null) {
+            val orderBy = node.orderBy!!
+            val newSorts =
+                orderBy.sorts.map { sort ->
+                    val newExpr = removePathRoot(sort.expr)
+                    sort(newExpr, sort.order, sort.nulls)
+                }
+            val newNode =
+                exprQuerySet(
+                    body = node.body,
+                    limit = node.limit,
+                    offset = node.offset,
+                    orderBy = orderBy(newSorts),
+                )
+            return super.visitExprQuerySet(newNode, tail)
+        }
+        return super.visitExprQuerySet(node, tail)
     }
 }
