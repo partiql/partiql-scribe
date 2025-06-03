@@ -144,7 +144,7 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
      * The additional qualification is invalid Redshift, hence why we remove it.
      *
      * Additionally, Redshift does not support path expressions in ORDER BY applied to set operations. See
-     * #[order-by-09] for an example of such an unsupported query.
+     * #[order-by-10] for an example of such an unsupported query.
      */
     override fun visitExprQuerySet(
         node: ExprQuerySet,
