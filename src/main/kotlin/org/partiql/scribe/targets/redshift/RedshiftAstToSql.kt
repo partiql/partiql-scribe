@@ -12,6 +12,7 @@ import org.partiql.ast.SelectItem
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprTrim
 import org.partiql.ast.expr.PathStep
@@ -141,6 +142,9 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
      * will have an extra qualification
      *   (SELECT a FROM ...) UNION (SELECT a FROM ...) ORDER BY "_1".a
      * The additional qualification is invalid Redshift, hence why we remove it.
+     *
+     * Additionally, Redshift does not support path expressions in ORDER BY applied to set operations. See
+     * #[order-by-09] for an example of such an unsupported query.
      */
     override fun visitExprQuerySet(
         node: ExprQuerySet,
@@ -150,6 +154,17 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             val orderBy = node.orderBy!!
             val newSorts =
                 orderBy.sorts.map { sort ->
+                    val sortExpr = sort.expr
+                    if (sortExpr is ExprPath && sortExpr.steps.size > 1) {
+                        listener.report(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
+                                message =
+                                    "Redshift does not support path expressions in the ORDER BY clause when " +
+                                        "applied to a set operation.",
+                            ),
+                        )
+                    }
                     val newExpr = removePathRoot(sort.expr)
                     sort(newExpr, sort.order, sort.nulls)
                 }

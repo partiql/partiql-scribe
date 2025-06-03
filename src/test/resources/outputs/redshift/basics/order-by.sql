@@ -25,5 +25,7 @@ SELECT "T"."a" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b
 --#[order-by-08]
 (SELECT "T"."a", "T"."b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST LIMIT 1 OFFSET 2) UNION DISTINCT (SELECT "T"."a", "T"."b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST LIMIT 3 OFFSET 4) ORDER BY "a" ASC NULLS LAST LIMIT 5 OFFSET 6;
 
---#[order-by-09]
-(SELECT "T"."flds" FROM "default"."EXCLUDE_T" AS "T") UNION DISTINCT (SELECT "T"."flds" FROM "default"."EXCLUDE_T" AS "T") ORDER BY "flds"."c"."field_x" ASC NULLS LAST;
+-- Redshift does not support the following case where the ORDER BY expression is a nested path expression applied to
+-- the set operation. It only supports columns output from the set operation.
+-- --#[order-by-09]
+-- (SELECT "T"."flds" FROM "default"."EXCLUDE_T" AS "T") UNION DISTINCT (SELECT "T"."flds" FROM "default"."EXCLUDE_T" AS "T") ORDER BY "flds"."c"."field_x" ASC NULLS LAST;
