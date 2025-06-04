@@ -17,6 +17,7 @@ import org.partiql.ast.Ast.selectItemExpr
 import org.partiql.ast.Ast.selectList
 import org.partiql.ast.Ast.selectStar
 import org.partiql.ast.Ast.selectValue
+import org.partiql.ast.Ast.sort
 import org.partiql.ast.Exclude
 import org.partiql.ast.ExcludePath
 import org.partiql.ast.ExcludeStep
@@ -27,6 +28,8 @@ import org.partiql.ast.GroupByStrategy
 import org.partiql.ast.Identifier
 import org.partiql.ast.Let
 import org.partiql.ast.Literal
+import org.partiql.ast.Nulls
+import org.partiql.ast.Order
 import org.partiql.ast.OrderBy
 import org.partiql.ast.QueryBody
 import org.partiql.ast.Select
@@ -42,6 +45,7 @@ import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.expr.ExprVarRef
+import org.partiql.plan.Collation
 import org.partiql.plan.Exclusion
 import org.partiql.plan.JoinType
 import org.partiql.plan.Operator
@@ -561,15 +565,51 @@ public open class RelConverter(
         )
     }
 
+    private fun convertCollationOrder(order: Collation.Order): Order {
+        return when (order.code()) {
+            Collation.Order.ASC -> Order.ASC()
+            Collation.Order.DESC -> Order.DESC()
+            else -> {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                        message = "Unsupported ORDER BY order direction $order",
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun convertCollationNulls(nulls: Collation.Nulls): Nulls {
+        return when (nulls.code()) {
+            Collation.Nulls.FIRST -> Nulls.FIRST()
+            Collation.Nulls.LAST -> Nulls.LAST()
+            else -> {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                        message = "Unsupported ORDER BY null ordering $nulls",
+                    ),
+                )
+            }
+        }
+    }
+
     override fun visitSort(
         rel: RelSort,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "SORT is not yet supported",
-            ),
+        val input = visit(rel.input, Unit)
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        val sorts =
+            rel.collations.map { collation ->
+                val orderByField = rexConverter.apply(collation.column)
+                val order = convertCollationOrder(collation.order)
+                val nullOrder = convertCollationNulls(collation.nulls)
+                sort(orderByField, order, nullOrder)
+            }
+        return input.copy(
+            orderBy = orderBy(sorts),
         )
     }
 
