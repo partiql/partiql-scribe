@@ -104,7 +104,7 @@
 --
 -- --#[exclude-49]
 -- -- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
--- SELECT STRUCT(`t`.`flds`.`a` AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NULLABLE` AS `t`;
+-- SELECT STRUCT(`t`.`flds`.`a` AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 --
 -- --#[exclude-50]
 -- SELECT `transform`(`t`.`a`, ___coll_wildcard___ -> STRUCT(___coll_wildcard___.`field_y` AS `field_y`, ___coll_wildcard___.`field_z` AS `field_z`, ___coll_wildcard___.`nested_list` AS `nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
