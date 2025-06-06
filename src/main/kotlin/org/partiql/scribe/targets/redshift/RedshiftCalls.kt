@@ -7,6 +7,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.expr.Expr
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
@@ -20,6 +21,7 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
             this["utcnow"] = ::utcnow
             // Extensions
             this["split"] = ::split
+            this["OBJECT_TRANSFORM"] = ::objectTransform
         }
 
     /**
@@ -52,6 +54,18 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         val arg0 = args[0].expr
         val arg1 = args[1].expr
         return exprCall(id, listOf(arg0, arg1))
+    }
+
+    private fun objectTransform(args: List<SqlArg>): Expr {
+        // https://docs.aws.amazon.com/redshift/latest/dg/r_object_transform_function.html
+        // Currently by default, function names get marked as case-sensitive identifiers in SqlCalls
+        // (so will be double-quoted).
+        // OBJECT_TRANSFORM in Redshift has to be unquoted so changing the identifier to be regular.
+        val id = Identifier.regular("OBJECT_TRANSFORM")
+        val input = args[0].expr
+        val keepPaths = args[1].expr
+        val setPaths = args[2].expr
+        return exprCall(id, listOf(input, keepPaths, setPaths))
     }
 
     override fun dateAdd(

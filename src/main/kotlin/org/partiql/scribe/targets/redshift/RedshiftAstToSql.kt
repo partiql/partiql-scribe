@@ -9,11 +9,13 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
-import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
+import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprQuerySet
+import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.expr.ExprTrim
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
@@ -51,6 +53,64 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             visitPathStepField(stepField, tail)
         } else {
             super.visitPathStepElement(node, tail)
+        }
+    }
+
+    // Redshift's equivalent for PartiQL's STRUCT type is SUPER OBJECT. Can use the `OBJECT` function to create SUPER
+    // OBJECTs: https://docs.aws.amazon.com/redshift/latest/dg/r_object_function.html
+    override fun visitExprStruct(
+        node: ExprStruct,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return tail concat list(this, "OBJECT(", ")") { node.fields }
+    }
+
+    override fun visitExprStructField(
+        node: ExprStruct.Field,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        t = visitExprWrapped(node.name, t)
+        t = t concat ", "
+        t = visitExprWrapped(node.value, t)
+        return t
+    }
+
+    override fun visitExprCall(
+        node: ExprCall,
+        tail: SqlBlock,
+    ): SqlBlock {
+        val fn = node.function
+        return when {
+            // https://docs.aws.amazon.com/redshift/latest/dg/r_object_transform_function.html
+            // Function has a special form:
+            // OBJECT_TRANSFORM(
+            //     <input SUPER OBJECT>                         // arg[0]
+            //     KEEP                                         // arg[1]
+            //         <keep path string 1>,
+            //         ...
+            //         <keep path string m>
+            //     [SET (optional)                              // arg[2]
+            //         <set path string 1>, <set path value 1>,
+            //         ...
+            //         <set path string n>, <set path value n>]
+            // )
+            fn.identifier.text == "OBJECT_TRANSFORM" -> {
+                val input = node.args[0]
+                val keepPaths = (node.args[1] as ExprArray).values
+                val setPaths = (node.args[2] as ExprArray).values
+                var t = tail
+                t = t concat "OBJECT_TRANSFORM("
+                t = visitExprWrapped(input, t)
+                t = t concat list(this, start = " KEEP ", end = "") { keepPaths }
+                if (setPaths.isNotEmpty()) {
+                    // no need for an empty block, just don't link it
+                    t = t concat list(this, start = " SET ", end = "") { setPaths }
+                }
+                t = t concat ")"
+                t
+            }
+            else -> super.visitExprCall(node, tail)
         }
     }
 
