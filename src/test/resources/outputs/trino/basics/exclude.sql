@@ -201,7 +201,7 @@
 --
 -- --#[exclude-49]
 -- -- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
--- SELECT CAST(ROW("t"."flds"."a", CAST(ROW("t"."flds"."c"."field_y") AS ROW("field_y" VARCHAR))) AS ROW("a" ROW("field_x" INTEGER, "field_y" VARCHAR), "c" ROW("field_y" VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NULLABLE" AS "t";
+-- SELECT CAST(ROW("t"."flds"."a", CAST(ROW("t"."flds"."c"."field_y") AS ROW("field_y" VARCHAR))) AS ROW("a" ROW("field_x" INTEGER, "field_y" VARCHAR), "c" ROW("field_y" VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 --
 -- --#[exclude-50]
 -- SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y", ___coll_wildcard___."field_z", ___coll_wildcard___."nested_list") AS ROW("field_y" VARCHAR, "field_z" VARCHAR, "nested_list" ARRAY<INTEGER>))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
