@@ -23,6 +23,7 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
         super.rules.toMutableMap().apply {
             this["utcnow"] = ::utcnow
             this["current_user"] = ::currentUser
+            this["transform"] = ::transform
         }
 
     private fun currentUser(args: List<SqlArg>): Expr {
@@ -51,6 +52,21 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
         val currentTimestamp = Identifier.regular("current_timestamp")
         val targetTimezone = exprLit(Literal.string("UTC"))
         return exprCall(convertTimeZone, listOf(targetTimezone, exprCall(currentTimestamp, emptyList())))
+    }
+
+    // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>
+    // docs: https://spark.apache.org/docs/latest/api/sql/index.html#transform
+    // This function is used for transpilation of `EXCLUDE` collection wildcards. It is similar to a functional map but
+    // uses some special syntax (same as Trino's `transform` function).
+    // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
+    // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
+    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexConverter
+    private fun transform(args: List<SqlArg>): Expr {
+        val fnName = Identifier.regular("transform")
+        val arrayExpr = args[0].expr
+        val elementVar = args[1].expr
+        val elementExpr = args[2].expr
+        return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
     }
 
     /**

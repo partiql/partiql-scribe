@@ -2,3 +2,42 @@
 -- See resources/outputs/sandbox/sandbox/sandbox.sql for the expected output
 --#[sandbox-00]
 1;
+-- CAST(null AS VARCHAR);
+-- SELECT split(v, '.')[0] AS chars FROM T;
+-- SELECT * EXCLUDE t.foo.bar FROM datatypes.T_TIMESTAMP AS t;
+-- SELECT * EXCLUDE t1.foo, t2.flds.b, t2.flds.c.field_x FROM EXCLUDE_T AS t1, EXCLUDE_T AS t2 WHERE t1.foo = t2.foo;
+-- SELECT T.flds FROM EXCLUDE_T AS T ORDER BY T.flds.c.field_x;
+-- SELECT T.flds FROM EXCLUDE_T AS T ORDER BY T.flds.c.field_x;
+-- SELECT * EXCLUDE t1.foo, t2.flds.b, t2.flds.c.field_x FROM EXCLUDE_T AS t1, EXCLUDE_T AS t2 WHERE t1.foo = t2.foo;
+-- SELECT * EXCLUDE t.foo.bar FROM datatypes.T_STRING_16 AS t;
+-- SELECT * EXCLUDE t.foo.bar FROM datatypes.T_INT64 AS t;
+-- SELECT * EXCLUDE t.a[*].field_x FROM EXCLUDE_T_COLL_WILDCARD AS t;
+-- SELECT * EXCLUDE t.flds.b, t.flds.c.field_x FROM EXCLUDE_T AS t;
+-- 1;
+-- (SELECT T.flds FROM EXCLUDE_T AS T) UNION (SELECT T.flds FROM EXCLUDE_T AS T) ORDER BY flds.c.field_x;
+-- ((SELECT a AS b FROM T ORDER BY a) UNION (SELECT a AS b FROM T ORDER BY a)) ORDER BY b;
+-- SELECT 2 * a AS total FROM <<{'a': 1}>> AS T ORDER BY total;
+-- SELECT DISTINCT * FROM T;
+-- SELECT * FROM T WHERE T.b < 1 GROUP BY T.b HAVING COUNT(T.b) > 1;
+-- (SELECT a FROM T) UNION (SELECT a FROM T) ORDER BY a;
+-- SELECT a FROM T ORDER BY a;
+-- WITH cte1 AS (
+--     SELECT * FROM SIMPLE_T
+-- )
+-- SELECT * FROM cte1;
+-- SELECT *
+-- ''hello'';
+-- WITH cte1 AS (
+--     SELECT * FROM SIMPLE_T
+-- )
+-- SELECT * FROM cte1;
+-- SELECT DISTINCT a FROM T AS T1 LIMIT 1;
+-- (SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true ORDER BY a LIMIT 1 OFFSET 2) UNION (SELECT a FROM <<{'a': 2}>> ORDER BY a LIMIT 3 OFFSET 4) UNION (SELECT a FROM <<{'a': 3}>> ORDER BY a LIMIT 5 OFFSET 6) ORDER BY a LIMIT 7 OFFSET 8;
+-- (SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true LIMIT 1 OFFSET 2) UNION (SELECT a FROM <<{'a': 2}>> LIMIT 3 OFFSET 4) UNION (SELECT a FROM <<{'a': 3}>> LIMIT 5 OFFSET 6) LIMIT 7 OFFSET 8;
+-- (SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true LIMIT 1 OFFSET 2) UNION (SELECT a FROM <<{'a': 2}>> LIMIT 3 OFFSET 4);
+-- SELECT a FROM <<{'a': 1}>> WHERE true GROUP BY a HAVING true LIMIT 1 OFFSET 2;
+-- SELECT a
+-- FROM <<{'a': true}>> AS t1
+-- WHERE a IN (SELECT a FROM T);
+-- (SELECT * FROM <<{'a': 1}>> AS t1 UNION SELECT * FROM <<{'a': 2}>> AS t2) LIMIT 3;
+-- SELECT * FROM <<{'a': 1}>> AS t1 LIMIT 1;

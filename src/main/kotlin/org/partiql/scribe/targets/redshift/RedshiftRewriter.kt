@@ -4,13 +4,10 @@ import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.rel.RelExclude
 import org.partiql.plan.rel.RelProject
-import org.partiql.plan.rex.Rex
-import org.partiql.plan.rex.RexPathIndex
-import org.partiql.plan.rex.RexPathKey
-import org.partiql.plan.rex.RexPathSymbol
 import org.partiql.plan.rex.RexStruct
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.sql.utils.isPathRex
 import org.partiql.scribe.targets.redshift.utils.rewriteToObjectTransform
 import org.partiql.spi.types.PType
 
@@ -36,8 +33,6 @@ public open class RedshiftRewriter(context: ScribeContext) : OperatorRewriter<Sc
             }
         return super.visitProject(newNode, ctx)
     }
-
-    private fun Rex.isPathRex() = this is RexPathIndex || this is RexPathKey || this is RexPathSymbol
 
     override fun visitStruct(
         rex: RexStruct,
