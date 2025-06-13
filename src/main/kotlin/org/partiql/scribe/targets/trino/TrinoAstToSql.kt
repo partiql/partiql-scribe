@@ -102,11 +102,21 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         return super.visitExprCall(node, tail)
     }
 
+    /**
+     * Trino-specific type conversions
+     * BOOL -> BOOLEAN
+     * INT2 -> SMALLINT
+     * INT4 -> INT
+     * INT8 -> BIGINT
+     * DOUBLE PRECISION -> DOUBLE
+     * STRING -> VARCHAR
+     */
     override fun visitDataType(
         node: DataType,
         tail: SqlBlock,
     ): SqlBlock {
         return when (node.code()) {
+            DataType.BOOL -> tail concat "BOOLEAN"
             DataType.INT2 -> tail concat "SMALLINT"
             DataType.INT4 -> tail concat "INT"
             DataType.INT8 -> tail concat "BIGINT"

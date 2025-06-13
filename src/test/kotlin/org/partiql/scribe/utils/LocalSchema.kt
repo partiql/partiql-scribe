@@ -38,7 +38,7 @@ private object LocalSchema {
             "int8" -> PType.tinyint()
             "int16" -> PType.smallint()
             "int32" -> PType.integer()
-            "int64" -> PType.integer()
+            "int64" -> PType.bigint()
             "decimal" -> PType.decimal()
             "float32" -> PType.real()
             "float64" -> PType.doublePrecision()
