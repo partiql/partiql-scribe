@@ -26,20 +26,20 @@ SELECT DATE '2020-02-03' AS `_1` FROM `default`.`T` AS `T`;
 
 -- TIMESTAMP
 --#[datetime-08]
-SELECT TIMESTAMP '0001-02-03 04:05:06.78' AS `_1` FROM `default`.`T` AS `T`;
+SELECT TIMESTAMP_NTZ '0001-02-03 04:05:06.78' AS `_1` FROM `default`.`T` AS `T`;
 
 -- previous test includes timezone offset for TIMESTAMP and negative timezone offset is not supported
 -- --#[datetime-09]
 -- SELECT TIMESTAMP '0001-02-03 04:05:06.78-00:00' AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-10]
-SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 04:05:06.78+00:00' AS `_1` FROM `default`.`T` AS `T`;
+SELECT TIMESTAMP '0001-02-03 04:05:06.78+00:00' AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-11]
-SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 04:05:06.78+00:30' AS `_1` FROM `default`.`T` AS `T`;
+SELECT TIMESTAMP '0001-02-03 04:05:06.78+00:30' AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-12]
-SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 04:05:06.78-00:30' AS `_1` FROM `default`.`T` AS `T`;
+SELECT TIMESTAMP '0001-02-03 04:05:06.78-00:30' AS `_1` FROM `default`.`T` AS `T`;
 
 -- -- Ion Timestamp -> map to SQL timestamp literal
 -- --#[datetime-13]

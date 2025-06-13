@@ -177,17 +177,32 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
 
     /**
      * Type mappings for Redshift
-     * Shorten the naming
-     * - TIME WITH TIME ZONE -> TIMETZ
-     * - TIMESTAMP WITH TIME ZONE -> TIMESTAMPTZ
+     * - STRING -> VARCHAR(65535)
+     * - TINYINT -> error
      */
     override fun visitDataType(
         node: DataType,
         tail: SqlBlock,
     ): SqlBlock {
         return when (node.code()) {
-            DataType.TIME_WITH_TIME_ZONE -> tail concat type("TIMETZ", node.precision, gap = true)
-            DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat type("TIMESTAMPTZ", node.precision, gap = true)
+            DataType.TINYINT ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
+                        message = "Redshift does not support TINYINT type.",
+                    ),
+                )
+            DataType.STRING -> {
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "Redshift does not support PartiQL's STRING type. " +
+                                "Replaced with VARCHAR(65535).",
+                    ),
+                )
+                tail concat type("VARCHAR", 65535, gap = false)
+            }
             else -> super.visitDataType(node, tail)
         }
     }
