@@ -71,6 +71,10 @@ public class Locals(
     }
 }
 
+private const val UNSPECIFIED_LENGTH = "UNSPECIFIED_LENGTH"
+private const val UNSPECIFIED_PRECISION = "UNSPECIFIED_PRECISION"
+private const val UNSPECIFIED_SCALE = "UNSPECIFIED_SCALE"
+
 public open class RexConverter(
     private val transform: PlanToAst,
     private val locals: Locals,
@@ -149,7 +153,12 @@ public open class RexConverter(
         return exprCase(matchExpr, branches, default)
     }
 
-    // TODO support CAST parameters
+    private fun PType.unspecifiedLength() = metas[UNSPECIFIED_LENGTH] == true
+
+    private fun PType.unspecifiedPrecision() = metas[UNSPECIFIED_PRECISION] == true
+
+    private fun PType.unspecifiedScale() = metas[UNSPECIFIED_SCALE] == true
+
     override fun visitCast(
         rex: RexCast,
         ctx: Unit,
@@ -165,17 +174,65 @@ public open class RexConverter(
                 PType.INTEGER -> DataType.INT()
                 PType.BIGINT -> DataType.BIGINT()
                 // DECIMAL types
-                PType.NUMERIC -> DataType.NUMERIC()
-                PType.DECIMAL -> DataType.DECIMAL()
+                PType.NUMERIC -> {
+                    val noPrecision = rex.target.unspecifiedPrecision()
+                    val noScale = rex.target.unspecifiedScale()
+                    when {
+                        noPrecision && noScale -> DataType.NUMERIC()
+                        noScale -> DataType.NUMERIC(rex.target.precision)
+                        noPrecision -> error("Invalid PType in plan ${rex.target} has a scale but no precision specified")
+                        else -> DataType.NUMERIC(rex.target.precision, rex.target.scale)
+                    }
+                }
+                PType.DECIMAL -> {
+                    val noPrecision = rex.target.unspecifiedPrecision()
+                    val noScale = rex.target.unspecifiedScale()
+                    when {
+                        noPrecision && noScale -> DataType.DECIMAL()
+                        noScale -> DataType.DECIMAL(rex.target.precision)
+                        noPrecision -> error("Invalid PType in plan ${rex.target} has a scale but no precision specified")
+                        else -> DataType.DECIMAL(rex.target.precision, rex.target.scale)
+                    }
+                }
                 // Approximate numeric types
                 PType.REAL -> DataType.REAL()
                 PType.DOUBLE -> DataType.DOUBLE_PRECISION()
                 // String types
-                PType.CHAR -> DataType.CHAR()
-                PType.VARCHAR -> DataType.VARCHAR()
+                PType.CHAR ->
+                    when (rex.target.unspecifiedLength()) {
+                        true -> DataType.CHAR()
+                        false -> DataType.CHAR(rex.target.length)
+                    }
+                PType.VARCHAR ->
+                    when (rex.target.unspecifiedLength()) {
+                        true -> DataType.VARCHAR()
+                        false -> DataType.VARCHAR(rex.target.length)
+                    }
                 PType.STRING -> DataType.STRING()
+                // Datetime types
+                PType.DATE -> DataType.DATE()
+                PType.TIME ->
+                    when (rex.target.unspecifiedPrecision()) {
+                        true -> DataType.TIME()
+                        false -> DataType.TIME(rex.target.precision)
+                    }
+                PType.TIMEZ ->
+                    when (rex.target.unspecifiedPrecision()) {
+                        true -> DataType.TIME_WITH_TIME_ZONE()
+                        false -> DataType.TIME_WITH_TIME_ZONE(rex.target.precision)
+                    }
+                PType.TIMESTAMP ->
+                    when (rex.target.unspecifiedPrecision()) {
+                        true -> DataType.TIMESTAMP()
+                        false -> DataType.TIMESTAMP(rex.target.precision)
+                    }
+                PType.TIMESTAMPZ ->
+                    when (rex.target.unspecifiedPrecision()) {
+                        true -> DataType.TIMESTAMP_WITH_TIME_ZONE()
+                        false -> DataType.TIMESTAMP_WITH_TIME_ZONE(rex.target.precision)
+                    }
                 // Dynamic type
-                PType.DYNAMIC -> return value // TODO possibly move into separate rewrite
+                PType.DYNAMIC -> return value
                 PType.BAG -> return value
                 else ->
                     listener.reportAndThrow(
