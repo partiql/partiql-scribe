@@ -13,6 +13,17 @@ import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprVarRef
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
+import org.partiql.plan.rex.Rex
+import org.partiql.plan.rex.RexPathIndex
+import org.partiql.plan.rex.RexPathKey
+import org.partiql.plan.rex.RexPathSymbol
+import org.partiql.spi.types.PType
+
+// ////////////////////////////// Plan -> Plan utils
+internal fun Rex.isPathRex() = this is RexPathIndex || this is RexPathKey || this is RexPathSymbol
+
+// Checks if the [PType] has the `CONTAINS_EXCLUDED_FIELD` set to true
+internal fun PType.containsExcludedFieldMeta() = this.metas["CONTAINS_EXCLUDED_FIELD"] == true
 
 // ////////////////////////////// AST -> Text utils
 
