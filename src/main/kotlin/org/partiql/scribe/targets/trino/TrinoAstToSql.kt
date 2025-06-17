@@ -17,6 +17,7 @@ import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprSessionAttribute
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
+import org.partiql.ast.sql.sql
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
@@ -99,7 +100,19 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             t = t concat list(this, start) { node.args }
             return t
         }
-        return super.visitExprCall(node, tail)
+        return when {
+            node.function.identifier.text == "transform" -> {
+                // Trino's transform function uses `->` to separate between the element variable and the element expr.
+                val arrayExpr = node.args[0].sql(dialect = this)
+                val elementVar = node.args[1].sql(dialect = this)
+                val elementExpr = node.args[2].sql(dialect = this)
+                var h = tail
+                h = visitIdentifier(node.function, h)
+                h = h concat "($arrayExpr, $elementVar -> $elementExpr)"
+                h
+            }
+            else -> super.visitExprCall(node, tail)
+        }
     }
 
     /**
