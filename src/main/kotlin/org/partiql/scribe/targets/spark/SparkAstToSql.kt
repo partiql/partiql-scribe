@@ -24,6 +24,7 @@ import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
 import org.partiql.scribe.sql.utils.list
 import org.partiql.scribe.sql.utils.removePathRoot
+import org.partiql.scribe.sql.utils.type
 
 public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
@@ -116,7 +117,12 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
      * INT2 -> SMALLINT
      * INT4 -> INT
      * INT8 -> BIGINT
-     * DOUBLE_PRECISION -> DOUBLE
+     * DOUBLE PRECISION -> DOUBLE
+     * VARCHAR -> no params given default of 20 (https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/VarcharType.html#defaultSize())
+     * CHAR -> no params given default of 20 (https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/types/CharType.html#defaultSize())
+     * TIMESTAMP -> TIMESTAMP_NTZ; parameters removed
+     * TIMESTAMP WITH TIME ZONE -> TIMESTAMP; parameters removed
+     * TIME + TIME WITH TIME ZONE -> error since Spark does not have a TIME type
      */
     override fun visitDataType(
         node: DataType,
@@ -127,6 +133,76 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.INT4 -> tail concat "INT"
             DataType.INT8 -> tail concat "BIGINT"
             DataType.DOUBLE_PRECISION -> tail concat "DOUBLE"
+            DataType.VARCHAR ->
+                when (node.length) {
+                    null -> {
+                        listener.report(
+                            ScribeProblem.simpleInfo(
+                                code = ScribeProblem.TRANSLATION_INFO,
+                                message =
+                                    "SparkSQL requires a precision argument for VARCHAR. " +
+                                        "Set to default of 20.",
+                            ),
+                        )
+                        tail concat "VARCHAR(20)"
+                    }
+                    else -> tail concat "VARCHAR(${node.length})"
+                }
+            DataType.CHAR ->
+                when (node.length) {
+                    null -> {
+                        listener.report(
+                            ScribeProblem.simpleInfo(
+                                code = ScribeProblem.TRANSLATION_INFO,
+                                message =
+                                    "SparkSQL requires a precision argument for CHAR. " +
+                                        "Set to default of 20.",
+                            ),
+                        )
+                        tail concat "CHAR(20)"
+                    }
+                    else -> tail concat "CHAR(${node.length})"
+                }
+            DataType.TIMESTAMP -> {
+                if (node.precision != null) {
+                    listener.report(
+                        ScribeProblem.simpleInfo(
+                            code = ScribeProblem.TRANSLATION_INFO,
+                            message =
+                                "SparkSQL does not support PartiQL's timestamp precision. " +
+                                    "Replaced with TIMESTAMP_NTZ type.",
+                        ),
+                    )
+                }
+                tail concat type("TIMESTAMP_NTZ", null, gap = true)
+            }
+            DataType.TIMESTAMP_WITH_TIME_ZONE -> {
+                if (node.precision != null) {
+                    listener.report(
+                        ScribeProblem.simpleInfo(
+                            code = ScribeProblem.TRANSLATION_INFO,
+                            message =
+                                "SparkSQL does not support PartiQL's timestamp with time zone precision. " +
+                                    "Replaced with TIMESTAMP type.",
+                        ),
+                    )
+                }
+                tail concat type("TIMESTAMP", null, gap = true)
+            }
+            DataType.TIME ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
+                        "TIME type is not supported in Spark.",
+                    ),
+                )
+            DataType.TIME_WITH_TIME_ZONE ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
+                        "TIME WITH TIME ZONE type is not supported in Spark.",
+                    ),
+                )
             else -> super.visitDataType(node, tail)
         }
     }
