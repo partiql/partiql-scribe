@@ -6,14 +6,12 @@ import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexStruct
 import org.partiql.plan.rex.RexType
+import org.partiql.scribe.sql.utils.containsExcludedFieldMeta
 import org.partiql.spi.function.Fn
 import org.partiql.spi.function.Parameter
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
 import org.partiql.spi.value.Datum
-
-// Checks if the [PType] has the `CONTAINS_EXCLUDED_FIELD` set to true
-private fun PType.containsExcludedFieldMeta() = this.metas["CONTAINS_EXCLUDED_FIELD"] == true
 
 /**
  * Second and third arguments of Redshift's OBJECT_TRANSFORM are the "paths" to keep and set in the output SUPER object.

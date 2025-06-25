@@ -440,8 +440,12 @@ public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe
 	public fun visitDataType (Lorg/partiql/ast/DataType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitFromExpr (Lorg/partiql/ast/FromExpr;Ljava/lang/Object;)Ljava/lang/Object;
@@ -484,10 +488,18 @@ public class org/partiql/scribe/targets/spark/SparkRelConverter : org/partiql/sc
 
 public class org/partiql/scribe/targets/spark/SparkRewriter : org/partiql/plan/OperatorRewriter {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
 }
 
 public class org/partiql/scribe/targets/spark/SparkRexConverter : org/partiql/scribe/sql/RexConverter {
 	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitLit (Lorg/partiql/plan/rex/RexLit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitLit (Lorg/partiql/plan/rex/RexLit;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/spark/SparkTarget : org/partiql/scribe/sql/SqlTarget {

@@ -2,7 +2,9 @@ package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Ast.exprPathStepField
 import org.partiql.ast.Ast.exprQuerySet
+import org.partiql.ast.Ast.identifierSimple
 import org.partiql.ast.Ast.orderBy
+import org.partiql.ast.Ast.selectItemExpr
 import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
 import org.partiql.ast.FromExpr
@@ -12,12 +14,15 @@ import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
 import org.partiql.ast.expr.ExprBag
+import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprQuerySet
+import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.expr.ExprTrim
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.expr.TrimSpec
 import org.partiql.ast.sql.SqlBlock
+import org.partiql.ast.sql.sql
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
@@ -110,6 +115,45 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         return tail concat ".${node.field.sql()}"
+    }
+
+    // Spark's equivalent for PartiQL's STRUCT type is struct type. Can use the `STRUCT` function to create Spark
+    // structs: https://spark.apache.org/docs/latest/api/sql/#struct. Names are provided by using an `AS` alias.
+    override fun visitExprStruct(
+        node: ExprStruct,
+        tail: SqlBlock,
+    ): SqlBlock {
+        val fieldsAsSparkStructs =
+            node.fields.map { field ->
+                selectItemExpr(
+                    expr = field.value,
+                    asAlias =
+                        identifierSimple(
+                            symbol = (field.name as ExprLit).lit.stringValue(),
+                            isRegular = true,
+                        ),
+                )
+            }
+        return tail concat list(this, "STRUCT(", ")") { fieldsAsSparkStructs }
+    }
+
+    override fun visitExprCall(
+        node: ExprCall,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return when {
+            node.function.identifier.text == "transform" -> {
+                // Spark's transform function uses `->` to separate between the element variable and the element expr.
+                val arrayExpr = node.args[0].sql(dialect = this)
+                val elementVar = node.args[1].sql(dialect = this)
+                val elementExpr = node.args[2].sql(dialect = this)
+                var h = tail
+                h = visitIdentifier(node.function, h)
+                h = h concat "($arrayExpr, $elementVar -> $elementExpr)"
+                h
+            }
+            else -> super.visitExprCall(node, tail)
+        }
     }
 
     /**
