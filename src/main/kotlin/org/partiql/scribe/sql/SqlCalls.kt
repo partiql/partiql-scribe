@@ -39,6 +39,7 @@ import org.partiql.ast.typeSymbol
 import org.partiql.ast.typeTime
 import org.partiql.ast.typeTimestamp
 import org.partiql.types.StaticType
+import org.partiql.value.Int32Value
 import org.partiql.value.NumericValue
 import org.partiql.value.PartiQLValueExperimental
 import org.partiql.value.PartiQLValueType
@@ -319,8 +320,24 @@ public abstract class SqlCalls {
         return exprLike(arg0, arg1, arg2, false)
     }
 
+    /**
+     * If [expr] is an [Expr.Lit] and its inner value is an [Int32Value], return the value. Otherwise, return null.
+     */
+    private fun maybeGetIntValue(expr: Expr): Int? {
+        if (expr !is Expr.Lit) {
+            return null
+        }
+        val partiqlValue = expr.value
+        if (partiqlValue !is Int32Value) {
+            return null
+        }
+        val intValue = partiqlValue
+        return intValue.value
+    }
+
+    // Currently only support typed casts for DECIMAL (unspecified scale will be set to `0` during PLK 0.14.9's AST ->
+    // plan transformation
     public open fun rewriteCast(type: PartiQLValueType, args: SqlArgs): Expr {
-        assert(args.size == 1) { "CAST should only have 1 argument" }
         val value = args[0].expr
         val asType = when (type) {
             PartiQLValueType.ANY -> typeAny()
@@ -331,7 +348,25 @@ public abstract class SqlCalls {
             PartiQLValueType.INT64 -> typeBigint()
             PartiQLValueType.INT -> typeInt()
             PartiQLValueType.DECIMAL_ARBITRARY -> typeDecimal(null, null)
-            PartiQLValueType.DECIMAL -> typeDecimal(null, null)
+            PartiQLValueType.DECIMAL -> {
+                when (args.size) {
+                    3 -> {
+                        val precision = maybeGetIntValue(args[1].expr)
+                        val scale = maybeGetIntValue(args[2].expr)
+                        typeDecimal(precision, scale)
+                    }
+                    2 -> {
+                        // no scale; currently in PLK 0.14.9, scale is set to `0` whenever it's unspecified so this elif
+                        // will not be true
+                        // https://github.com/partiql/partiql-lang-kotlin/blob/v0.14.9/partiql-planner/src/main/kotlin/org/partiql/planner/internal/transforms/RexConverter.kt#L560
+                        val precision = maybeGetIntValue(args[1].expr)
+                        typeDecimal(precision, null)
+                    }
+                    else -> {
+                        typeDecimal(null, null)
+                    }
+                }
+            }
             PartiQLValueType.FLOAT32 -> typeFloat32()
             PartiQLValueType.FLOAT64 -> typeFloat64()
             PartiQLValueType.CHAR -> typeChar(null)
