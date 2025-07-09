@@ -8,7 +8,7 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.fail
 import org.partiql.parser.PartiQLParser
 import org.partiql.plan.Plan
-import org.partiql.planner.PartiQLPlanner
+import org.partiql.planner.builder.PartiQLPlannerBuilder
 import org.partiql.scribe.Scribe
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeException
@@ -55,7 +55,7 @@ abstract class SqlTargetSuite {
      */
     private val comparator = SqlEqualsNaive
     private val parser = PartiQLParser.standard()
-    private val planner = PartiQLPlanner.standard()
+    private val planner = PartiQLPlannerBuilder().replaceWithReferences(replaceWith = false).build()
     private val scribeContext = ScribeContext.standard()
 
     /**

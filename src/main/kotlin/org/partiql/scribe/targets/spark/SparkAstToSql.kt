@@ -13,6 +13,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
+import org.partiql.ast.WithListElement
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprLit
@@ -55,6 +56,21 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
         // AT and BY should be stopped by feature validation.
         return h
+    }
+
+    /**
+     * Use the Spark backticks as the delimiter for the With query name.
+     */
+    override fun visitWithListElement(
+        node: WithListElement,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        t = t concat node.queryName.sql()
+        t = node.columnList?.let { columns -> list(this, " (", ") ") { columns } } ?: t
+        t = t concat " AS "
+        t = visitExprWrapped(node.asQuery, t)
+        return t
     }
 
     /**

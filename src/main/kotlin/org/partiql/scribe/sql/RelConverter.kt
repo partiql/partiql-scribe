@@ -1,5 +1,6 @@
 package org.partiql.scribe.sql
 
+import org.partiql.ast.Ast
 import org.partiql.ast.Ast.exclude
 import org.partiql.ast.Ast.excludePath
 import org.partiql.ast.Ast.excludeStepCollIndex
@@ -18,6 +19,7 @@ import org.partiql.ast.Ast.selectList
 import org.partiql.ast.Ast.selectStar
 import org.partiql.ast.Ast.selectValue
 import org.partiql.ast.Ast.sort
+import org.partiql.ast.Ast.withListElement
 import org.partiql.ast.Exclude
 import org.partiql.ast.ExcludePath
 import org.partiql.ast.ExcludeStep
@@ -68,6 +70,7 @@ import org.partiql.plan.rel.RelSort
 import org.partiql.plan.rel.RelType
 import org.partiql.plan.rel.RelUnion
 import org.partiql.plan.rel.RelUnpivot
+import org.partiql.plan.rel.RelWith
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 
@@ -660,6 +663,30 @@ public open class RelConverter(
                 message = "UNPIVOT is not yet supported",
             ),
         )
+    }
+
+    override fun visitWith(
+        rel: RelWith,
+        ctx: Unit,
+    ): ExprQuerySetFactory {
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        val querySet = visit(rel.input, ctx)
+        val withElements =
+            rel.elements.map { element ->
+                val name = element.name
+                val repr = rexConverter.apply(element.representation)
+                withListElement(
+                    queryName = Identifier.Simple.delimited(name),
+                    asQuery = repr as ExprQuerySet,
+                    columnList = null,
+                )
+            }
+        querySet.with =
+            Ast.with(
+                elements = withElements,
+                isRecursive = false,
+            )
+        return querySet
     }
 
     // Private helpers
