@@ -1,0 +1,2 @@
+--#[interval-00]
+SELECT INTERVAL '10' YEAR AS i FROM T;

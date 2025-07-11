@@ -18,8 +18,10 @@ import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.Ast.queryBodySetOp
 import org.partiql.ast.Ast.setOp
 import org.partiql.ast.DataType
+import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Identifier.Simple.regular
+import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
@@ -345,6 +347,19 @@ public open class RexConverter(
                 Literal.typedString(
                     DataType.TIMESTAMP_WITH_TIME_ZONE(),
                     "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}$offsetString",
+                )
+            }
+            PType.INTERVAL_YM -> {
+                Literal.typedString(
+                    DataType.INTERVAL(
+                        IntervalQualifier.Range(
+                            DatetimeField.YEAR(),
+                            this.type.precision,
+                            DatetimeField.MONTH(),
+                            null,
+                        ),
+                    ),
+                    "${this.years}-${this.months}",
                 )
             }
             else ->
