@@ -204,6 +204,8 @@ public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisi
 	public fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitWith (Lorg/partiql/plan/rel/RelWith;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWith (Lorg/partiql/plan/rel/RelWith;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 }
 
 public class org/partiql/scribe/sql/RexConverter : org/partiql/plan/OperatorVisitor {
@@ -460,6 +462,8 @@ public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe
 	public fun visitPathStepField (Lorg/partiql/ast/expr/PathStep$Field;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitWithListElement (Lorg/partiql/ast/WithListElement;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWithListElement (Lorg/partiql/ast/WithListElement;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }
 
 public class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sql/SqlCalls {
