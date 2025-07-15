@@ -55,7 +55,7 @@ abstract class SqlTargetSuite {
      */
     private val comparator = SqlEqualsNaive
     private val parser = PartiQLParser.standard()
-    private val planner = PartiQLPlannerBuilder().replaceWithReferences(replaceWith = false).build()
+    private val planner = PartiQLPlannerBuilder().forceInlineWithClause(replaceWith = false).build()
     private val scribeContext = ScribeContext.standard()
 
     /**
