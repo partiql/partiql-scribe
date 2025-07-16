@@ -18,8 +18,10 @@ import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.Ast.queryBodySetOp
 import org.partiql.ast.Ast.setOp
 import org.partiql.ast.DataType
+import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Identifier.Simple.regular
+import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
@@ -54,11 +56,13 @@ import org.partiql.plan.rex.RexTable
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
 import org.partiql.spi.value.Datum
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlin.math.absoluteValue
 
 public typealias TypeEnv = List<PTypeField>
 
@@ -74,6 +78,7 @@ public class Locals(
 private const val UNSPECIFIED_LENGTH = "UNSPECIFIED_LENGTH"
 private const val UNSPECIFIED_PRECISION = "UNSPECIFIED_PRECISION"
 private const val UNSPECIFIED_SCALE = "UNSPECIFIED_SCALE"
+private const val UNSPECIFIED_FRACTIONAL_PRECISION = "UNSPECIFIED_FRACTIONAL_PRECISION"
 
 public open class RexConverter(
     private val transform: PlanToAst,
@@ -158,6 +163,8 @@ public open class RexConverter(
     private fun PType.unspecifiedPrecision() = metas[UNSPECIFIED_PRECISION] == true
 
     private fun PType.unspecifiedScale() = metas[UNSPECIFIED_SCALE] == true
+
+    private fun PType.unspecifiedFractionalPrecision() = metas[UNSPECIFIED_FRACTIONAL_PRECISION] == true
 
     override fun visitCast(
         rex: RexCast,
@@ -288,6 +295,13 @@ public open class RexConverter(
         return exprLit(datum.toLiteral())
     }
 
+    private fun PType.retrievePrecision() =
+        if (this.unspecifiedPrecision()) {
+            null
+        } else {
+            this.precision
+        }
+
     private fun Datum.toLiteral(): Literal {
         if (this.isNull) {
             return Literal.nul()
@@ -346,6 +360,243 @@ public open class RexConverter(
                     DataType.TIMESTAMP_WITH_TIME_ZONE(),
                     "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}$offsetString",
                 )
+            }
+            PType.INTERVAL_YM -> {
+                when (type.intervalCode) {
+                    IntervalCode.YEAR -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Single(
+                                    DatetimeField.YEAR(),
+                                    type.retrievePrecision(),
+                                    null,
+                                ),
+                            ),
+                            "$years",
+                        )
+                    }
+                    IntervalCode.MONTH -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Single(
+                                    DatetimeField.MONTH(),
+                                    type.retrievePrecision(),
+                                    null,
+                                ),
+                            ),
+                            "$months",
+                        )
+                    }
+                    IntervalCode.YEAR_MONTH -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Range(
+                                    DatetimeField.YEAR(),
+                                    type.retrievePrecision(),
+                                    DatetimeField.MONTH(),
+                                    null,
+                                ),
+                            ),
+                            "$years-${months.absoluteValue}",
+                        )
+                    }
+                    else ->
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.INVALID_PLAN,
+                                message = "Invalid IntervalCode for INTERVAL_YM value: ${type.intervalCode}",
+                            ),
+                        )
+                }
+            }
+            PType.INTERVAL_DT -> {
+                when (type.intervalCode) {
+                    IntervalCode.DAY -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Single(
+                                    DatetimeField.DAY(),
+                                    type.retrievePrecision(),
+                                    null,
+                                ),
+                            ),
+                            "$days",
+                        )
+                    }
+                    IntervalCode.HOUR -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Single(
+                                    DatetimeField.HOUR(),
+                                    type.retrievePrecision(),
+                                    null,
+                                ),
+                            ),
+                            "$hours",
+                        )
+                    }
+                    IntervalCode.MINUTE -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Single(
+                                    DatetimeField.MINUTE(),
+                                    type.retrievePrecision(),
+                                    null,
+                                ),
+                            ),
+                            "$minutes",
+                        )
+                    }
+                    IntervalCode.SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$seconds.$nanosTruncated"
+                            } else {
+                                "$seconds"
+                            }
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Single(
+                                    DatetimeField.SECOND(),
+                                    type.retrievePrecision(),
+                                    fracPrecision,
+                                ),
+                            ),
+                            intervalValue,
+                        )
+                    }
+                    IntervalCode.DAY_HOUR -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Range(
+                                    DatetimeField.DAY(),
+                                    type.retrievePrecision(),
+                                    DatetimeField.HOUR(),
+                                    null,
+                                ),
+                            ),
+                            "$days ${hours.absoluteValue}",
+                        )
+                    }
+                    IntervalCode.DAY_MINUTE -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Range(
+                                    DatetimeField.DAY(),
+                                    type.retrievePrecision(),
+                                    DatetimeField.MINUTE(),
+                                    null,
+                                ),
+                            ),
+                            "$days ${hours.absoluteValue}:${minutes.absoluteValue}",
+                        )
+                    }
+                    IntervalCode.DAY_SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$days ${hours.absoluteValue}:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
+                            } else {
+                                "$days ${hours.absoluteValue}:${minutes.absoluteValue}:${seconds.absoluteValue}"
+                            }
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Range(
+                                    DatetimeField.DAY(),
+                                    type.retrievePrecision(),
+                                    DatetimeField.SECOND(),
+                                    fracPrecision,
+                                ),
+                            ),
+                            intervalValue,
+                        )
+                    }
+                    IntervalCode.HOUR_MINUTE -> {
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Range(
+                                    DatetimeField.HOUR(),
+                                    type.retrievePrecision(),
+                                    DatetimeField.MINUTE(),
+                                    null,
+                                ),
+                            ),
+                            "$hours:${minutes.absoluteValue}",
+                        )
+                    }
+                    IntervalCode.HOUR_SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$hours:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
+                            } else {
+                                "$hours:${minutes.absoluteValue}:${seconds.absoluteValue}"
+                            }
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Range(
+                                    DatetimeField.HOUR(),
+                                    type.retrievePrecision(),
+                                    DatetimeField.SECOND(),
+                                    fracPrecision,
+                                ),
+                            ),
+                            intervalValue,
+                        )
+                    }
+                    IntervalCode.MINUTE_SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$minutes:${seconds.absoluteValue}.$nanosTruncated"
+                            } else {
+                                "$minutes:${seconds.absoluteValue}"
+                            }
+                        Literal.typedString(
+                            DataType.INTERVAL(
+                                IntervalQualifier.Range(
+                                    DatetimeField.MINUTE(),
+                                    type.retrievePrecision(),
+                                    DatetimeField.SECOND(),
+                                    fracPrecision,
+                                ),
+                            ),
+                            intervalValue,
+                        )
+                    }
+                    else ->
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.INVALID_PLAN,
+                                message = "Invalid IntervalCode for INTERVAL_DT value: ${type.intervalCode}",
+                            ),
+                        )
+                }
             }
             else ->
                 listener.reportAndThrow(
