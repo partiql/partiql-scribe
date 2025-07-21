@@ -22,10 +22,22 @@ class PErrorCollector : PErrorListener {
     val warnings: List<PError>
         get() = warningList
 
+    val upgradeToError =
+        setOf(
+            PError.FUNCTION_NOT_FOUND,
+            PError.FUNCTION_TYPE_MISMATCH,
+        )
+
     override fun report(error: PError) {
         when (error.severity.code()) {
             Severity.ERROR -> errorList.add(error)
-            Severity.WARNING -> warningList.add(error)
+            Severity.WARNING -> {
+                if (error.code() in upgradeToError) {
+                    errorList.add(error)
+                } else {
+                    warningList.add(error)
+                }
+            }
             else -> error("Unsupported severity.")
         }
     }

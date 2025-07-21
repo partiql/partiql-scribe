@@ -79,7 +79,7 @@
         type: "timestamp"
       },
       {
-        name: "col_timestamp",
+        name: "col_timestampz",
         type: {
           type: "timestamp",
           withTimeZone: true

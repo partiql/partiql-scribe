@@ -46,10 +46,12 @@ SELECT T.col_date + T.col_h2s AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-12]
 SELECT T.col_date + T.col_m2s AS res FROM T_INTERVALS AS T;
 
---#[dt-plus-interval-13]
-SELECT T.col_time + T.col_y AS res FROM T_INTERVALS AS T;
---#[dt-plus-interval-14]
-SELECT T.col_time + T.col_mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-plus-interval-13]
+-- SELECT T.col_time + T.col_y AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-plus-interval-14]
+-- SELECT T.col_time + T.col_mon AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-15]
 SELECT T.col_time + T.col_d AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-16]
@@ -58,8 +60,9 @@ SELECT T.col_time + T.col_h AS res FROM T_INTERVALS AS T;
 SELECT T.col_time + T.col_min AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-18]
 SELECT T.col_time + T.col_s AS res FROM T_INTERVALS AS T;
---#[dt-plus-interval-19]
-SELECT T.col_time + T.col_y2mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-plus-interval-19]
+-- SELECT T.col_time + T.col_y2mon AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-20]
 SELECT T.col_time + T.col_d2h AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-21]
@@ -73,10 +76,12 @@ SELECT T.col_time + T.col_h2s AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-25]
 SELECT T.col_time + T.col_m2s AS res FROM T_INTERVALS AS T;
 
---#[dt-plus-interval-26]
-SELECT T.col_timez + T.col_y AS res FROM T_INTERVALS AS T;
---#[dt-plus-interval-27]
-SELECT T.col_timez + T.col_mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-plus-interval-26]
+-- SELECT T.col_timez + T.col_y AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-plus-interval-27]
+-- SELECT T.col_timez + T.col_mon AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-28]
 SELECT T.col_timez + T.col_d AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-29]
@@ -85,8 +90,9 @@ SELECT T.col_timez + T.col_h AS res FROM T_INTERVALS AS T;
 SELECT T.col_timez + T.col_min AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-31]
 SELECT T.col_timez + T.col_s AS res FROM T_INTERVALS AS T;
---#[dt-plus-interval-32]
-SELECT T.col_timez + T.col_y2mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-plus-interval-32]
+-- SELECT T.col_timez + T.col_y2mon AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-33]
 SELECT T.col_timez + T.col_d2h AS res FROM T_INTERVALS AS T;
 --#[dt-plus-interval-34]
@@ -182,10 +188,12 @@ SELECT T.col_date - T.col_h2s AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-12]
 SELECT T.col_date - T.col_m2s AS res FROM T_INTERVALS AS T;
 
---#[dt-minus-interval-13]
-SELECT T.col_time - T.col_y AS res FROM T_INTERVALS AS T;
---#[dt-minus-interval-14]
-SELECT T.col_time - T.col_mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-minus-interval-13]
+-- SELECT T.col_time - T.col_y AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-minus-interval-14]
+-- SELECT T.col_time - T.col_mon AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-15]
 SELECT T.col_time - T.col_d AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-16]
@@ -194,8 +202,9 @@ SELECT T.col_time - T.col_h AS res FROM T_INTERVALS AS T;
 SELECT T.col_time - T.col_min AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-18]
 SELECT T.col_time - T.col_s AS res FROM T_INTERVALS AS T;
---#[dt-minus-interval-19]
-SELECT T.col_time - T.col_y2mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-minus-interval-19]
+-- SELECT T.col_time - T.col_y2mon AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-20]
 SELECT T.col_time - T.col_d2h AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-21]
@@ -209,10 +218,12 @@ SELECT T.col_time - T.col_h2s AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-25]
 SELECT T.col_time - T.col_m2s AS res FROM T_INTERVALS AS T;
 
---#[dt-minus-interval-26]
-SELECT T.col_timez - T.col_y AS res FROM T_INTERVALS AS T;
---#[dt-minus-interval-27]
-SELECT T.col_timez - T.col_mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-minus-interval-26]
+-- SELECT T.col_timez - T.col_y AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-minus-interval-27]
+-- SELECT T.col_timez - T.col_mon AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-28]
 SELECT T.col_timez - T.col_d AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-29]
@@ -221,8 +232,9 @@ SELECT T.col_timez - T.col_h AS res FROM T_INTERVALS AS T;
 SELECT T.col_timez - T.col_min AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-31]
 SELECT T.col_timez - T.col_s AS res FROM T_INTERVALS AS T;
---#[dt-minus-interval-32]
-SELECT T.col_timez - T.col_y2mon AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[dt-minus-interval-32]
+-- SELECT T.col_timez - T.col_y2mon AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-33]
 SELECT T.col_timez - T.col_d2h AS res FROM T_INTERVALS AS T;
 --#[dt-minus-interval-34]
@@ -319,10 +331,12 @@ SELECT T.col_h2s + T.col_date AS res FROM T_INTERVALS AS T;
 --#[interval-plus-12]
 SELECT T.col_m2s + T.col_date AS res FROM T_INTERVALS AS T;
 
---#[interval-plus-13]
-SELECT T.col_y + T.col_time AS res FROM T_INTERVALS AS T;
---#[interval-plus-14]
-SELECT T.col_mon + T.col_time AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[interval-plus-13]
+-- SELECT T.col_y + T.col_time AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[interval-plus-14]
+-- SELECT T.col_mon + T.col_time AS res FROM T_INTERVALS AS T;
 --#[interval-plus-15]
 SELECT T.col_d + T.col_time AS res FROM T_INTERVALS AS T;
 --#[interval-plus-16]
@@ -331,8 +345,9 @@ SELECT T.col_h + T.col_time AS res FROM T_INTERVALS AS T;
 SELECT T.col_min + T.col_time AS res FROM T_INTERVALS AS T;
 --#[interval-plus-18]
 SELECT T.col_s + T.col_time AS res FROM T_INTERVALS AS T;
---#[interval-plus-19]
-SELECT T.col_y2mon + T.col_time AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[interval-plus-19]
+-- SELECT T.col_y2mon + T.col_time AS res FROM T_INTERVALS AS T;
 --#[interval-plus-20]
 SELECT T.col_d2h + T.col_time AS res FROM T_INTERVALS AS T;
 --#[interval-plus-21]
@@ -346,10 +361,12 @@ SELECT T.col_h2s + T.col_time AS res FROM T_INTERVALS AS T;
 --#[interval-plus-25]
 SELECT T.col_m2s + T.col_time AS res FROM T_INTERVALS AS T;
 
---#[interval-plus-26]
-SELECT T.col_y + T.col_timez AS res FROM T_INTERVALS AS T;
---#[interval-plus-27]
-SELECT T.col_mon + T.col_timez AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[interval-plus-26]
+-- SELECT T.col_y + T.col_timez AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[interval-plus-27]
+-- SELECT T.col_mon + T.col_timez AS res FROM T_INTERVALS AS T;
 --#[interval-plus-28]
 SELECT T.col_d + T.col_timez AS res FROM T_INTERVALS AS T;
 --#[interval-plus-29]
@@ -358,8 +375,9 @@ SELECT T.col_h + T.col_timez AS res FROM T_INTERVALS AS T;
 SELECT T.col_min + T.col_timez AS res FROM T_INTERVALS AS T;
 --#[interval-plus-31]
 SELECT T.col_s + T.col_timez AS res FROM T_INTERVALS AS T;
---#[interval-plus-32]
-SELECT T.col_y2mon + T.col_timez AS res FROM T_INTERVALS AS T;
+-- By SQL2023: 6.42, error
+-- --#[interval-plus-32]
+-- SELECT T.col_y2mon + T.col_timez AS res FROM T_INTERVALS AS T;
 --#[interval-plus-33]
 SELECT T.col_d2h + T.col_timez AS res FROM T_INTERVALS AS T;
 --#[interval-plus-34]
