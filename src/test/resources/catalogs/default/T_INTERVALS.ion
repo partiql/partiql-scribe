@@ -4,6 +4,7 @@
     type: "struct",
     constraints: [ closed, ordered, unique ],
     fields: [
+      // INTERVAL single
       {
         name: "col_y",
         type: "intervalY",
@@ -28,6 +29,7 @@
         name: "col_s",
         type: "intervalS",
       },
+      // INTERVAL range
       {
         name: "col_y2mon",
         type: "intervalY2Mon",
@@ -55,6 +57,33 @@
       {
         name: "col_m2s",
         type: "intervalMin2S",
+      },
+      // datetime
+      {
+        name: "col_date",
+        type: "date",
+      },
+      {
+        name: "col_time",
+        type: "time",
+      },
+      {
+        name: "col_timez",
+        type: {
+          type: "time",
+          withTimeZone: true
+        }
+      },
+      {
+        name: "col_timestamp",
+        type: "timestamp"
+      },
+      {
+        name: "col_timestampz",
+        type: {
+          type: "timestamp",
+          withTimeZone: true
+        }
       },
     ]
   }

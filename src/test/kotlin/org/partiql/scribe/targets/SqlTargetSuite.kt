@@ -21,7 +21,6 @@ import org.partiql.scribe.utils.SessionProvider
 import org.partiql.scribe.utils.SqlEqualsNaive
 import org.partiql.spi.Context
 import org.partiql.spi.catalog.Session
-import org.partiql.spi.errors.Severity
 import java.io.File
 import java.nio.file.Path
 import java.util.stream.Stream
@@ -146,7 +145,7 @@ abstract class SqlTargetSuite {
             scribeContext.getProblemListener().report(
                 ScribeProblem.simpleError(
                     code = ScribeProblem.UNSUPPORTED_OPERATION,
-                    "Only one statement is supported at a time.",
+                    "Encountered error(s) during parsing: ${problemCollector.errors}",
                 ),
             )
         }
@@ -157,7 +156,7 @@ abstract class SqlTargetSuite {
         val plan = plannerResult.plan
 
         // Check for errors
-        val problems = problemCollector.problems.filter { it.severity == Severity.ERROR() }
+        val problems = problemCollector.errors
         if (problems.isNotEmpty()) {
             fail {
                 buildString {
