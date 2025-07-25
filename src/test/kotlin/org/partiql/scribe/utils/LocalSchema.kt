@@ -48,6 +48,22 @@ private object LocalSchema {
             "date" -> PType.date()
             "time" -> PType.time()
             "timestamp" -> PType.timestamp()
+            // Interval Single
+            "intervalY" -> PType.intervalYear(2)
+            "intervalMon" -> PType.intervalMonth(2)
+            "intervalD" -> PType.intervalDay(2)
+            "intervalH" -> PType.intervalHour(2)
+            "intervalMin" -> PType.intervalMinute(2)
+            "intervalS" -> PType.intervalSecond(2, 6)
+            // Interval Range
+            "intervalY2Mon" -> PType.intervalYearMonth(2)
+            "intervalD2H" -> PType.intervalDayHour(2)
+            "intervalD2Min" -> PType.intervalDayMinute(2)
+            "intervalD2S" -> PType.intervalDaySecond(2, 6)
+            "intervalH2Min" -> PType.intervalHourMinute(2)
+            "intervalH2S" -> PType.intervalHourSecond(2, 6)
+            "intervalMin2S" -> PType.intervalMinuteSecond(2, 6)
+            // other
             "bag" -> error("`bag` is not an atomic type")
             "list" -> error("`list` is not an atomic type")
             "sexp" -> error("`sexp` is not an atomic type")

@@ -127,3 +127,104 @@ SELECT CAST("T"['timestamp_1'] AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "defau
 
 --#[cast-40]
 SELECT CAST("T"['timestamp_1'] AS TIMESTAMP (6) WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
+
+-- INTERVAL YEAR-MONTH
+--#[cast-41]
+SELECT CAST("T"['col_y2mon'] AS INTERVAL YEAR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-42]
+SELECT CAST("T"['col_y2mon'] AS INTERVAL YEAR (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-43]
+SELECT CAST("T"['col_y2mon'] AS INTERVAL MONTH) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-44]
+SELECT CAST("T"['col_y2mon'] AS INTERVAL MONTH (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-45]
+SELECT CAST("T"['col_y2mon'] AS INTERVAL YEAR TO MONTH) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-46]
+SELECT CAST("T"['col_y2mon'] AS INTERVAL YEAR (2) TO MONTH) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- INTERVAL DAY-TIME
+--#[cast-47]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-48]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-49]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-50]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-51]
+SELECT CAST("T"['col_d2s'] AS INTERVAL MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-52]
+SELECT CAST("T"['col_d2s'] AS INTERVAL MINUTE (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-53]
+SELECT CAST("T"['col_d2s'] AS INTERVAL SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-54]
+SELECT CAST("T"['col_d2s'] AS INTERVAL SECOND (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-55]
+SELECT CAST("T"['col_d2s'] AS INTERVAL SECOND (2, 3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-56]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY TO HOUR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-57]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY (2) TO HOUR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-58]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-59]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY (2) TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-60]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-61]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY (2) TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-62]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-63]
+SELECT CAST("T"['col_d2s'] AS INTERVAL DAY (2) TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-64]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-65]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR (2) TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-66]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-67]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR (2) TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-68]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-69]
+SELECT CAST("T"['col_d2s'] AS INTERVAL HOUR (2) TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-70]
+SELECT CAST("T"['col_d2s'] AS INTERVAL MINUTE TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-71]
+SELECT CAST("T"['col_d2s'] AS INTERVAL MINUTE (2) TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-72]
+SELECT CAST("T"['col_d2s'] AS INTERVAL MINUTE TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-73]
+SELECT CAST("T"['col_d2s'] AS INTERVAL MINUTE (2) TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";

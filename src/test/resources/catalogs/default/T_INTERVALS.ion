@@ -1,0 +1,61 @@
+{
+  type: "bag",
+  items: {
+    type: "struct",
+    constraints: [ closed, ordered, unique ],
+    fields: [
+      {
+        name: "col_y",
+        type: "intervalY",
+      },
+      {
+        name: "col_mon",
+        type: "intervalMon",
+      },
+      {
+        name: "col_d",
+        type: "intervalD",
+      },
+      {
+        name: "col_h",
+        type: "intervalH",
+      },
+      {
+        name: "col_min",
+        type: "intervalMin",
+      },
+      {
+        name: "col_s",
+        type: "intervalS",
+      },
+      {
+        name: "col_y2mon",
+        type: "intervalY2Mon",
+      },
+      {
+        name: "col_d2h",
+        type: "intervalD2H",
+      },
+      {
+        name: "col_d2min",
+        type: "intervalD2Min",
+      },
+      {
+        name: "col_d2s",
+        type: "intervalD2S",
+      },
+      {
+        name: "col_h2min",
+        type: "intervalH2Min",
+      },
+      {
+        name: "col_h2s",
+        type: "intervalH2S",
+      },
+      {
+        name: "col_m2s",
+        type: "intervalMin2S",
+      },
+    ]
+  }
+}
