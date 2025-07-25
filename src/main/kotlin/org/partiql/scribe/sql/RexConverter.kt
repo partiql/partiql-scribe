@@ -18,8 +18,10 @@ import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.Ast.queryBodySetOp
 import org.partiql.ast.Ast.setOp
 import org.partiql.ast.DataType
+import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Identifier.Simple.regular
+import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
@@ -54,11 +56,13 @@ import org.partiql.plan.rex.RexTable
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
 import org.partiql.spi.value.Datum
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlin.math.absoluteValue
 
 public typealias TypeEnv = List<PTypeField>
 
@@ -74,6 +78,7 @@ public class Locals(
 private const val UNSPECIFIED_LENGTH = "UNSPECIFIED_LENGTH"
 private const val UNSPECIFIED_PRECISION = "UNSPECIFIED_PRECISION"
 private const val UNSPECIFIED_SCALE = "UNSPECIFIED_SCALE"
+private const val UNSPECIFIED_FRACTIONAL_PRECISION = "UNSPECIFIED_FRACTIONAL_PRECISION"
 
 public open class RexConverter(
     private val transform: PlanToAst,
@@ -159,78 +164,258 @@ public open class RexConverter(
 
     private fun PType.unspecifiedScale() = metas[UNSPECIFIED_SCALE] == true
 
+    private fun PType.unspecifiedFractionalPrecision() = metas[UNSPECIFIED_FRACTIONAL_PRECISION] == true
+
+    private fun PType.toDataType(): DataType? {
+        val pType = this
+        return when (pType.code()) {
+            // BOOL type
+            PType.BOOL -> DataType.BOOL()
+            // INTEGER types
+            PType.TINYINT -> DataType.TINYINT()
+            PType.SMALLINT -> DataType.SMALLINT()
+            PType.INTEGER -> DataType.INT()
+            PType.BIGINT -> DataType.BIGINT()
+            // DECIMAL types
+            PType.NUMERIC -> {
+                val noPrecision = pType.unspecifiedPrecision()
+                val noScale = pType.unspecifiedScale()
+                when {
+                    noPrecision && noScale -> DataType.NUMERIC()
+                    noScale -> DataType.NUMERIC(pType.precision)
+                    noPrecision -> error("Invalid PType in plan $pType has a scale but no precision specified")
+                    else -> DataType.NUMERIC(pType.precision, pType.scale)
+                }
+            }
+            PType.DECIMAL -> {
+                val noPrecision = pType.unspecifiedPrecision()
+                val noScale = pType.unspecifiedScale()
+                when {
+                    noPrecision && noScale -> DataType.DECIMAL()
+                    noScale -> DataType.DECIMAL(pType.precision)
+                    noPrecision -> error("Invalid PType in plan $pType has a scale but no precision specified")
+                    else -> DataType.DECIMAL(pType.precision, pType.scale)
+                }
+            }
+            // Approximate numeric types
+            PType.REAL -> DataType.REAL()
+            PType.DOUBLE -> DataType.DOUBLE_PRECISION()
+            // String types
+            PType.CHAR ->
+                when (pType.unspecifiedLength()) {
+                    true -> DataType.CHAR()
+                    false -> DataType.CHAR(pType.length)
+                }
+            PType.VARCHAR ->
+                when (pType.unspecifiedLength()) {
+                    true -> DataType.VARCHAR()
+                    false -> DataType.VARCHAR(pType.length)
+                }
+            PType.STRING -> DataType.STRING()
+            // Datetime types
+            PType.DATE -> DataType.DATE()
+            PType.TIME ->
+                when (pType.unspecifiedPrecision()) {
+                    true -> DataType.TIME()
+                    false -> DataType.TIME(pType.precision)
+                }
+            PType.TIMEZ ->
+                when (pType.unspecifiedPrecision()) {
+                    true -> DataType.TIME_WITH_TIME_ZONE()
+                    false -> DataType.TIME_WITH_TIME_ZONE(pType.precision)
+                }
+            PType.TIMESTAMP ->
+                when (pType.unspecifiedPrecision()) {
+                    true -> DataType.TIMESTAMP()
+                    false -> DataType.TIMESTAMP(pType.precision)
+                }
+            PType.TIMESTAMPZ ->
+                when (pType.unspecifiedPrecision()) {
+                    true -> DataType.TIMESTAMP_WITH_TIME_ZONE()
+                    false -> DataType.TIMESTAMP_WITH_TIME_ZONE(pType.precision)
+                }
+            PType.INTERVAL_YM -> {
+                when (pType.intervalCode) {
+                    IntervalCode.YEAR -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Single(
+                                DatetimeField.YEAR(),
+                                pType.retrievePrecision(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.MONTH -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Single(
+                                DatetimeField.MONTH(),
+                                pType.retrievePrecision(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.YEAR_MONTH -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Range(
+                                DatetimeField.YEAR(),
+                                pType.retrievePrecision(),
+                                DatetimeField.MONTH(),
+                                null,
+                            ),
+                        )
+                    }
+                    else ->
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.INVALID_PLAN,
+                                message = "Invalid IntervalCode for INTERVAL_YM value: ${pType.intervalCode}",
+                            ),
+                        )
+                }
+            }
+            PType.INTERVAL_DT -> {
+                when (pType.intervalCode) {
+                    IntervalCode.DAY -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Single(
+                                DatetimeField.DAY(),
+                                pType.retrievePrecision(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.HOUR -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Single(
+                                DatetimeField.HOUR(),
+                                pType.retrievePrecision(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.MINUTE -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Single(
+                                DatetimeField.MINUTE(),
+                                pType.retrievePrecision(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.SECOND -> {
+                        val fracPrecision =
+                            if (pType.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                pType.fractionalPrecision
+                            }
+                        DataType.INTERVAL(
+                            IntervalQualifier.Single(
+                                DatetimeField.SECOND(),
+                                pType.retrievePrecision(),
+                                fracPrecision,
+                            ),
+                        )
+                    }
+                    IntervalCode.DAY_HOUR -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Range(
+                                DatetimeField.DAY(),
+                                pType.retrievePrecision(),
+                                DatetimeField.HOUR(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.DAY_MINUTE -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Range(
+                                DatetimeField.DAY(),
+                                pType.retrievePrecision(),
+                                DatetimeField.MINUTE(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.DAY_SECOND -> {
+                        val fracPrecision =
+                            if (pType.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                pType.fractionalPrecision
+                            }
+                        DataType.INTERVAL(
+                            IntervalQualifier.Range(
+                                DatetimeField.DAY(),
+                                pType.retrievePrecision(),
+                                DatetimeField.SECOND(),
+                                fracPrecision,
+                            ),
+                        )
+                    }
+                    IntervalCode.HOUR_MINUTE -> {
+                        DataType.INTERVAL(
+                            IntervalQualifier.Range(
+                                DatetimeField.HOUR(),
+                                pType.retrievePrecision(),
+                                DatetimeField.MINUTE(),
+                                null,
+                            ),
+                        )
+                    }
+                    IntervalCode.HOUR_SECOND -> {
+                        val fracPrecision =
+                            if (pType.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                pType.fractionalPrecision
+                            }
+                        DataType.INTERVAL(
+                            IntervalQualifier.Range(
+                                DatetimeField.HOUR(),
+                                pType.retrievePrecision(),
+                                DatetimeField.SECOND(),
+                                fracPrecision,
+                            ),
+                        )
+                    }
+                    IntervalCode.MINUTE_SECOND -> {
+                        val fracPrecision =
+                            if (pType.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                pType.fractionalPrecision
+                            }
+                        DataType.INTERVAL(
+                            IntervalQualifier.Range(
+                                DatetimeField.MINUTE(),
+                                pType.retrievePrecision(),
+                                DatetimeField.SECOND(),
+                                fracPrecision,
+                            ),
+                        )
+                    }
+                    else ->
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.INVALID_PLAN,
+                                message = "Invalid IntervalCode for INTERVAL_DT value: ${pType.intervalCode}",
+                            ),
+                        )
+                }
+            }
+            else -> null
+        }
+    }
+
     override fun visitCast(
         rex: RexCast,
         ctx: Unit,
     ): Expr {
         val value = visitRex(rex.operand, ctx)
-        val targetType =
+        val targetType = rex.target.toDataType()
+        if (targetType == null) {
             when (rex.target.code()) {
-                // BOOL type
-                PType.BOOL -> DataType.BOOL()
-                // INTEGER types
-                PType.TINYINT -> DataType.TINYINT()
-                PType.SMALLINT -> DataType.SMALLINT()
-                PType.INTEGER -> DataType.INT()
-                PType.BIGINT -> DataType.BIGINT()
-                // DECIMAL types
-                PType.NUMERIC -> {
-                    val noPrecision = rex.target.unspecifiedPrecision()
-                    val noScale = rex.target.unspecifiedScale()
-                    when {
-                        noPrecision && noScale -> DataType.NUMERIC()
-                        noScale -> DataType.NUMERIC(rex.target.precision)
-                        noPrecision -> error("Invalid PType in plan ${rex.target} has a scale but no precision specified")
-                        else -> DataType.NUMERIC(rex.target.precision, rex.target.scale)
-                    }
-                }
-                PType.DECIMAL -> {
-                    val noPrecision = rex.target.unspecifiedPrecision()
-                    val noScale = rex.target.unspecifiedScale()
-                    when {
-                        noPrecision && noScale -> DataType.DECIMAL()
-                        noScale -> DataType.DECIMAL(rex.target.precision)
-                        noPrecision -> error("Invalid PType in plan ${rex.target} has a scale but no precision specified")
-                        else -> DataType.DECIMAL(rex.target.precision, rex.target.scale)
-                    }
-                }
-                // Approximate numeric types
-                PType.REAL -> DataType.REAL()
-                PType.DOUBLE -> DataType.DOUBLE_PRECISION()
-                // String types
-                PType.CHAR ->
-                    when (rex.target.unspecifiedLength()) {
-                        true -> DataType.CHAR()
-                        false -> DataType.CHAR(rex.target.length)
-                    }
-                PType.VARCHAR ->
-                    when (rex.target.unspecifiedLength()) {
-                        true -> DataType.VARCHAR()
-                        false -> DataType.VARCHAR(rex.target.length)
-                    }
-                PType.STRING -> DataType.STRING()
-                // Datetime types
-                PType.DATE -> DataType.DATE()
-                PType.TIME ->
-                    when (rex.target.unspecifiedPrecision()) {
-                        true -> DataType.TIME()
-                        false -> DataType.TIME(rex.target.precision)
-                    }
-                PType.TIMEZ ->
-                    when (rex.target.unspecifiedPrecision()) {
-                        true -> DataType.TIME_WITH_TIME_ZONE()
-                        false -> DataType.TIME_WITH_TIME_ZONE(rex.target.precision)
-                    }
-                PType.TIMESTAMP ->
-                    when (rex.target.unspecifiedPrecision()) {
-                        true -> DataType.TIMESTAMP()
-                        false -> DataType.TIMESTAMP(rex.target.precision)
-                    }
-                PType.TIMESTAMPZ ->
-                    when (rex.target.unspecifiedPrecision()) {
-                        true -> DataType.TIMESTAMP_WITH_TIME_ZONE()
-                        false -> DataType.TIMESTAMP_WITH_TIME_ZONE(rex.target.precision)
-                    }
                 // Dynamic type
                 PType.DYNAMIC -> return value
                 PType.BAG -> return value
@@ -242,6 +427,7 @@ public open class RexConverter(
                         ),
                     )
             }
+        }
         return exprCast(
             value = value,
             asType = targetType,
@@ -287,6 +473,13 @@ public open class RexConverter(
         val datum = rex.datum
         return exprLit(datum.toLiteral())
     }
+
+    private fun PType.retrievePrecision() =
+        if (this.unspecifiedPrecision()) {
+            null
+        } else {
+            this.precision
+        }
 
     private fun Datum.toLiteral(): Literal {
         if (this.isNull) {
@@ -346,6 +539,172 @@ public open class RexConverter(
                     DataType.TIMESTAMP_WITH_TIME_ZONE(),
                     "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}$offsetString",
                 )
+            }
+            PType.INTERVAL_YM -> {
+                val dataType =
+                    type.toDataType() ?: listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.INVALID_PLAN,
+                            message = "Cannot convert $type to a DataType",
+                        ),
+                    )
+                when (type.intervalCode) {
+                    IntervalCode.YEAR -> {
+                        Literal.typedString(
+                            dataType,
+                            "$years",
+                        )
+                    }
+                    IntervalCode.MONTH -> {
+                        Literal.typedString(
+                            dataType,
+                            "$months",
+                        )
+                    }
+                    IntervalCode.YEAR_MONTH -> {
+                        Literal.typedString(
+                            dataType,
+                            "$years-${months.absoluteValue}",
+                        )
+                    }
+                    else ->
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.INVALID_PLAN,
+                                message = "Invalid IntervalCode for INTERVAL_YM value: ${type.intervalCode}",
+                            ),
+                        )
+                }
+            }
+            PType.INTERVAL_DT -> {
+                val dataType =
+                    type.toDataType() ?: listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.INVALID_PLAN,
+                            message = "Cannot convert $type to a DataType",
+                        ),
+                    )
+                when (type.intervalCode) {
+                    IntervalCode.DAY -> {
+                        Literal.typedString(
+                            dataType,
+                            "$days",
+                        )
+                    }
+                    IntervalCode.HOUR -> {
+                        Literal.typedString(
+                            dataType,
+                            "$hours",
+                        )
+                    }
+                    IntervalCode.MINUTE -> {
+                        Literal.typedString(
+                            dataType,
+                            "$minutes",
+                        )
+                    }
+                    IntervalCode.SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$seconds.$nanosTruncated"
+                            } else {
+                                "$seconds"
+                            }
+                        Literal.typedString(
+                            dataType,
+                            intervalValue,
+                        )
+                    }
+                    IntervalCode.DAY_HOUR -> {
+                        Literal.typedString(
+                            dataType,
+                            "$days ${hours.absoluteValue}",
+                        )
+                    }
+                    IntervalCode.DAY_MINUTE -> {
+                        Literal.typedString(
+                            dataType,
+                            "$days ${hours.absoluteValue}:${minutes.absoluteValue}",
+                        )
+                    }
+                    IntervalCode.DAY_SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$days ${hours.absoluteValue}:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
+                            } else {
+                                "$days ${hours.absoluteValue}:${minutes.absoluteValue}:${seconds.absoluteValue}"
+                            }
+                        Literal.typedString(
+                            dataType,
+                            intervalValue,
+                        )
+                    }
+                    IntervalCode.HOUR_MINUTE -> {
+                        Literal.typedString(
+                            dataType,
+                            "$hours:${minutes.absoluteValue}",
+                        )
+                    }
+                    IntervalCode.HOUR_SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$hours:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
+                            } else {
+                                "$hours:${minutes.absoluteValue}:${seconds.absoluteValue}"
+                            }
+                        Literal.typedString(
+                            dataType,
+                            intervalValue,
+                        )
+                    }
+                    IntervalCode.MINUTE_SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$minutes:${seconds.absoluteValue}.$nanosTruncated"
+                            } else {
+                                "$minutes:${seconds.absoluteValue}"
+                            }
+                        Literal.typedString(
+                            dataType,
+                            intervalValue,
+                        )
+                    }
+                    else ->
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.INVALID_PLAN,
+                                message = "Invalid IntervalCode for INTERVAL_DT value: ${type.intervalCode}",
+                            ),
+                        )
+                }
             }
             else ->
                 listener.reportAndThrow(
