@@ -531,12 +531,20 @@ public class org/partiql/scribe/targets/trino/TrinoAstToSql : org/partiql/scribe
 	public fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprCast (Lorg/partiql/ast/expr/ExprCast;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprCast (Lorg/partiql/ast/expr/ExprCast;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifier (Lorg/partiql/ast/IntervalQualifier;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifier (Lorg/partiql/ast/IntervalQualifier;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }

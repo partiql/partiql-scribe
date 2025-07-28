@@ -127,3 +127,135 @@ SELECT CAST("T"."timestamp_1" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "defaul
 
 --#[cast-40]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP (6) WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
+
+-- INTERVAL YEAR-MONTH
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-41]
+-- SELECT CAST("T"."col_y2mon" AS INTERVAL YEAR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-42]
+-- SELECT CAST("T"."col_y2mon" AS INTERVAL YEAR (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-43]
+-- SELECT CAST("T"."col_y2mon" AS INTERVAL MONTH) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-44]
+-- SELECT CAST("T"."col_y2mon" AS INTERVAL MONTH (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-45]
+SELECT CAST("T"."col_y2mon" AS INTERVAL YEAR TO MONTH) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino does not support precision on datetime fields
+--#[cast-46]
+SELECT CAST("T"."col_y2mon" AS INTERVAL YEAR TO MONTH) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- INTERVAL DAY-TIME
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-47]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL DAY) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-48]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL DAY (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-49]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-50]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-51]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-52]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL MINUTE (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-53]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-54]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL SECOND (2)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-55]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL SECOND (2, 3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-56]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL DAY TO HOUR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-57]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL DAY (2) TO HOUR) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-58]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL DAY TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-59]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL DAY (2) TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+--#[cast-60]
+SELECT CAST("T"."col_d2s" AS INTERVAL DAY TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino does not support precision on datetime fields
+--#[cast-61]
+SELECT CAST("T"."col_d2s" AS INTERVAL DAY TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino does not support precision on datetime fields
+--#[cast-62]
+SELECT CAST("T"."col_d2s" AS INTERVAL DAY TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino does not support precision on datetime fields
+--#[cast-63]
+SELECT CAST("T"."col_d2s" AS INTERVAL DAY TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-64]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-65]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR (2) TO MINUTE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-66]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-67]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR (2) TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-68]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-69]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL HOUR (2) TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-70]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL MINUTE TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-71]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL MINUTE (2) TO SECOND) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-72]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL MINUTE TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
+-- --#[cast-73]
+-- SELECT CAST("T"."col_d2s" AS INTERVAL MINUTE (2) TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
