@@ -554,6 +554,8 @@ public class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sq
 	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
+	public fun minusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public final class org/partiql/scribe/targets/trino/TrinoFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
