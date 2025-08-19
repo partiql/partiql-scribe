@@ -17,6 +17,8 @@ import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.utils.unquotedStringExpr
+import org.partiql.spi.types.IntervalCode
+import org.partiql.spi.types.PType
 
 public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
     private val listener = context.getProblemListener()
@@ -121,5 +123,57 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         val elementVar = sqlArgs[1].expr
         val elementExpr = sqlArgs[2].expr
         return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
+    }
+
+    /**
+     * Returns true if and only if [type] is a day-time interval that contains any time fields.
+     */
+    private fun isIntervalTime(type: PType): Boolean {
+        if (type.code() != PType.INTERVAL_DT) {
+            return false
+        }
+        return type.intervalCode != IntervalCode.DAY
+    }
+
+    override fun plusFn(args: SqlArgs): Expr {
+        val lhsType = args[0].type
+        val rhsType = args[1].type
+        if (lhsType.code() == PType.DATE && isIntervalTime(rhsType)) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Trino does not support arithmetic between dates and intervals with time fields.",
+                ),
+            )
+        } else if (isIntervalTime(lhsType) && rhsType.code() == PType.DATE) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Trino does not support arithmetic between dates and intervals with time fields.",
+                ),
+            )
+        }
+        return super.plusFn(args)
+    }
+
+    override fun minusFn(args: SqlArgs): Expr {
+        val lhsType = args[0].type
+        val rhsType = args[1].type
+        if (lhsType.code() == PType.DATE && isIntervalTime(rhsType)) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Trino does not support arithmetic between dates and intervals with time fields.",
+                ),
+            )
+        } else if (isIntervalTime(lhsType) && rhsType.code() == PType.DATE) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Trino does not support arithmetic between dates and intervals with time fields.",
+                ),
+            )
+        }
+        return super.minusFn(args)
     }
 }
