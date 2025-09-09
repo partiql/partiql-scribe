@@ -206,6 +206,9 @@ public open class RelConverter(
         val sfw = visitRelSFW(rel.input, ctx)
         val rexToSql = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
         if (rel.groups.isNotEmpty()) {
+            // name of aggregates come first, followed by offset
+            val names = rel.type.fields.map { it.name }
+            val numMeasures = rel.measures.size
             sfw.groupBy =
                 groupBy(
                     strategy = GroupByStrategy.FULL(),
@@ -213,9 +216,9 @@ public open class RelConverter(
                         rel.groups.mapIndexed { i, rex ->
                             groupByKey(
                                 expr = rexToSql.apply(rex),
+                                asAlias = Identifier.Simple.delimited(names[numMeasures + i]),
                             )
                         },
-                    asAlias = null,
                 )
         }
         val aggregations =
