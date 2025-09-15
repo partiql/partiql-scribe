@@ -24,20 +24,22 @@ git clone --recursive https://github.com/partiql/partiql-scribe.git
 
 == Usage
 
-Scribe leverages PartiQL's plugin system and planner to produce a resolved and typed logical query plan.
-This plan is passed to a _target_ implementation to be transformed to the domain specific output.
+Scribe leverages partiql-lang-kotlin's SPI and planner to produce a resolved and typed logical query plan.
+This plan is passed to a _target_ implementation to be transformed to the domain specific output. See
+xref:https://partiql.org/plk/1.0/index.html[partiql-lang-kotlin v1] docs on how to use the new SPI and planner
+interfaces.
 
 NOTE: Much of the transpiler involves manipulating both the AST and Plan which are PartiQL intermediate representations.
-This xref:https://github.com/partiql/partiql-lang-kotlin/blob/main/partiql-ast/README.adoc[PartiQL AST README] has tips on working with these structures.
+This xref:https://partiql.org/plk/1.0/ast-manipulation.html[PartiQL AST] has tips on working with these structures.
 
 .Creating the Transpiler
 [source,kotlin]
 ----
-// PartiQL's plugin system is how you provide tables and schemas to the planner (à la Trino).
-val plugin = MyPlugin()
+// Scribe provides an interface to handle additional configuration such as error handling
+val scribeContext = MyScribeContext()
 
 // Instantiate the transpiler once. It can be re-used!
-val transpiler = PartiQLTranspiler(listOf(plugin))
+val transpiler = Scribe(scribeContext = scribeContext)
 ----
 
 Suppose you have some table
@@ -46,7 +48,7 @@ Suppose you have some table
 ----
 CREATE TABLE orders (
     order_id   STRING PRIMARY KEY, -- PartiQL STRING type
-    ordered_at DATETIME NOT NULL   -- PartiQL DATETIME type
+    ordered_at TIMESTAMP NOT NULL   -- PartiQL TIMESTAMP type
 );
 ----
 
@@ -60,73 +62,42 @@ val query = """
     WHERE ordered_at > date_diff(day, -30, UTCNOW())
 """
 
-// TrinoTarget holds the translation rules from a PartiQL plan to Trino SQL
-val target = TrinoTarget()
+// Initialize error handling listeners for parsing and planning
+val problemCollector = PErrorCollector()
+val partiqlContext = Context.of(problemCollector)
 
-// Planner session, assuming your table `orders` exists in the "default" catalog
-val session = PartiQLPlanner.Session(
-    queryId = "readme_query_id",
-    userId = "readme_user_id",
-    currentCatalog = "default",
-)
+// PartiQL TEXT -> AST
+val parserResult = parser.parse(statement, partiqlContext)
+val parsedStatements = parserResult.statements
+
+if (parsedStatements.size != 1) {
+    scribeContext.getProblemListener().report(
+        ScribeProblem.simpleError(
+            code = ScribeProblem.UNSUPPORTED_OPERATION,
+            "Encountered error(s) during parsing: ${problemCollector.errors}",
+        ),
+    )
+}
+val ast = parsedStatements[0]
+
+// PartiQL's SPI `Session` and `Catalog` is how you provide tables, schemas, and functions to the planner (à la Trino).
+val session = MyPartiQLSession()
+
+// AST -> PLAN
+val plannerResult = planner.plan(ast, session, partiqlContext)
+val plan = plannerResult.plan
+
+// TrinoTarget holds the translation rules from a PartiQL plan to Trino SQL
+val target = TrinoTarget() // Extends `SqlTarget`
 
 // Invoke the transpiler
-val result = transpiler.transpile(query, target, session)
+val result = transpiler.compile(plan, target, session)
 
-println(result.value)
+println(result.output.value)
 // Output:
 //   SELECT orders.order_id AS order_id FROM orders AS orders
 //   WHERE orders.ordered_at > date_add('day', -30, at_timezone(current_timestamp, 'UTC'))
 ----
-
-=== Shell
-
-There's a shell which can be useful for rapid experimentation. You can also attach a debugger to this shell.
-
-NOTE: You may load the TPC-DS schemas in `catalogs/` or provide your own catalog.
-
-.Debugging
-[source,bash]
-----
-# Install
-./gradlew install
-
-# Execute
-./build/install/scribe/bin/scribe --help
-
-Usage: scribe [-hV] [--catalog=catalog] -d=DIR
-
-The PartiQL Transpiler Debug REPL
-This REPL is used for debugging the transpiler
-      --catalog=catalog   Catalog, use `default` .. by default
-                              Default: default
-  -d=DIR                    Database root directory
-  -h, --help                Show this help message and exit.
-  -V, --version             Print version information and exit.
-
-
-./build/install/scribe/bin/scribe -d ./catalogs --catalog=tpc_ds
-
- ____ ____ ____ ____ ____ ____
-||S |||C |||R |||I |||B |||E ||
-||__|||__|||__|||__|||__|||__||
-|/__\|/__\|/__\|/__\|/__\|/__\|
-
-
-scribe ▶ .h
-
-.h                  Print this message
-.s                  Print command history
-.q                  Disconnect
-.d                  Describe catalog
-.dt table           Describe table
-.debug on|off       Toggle debug printing
-.t target           Get/Set the transpiler target
-.clear              Clear screen
-----
-
-NOTE: You can attach a debugger with `JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:5050 ...`
-
 
 == Overview
 
@@ -134,29 +105,35 @@ Scribe is a framework to plug different compilation backends.
 Perhaps this project should be renamed to BYOB (bring your own backend).
 For now, we only provide SQL source-to-source compilation (hence "transpile"), but you could conceive of several non-SQL targets such as:
 
-* xref:https://substrait.io/[Substrait]
+* xref:https://substrait.io[Substrait]
 * xref:https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/Dataset.html[Spark Dataset Closure]
-* xref:https://beam.apache.org/documentation/basics/[Apache Beam Transform]
+* xref:https://beam.apache.org/documentation/basics[Apache Beam Transform]
 * xref:https://calcite.apache.org/docs/algebra.html[Calcite relational algebra]
+
 
 === Producing SQL
 
-For now, Scribe provides two simple SQL text targets.
-Each dialect is _quite_ similar (hence dialect) so much of the base translation from PartiQL's logical plan to an SQL AST is captured by `org.partiql.transpiler.sql.SqlTransform`.
+For now, Scribe provides four simple SQL text targets - PartiQL, Redshift, SparkSQL, and Trino.
+Each dialect is _quite_ similar (hence dialect) so much of the base translation from PartiQL's logical plan to an SQL AST is captured by `org.partiql.scribe.sql.PlanToAst`.
 
-This applies a transformation of relational algebra to an SQL AST just like Calcite's xref:https://github.com/apache/calcite/blob/main/core/src/main/java/org/apache/calcite/rel/rel2sql/RelToSqlConverter.java[RelToSqlConverter]; however, this is currently more limited than Calcite's.
+This applies a transformation of relational algebra to an SQL AST just like Calcite's
+xref:https://github.com/apache/calcite/blob/main/core/src/main/java/org/apache/calcite/rel/rel2sql/RelToSqlConverter.java[RelToSqlConverter];
+however, this is currently more limited than Calcite's.
 
-Much of the differences between dialects comes down to scalar functions, but it's often the case that each dialect has functions with similar functionality albeit different names.
-This is shown in the earlier `UTCNOW()` example.
+Much of the differences between dialects comes down to scalar functions, but it's often the case that each dialect has
+functions with similar functionality albeit different names. This is shown in the earlier `UTCNOW()` example.
 
 === Common Interfaces
 
 The most useful interfaces to implement for an SQL target are
 
-* `SqlTarget<T>` — Base transpiler target interface
-* `SqlTarget` — Base `SqlTarget<String>` implementation for an SQL dialect target
-* `SqlCalls` — Ruleset for rewriting scalar calls
-* `SqlTransform` — Ruleset for RelToSql conversion
+* `ScribeTarget<T>` — Base transpiler target interface
+* `SqlTarget` — Base `ScribeTarget<String>` implementation for an SQL dialect target
+* `SqlCalls` — Ruleset for rewriting scalar function calls and operators
+* `PlanToAst` — Ruleset for plan to AST conversion
+  * `RelConverter` — Ruleset for `Rel` plan to AST `ExprQuerySet` conversion
+  * `RexConverter` — Ruleset for `Rex` plan to AST `Expr` conversion
+* `AstToSql` — Ruleset for AST to SQL conversion
 
 == Development
 
@@ -183,69 +160,34 @@ public object SQLiteTarget : SqlTarget() {
     // Using SQLite3
     override val version: String = "3"
 
-    // Override the default call ruleset with the SQLiteCalls ruleset
-    override fun getCalls(onProblem: Problemhandler): SqlCalls = SQLiteCalls()
+    // Override the default AstToSql with the SQLiteAstToSql ruleset
+    override fun getAstToSql(context: ScribeContext): AstToSql = SQLiteAstToSql(context)
 
-    // No need to rewrite the plan, return as is
-    override fun rewrite(plan: PartiQLPlan, onProblem: ProblemCallback) = plan
+    // No need to rewrite the plan for this example, return as is
+    override fun rewrite(plan: Plan, context: ScribeContext) = plan
 }
 ----
 
-NOTE: I'm conflicted on how to pass the problem handler to SqlCalls, so that's subject to change.
-
-.Provide Scalar Function Ruleset
+.Defining a Dialect
 [source,kotlin]
 ----
-@OptIn(PartiQLValueExperimental::class)
-public class SQLiteCalls : SqlCalls() {
-
+public open class SQLiteAstToSql(context: ScribeContext) : AstToSql(context) {
     /**
-    * SqlCalls has many open functions which you can extend to override for edge cases.
+    * AstToSql has many open functions which you can extend to override for edge cases.
     */
-    override fun rewriteCast(type: PartiQLValueType, args: SqlArgs): Expr = Ast.create {
-        if (type == PartiQLValueType.STRING) {
-            // do something special for `CAST(.. AS STRING)`
-            Ast.create { exprCast(args[0].expr, typeCustom("TEXT")) }
-        } else {
-            return super.rewriteCast(type, args)
+    override fun visitDataType(node: DataType, tail: SqlBlock): SqlBlock {
+        return when (node.code()) {
+            DataType.STRING -> tail concat "TEXT" // override "STRING" printing to "TEXT"
+            else -> super.visitDataType(node, tail) // use default behavior for other type conversions
         }
     }
 }
 ----
 
-This is reasonable, but what about replacing all occurrences of STRING with TEXT?
-It would be a cumbersome to track down all the places a type might be used (like this `IS` special form is another).
+This will overwrite all occurrences of STRING with TEXT in `CAST` expressions, which has the added benefit of
+performing this overwrite for other expressions that may use the `DataType` AST class such as the `IS <type>` operator.
 
-We can actually _also_ extend how SQL is rendered to text via an extendable query printing framework.
-See xref:https://github.com/partiql/partiql-lang-kotlin/pull/1183[Pull #1183].
-You can provide the pretty-printer a _Dialect_ which contains base behavior for translating from an AST to a Block tree where the Block tree is a basic formatting structure.
-
-Let's implement `SQLiteDialect` and wire it to our `SQLiteTarget`.
-
-.Defining a Dialect
-[source,kotlin]
-----
-public object SQLiteDialect : SqlDialect() {
-
-    override fun visitTypeString(node: Type.String, head: SqlBlock) =
-        SqlBlock.Link(head, SqlBlock.Text("TEXT"))
-}
-----
-
-.Providing the Dialect
-All this says is during the fold from an AST to Block tree, is to append the string "TEXT" to the tree.
-We can use this dialect for our target by overriding the `dialect` field.
-
-[source,kotlin]
-----
-public object SQLiteTarget : SqlTarget() {
-
-    // ... same as before
-
-    // hook up the pretty-printer rules
-    override val dialect = SQLiteDialect
-}
-----
+The `AstToSql` interface is extensible to allow for additional AST to text rewrites of any AST node.
 
 == Testing
 
@@ -277,7 +219,7 @@ WHERE x BETWEEN y AND z;
 Similar to inputs, you'll see that expected test outputs are stored in `test/resources/outputs`. The default test suite
 will produce a junit test for each expected output. You may implement additional junit tests for negative testing.
 
-Please see `test / org.partiql.scribe.targets.PartiQLTargetSuite` as an example.
+Please see `test / org.partiql.scribe.targets.partiql.PartiQLTargetSuite` as an example.
 
 == Appendix
 
@@ -314,13 +256,10 @@ The changes are (1) it's Ion and (2) we use the PartiQL type names.
 }
 ----
 
-IMPORTANT: For now, we omit constraints such as open/closed structs.
+These schemas will be converted to corresponding `PType`s during the catalog construction.
 
-=== II. PartiQL FS Plugin
+=== II. PartiQL Session and Catalog Loading
 
-The PartiQL FS Plugin builds a catalog from a directory tree. It is implemented here https://github.com/partiql/partiql-lang-kotlin/tree/transpile/partiql-planner/src/testFixtures/kotlin/org/partiql/planner/test/plugin.
+The PartiQL `SessionProvider` builds a catalog from an in-memory directory tree. It is implemented xref:https://github.com/partiql/partiql-scribe/blob/849a3192dc4e285a6a128660bf756c9e2f42360b/src/test/kotlin/org/partiql/scribe/utils/SessionProvider.kt[here].
 
 NOTE: Directories are nested schemas; files represent table schema where the table name is the file name (without .ion).
-
-It will eventually be merged with mockdb. The only difference is that is memoizes parsed schemas and uses PartiQL Value Schema
-syntax.
