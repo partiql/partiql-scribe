@@ -13,7 +13,7 @@ import org.partiql.scribe.sql.SqlTarget
 import org.partiql.spi.catalog.Session
 
 public open class SparkTarget : SqlTarget() {
-    override val target: String = "Redshift"
+    override val target: String = "Spark"
 
     override val version: String = "0"
 
