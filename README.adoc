@@ -114,7 +114,8 @@ For now, we only provide SQL source-to-source compilation (hence "transpile"), b
 === Producing SQL
 
 For now, Scribe provides four simple SQL text targets - PartiQL, Redshift, SparkSQL, and Trino.
-Each dialect is _quite_ similar (hence dialect) so much of the base translation from PartiQL's logical plan to an SQL AST is captured by `org.partiql.scribe.sql.PlanToAst`.
+Each dialect is _quite_ similar (hence dialect) so much of the base translation from PartiQL's logical plan to an SQL
+AST is captured by xref:https://github.com/partiql/partiql-scribe/blob/849a3192dc4e285a6a128660bf756c9e2f42360b/src/main/kotlin/org/partiql/scribe/sql/PlanToAst.kt[PlanToAst].
 
 This applies a transformation of relational algebra to an SQL AST just like Calcite's
 xref:https://github.com/apache/calcite/blob/main/core/src/main/java/org/apache/calcite/rel/rel2sql/RelToSqlConverter.java[RelToSqlConverter];
@@ -219,7 +220,7 @@ WHERE x BETWEEN y AND z;
 Similar to inputs, you'll see that expected test outputs are stored in `test/resources/outputs`. The default test suite
 will produce a junit test for each expected output. You may implement additional junit tests for negative testing.
 
-Please see `test / org.partiql.scribe.targets.partiql.PartiQLTargetSuite` as an example.
+Please see xref:https://github.com/partiql/partiql-scribe/blob/849a3192dc4e285a6a128660bf756c9e2f42360b/src/test/kotlin/org/partiql/scribe/targets/partiql/PartiQLTargetSuite.kt[PartiQLTargetSuite] as an example.
 
 == Appendix
 
