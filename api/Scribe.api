@@ -452,6 +452,8 @@ public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe
 	public fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitFromExpr (Lorg/partiql/ast/FromExpr;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitFromExpr (Lorg/partiql/ast/FromExpr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitGroupByKey (Lorg/partiql/ast/GroupBy$Key;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitGroupByKey (Lorg/partiql/ast/GroupBy$Key;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitIdentifier (Lorg/partiql/ast/Identifier;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitIdentifier (Lorg/partiql/ast/Identifier;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitLiteral (Lorg/partiql/ast/Literal;Ljava/lang/Object;)Ljava/lang/Object;

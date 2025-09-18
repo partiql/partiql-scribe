@@ -11,7 +11,7 @@ SELECT count(1) AS "_1" FROM "default"."T" AS "T";
 SELECT count("T"['a']) AS "_1" FROM "default"."T" AS "T";
 
 --#[rel-aggregation-count-03]
-SELECT count(1) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'];
+SELECT count(1) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'] AS "a";
 -- previously was using COUNT(*)
 -- SELECT COUNT(*) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'];
 -- Issue to support `COUNT(*) -> COUNT(*)` https://github.com/partiql/partiql-scribe/issues/83
@@ -20,4 +20,4 @@ SELECT count(1) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'];
 SELECT max("T"['b']) AS "_1" FROM "default"."T" AS "T";
 
 --#[rel-aggregation-max-01]
-SELECT max("T"['b']) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'];
+SELECT max("T"['b']) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'] AS "a";

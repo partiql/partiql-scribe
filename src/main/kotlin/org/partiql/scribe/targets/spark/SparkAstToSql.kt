@@ -9,6 +9,7 @@ import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
 import org.partiql.ast.FromExpr
 import org.partiql.ast.FromType
+import org.partiql.ast.GroupBy
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
@@ -350,6 +351,17 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
             return super.visitExprQuerySet(newNode, tail)
         }
         return super.visitExprQuerySet(node, tail)
+    }
+
+    override fun visitGroupByKey(
+        node: GroupBy.Key,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        t = visitExprWrapped(node.expr, t)
+        val asAlias = node.asAlias
+        t = if (asAlias != null) t concat " AS ${asAlias.sql()}" else t
+        return t
     }
 
     // Spark, has no notion of case sensitivity
