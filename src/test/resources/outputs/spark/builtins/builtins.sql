@@ -2,22 +2,22 @@
 SELECT CURRENT_DATE AS `CURRENT_DATE` FROM `default`.`T` AS `T`;
 
 --#[datetime-09]
-SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, 0, 0, 0, 5) AS `_1` FROM `default`.`T` AS `T`;
+SELECT INTERVAL '5' SECOND + `T`.`timestamp_1` AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-10]
-SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, 0, 0, 5, 0) AS `_1` FROM `default`.`T` AS `T`;
+SELECT INTERVAL '5' MINUTE + `T`.`timestamp_1` AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-11]
-SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, 0, 5, 0, 0) AS `_1` FROM `default`.`T` AS `T`;
+SELECT INTERVAL '5' HOUR + `T`.`timestamp_1` AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-12]
-SELECT CURRENT_DATE + `make_interval`(0, 0, 0, 5, 0, 0, 0) AS `_1` FROM `default`.`T` AS `T`;
+SELECT INTERVAL '5' DAY + CURRENT_DATE AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-13]
-SELECT CURRENT_DATE + `make_interval`(0, 5, 0, 0, 0, 0, 0) AS `_1` FROM `default`.`T` AS `T`;
+SELECT INTERVAL '5' MONTH + CURRENT_DATE AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-14]
-SELECT CURRENT_DATE + `make_interval`(5, 0, 0, 0, 0, 0, 0) AS `_1` FROM `default`.`T` AS `T`;
+SELECT INTERVAL '5' YEAR + CURRENT_DATE AS `_1` FROM `default`.`T` AS `T`;
 
 --#[datetime-15]
 SELECT CAST(`months_between`(`T`.`timestamp_2`, `T`.`timestamp_1`) / 12 AS BIGINT) AS `_1` FROM `default`.`T` AS `T`;

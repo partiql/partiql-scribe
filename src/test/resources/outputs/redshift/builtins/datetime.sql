@@ -4,22 +4,22 @@
 SELECT CURRENT_DATE AS "CURRENT_DATE" FROM "default"."T" AS "T";
 
 --#[datetime-09]
-SELECT DATEADD(SECOND, 5, CAST("T"."timestamp_1" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T";
+SELECT INTERVAL '5' SECOND + CAST("T"."timestamp_1" AS TIMESTAMP) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-10]
-SELECT DATEADD(MINUTE, 5, CAST("T"."timestamp_1" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T";
+SELECT INTERVAL '5' MINUTE + CAST("T"."timestamp_1" AS TIMESTAMP) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-11]
-SELECT DATEADD(HOUR, 5, CAST("T"."timestamp_1" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T";
+SELECT INTERVAL '5' HOUR + CAST("T"."timestamp_1" AS TIMESTAMP) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-12]
-SELECT DATEADD(DAY, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT INTERVAL '5' DAY + CURRENT_DATE AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-13]
-SELECT DATEADD(MONTH, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT INTERVAL '5' MONTH + CURRENT_DATE AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-14]
-SELECT DATEADD(YEAR, 5, CURRENT_DATE) AS "_1" FROM "default"."T" AS "T";
+SELECT INTERVAL '5' YEAR + CURRENT_DATE AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-15]
 SELECT DATEDIFF(YEAR, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
@@ -40,7 +40,7 @@ SELECT DATEDIFF(MINUTE, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestam
 SELECT DATEDIFF(SECOND, CAST("T"."timestamp_1" AS TIMESTAMP), CAST("T"."timestamp_2" AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
 
 --#[datetime-21]
-SELECT DATEADD(SECOND, 1, TIMESTAMP '2017-01-02 03:04:05.006') AS "_1" FROM "default"."T" AS "T";
+SELECT INTERVAL '1' SECOND + TIMESTAMP '2017-01-02 03:04:05.006' AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-22]
 SELECT DATEDIFF(SECOND, TIMESTAMP '2017-01-02 03:04:05.006', TIMESTAMP '2017-01-02 03:04:20.006') AS "_1" FROM "default"."T" AS "T";

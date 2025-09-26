@@ -10,6 +10,7 @@ import org.partiql.ast.DataType
 import org.partiql.ast.FromExpr
 import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
+import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
@@ -350,6 +351,70 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
             return super.visitExprQuerySet(newNode, tail)
         }
         return super.visitExprQuerySet(node, tail)
+    }
+
+    /**
+     * Spark does not support precision and fractional precision components in the output SQL.
+     */
+    override fun visitIntervalQualifierSingle(
+        node: IntervalQualifier.Single,
+        tail: SqlBlock,
+    ): SqlBlock {
+        if (node.precision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "Spark does not support a datetime field INTERVAL precision. " +
+                            "Precision has been omitted in the output.",
+                ),
+            )
+        }
+        if (node.fractionalPrecision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "Spark does not support a fractional second INTERVAL precision. " +
+                            "Fractional second precision has been omitted in the output.",
+                ),
+            )
+        }
+        return tail concat node.field.name()
+    }
+
+    /**
+     * Spark does not support precision and fractional precision components in the output SQL.
+     */
+    override fun visitIntervalQualifierRange(
+        node: IntervalQualifier.Range,
+        tail: SqlBlock,
+    ): SqlBlock {
+        val startField = node.startField
+        val endField = node.endField
+        var datetimeField = startField.name()
+        if (node.startFieldPrecision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "Spark does not support a datetime field INTERVAL precision. " +
+                            "Precision has been omitted in the output.",
+                ),
+            )
+        }
+        datetimeField += " TO ${endField.name()}"
+        if (node.endFieldFractionalPrecision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "Spark does not support a fractional second INTERVAL precision. " +
+                            "Fractional second precision has been omitted in the output.",
+                ),
+            )
+        }
+        return tail concat datetimeField
     }
 
     // Spark, has no notion of case sensitivity

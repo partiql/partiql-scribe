@@ -611,7 +611,7 @@ public open class RexConverter(
                                 type.fractionalPrecision
                             }
                         val intervalValue =
-                            if (fracPrecision != null) {
+                            if (fracPrecision != null && fracPrecision > 0) {
                                 val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
                                 "$seconds.$nanosTruncated"
                             } else {
@@ -642,7 +642,7 @@ public open class RexConverter(
                                 type.fractionalPrecision
                             }
                         val intervalValue =
-                            if (fracPrecision != null) {
+                            if (fracPrecision != null && fracPrecision > 0) {
                                 val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
                                 "$days ${hours.absoluteValue}:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
                             } else {
@@ -667,7 +667,7 @@ public open class RexConverter(
                                 type.fractionalPrecision
                             }
                         val intervalValue =
-                            if (fracPrecision != null) {
+                            if (fracPrecision != null && fracPrecision > 0) {
                                 val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
                                 "$hours:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
                             } else {
@@ -686,7 +686,7 @@ public open class RexConverter(
                                 type.fractionalPrecision
                             }
                         val intervalValue =
-                            if (fracPrecision != null) {
+                            if (fracPrecision != null && fracPrecision > 0) {
                                 val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
                                 "$minutes:${seconds.absoluteValue}.$nanosTruncated"
                             } else {
