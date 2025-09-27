@@ -819,7 +819,7 @@ public open class RexConverter(
         ctx: Unit,
     ): Expr {
         val inputRel = rex.input
-        val relConverter = RelConverter(transform, context)
+        val relConverter = transform.getRelConverter()
         return relConverter.apply(inputRel, ctx).toExprQuerySet()
     }
 
