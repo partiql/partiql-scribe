@@ -111,7 +111,7 @@ public open class RexConverter(
         return defaultReturn(operator, ctx)
     }
 
-    public fun visitRex(
+    public open fun visitRex(
         rex: Rex,
         ctx: Unit,
     ): Expr {

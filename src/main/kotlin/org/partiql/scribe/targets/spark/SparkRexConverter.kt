@@ -2,8 +2,10 @@ package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprVarRef
+import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexLit
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
@@ -35,5 +37,23 @@ public open class SparkRexConverter(
             }
             else -> super.visitLit(rex, ctx)
         }
+    }
+
+    /**
+     * Throw an error on any function call argument that is of type TIME/TIMEZ.
+     */
+    override fun visitCall(
+        rex: RexCall,
+        ctx: Unit,
+    ): Expr {
+        if (rex.args.any { arg -> arg.type.pType.code() == PType.TIME || arg.type.pType.code() == PType.TIMEZ }) {
+            context.getProblemListener().report(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Spark does not support Time types.",
+                ),
+            )
+        }
+        return super.visitCall(rex, ctx)
     }
 }
