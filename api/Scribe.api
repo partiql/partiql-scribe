@@ -243,7 +243,7 @@ public class org/partiql/scribe/sql/RexConverter : org/partiql/plan/OperatorVisi
 	public fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitPivot (Lorg/partiql/plan/rex/RexPivot;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitPivot (Lorg/partiql/plan/rex/RexPivot;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
-	public final fun visitRex (Lorg/partiql/plan/rex/Rex;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public fun visitRex (Lorg/partiql/plan/rex/Rex;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitSelect (Lorg/partiql/plan/rex/RexSelect;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitSelect (Lorg/partiql/plan/rex/RexSelect;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitSpread (Lorg/partiql/plan/rex/RexSpread;Ljava/lang/Object;)Ljava/lang/Object;
@@ -510,6 +510,8 @@ public class org/partiql/scribe/targets/spark/SparkRewriter : org/partiql/plan/O
 
 public class org/partiql/scribe/targets/spark/SparkRexConverter : org/partiql/scribe/sql/RexConverter {
 	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitCall (Lorg/partiql/plan/rex/RexCall;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCall (Lorg/partiql/plan/rex/RexCall;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitLit (Lorg/partiql/plan/rex/RexLit;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitLit (Lorg/partiql/plan/rex/RexLit;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 }
