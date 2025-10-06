@@ -13,22 +13,22 @@
 
 -- Comparison operators with subqueries
 --#[subquery-03]
-SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" = (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0);
+SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" = (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 1);
 
 --#[subquery-04]
-SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0);
+SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 1);
 
 --#[subquery-05]
-SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" < (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0);
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" < (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 1);
 
 --#[subquery-06]
-SELECT "T"."v" AS "v" FROM "default"."T" AS "T" WHERE "T"."b" >= (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0);
+SELECT "T"."v" AS "v" FROM "default"."T" AS "T" WHERE "T"."b" >= (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 1);
 
 --#[subquery-07]
-SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" <= (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0);
+SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" <= (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 1);
 
 --#[subquery-08]
-SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" <> (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0);
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" <> (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 1);
 
 -- IN collection subquery
 --#[subquery-09]
@@ -52,19 +52,19 @@ SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" NOT IN (SELECT "T"
 
 -- Nested subqueries
 --#[subquery-14]
-SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" IN (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0));
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" IN (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 0));
 
 -- Subquery in SELECT clause
 --#[subquery-15]
-SELECT "T"."b" AS "b", (SELECT "t2"."v" AS "v" FROM "default"."T" AS "t2" WHERE "t2"."b" > 0) AS "match_v" FROM "default"."T" AS "T";
+SELECT "T"."b" AS "b", (SELECT "t2"."v" AS "v" FROM "default"."T" AS "t2" WHERE "t2"."b" = 0) AS "match_v" FROM "default"."T" AS "T";
 
 -- Multiple subqueries in WHERE
 -- #[subquery-16]
 -- SELECT "T"."v" AS "v" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0) AND EXISTS (SELECT "t2"."a" AS "a" FROM "default"."T" AS "t2" WHERE "t2"."b" > 0);
 
 -- Correlated subquery
---#[subquery-17]
-SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "t2"."b" AS "b" FROM "default"."T" AS "t2" WHERE "t2"."a" = "t2"."b");
+-- #[subquery-17]
+-- SELECT "t1"."a" AS "a" FROM "default"."T" AS "t1" WHERE "t1"."b" > (SELECT "t2"."b" AS "b" FROM "default"."T" AS "t2" WHERE "t1"."b" = "t2"."b");
 
 -- ANY/SOME with subquery
 -- #[subquery-18]

@@ -14,22 +14,22 @@
 
 -- Comparison operators with subqueries
 --#[subquery-03]
-SELECT a FROM T WHERE b = (SELECT b FROM T WHERE b > 0);
+SELECT a FROM T WHERE b = (SELECT b FROM T WHERE b = 1);
 
 --#[subquery-04]
-SELECT a FROM T WHERE b > (SELECT b FROM T WHERE b > 0);
+SELECT a FROM T WHERE b > (SELECT b FROM T WHERE b = 1);
 
 --#[subquery-05]
-SELECT b FROM T WHERE b < (SELECT b FROM T WHERE b > 0);
+SELECT b FROM T WHERE b < (SELECT b FROM T WHERE b = 1);
 
 --#[subquery-06]
-SELECT v FROM T WHERE b >= (SELECT b FROM T WHERE b > 0);
+SELECT v FROM T WHERE b >= (SELECT b FROM T WHERE b = 1);
 
 --#[subquery-07]
-SELECT a FROM T WHERE b <= (SELECT b FROM T WHERE b > 0);
+SELECT a FROM T WHERE b <= (SELECT b FROM T WHERE b = 1);
 
 --#[subquery-08]
-SELECT b FROM T WHERE b <> (SELECT b FROM T WHERE b > 0);
+SELECT b FROM T WHERE b <> (SELECT b FROM T WHERE b = 1);
 
 -- IN collection subquery
 --#[subquery-09]
@@ -53,11 +53,11 @@ SELECT a FROM T WHERE UNIQUE (SELECT b FROM T AS t2 WHERE t2.b > 0);
 
 -- Nested subqueries
 --#[subquery-14]
-SELECT b FROM T WHERE b IN (SELECT b FROM T WHERE b > (SELECT b FROM T WHERE b > 0));
+SELECT b FROM T WHERE b IN (SELECT b FROM T WHERE b > (SELECT b FROM T WHERE b = 0));
 
 -- Subquery in SELECT clause
 --#[subquery-15]
-SELECT b, (SELECT v FROM T AS t2 WHERE t2.b > 0) AS match_v FROM T;
+SELECT b, (SELECT v FROM T AS t2 WHERE t2.b = 0) AS match_v FROM T;
 
 -- Multiple subqueries in WHERE
 --#[subquery-16]
@@ -65,7 +65,7 @@ SELECT v FROM T WHERE b > (SELECT b FROM T WHERE b > 0) AND EXISTS (SELECT a FRO
 
 -- Correlated subquery
 --#[subquery-17]
-SELECT a FROM T WHERE b > (SELECT t2.b FROM T AS t2 WHERE t2.a = t2.b);
+SELECT a FROM T as t1 WHERE b > (SELECT t2.b FROM T AS t2 WHERE t1.b = t2.b);
 
 -- ANY/SOME with subquery
 -- #[subquery-18]
