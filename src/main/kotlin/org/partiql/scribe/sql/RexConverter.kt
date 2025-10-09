@@ -841,12 +841,13 @@ public open class RexConverter(
         rex: RexSubquery,
         ctx: Unit,
     ): Expr {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "SUBQUERY is not yet supported",
-            ),
-        )
+        // The planner does not support SubqueryComp, SubqueryIn, SubqueryTest planner node yet. Thus
+        // corresponding subquery function are not getting triggered.
+        // For `IN` and `EXISTS`, it was planned as RexSelect Node and get handled by visitSelect
+        // For comparison operators, it was planned as RexSubquery and get handled by visitSubquery
+        val transform = transform
+        val relConverter = transform.getRelConverter()
+        return relConverter.apply(rex.input, ctx).toExprQuerySet()
     }
 
     override fun visitSubqueryComp(
