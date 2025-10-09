@@ -38,19 +38,19 @@ SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" NOT IN (SELECT "T"
 -- SELECT "T"."v" AS "v" FROM "default"."T" AS "T" WHERE NOT EXISTS (SELECT "t2"."a" AS "a" FROM "default"."T" AS "t2" WHERE "t2"."b" > 0 AND "t2"."b" > 0);
 
 -- Nested subqueries
---#[subquery-14]
+--#[subquery-13]
 SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" IN (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" = 0));
 
 -- Subquery in SELECT clause
---#[subquery-15]
+--#[subquery-14]
 SELECT "T"."b" AS "b", (SELECT "t2"."v" AS "v" FROM "default"."T" AS "t2" WHERE "t2"."b" = 0) AS "match_v" FROM "default"."T" AS "T";
 
 -- Multiple subqueries in WHERE
 -- TODO Exists not implemented in scribe yet. Tracking with https://github.com/partiql/partiql-scribe/issues/104
--- #[subquery-16]
+-- #[subquery-15]
 -- SELECT "T"."v" AS "v" FROM "default"."T" AS "T" WHERE "T"."b" > (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" > 0) AND EXISTS (SELECT "t2"."a" AS "a" FROM "default"."T" AS "t2" WHERE "t2"."b" > 0);
 
 -- Correlated subquery
 -- Bug for correlated subquery, tracking with https://github.com/partiql/partiql-scribe/issues/119
--- #[subquery-17]
+-- #[subquery-16]
 -- SELECT "t1"."a" AS "a" FROM "default"."T" AS "t1" WHERE "t1"."b" = (SELECT "t2"."b" AS "b" FROM "default"."T" AS "t2" WHERE "t1"."b" = "t2"."b");
