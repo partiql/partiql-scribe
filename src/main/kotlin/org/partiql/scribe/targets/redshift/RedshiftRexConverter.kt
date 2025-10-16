@@ -83,7 +83,10 @@ public open class RedshiftRexConverter(
         return exprCase(matchExpr, branches, default)
     }
 
-    override fun visitLit(rex: RexLit, ctx: Unit): Expr {
+    override fun visitLit(
+        rex: RexLit,
+        ctx: Unit,
+    ): Expr {
         val type = rex.datum.type
         val datum = rex.datum
         return if (type.code() == PType.INTERVAL_DT) {
@@ -99,46 +102,46 @@ public open class RedshiftRexConverter(
                         message = "Cannot convert $type to a DataType",
                     ),
                 )
-            val literal = when (type.intervalCode) {
-                // For daytime intervals, there is a space in the string literal between DAY and TIME.
-                // Redshift requires minus sign for each part of the string literal.
-                // E.g., INTERVAL '-10 3' DAY To HOUR is evaluated `minus 10 days and 3 hours` in PartiQL,
-                // but is evaluated as `minus 9 days and 21 hours` in the Redshift.
-                // So Redshift we transcribe to INTERVAL '-10 -3' DAY To HOUR instead.
-                IntervalCode.DAY_HOUR -> {
-                    Literal.typedString(
-                        dataType,
-                        "$days ${hours}",
-                    )
+            val literal =
+                when (type.intervalCode) {
+                    // For daytime intervals, there is a space in the string literal between DAY and TIME.
+                    // Redshift requires minus sign for each part of the string literal.
+                    // E.g., INTERVAL '-10 3' DAY To HOUR is evaluated `minus 10 days and 3 hours` in PartiQL,
+                    // but is evaluated as `minus 9 days and 21 hours` in the Redshift.
+                    // So Redshift we transcribe to INTERVAL '-10 -3' DAY To HOUR instead.
+                    IntervalCode.DAY_HOUR ->
+                        Literal.typedString(
+                            dataType,
+                            "$days $hours",
+                        )
+
+                    IntervalCode.DAY_MINUTE ->
+                        Literal.typedString(
+                            dataType,
+                            "$days $hours:${minutes.absoluteValue}",
+                        )
+
+                    IntervalCode.DAY_SECOND -> {
+                        val fracPrecision =
+                            if (type.unspecifiedFractionalPrecision()) {
+                                null
+                            } else {
+                                type.fractionalPrecision
+                            }
+                        val intervalValue =
+                            if (fracPrecision != null && fracPrecision > 0) {
+                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
+                                "$days $hours:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
+                            } else {
+                                "$days $hours:${minutes.absoluteValue}:${seconds.absoluteValue}"
+                            }
+                        Literal.typedString(
+                            dataType,
+                            intervalValue,
+                        )
+                    }
+                    else -> return super.visitLit(rex, ctx)
                 }
-                IntervalCode.DAY_MINUTE -> {
-                    Literal.typedString(
-                        dataType,
-                        "$days ${hours}:${minutes.absoluteValue}",
-                    )
-                }
-                IntervalCode.DAY_SECOND -> {
-                    val fracPrecision =
-                        if (type.unspecifiedFractionalPrecision()) {
-                            null
-                        } else {
-                            type.fractionalPrecision
-                        }
-                    val intervalValue =
-                        if (fracPrecision != null && fracPrecision > 0) {
-                            val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
-                            "$days ${hours}:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
-                        } else {
-                            "$days ${hours}:${minutes.absoluteValue}:${seconds.absoluteValue}"
-                        }
-                    Literal.typedString(
-                        dataType,
-                        intervalValue,
-                    )
-                }
-                else ->
-                    return super.visitLit(rex, ctx)
-            }
             exprLit(literal)
         } else {
             super.visitLit(rex, ctx)
