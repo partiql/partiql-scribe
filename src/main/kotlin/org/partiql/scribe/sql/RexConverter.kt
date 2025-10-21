@@ -86,7 +86,7 @@ public open class RexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : OperatorVisitor<Expr, Unit> {
-    protected val listener: ScribeProblemListener = context.getProblemListener()
+    internal val listener: ScribeProblemListener = context.getProblemListener()
 
     /**
      * Convert a [Rex] to an [Expr].
@@ -159,15 +159,15 @@ public open class RexConverter(
         return exprCase(matchExpr, branches, default)
     }
 
-    protected fun PType.unspecifiedLength(): Boolean = metas[UNSPECIFIED_LENGTH] == true
+    internal fun PType.unspecifiedLength(): Boolean = metas[UNSPECIFIED_LENGTH] == true
 
-    protected fun PType.unspecifiedPrecision(): Boolean = metas[UNSPECIFIED_PRECISION] == true
+    internal fun PType.unspecifiedPrecision(): Boolean = metas[UNSPECIFIED_PRECISION] == true
 
-    protected fun PType.unspecifiedScale(): Boolean = metas[UNSPECIFIED_SCALE] == true
+    internal fun PType.unspecifiedScale(): Boolean = metas[UNSPECIFIED_SCALE] == true
 
-    protected fun PType.unspecifiedFractionalPrecision(): Boolean = metas[UNSPECIFIED_FRACTIONAL_PRECISION] == true
+    internal fun PType.unspecifiedFractionalPrecision(): Boolean = metas[UNSPECIFIED_FRACTIONAL_PRECISION] == true
 
-    protected fun PType.toDataType(): DataType? {
+    internal fun PType.toDataType(): DataType? {
         val pType = this
         return when (pType.code()) {
             // BOOL type

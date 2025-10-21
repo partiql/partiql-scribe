@@ -104,11 +104,11 @@ public open class RedshiftRexConverter(
                 )
             val literal =
                 when (type.intervalCode) {
-                    // For daytime intervals, there is a space in the string literal between DAY and TIME.
-                    // Redshift requires minus sign for each part of the string literal.
-                    // E.g., INTERVAL '-10 3' DAY To HOUR is evaluated `minus 10 days and 3 hours` in PartiQL,
-                    // but is evaluated as `minus 9 days and 21 hours` in the Redshift.
-                    // So Redshift we transcribe to INTERVAL '-10 -3' DAY To HOUR instead.
+                    // For daytime intervals, there is a space in the string literal between the day and time parts.
+                    // Redshift requires minus sign for each part of the daytime interval string literal.
+                    // E.g., `INTERVAL '-10 3' DAY To HOUR` is evaluated `-10 days and -3 hours` in PartiQL and SQL,
+                    // but is evaluated as `-9 days and -21 hours` in the Redshift.
+                    // So Redshift we transcribe to `INTERVAL '-10 -3' DAY TO HOUR` instead.
                     IntervalCode.DAY_HOUR ->
                         Literal.typedString(
                             dataType,

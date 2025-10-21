@@ -215,12 +215,6 @@ public class org/partiql/scribe/sql/RexConverter : org/partiql/plan/OperatorVisi
 	public fun defaultReturn (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun defaultVisit (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun defaultVisit (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
-	protected final fun getListener ()Lorg/partiql/scribe/problems/ScribeProblemListener;
-	protected final fun toDataType (Lorg/partiql/spi/types/PType;)Lorg/partiql/ast/DataType;
-	protected final fun unspecifiedFractionalPrecision (Lorg/partiql/spi/types/PType;)Z
-	protected final fun unspecifiedLength (Lorg/partiql/spi/types/PType;)Z
-	protected final fun unspecifiedPrecision (Lorg/partiql/spi/types/PType;)Z
-	protected final fun unspecifiedScale (Lorg/partiql/spi/types/PType;)Z
 	public synthetic fun visitArray (Lorg/partiql/plan/rex/RexArray;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitArray (Lorg/partiql/plan/rex/RexArray;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitBag (Lorg/partiql/plan/rex/RexBag;Ljava/lang/Object;)Ljava/lang/Object;
