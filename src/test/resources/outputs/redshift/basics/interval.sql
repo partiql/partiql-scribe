@@ -72,10 +72,10 @@ SELECT INTERVAL '10' SECOND AS "i" FROM "default"."T" AS "T";
 SELECT INTERVAL '-10' SECOND AS "i" FROM "default"."T" AS "T";
 
 --#[interval-24]
-SELECT INTERVAL '10.234' SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '10.234' SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-25]
-SELECT INTERVAL '-10.234' SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '-10.234' SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 -- <start field> TO <end field>
 --#[interval-26]
@@ -127,16 +127,16 @@ SELECT INTERVAL '10 3:4:5' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
 SELECT INTERVAL '-10 -3:4:5' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
 
 --#[interval-42]
-SELECT INTERVAL '10 3:4:5.678' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '10 3:4:5.678' DAY TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-43]
-SELECT INTERVAL '-10 -3:4:5.678' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '-10 -3:4:5.678' DAY TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-44]
-SELECT INTERVAL '10 3:4:5.678' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '10 3:4:5.678' DAY TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-45]
-SELECT INTERVAL '-10 -3:4:5.678' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '-10 -3:4:5.678' DAY TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-46]
 SELECT INTERVAL '3:4' HOUR TO MINUTE AS "i" FROM "default"."T" AS "T";
@@ -163,16 +163,16 @@ SELECT INTERVAL '2:3:4' HOUR TO SECOND AS "i" FROM "default"."T" AS "T";
 SELECT INTERVAL '-2:3:4' HOUR TO SECOND AS "i" FROM "default"."T" AS "T";
 
 --#[interval-54]
-SELECT INTERVAL '2:3:4.567' HOUR TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '2:3:4.567' HOUR TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-55]
-SELECT INTERVAL '-2:3:4.567' HOUR TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '-2:3:4.567' HOUR TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-56]
-SELECT INTERVAL '2:3:4.567' HOUR TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '2:3:4.567' HOUR TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-57]
-SELECT INTERVAL '-2:3:4.567' HOUR TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '-2:3:4.567' HOUR TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-58]
 SELECT INTERVAL '3:4' MINUTE TO SECOND AS "i" FROM "default"."T" AS "T";
@@ -187,13 +187,13 @@ SELECT INTERVAL '3:4' MINUTE TO SECOND AS "i" FROM "default"."T" AS "T";
 SELECT INTERVAL '-3:4' MINUTE TO SECOND AS "i" FROM "default"."T" AS "T";
 
 --#[interval-62]
-SELECT INTERVAL '3:4.567' MINUTE TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '3:4.567' MINUTE TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-63]
-SELECT INTERVAL '-3:4.567' MINUTE TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '-3:4.567' MINUTE TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-64]
-SELECT INTERVAL '3:4.567' MINUTE TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '3:4.567' MINUTE TO SECOND (3) AS "i" FROM "default"."T" AS "T";
 
 --#[interval-65]
-SELECT INTERVAL '-3:4.567' MINUTE TO SECOND AS "i" FROM "default"."T" AS "T";
+SELECT INTERVAL '-3:4.567' MINUTE TO SECOND (3) AS "i" FROM "default"."T" AS "T";

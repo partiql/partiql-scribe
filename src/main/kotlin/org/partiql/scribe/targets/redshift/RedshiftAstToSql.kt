@@ -274,9 +274,9 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             )
         }
 
-        var intervalField =  node.field.name()
+        var intervalField = node.field.name()
 
-        if(node.fractionalPrecision != null) {
+        if (node.fractionalPrecision != null && node.fractionalPrecision != 0) {
             intervalField += " (${node.fractionalPrecision})"
         }
 
@@ -305,7 +305,7 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         }
         datetimeField += " TO ${endField.name()}"
 
-        if(node.endFieldFractionalPrecision != null) {
+        if (node.endFieldFractionalPrecision != null && node.endFieldFractionalPrecision != 0) {
             datetimeField += " (${node.endFieldFractionalPrecision})"
         }
         return tail concat datetimeField
