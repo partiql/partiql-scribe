@@ -136,158 +136,158 @@ SELECT ABS("T"['col_decimal']) AS "_1" FROM "default"."T" AS "T";
 
 -- ABS with INTERVAL expressions
 --#[abs-interval-1]
-ABS(INTERVAL '1' YEAR);
+ABS(INTERVAL '-1' YEAR);
 
 --#[abs-interval-2]
 ABS(INTERVAL '1' YEAR);
 
 --#[abs-interval-3]
-ABS(INTERVAL '5' MONTH);
+ABS(INTERVAL '-5' MONTH);
 
 --#[abs-interval-4]
 ABS(INTERVAL '5' MONTH);
 
 --#[abs-interval-5]
-ABS(INTERVAL '10' DAY);
+ABS(INTERVAL '-10' DAY);
 
 --#[abs-interval-6]
 ABS(INTERVAL '10' DAY);
 
 --#[abs-interval-7]
-ABS(INTERVAL '2' HOUR);
+ABS(INTERVAL '-2' HOUR);
 
 --#[abs-interval-8]
 ABS(INTERVAL '2' HOUR);
 
 --#[abs-interval-9]
-ABS(INTERVAL '30' MINUTE);
+ABS(INTERVAL '-30' MINUTE);
 
 --#[abs-interval-10]
 ABS(INTERVAL '30' MINUTE);
 
 --#[abs-interval-11]
-ABS(INTERVAL '45' SECOND);
+ABS(INTERVAL '-45' SECOND);
 
 --#[abs-interval-12]
 ABS(INTERVAL '45' SECOND);
 
 --#[abs-interval-13]
-ABS(INTERVAL '1-6' YEAR TO MONTH);
+ABS(INTERVAL '-1-6' YEAR TO MONTH);
 
 --#[abs-interval-14]
 ABS(INTERVAL '1-6' YEAR TO MONTH);
 
 --#[abs-interval-15]
-ABS(INTERVAL '5 10' DAY TO HOUR);
+ABS(INTERVAL '-5 10' DAY TO HOUR);
 
 --#[abs-interval-16]
 ABS(INTERVAL '5 10' DAY TO HOUR);
 
 --#[abs-interval-17]
-ABS(INTERVAL '5 10:30' DAY TO MINUTE);
+ABS(INTERVAL '-5 10:30' DAY TO MINUTE);
 
 --#[abs-interval-18]
 ABS(INTERVAL '5 10:30' DAY TO MINUTE);
 
 --#[abs-interval-19]
-ABS(INTERVAL '5 10:30:45' DAY TO SECOND);
+ABS(INTERVAL '-5 10:30:45' DAY TO SECOND);
 
 --#[abs-interval-20]
 ABS(INTERVAL '5 10:30:45' DAY TO SECOND);
 
 --#[abs-interval-21]
-ABS(INTERVAL '10:30' HOUR TO MINUTE);
+ABS(INTERVAL '-10:30' HOUR TO MINUTE);
 
 --#[abs-interval-22]
 ABS(INTERVAL '10:30' HOUR TO MINUTE);
 
 --#[abs-interval-23]
-ABS(INTERVAL '10:30:45' HOUR TO SECOND);
+ABS(INTERVAL '-10:30:45' HOUR TO SECOND);
 
 --#[abs-interval-24]
 ABS(INTERVAL '10:30:45' HOUR TO SECOND);
 
 --#[abs-interval-25]
-ABS(INTERVAL '30:45' MINUTE TO SECOND);
+ABS(INTERVAL '-30:45' MINUTE TO SECOND);
 
 --#[abs-interval-26]
 ABS(INTERVAL '30:45' MINUTE TO SECOND);
 
 -- ABS with INTERVAL expressions in SELECT FROM T
 --#[abs-interval-select-1]
-SELECT ABS(INTERVAL '1' YEAR) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-1' YEAR) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-2]
 SELECT ABS(INTERVAL '1' YEAR) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-3]
-SELECT ABS(INTERVAL '5' MONTH) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-5' MONTH) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-4]
 SELECT ABS(INTERVAL '5' MONTH) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-5]
-SELECT ABS(INTERVAL '10' DAY) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-10' DAY) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-6]
 SELECT ABS(INTERVAL '10' DAY) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-7]
-SELECT ABS(INTERVAL '2' HOUR) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-2' HOUR) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-8]
 SELECT ABS(INTERVAL '2' HOUR) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-9]
-SELECT ABS(INTERVAL '30' MINUTE) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-30' MINUTE) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-10]
 SELECT ABS(INTERVAL '30' MINUTE) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-11]
-SELECT ABS(INTERVAL '45' SECOND) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-45' SECOND) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-12]
 SELECT ABS(INTERVAL '45' SECOND) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-13]
-SELECT ABS(INTERVAL '1-6' YEAR TO MONTH) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-1-6' YEAR TO MONTH) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-14]
 SELECT ABS(INTERVAL '1-6' YEAR TO MONTH) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-15]
-SELECT ABS(INTERVAL '5 10' DAY TO HOUR) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-5 10' DAY TO HOUR) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-16]
 SELECT ABS(INTERVAL '5 10' DAY TO HOUR) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-17]
-SELECT ABS(INTERVAL '5 10:30' DAY TO MINUTE) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-5 10:30' DAY TO MINUTE) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-18]
 SELECT ABS(INTERVAL '5 10:30' DAY TO MINUTE) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-19]
-SELECT ABS(INTERVAL '5 10:30:45' DAY TO SECOND) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-5 10:30:45' DAY TO SECOND) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-20]
 SELECT ABS(INTERVAL '5 10:30:45' DAY TO SECOND) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-21]
-SELECT ABS(INTERVAL '10:30' HOUR TO MINUTE) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-10:30' HOUR TO MINUTE) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-22]
 SELECT ABS(INTERVAL '10:30' HOUR TO MINUTE) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-23]
-SELECT ABS(INTERVAL '10:30:45' HOUR TO SECOND) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-10:30:45' HOUR TO SECOND) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-24]
 SELECT ABS(INTERVAL '10:30:45' HOUR TO SECOND) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-25]
-SELECT ABS(INTERVAL '30:45' MINUTE TO SECOND) AS "_1" FROM "default"."T" AS "T";
+SELECT ABS(INTERVAL '-30:45' MINUTE TO SECOND) AS "_1" FROM "default"."T" AS "T";
 
 --#[abs-interval-select-26]
 SELECT ABS(INTERVAL '30:45' MINUTE TO SECOND) AS "_1" FROM "default"."T" AS "T";
