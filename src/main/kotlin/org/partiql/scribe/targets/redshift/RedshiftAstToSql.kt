@@ -257,7 +257,7 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
     }
 
     /**
-     * Redshift does not support precision and fractional precision components in the output SQL.
+     * Redshift supports fractional precision for an interval which contains SECOND
      */
     override fun visitIntervalQualifierSingle(
         node: IntervalQualifier.Single,
@@ -273,21 +273,18 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
                 ),
             )
         }
-        if (node.fractionalPrecision != null) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    code = ScribeProblem.TRANSLATION_INFO,
-                    message =
-                        "Redshift does not support a fractional second INTERVAL precision. " +
-                            "Fractional second precision has been omitted in the output.",
-                ),
-            )
+
+        var intervalField = node.field.name()
+
+        if (node.fractionalPrecision != null && node.fractionalPrecision != 0) {
+            intervalField += " (${node.fractionalPrecision})"
         }
-        return tail concat node.field.name()
+
+        return tail concat intervalField
     }
 
     /**
-     * Redshift does not support precision and fractional precision components in the output SQL.
+     * Redshift supports fractional precision for an interval which contains SECOND
      */
     override fun visitIntervalQualifierRange(
         node: IntervalQualifier.Range,
@@ -307,15 +304,9 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             )
         }
         datetimeField += " TO ${endField.name()}"
-        if (node.endFieldFractionalPrecision != null) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    code = ScribeProblem.TRANSLATION_INFO,
-                    message =
-                        "Redshift does not support a fractional second INTERVAL precision. " +
-                            "Fractional second precision has been omitted in the output.",
-                ),
-            )
+
+        if (node.endFieldFractionalPrecision != null && node.endFieldFractionalPrecision != 0) {
+            datetimeField += " (${node.endFieldFractionalPrecision})"
         }
         return tail concat datetimeField
     }

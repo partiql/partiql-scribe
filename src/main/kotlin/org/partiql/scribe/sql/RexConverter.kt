@@ -56,6 +56,7 @@ import org.partiql.plan.rex.RexTable
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.problems.ScribeProblemListener
 import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
@@ -85,7 +86,7 @@ public open class RexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : OperatorVisitor<Expr, Unit> {
-    private val listener = context.getProblemListener()
+    internal val listener: ScribeProblemListener = context.getProblemListener()
 
     /**
      * Convert a [Rex] to an [Expr].
@@ -158,15 +159,15 @@ public open class RexConverter(
         return exprCase(matchExpr, branches, default)
     }
 
-    private fun PType.unspecifiedLength() = metas[UNSPECIFIED_LENGTH] == true
+    internal fun PType.unspecifiedLength(): Boolean = metas[UNSPECIFIED_LENGTH] == true
 
-    private fun PType.unspecifiedPrecision() = metas[UNSPECIFIED_PRECISION] == true
+    internal fun PType.unspecifiedPrecision(): Boolean = metas[UNSPECIFIED_PRECISION] == true
 
-    private fun PType.unspecifiedScale() = metas[UNSPECIFIED_SCALE] == true
+    internal fun PType.unspecifiedScale(): Boolean = metas[UNSPECIFIED_SCALE] == true
 
-    private fun PType.unspecifiedFractionalPrecision() = metas[UNSPECIFIED_FRACTIONAL_PRECISION] == true
+    internal fun PType.unspecifiedFractionalPrecision(): Boolean = metas[UNSPECIFIED_FRACTIONAL_PRECISION] == true
 
-    private fun PType.toDataType(): DataType? {
+    internal fun PType.toDataType(): DataType? {
         val pType = this
         return when (pType.code()) {
             // BOOL type
