@@ -284,6 +284,7 @@ public abstract class org/partiql/scribe/sql/SqlCalls {
 	public fun default (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun divFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun eqFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun extract (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
 	public fun gtFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun gteFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
