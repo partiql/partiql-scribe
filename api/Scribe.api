@@ -273,6 +273,7 @@ public final class org/partiql/scribe/sql/SqlArg {
 public abstract class org/partiql/scribe/sql/SqlCalls {
 	public static final field Companion Lorg/partiql/scribe/sql/SqlCalls$Companion;
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public fun abs (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun andFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun between (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun binary (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
