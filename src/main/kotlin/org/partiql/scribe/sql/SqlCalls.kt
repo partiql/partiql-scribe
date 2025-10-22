@@ -144,6 +144,8 @@ public abstract class SqlCalls(context: ScribeContext) {
             "in_collection" to { args -> inCollection(args) },
             // between
             "between" to { args -> between(args) },
+            // ABS for intervals and numbers
+            "abs" to { args -> abs(args) },
         )
 
     private fun removeSystemPrefix(name: String): String {
@@ -347,5 +349,13 @@ public abstract class SqlCalls(context: ScribeContext) {
                     ScribeProblem.simpleError(ScribeProblem.INVALID_PLAN, "Unsupported trim(...) with arity ${args.size}"),
                 )
         }
+    }
+
+    /**
+     * SQL ABS — ABS( <value> )
+     */
+    public open fun abs(args: SqlArgs): Expr {
+        val call = Identifier.regular("ABS")
+        return exprCall(call, listOf(args[0].expr))
     }
 }

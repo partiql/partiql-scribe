@@ -58,6 +58,98 @@
         name: "timestamp_2",
         type: "timestamp",
       },
+      // Additional data type columns
+      {
+        name: "col_bool",
+        type: "bool",
+      },
+
+      {
+        name: "col_int16",
+        type: "int16",
+      },
+      {
+        name: "col_int32",
+        type: "int32",
+      },
+      {
+        name: "col_int64",
+        type: "int64",
+      },
+      {
+        name: "col_float32",
+        type: "float32",
+      },
+      {
+        name: "col_float64",
+        type: "float64",
+      },
+      {
+        name: "col_decimal",
+        type: "decimal",
+      },
+      {
+        name: "col_string",
+        type: "string",
+      },
+      {
+        name: "col_char",
+        type: {
+          type: "char",
+          length: 10
+        },
+      },
+      {
+        name: "col_date",
+        type: "date",
+      },
+      {
+        name: "col_time",
+        type: "time",
+      },
+      {
+        name: "col_timestamp",
+        type: "timestamp",
+      },
+      {
+        name: "col_blob",
+        type: "blob",
+      },
+      {
+        name: "col_clob",
+        type: "clob",
+      },
+      {
+        name: "col_list",
+        type: {
+          type: "list",
+          items: "int32",
+        },
+      },
+      {
+        name: "col_bag",
+        type: {
+          type: "bag",
+          items: "string",
+        },
+      },
+      {
+        name: "col_struct",
+        type: {
+          type: "struct",
+          constraints: [ closed, ordered, unique ],
+          fields: [
+            {
+              name: "nested_field",
+              type: "string"
+            }
+          ]
+        },
+      },
+      {
+        name: "col_any",
+        type: "any",
+      },
     ]
   }
 }
