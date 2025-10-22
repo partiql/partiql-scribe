@@ -315,16 +315,16 @@ SELECT ABS("T"['col_s']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
 SELECT ABS("T"['col_y2mon']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
 
 --#[abs-interval-select-34]
-SELECT ABS("T"['col_y2h']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
+SELECT ABS("T"['col_d2h']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
 
 --#[abs-interval-select-35]
-SELECT ABS("T"['col_y2min']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
+SELECT ABS("T"['col_d2min']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
 
 --#[abs-interval-select-36]
 SELECT ABS("T"['col_d2s']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
 
 --#[abs-interval-select-37]
-SELECT ABS("T"['col_h2m']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
+SELECT ABS("T"['col_h2min']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
 
 --#[abs-interval-select-38]
 SELECT ABS("T"['col_h2s']) AS "_1" FROM "default"."T_INTERVALS" AS "T";
