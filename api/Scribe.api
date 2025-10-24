@@ -298,6 +298,7 @@ public abstract class org/partiql/scribe/sql/SqlCalls {
 	public fun negFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun notFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun orFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun posFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public final fun retarget (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
@@ -384,6 +385,7 @@ public class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scr
 	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
+	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -483,6 +485,7 @@ public class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sq
 	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
+	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/spark/SparkFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -569,6 +572,7 @@ public class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sq
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
 	public fun minusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 

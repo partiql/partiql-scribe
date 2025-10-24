@@ -3,7 +3,6 @@ package org.partiql.scribe.targets.trino
 import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
-import org.partiql.ast.Ast.exprOverlaps
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier

@@ -21,7 +21,6 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprArray
-import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprBetween
 import org.partiql.ast.expr.ExprInCollection
 import org.partiql.ast.expr.ExprIsType
@@ -158,7 +157,7 @@ public abstract class SqlCalls(context: ScribeContext) {
             "extract_second" to { args -> extract(DatetimeField.SECOND(), args) },
             // OVERLAPS
             "overlaps" to { args -> overlaps(args) },
-            )
+        )
 
     private fun removeSystemPrefix(name: String): String {
         return name.removePrefix("\uFDEF")

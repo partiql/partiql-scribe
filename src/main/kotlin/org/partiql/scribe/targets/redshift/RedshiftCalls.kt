@@ -1,7 +1,6 @@
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.ast.Ast.exprCall
-import org.partiql.ast.Ast.exprOverlaps
 import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
