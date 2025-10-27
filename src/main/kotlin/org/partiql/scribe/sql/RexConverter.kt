@@ -81,6 +81,14 @@ private const val UNSPECIFIED_PRECISION = "UNSPECIFIED_PRECISION"
 private const val UNSPECIFIED_SCALE = "UNSPECIFIED_SCALE"
 private const val UNSPECIFIED_FRACTIONAL_PRECISION = "UNSPECIFIED_FRACTIONAL_PRECISION"
 
+internal const val MONTHS_PER_YEAR = 12L
+internal const val SECONDS_PER_MINUTE = 60L
+internal const val MINUTES_PER_HOUR = 60L
+internal const val HOURS_PER_DAY = 24L
+internal const val SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
+internal const val SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY
+internal const val NANOS_PER_SECOND = 1_000_000_000L
+
 public open class RexConverter(
     private val transform: PlanToAst,
     private val locals: Locals,
@@ -559,7 +567,7 @@ public open class RexConverter(
                     IntervalCode.MONTH -> {
                         Literal.typedString(
                             dataType,
-                            "$months",
+                            "$totalMonths",
                         )
                     }
                     IntervalCode.YEAR_MONTH -> {
@@ -595,29 +603,17 @@ public open class RexConverter(
                     IntervalCode.HOUR -> {
                         Literal.typedString(
                             dataType,
-                            "$hours",
+                            "${totalSeconds / SECONDS_PER_HOUR}",
                         )
                     }
                     IntervalCode.MINUTE -> {
                         Literal.typedString(
                             dataType,
-                            "$minutes",
+                            "${totalSeconds / SECONDS_PER_MINUTE}",
                         )
                     }
                     IntervalCode.SECOND -> {
-                        val fracPrecision =
-                            if (type.unspecifiedFractionalPrecision()) {
-                                null
-                            } else {
-                                type.fractionalPrecision
-                            }
-                        val intervalValue =
-                            if (fracPrecision != null && fracPrecision > 0) {
-                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
-                                "$seconds.$nanosTruncated"
-                            } else {
-                                "$seconds"
-                            }
+                        val intervalValue = "$totalSeconds${getNanosPart(type, nanos)}"
                         Literal.typedString(
                             dataType,
                             intervalValue,
@@ -636,19 +632,9 @@ public open class RexConverter(
                         )
                     }
                     IntervalCode.DAY_SECOND -> {
-                        val fracPrecision =
-                            if (type.unspecifiedFractionalPrecision()) {
-                                null
-                            } else {
-                                type.fractionalPrecision
-                            }
                         val intervalValue =
-                            if (fracPrecision != null && fracPrecision > 0) {
-                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
-                                "$days ${hours.absoluteValue}:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
-                            } else {
-                                "$days ${hours.absoluteValue}:${minutes.absoluteValue}:${seconds.absoluteValue}"
-                            }
+                            "$days ${hours.absoluteValue}:${minutes.absoluteValue}:" +
+                                "${seconds.absoluteValue}${getNanosPart(type, nanos)}"
                         Literal.typedString(
                             dataType,
                             intervalValue,
@@ -657,42 +643,22 @@ public open class RexConverter(
                     IntervalCode.HOUR_MINUTE -> {
                         Literal.typedString(
                             dataType,
-                            "$hours:${minutes.absoluteValue}",
+                            "${totalSeconds / SECONDS_PER_HOUR}:${minutes.absoluteValue}",
                         )
                     }
                     IntervalCode.HOUR_SECOND -> {
-                        val fracPrecision =
-                            if (type.unspecifiedFractionalPrecision()) {
-                                null
-                            } else {
-                                type.fractionalPrecision
-                            }
                         val intervalValue =
-                            if (fracPrecision != null && fracPrecision > 0) {
-                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
-                                "$hours:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
-                            } else {
-                                "$hours:${minutes.absoluteValue}:${seconds.absoluteValue}"
-                            }
+                            "${totalSeconds / SECONDS_PER_HOUR}:${minutes.absoluteValue}:" +
+                                "${seconds.absoluteValue}${getNanosPart(type, nanos)}"
                         Literal.typedString(
                             dataType,
                             intervalValue,
                         )
                     }
                     IntervalCode.MINUTE_SECOND -> {
-                        val fracPrecision =
-                            if (type.unspecifiedFractionalPrecision()) {
-                                null
-                            } else {
-                                type.fractionalPrecision
-                            }
                         val intervalValue =
-                            if (fracPrecision != null && fracPrecision > 0) {
-                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
-                                "$minutes:${seconds.absoluteValue}.$nanosTruncated"
-                            } else {
-                                "$minutes:${seconds.absoluteValue}"
-                            }
+                            "${totalSeconds / SECONDS_PER_MINUTE}:" +
+                                "${seconds.absoluteValue}${getNanosPart(type, nanos)}"
                         Literal.typedString(
                             dataType,
                             intervalValue,
@@ -936,6 +902,25 @@ public open class RexConverter(
             identifier = identifier,
             isQualified = false,
         )
+    }
+
+    internal fun getNanosPart(
+        type: PType,
+        nanos: Int,
+    ): String {
+        val fracPrecision =
+            if (type.unspecifiedFractionalPrecision()) {
+                null
+            } else {
+                type.fractionalPrecision
+            }
+        var nanosStr = ""
+        if (fracPrecision != null && fracPrecision > 0) {
+            nanosStr = String.format("%09d", nanos.absoluteValue)
+            nanosStr = "." + nanosStr.substring(0, fracPrecision)
+        }
+
+        return nanosStr
     }
 
     // Private helpers

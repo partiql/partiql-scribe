@@ -197,3 +197,28 @@ SELECT INTERVAL '3:4.567' MINUTE (2) TO SECOND (3) AS "i" FROM "default"."T" AS 
 
 --#[interval-65]
 SELECT INTERVAL '-3:4.567' MINUTE (2) TO SECOND (3) AS "i" FROM "default"."T" AS "T";
+
+-- Additional DAY TO SECOND precision tests
+--#[interval-66]
+SELECT INTERVAL '2 3:4:5.000006' DAY TO SECOND (6) AS "i" FROM "default"."T" AS "T";
+
+--#[interval-67]
+SELECT INTERVAL '-2 3:4:5.000006' DAY TO SECOND (6) AS "i" FROM "default"."T" AS "T";
+
+--#[interval-68]
+SELECT INTERVAL '2 3:4:5.000006000' DAY TO SECOND (9) AS "i" FROM "default"."T" AS "T";
+
+--#[interval-69]
+SELECT INTERVAL '-2 3:4:5.000006000' DAY TO SECOND (9) AS "i" FROM "default"."T" AS "T";
+
+--#[interval-70]
+SELECT INTERVAL '2 3:4:5.000' DAY TO SECOND (3) AS "i" FROM "default"."T" AS "T";
+
+--#[interval-71]
+SELECT INTERVAL '-2 3:4:5.000' DAY TO SECOND (3) AS "i" FROM "default"."T" AS "T";
+
+--#[interval-72]
+SELECT INTERVAL '2 3:4:5.000000' DAY TO SECOND (6) AS "i" FROM "default"."T" AS "T";
+
+--#[interval-73]
+SELECT INTERVAL '-2 3:4:5.000000' DAY TO SECOND (6) AS "i" FROM "default"."T" AS "T";

@@ -273,10 +273,20 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
                 ),
             )
         }
-
         var intervalField = node.field.name()
 
         if (node.fractionalPrecision != null && node.fractionalPrecision != 0) {
+            if (node.fractionalPrecision!! > 6) {
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "Redshift does not support fractional precision greater than 6 for " +
+                                "INTERVAL SECOND. ",
+                    ),
+                )
+            }
+
             intervalField += " (${node.fractionalPrecision})"
         }
 
