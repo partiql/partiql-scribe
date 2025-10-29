@@ -4,6 +4,7 @@ import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
+import org.partiql.ast.Ast.exprOverlaps
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
@@ -239,6 +240,15 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                     ),
                 )
         }
+
+    override fun overlaps(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Spark does not support OVERLAPS predicate.",
+            ),
+        )
+    }
 
     private fun truncate(arg: Expr): Expr =
         exprCast(

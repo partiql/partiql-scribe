@@ -1,6 +1,7 @@
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprOverlaps
 import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
@@ -103,5 +104,14 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         val arg1 = args[0].expr
         val arg2 = args[1].expr
         return exprCall(id, listOf(arg0, arg1, arg2))
+    }
+
+    override fun overlaps(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support OVERLAPS predicate.",
+            ),
+        )
     }
 }

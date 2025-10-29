@@ -11,6 +11,7 @@ import org.partiql.ast.Ast.exprMissingPredicate
 import org.partiql.ast.Ast.exprNot
 import org.partiql.ast.Ast.exprNullPredicate
 import org.partiql.ast.Ast.exprOperator
+import org.partiql.ast.Ast.exprOverlaps
 import org.partiql.ast.Ast.exprRowValue
 import org.partiql.ast.Ast.exprSessionAttribute
 import org.partiql.ast.Ast.exprTrim
@@ -20,6 +21,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprArray
+import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprBetween
 import org.partiql.ast.expr.ExprInCollection
 import org.partiql.ast.expr.ExprIsType
@@ -154,7 +156,9 @@ public abstract class SqlCalls(context: ScribeContext) {
             "extract_hour" to { args -> extract(DatetimeField.HOUR(), args) },
             "extract_minute" to { args -> extract(DatetimeField.MINUTE(), args) },
             "extract_second" to { args -> extract(DatetimeField.SECOND(), args) },
-        )
+            // OVERLAPS
+            "overlaps" to { args -> overlaps(args) },
+            )
 
     private fun removeSystemPrefix(name: String): String {
         return name.removePrefix("\uFDEF")
@@ -375,5 +379,12 @@ public abstract class SqlCalls(context: ScribeContext) {
         args: SqlArgs,
     ): Expr {
         return exprExtract(field, args[0].expr)
+    }
+
+    /**
+     * SQL OVERLAPS — (<start1>, <end1>) OVERLAPS (<start2>, <end2>)
+     */
+    public open fun overlaps(args: SqlArgs): Expr {
+        return exprOverlaps(args[0].expr, args[1].expr)
     }
 }

@@ -3,6 +3,7 @@ package org.partiql.scribe.targets.trino
 import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.Ast.exprOverlaps
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
@@ -175,5 +176,14 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
             )
         }
         return super.minusFn(args)
+    }
+
+    override fun overlaps(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Trino does not support OVERLAPS predicate",
+            ),
+        )
     }
 }
