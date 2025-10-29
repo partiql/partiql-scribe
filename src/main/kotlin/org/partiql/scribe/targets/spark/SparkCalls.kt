@@ -240,6 +240,15 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                 )
         }
 
+    override fun overlaps(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Spark does not support OVERLAPS predicate.",
+            ),
+        )
+    }
+
     private fun truncate(arg: Expr): Expr =
         exprCast(
             value = arg,

@@ -1,0 +1,64 @@
+-- Top-level OVERLAPS expressions with DATE
+--#[overlaps-01]
+(DATE '2023-01-01', DATE '2023-01-10') OVERLAPS (DATE '2023-01-05', DATE '2023-01-15');
+
+-- Top-level OVERLAPS expressions with TIME
+--#[overlaps-02]
+(TIME '10:00:00', TIME '12:00:00') OVERLAPS (TIME '11:00:00', TIME '13:00:00');
+
+-- Top-level OVERLAPS expressions with TIMESTAMP
+--#[overlaps-03]
+(TIMESTAMP '2023-01-01 10:00:00', TIMESTAMP '2023-01-01 12:00:00') OVERLAPS (TIMESTAMP '2023-01-01 11:00:00', TIMESTAMP '2023-01-01 13:00:00');
+
+-- Top-level OVERLAPS expressions with INTERVAL
+--#[overlaps-04]
+(DATE '2023-01-01', INTERVAL '10' DAY) OVERLAPS (DATE '2023-01-05', INTERVAL '10' DAY);
+
+-- OVERLAPS expressions with SELECT FROM T
+--#[overlaps-select-1]
+SELECT (DATE '2023-01-01', DATE '2023-01-10') OVERLAPS (DATE '2023-01-05', DATE '2023-01-15') FROM T;
+
+--#[overlaps-select-2]
+SELECT (TIME '10:00:00', TIME '12:00:00') OVERLAPS (TIME '11:00:00', TIME '13:00:00') FROM T;
+
+--#[overlaps-select-3]
+SELECT (TIMESTAMP '2023-01-01 10:00:00', TIMESTAMP '2023-01-01 12:00:00') OVERLAPS (TIMESTAMP '2023-01-01 11:00:00', TIMESTAMP '2023-01-01 13:00:00') FROM T;
+
+--#[overlaps-select-4]
+SELECT (DATE '2023-01-01', INTERVAL '10' DAY) OVERLAPS (DATE '2023-01-05', INTERVAL '10' DAY) FROM T;
+
+-- OVERLAPS with column references
+--#[overlaps-select-5]
+SELECT (T.col_date, T.col_date) OVERLAPS (DATE '2023-01-01', DATE '2023-12-31') FROM T_INTERVALS as T;
+
+--#[overlaps-select-6]
+SELECT (T.col_time, T.col_time) OVERLAPS (TIME '09:00:00', TIME '17:00:00') FROM T_INTERVALS as T;
+
+--#[overlaps-select-7]
+SELECT (T.col_timestamp, T.col_timestamp) OVERLAPS (TIMESTAMP '2023-01-01 10:00:00', TIMESTAMP '2023-01-01 12:00:00') FROM T_INTERVALS as T;
+
+-- OVERLAPS with array and bag operands
+--#[overlaps-select-8]
+SELECT [DATE '2023-01-01', DATE '2023-01-10'] OVERLAPS (DATE '2023-01-05', DATE '2023-01-15') FROM T;
+
+--#[overlaps-select-9]
+SELECT (DATE '2023-01-01', DATE '2023-01-10') OVERLAPS [DATE '2023-01-05', DATE '2023-01-15'] FROM T;
+
+--#[overlaps-select-10]
+SELECT <<DATE '2023-01-01', DATE '2023-01-10'>> OVERLAPS (DATE '2023-01-05', DATE '2023-01-15') FROM T;
+
+--#[overlaps-select-11]
+SELECT (DATE '2023-01-01', DATE '2023-01-10') OVERLAPS <<DATE '2023-01-05', DATE '2023-01-15'>> FROM T;
+
+-- OVERLAPS with both operands as arrays or bags
+--#[overlaps-select-12]
+SELECT [DATE '2023-01-01', DATE '2023-01-10'] OVERLAPS [DATE '2023-01-05', DATE '2023-01-15'] FROM T;
+
+--#[overlaps-select-13]
+SELECT <<DATE '2023-01-01', DATE '2023-01-10'>> OVERLAPS <<DATE '2023-01-05', DATE '2023-01-15'>> FROM T;
+
+--#[overlaps-select-14]
+SELECT [DATE '2023-01-01', DATE '2023-01-10'] OVERLAPS <<DATE '2023-01-05', DATE '2023-01-15'>> FROM T;
+
+--#[overlaps-select-15]
+SELECT <<DATE '2023-01-01', DATE '2023-01-10'>> OVERLAPS [DATE '2023-01-05', DATE '2023-01-15'] FROM T;

@@ -176,4 +176,13 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         }
         return super.minusFn(args)
     }
+
+    override fun overlaps(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Trino does not support OVERLAPS predicate",
+            ),
+        )
+    }
 }

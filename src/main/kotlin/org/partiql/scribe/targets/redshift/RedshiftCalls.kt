@@ -104,4 +104,13 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         val arg2 = args[1].expr
         return exprCall(id, listOf(arg0, arg1, arg2))
     }
+
+    override fun overlaps(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support OVERLAPS predicate.",
+            ),
+        )
+    }
 }
