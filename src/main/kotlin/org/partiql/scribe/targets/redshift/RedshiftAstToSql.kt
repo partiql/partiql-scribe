@@ -282,7 +282,7 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
                         code = ScribeProblem.TRANSLATION_INFO,
                         message =
                             "Redshift does not support fractional precision greater than 6 for " +
-                                "INTERVAL SECOND. ",
+                                "INTERVAL SECOND.",
                     ),
                 )
             }
