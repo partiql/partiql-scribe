@@ -221,3 +221,16 @@ SELECT INTERVAL '2 3:4:5.000000' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
 
 --#[interval-73]
 SELECT INTERVAL '-2 3:4:5.000000' DAY TO SECOND AS "i" FROM "default"."T" AS "T";
+
+-- Additional large value test cases
+--#[interval-74]
+SELECT INTERVAL '30' MONTH AS "i" FROM "default"."T" AS "T";
+
+--#[interval-75]
+SELECT INTERVAL '100' HOUR AS "i" FROM "default"."T" AS "T";
+
+--#[interval-76]
+SELECT INTERVAL '2000' MINUTE AS "i" FROM "default"."T" AS "T";
+
+--#[interval-77]
+SELECT INTERVAL '100000' SECOND AS "i" FROM "default"."T" AS "T";
