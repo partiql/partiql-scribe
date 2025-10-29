@@ -247,7 +247,8 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
                     code = ScribeProblem.TRANSLATION_INFO,
                     message =
                         "Trino does not support a fractional second INTERVAL precision. " +
-                            "Fractional second precision has been omitted in the output.",
+                            "Fractional second precision has been omitted in the output. " +
+                            "Trino has a default fractional precision `3` for INTERVAL second.",
                 ),
             )
         }

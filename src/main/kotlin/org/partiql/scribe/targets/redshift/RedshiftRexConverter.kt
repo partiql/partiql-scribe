@@ -122,19 +122,7 @@ public open class RedshiftRexConverter(
                         )
 
                     IntervalCode.DAY_SECOND -> {
-                        val fracPrecision =
-                            if (type.unspecifiedFractionalPrecision()) {
-                                null
-                            } else {
-                                type.fractionalPrecision
-                            }
-                        val intervalValue =
-                            if (fracPrecision != null && fracPrecision > 0) {
-                                val nanosTruncated = nanos.absoluteValue.toString().substring(0, fracPrecision)
-                                "$days $hours:${minutes.absoluteValue}:${seconds.absoluteValue}.$nanosTruncated"
-                            } else {
-                                "$days $hours:${minutes.absoluteValue}:${seconds.absoluteValue}"
-                            }
+                        val intervalValue = "$days $hours:${minutes.absoluteValue}:${seconds.absoluteValue}${getNanosPart(type, nanos)}"
                         Literal.typedString(
                             dataType,
                             intervalValue,
