@@ -2,6 +2,7 @@ package org.partiql.scribe.sql
 
 import org.partiql.ast.Ast.exprBetween
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprExtract
 import org.partiql.ast.Ast.exprInCollection
 import org.partiql.ast.Ast.exprIsType
 import org.partiql.ast.Ast.exprLike
@@ -146,6 +147,13 @@ public abstract class SqlCalls(context: ScribeContext) {
             "between" to { args -> between(args) },
             // ABS for intervals and numbers
             "abs" to { args -> abs(args) },
+            // EXTRACT
+            "extract_year" to { args -> extract(DatetimeField.YEAR(), args) },
+            "extract_month" to { args -> extract(DatetimeField.MONTH(), args) },
+            "extract_day" to { args -> extract(DatetimeField.DAY(), args) },
+            "extract_hour" to { args -> extract(DatetimeField.HOUR(), args) },
+            "extract_minute" to { args -> extract(DatetimeField.MINUTE(), args) },
+            "extract_second" to { args -> extract(DatetimeField.SECOND(), args) },
         )
 
     private fun removeSystemPrefix(name: String): String {
@@ -357,5 +365,15 @@ public abstract class SqlCalls(context: ScribeContext) {
     public open fun abs(args: SqlArgs): Expr {
         val call = Identifier.regular("ABS")
         return exprCall(call, listOf(args[0].expr))
+    }
+
+    /**
+     * SQL EXTRACT — EXTRACT( <field> FROM <source> )
+     */
+    public open fun extract(
+        field: DatetimeField,
+        args: SqlArgs,
+    ): Expr {
+        return exprExtract(field, args[0].expr)
     }
 }
