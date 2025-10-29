@@ -1,113 +1,303 @@
--- NOTE: Spark does not support top-level expression syntax.
+-- Top-level EXTRACT expressions from TIMESTAMP
+--#[extract-01]
+EXTRACT(YEAR FROM TIMESTAMP_NTZ '2023-10-19 12:34:56');
 
--- EXTRACT expressions with SELECT FROM T
---#[extract-select-1]
+--#[extract-02]
+EXTRACT(MONTH FROM TIMESTAMP_NTZ '2023-10-19 12:34:56');
+
+--#[extract-03]
+EXTRACT(DAY FROM TIMESTAMP_NTZ '2023-10-19 12:34:56');
+
+--#[extract-04]
+EXTRACT(HOUR FROM TIMESTAMP_NTZ '2023-10-19 12:34:56');
+
+--#[extract-05]
+EXTRACT(MINUTE FROM TIMESTAMP_NTZ '2023-10-19 12:34:56');
+
+--#[extract-06]
+EXTRACT(SECOND FROM TIMESTAMP_NTZ '2023-10-19 12:34:56');
+
+-- Top-level EXTRACT expressions from DATE
+--#[extract-07]
+EXTRACT(YEAR FROM DATE '2023-10-19');
+
+--#[extract-08]
+EXTRACT(MONTH FROM DATE '2023-10-19');
+
+--#[extract-09]
+EXTRACT(DAY FROM DATE '2023-10-19');
+
+-- Top-level EXTRACT expressions from TIME
+-- Spark does not support time type
+-- #[extract-10]
+-- EXTRACT(HOUR FROM TIME '12:34:56');
+
+-- #[extract-11]
+-- EXTRACT(MINUTE FROM TIME '12:34:56');
+
+-- #[extract-12]
+-- EXTRACT(SECOND FROM TIME '12:34:56');
+
+-- Top-level EXTRACT expressions from single INTERVAL types
+--#[extract-13]
+EXTRACT(YEAR FROM INTERVAL '5' YEAR);
+
+--#[extract-14]
+EXTRACT(MONTH FROM INTERVAL '3' MONTH);
+
+--#[extract-15]
+EXTRACT(DAY FROM INTERVAL '10' DAY);
+
+--#[extract-16]
+EXTRACT(HOUR FROM INTERVAL '8' HOUR);
+
+--#[extract-17]
+EXTRACT(MINUTE FROM INTERVAL '30' MINUTE);
+
+--#[extract-18]
+EXTRACT(SECOND FROM INTERVAL '45' SECOND);
+
+-- Top-level EXTRACT expressions from compound INTERVAL types
+--#[extract-19]
+EXTRACT(YEAR FROM INTERVAL '2-6' YEAR TO MONTH);
+
+--#[extract-20]
+EXTRACT(MONTH FROM INTERVAL '2-6' YEAR TO MONTH);
+
+--#[extract-21]
+EXTRACT(DAY FROM INTERVAL '5 12' DAY TO HOUR);
+
+--#[extract-22]
+EXTRACT(HOUR FROM INTERVAL '5 12' DAY TO HOUR);
+
+--#[extract-23]
+EXTRACT(DAY FROM INTERVAL '3 10:30' DAY TO MINUTE);
+
+--#[extract-24]
+EXTRACT(HOUR FROM INTERVAL '3 10:30' DAY TO MINUTE);
+
+--#[extract-25]
+EXTRACT(MINUTE FROM INTERVAL '3 10:30' DAY TO MINUTE);
+
+--#[extract-26]
+EXTRACT(DAY FROM INTERVAL '2 8:15:45' DAY TO SECOND);
+
+--#[extract-27]
+EXTRACT(HOUR FROM INTERVAL '2 8:15:45' DAY TO SECOND);
+
+--#[extract-28]
+EXTRACT(MINUTE FROM INTERVAL '2 8:15:45' DAY TO SECOND);
+
+--#[extract-29]
+EXTRACT(SECOND FROM INTERVAL '2 8:15:45' DAY TO SECOND);
+
+--#[extract-30]
+EXTRACT(HOUR FROM INTERVAL '14:30' HOUR TO MINUTE);
+
+--#[extract-31]
+EXTRACT(MINUTE FROM INTERVAL '14:30' HOUR TO MINUTE);
+
+--#[extract-32]
+EXTRACT(HOUR FROM INTERVAL '6:45:30' HOUR TO SECOND);
+
+--#[extract-33]
+EXTRACT(MINUTE FROM INTERVAL '6:45:30' HOUR TO SECOND);
+
+--#[extract-34]
+EXTRACT(SECOND FROM INTERVAL '6:45:30' HOUR TO SECOND);
+
+--#[extract-35]
+EXTRACT(MINUTE FROM INTERVAL '25:15' MINUTE TO SECOND);
+
+--#[extract-36]
+EXTRACT(SECOND FROM INTERVAL '25:15' MINUTE TO SECOND);
+
+-- Top-level EXTRACT expressions from negative INTERVAL types
+--#[extract-37]
+EXTRACT(YEAR FROM INTERVAL '-3' YEAR);
+
+--#[extract-38]
+EXTRACT(MONTH FROM INTERVAL '-8' MONTH);
+
+--#[extract-39]
+EXTRACT(DAY FROM INTERVAL '-15' DAY);
+
+--#[extract-40]
+EXTRACT(HOUR FROM INTERVAL '-6' HOUR);
+
+--#[extract-41]
+EXTRACT(MINUTE FROM INTERVAL '-45' MINUTE);
+
+--#[extract-42]
+EXTRACT(SECOND FROM INTERVAL '-30' SECOND);
+
+--#[extract-43]
+EXTRACT(YEAR FROM INTERVAL '-1-3' YEAR TO MONTH);
+
+--#[extract-44]
+EXTRACT(MONTH FROM INTERVAL '-1-3' YEAR TO MONTH);
+
+--#[extract-45]
+EXTRACT(DAY FROM INTERVAL '-2 5' DAY TO HOUR);
+
+--#[extract-46]
+EXTRACT(HOUR FROM INTERVAL '-2 5' DAY TO HOUR);
+
+--#[extract-47]
+EXTRACT(HOUR FROM INTERVAL '-8:30' HOUR TO MINUTE);
+
+--#[extract-48]
+EXTRACT(MINUTE FROM INTERVAL '-8:30' HOUR TO MINUTE);
+
+-- EXTRACT expressions with SELECT FROM T - TIMESTAMP
+--#[extract-49]
 SELECT EXTRACT(YEAR FROM TIMESTAMP_NTZ '2023-10-19 12:34:56') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-2]
+--#[extract-50]
 SELECT EXTRACT(MONTH FROM TIMESTAMP_NTZ '2023-10-19 12:34:56') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-3]
+--#[extract-51]
 SELECT EXTRACT(DAY FROM TIMESTAMP_NTZ '2023-10-19 12:34:56') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-4]
+--#[extract-52]
 SELECT EXTRACT(HOUR FROM TIMESTAMP_NTZ '2023-10-19 12:34:56') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-5]
+--#[extract-53]
 SELECT EXTRACT(MINUTE FROM TIMESTAMP_NTZ '2023-10-19 12:34:56') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-6]
+--#[extract-54]
 SELECT EXTRACT(SECOND FROM TIMESTAMP_NTZ '2023-10-19 12:34:56') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-7]
+-- EXTRACT expressions with SELECT FROM T - DATE
+--#[extract-55]
 SELECT EXTRACT(YEAR FROM DATE '2023-10-19') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-8]
+--#[extract-56]
 SELECT EXTRACT(MONTH FROM DATE '2023-10-19') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-9]
+--#[extract-57]
 SELECT EXTRACT(DAY FROM DATE '2023-10-19') AS `_1` FROM `default`.`T` AS `T`;
 
+-- EXTRACT expressions with SELECT FROM T - TIME
 -- Spark does not support time type
--- --#[extract-select-10]
+-- #[extract-58]
 -- SELECT EXTRACT(HOUR FROM TIME '12:34:56') AS `_1` FROM `default`.`T` AS `T`;
---
--- --#[extract-select-11]
+
+-- #[extract-59]
 -- SELECT EXTRACT(MINUTE FROM TIME '12:34:56') AS `_1` FROM `default`.`T` AS `T`;
---
--- --#[extract-select-12]
+
+-- #[extract-60]
 -- SELECT EXTRACT(SECOND FROM TIME '12:34:56') AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-13]
+-- EXTRACT expressions with SELECT FROM T - single INTERVAL types
+--#[extract-61]
 SELECT EXTRACT(YEAR FROM INTERVAL '5' YEAR) AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-14]
+--#[extract-62]
 SELECT EXTRACT(MONTH FROM INTERVAL '3' MONTH) AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-15]
+--#[extract-63]
 SELECT EXTRACT(DAY FROM INTERVAL '10' DAY) AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-16]
+--#[extract-64]
 SELECT EXTRACT(HOUR FROM INTERVAL '8' HOUR) AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-17]
+--#[extract-65]
 SELECT EXTRACT(MINUTE FROM INTERVAL '30' MINUTE) AS `_1` FROM `default`.`T` AS `T`;
 
---#[extract-select-18]
+--#[extract-66]
 SELECT EXTRACT(SECOND FROM INTERVAL '45' SECOND) AS `_1` FROM `default`.`T` AS `T`;
 
--- EXTRACT with column references
---#[extract-select-19]
+-- EXTRACT expressions with SELECT FROM T - compound INTERVAL types
+--#[extract-67]
+SELECT EXTRACT(YEAR FROM INTERVAL '2-6' YEAR TO MONTH) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-68]
+SELECT EXTRACT(MONTH FROM INTERVAL '2-6' YEAR TO MONTH) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-69]
+SELECT EXTRACT(DAY FROM INTERVAL '5 12' DAY TO HOUR) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-70]
+SELECT EXTRACT(HOUR FROM INTERVAL '5 12' DAY TO HOUR) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-71]
+SELECT EXTRACT(HOUR FROM INTERVAL '14:30' HOUR TO MINUTE) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-72]
+SELECT EXTRACT(MINUTE FROM INTERVAL '14:30' HOUR TO MINUTE) AS `_1` FROM `default`.`T` AS `T`;
+
+-- EXTRACT expressions with SELECT FROM T - negative INTERVAL types
+--#[extract-73]
+SELECT EXTRACT(YEAR FROM INTERVAL '-3' YEAR) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-74]
+SELECT EXTRACT(MONTH FROM INTERVAL '-8' MONTH) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-75]
+SELECT EXTRACT(DAY FROM INTERVAL '-15' DAY) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-76]
+SELECT EXTRACT(YEAR FROM INTERVAL '-1-3' YEAR TO MONTH) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[extract-77]
+SELECT EXTRACT(MONTH FROM INTERVAL '-1-3' YEAR TO MONTH) AS `_1` FROM `default`.`T` AS `T`;
+
+-- EXTRACT with column references - TIMESTAMP columns
+--#[extract-78]
 SELECT EXTRACT(YEAR FROM `T_INTERVALS`.`col_timestamp`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-20]
+--#[extract-79]
 SELECT EXTRACT(MONTH FROM `T_INTERVALS`.`col_timestamp`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-21]
+--#[extract-80]
 SELECT EXTRACT(DAY FROM `T_INTERVALS`.`col_timestamp`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-22]
+--#[extract-81]
 SELECT EXTRACT(HOUR FROM `T_INTERVALS`.`col_timestamp`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-23]
+--#[extract-82]
 SELECT EXTRACT(MINUTE FROM `T_INTERVALS`.`col_timestamp`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-24]
+--#[extract-83]
 SELECT EXTRACT(SECOND FROM `T_INTERVALS`.`col_timestamp`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-25]
+-- EXTRACT with column references - DATE columns
+--#[extract-84]
 SELECT EXTRACT(YEAR FROM `T_INTERVALS`.`col_date`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-26]
+--#[extract-85]
 SELECT EXTRACT(MONTH FROM `T_INTERVALS`.`col_date`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-27]
+--#[extract-86]
 SELECT EXTRACT(DAY FROM `T_INTERVALS`.`col_date`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
--- Spark does not support Time types.
--- --#[extract-select-28]
+-- EXTRACT with column references - TIME columns
+-- Spark does not support time type
+-- #[extract-87]
 -- SELECT EXTRACT(HOUR FROM `T_INTERVALS`.`col_time`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
---
--- --#[extract-select-29]
+
+-- #[extract-88]
 -- SELECT EXTRACT(MINUTE FROM `T_INTERVALS`.`col_time`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
---
--- --#[extract-select-30]
+
+-- #[extract-89]
 -- SELECT EXTRACT(SECOND FROM `T_INTERVALS`.`col_time`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-31]
+-- EXTRACT with column references - INTERVAL columns
+--#[extract-90]
 SELECT EXTRACT(YEAR FROM `T_INTERVALS`.`col_y2mon`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-32]
+--#[extract-91]
 SELECT EXTRACT(MONTH FROM `T_INTERVALS`.`col_y2mon`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-33]
+--#[extract-92]
 SELECT EXTRACT(DAY FROM `T_INTERVALS`.`col_d2s`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-34]
+--#[extract-93]
 SELECT EXTRACT(HOUR FROM `T_INTERVALS`.`col_d2s`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-35]
+--#[extract-94]
 SELECT EXTRACT(MINUTE FROM `T_INTERVALS`.`col_d2s`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
 
---#[extract-select-36]
+--#[extract-95]
 SELECT EXTRACT(SECOND FROM `T_INTERVALS`.`col_d2s`) AS `_1` FROM `default`.`T_INTERVALS` AS `T_INTERVALS`;
