@@ -142,10 +142,11 @@ public final class org/partiql/scribe/sql/ExprQuerySetFactory {
 
 public final class org/partiql/scribe/sql/Locals {
 	public static final field Companion Lorg/partiql/scribe/sql/Locals$Companion;
-	public fun <init> (Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAggregations ()Ljava/util/List;
 	public final fun getEnv ()Ljava/util/List;
+	public final fun getWindowFunctions ()Ljava/util/List;
 }
 
 public final class org/partiql/scribe/sql/Locals$Companion {
@@ -204,6 +205,8 @@ public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisi
 	public fun visitUnion (Lorg/partiql/plan/rel/RelUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitUnpivot (Lorg/partiql/plan/rel/RelUnpivot;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitWindow (Lorg/partiql/plan/rel/RelWindow;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWindow (Lorg/partiql/plan/rel/RelWindow;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun visitWith (Lorg/partiql/plan/rel/RelWith;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitWith (Lorg/partiql/plan/rel/RelWith;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 }

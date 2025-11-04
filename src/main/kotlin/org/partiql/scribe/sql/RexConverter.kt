@@ -70,9 +70,10 @@ public typealias TypeEnv = List<PTypeField>
 public class Locals(
     public val env: TypeEnv,
     public val aggregations: List<Expr> = emptyList(),
+    public val windowFunctions: List<Expr> = emptyList(),
 ) {
     public companion object {
-        public val EMPTY: Locals = Locals(env = emptyList(), aggregations = emptyList())
+        public val EMPTY: Locals = Locals(env = emptyList(), aggregations = emptyList(), windowFunctions = emptyList())
     }
 }
 
@@ -888,15 +889,33 @@ public open class RexConverter(
     ): Expr {
         val scope = rex.scope // TODO currently unused
         val offset = rex.offset
-        if (0 <= offset && offset < locals.aggregations.size) {
-            return locals.aggregations[offset]
-        }
+
+        // The offset means the offset from locals.env, which may include local refs, aggregation function or window function.
+        // The order of the output shema differs by Rel.
         val binding =
             locals.env.getOrNull(offset) ?: listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
                 ),
             )
+
+        if (binding.name.startsWith("\$agg_")) {
+            // The output schema for RelAggregate [PlanTyper.visitRelOpAggregate] is [aggregation function, groups]
+            // Aggregation function starts from index 0 from env. So reuse offset
+            if (0 <= offset && offset < locals.aggregations.size) {
+                return locals.aggregations[offset]
+            }
+        }
+
+        if (binding.name.startsWith("\$window_func_")) {
+            // The output schema for RelWindow [PlanTyper.visitRelOpWindow] is [columns, window function]
+            // Window function are in indices start from env - windowFunctions
+            if (locals.env.size - locals.windowFunctions.size <= offset && offset <= locals.env.size) {
+                val newOffset = offset - (locals.env.size - locals.windowFunctions.size)
+                return locals.windowFunctions[newOffset]
+            }
+        }
+
         val identifier = binder(binding.name)
         return exprVarRef(
             identifier = identifier,
@@ -926,7 +945,9 @@ public open class RexConverter(
     // Private helpers
     private fun Locals.dump(): String {
         val pairs = this.env.joinToString { "${it.name}: ${it.type}" }
-        return "< $pairs >"
+        val aggCount = this.aggregations.size
+        val winCount = this.windowFunctions.size
+        return "< $pairs > (agg: $aggCount, win: $winCount)"
     }
 
     private fun binder(symbol: String): Identifier = Identifier.delimited(symbol)
