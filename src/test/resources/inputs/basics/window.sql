@@ -26,10 +26,10 @@ SELECT a, LAG(a, 1) OVER (ORDER BY a) FROM T;
 SELECT a, LEAD(a, 1) OVER (ORDER BY a) FROM T;
 
 --#[window-09]
-SELECT a, LAG(a, 2, 'DEFAULT') OVER (ORDER BY a) FROM T;
+SELECT a, LAG(a, 2, FALSE) OVER (ORDER BY a) FROM T;
 
 --#[window-10]
-SELECT a, LEAD(a, 2, 'DEFAULT') OVER (ORDER BY a) FROM T;
+SELECT a, LEAD(a, 2, FALSE) OVER (ORDER BY a) FROM T;
 
 -- Window functions with NULLS handling
 --#[window-11]
@@ -71,7 +71,7 @@ SELECT a, b, RANK() OVER (PARTITION BY a ORDER BY b ASC, c DESC) FROM T;
 
 -- Complex comprehensive example
 --#[window-22]
-SELECT t.a AS _id, t.b AS _name, RANK() OVER _w1 AS _rank_1, RANK() OVER _w2 AS _rank_2, DENSE_RANK() OVER _w1 AS _dense_rank_1, DENSE_RANK() OVER _w2 AS _dense_rank_2, ROW_NUMBER() OVER _w1 as _row_number_1, ROW_NUMBER() OVER _w2 as _row_number_2, LAG(t.b, 1, 'UNKNOWN') OVER _w1 AS _lag_1, LAG(t.b, 1, 'UNKNOWN') OVER _w2 AS _lag_2, LEAD(t.b, 1, 'UNKNOWN') OVER _w1 AS _lead_1, LEAD(t.b, 1, 'UNKNOWN') OVER _w2 AS _lead_2 FROM T AS t WINDOW _w1 AS (PARTITION BY t.a ORDER BY t.b, t.c), _w2 AS (PARTITION BY t.a ORDER BY t.b DESC, t.c DESC);
+SELECT t.a AS _id, t.b AS _name, RANK() OVER _w1 AS _rank_1, RANK() OVER _w2 AS _rank_2, DENSE_RANK() OVER _w1 AS _dense_rank_1, DENSE_RANK() OVER _w2 AS _dense_rank_2, ROW_NUMBER() OVER _w1 as _row_number_1, ROW_NUMBER() OVER _w2 as _row_number_2, LAG(t.b, 1, -1) OVER _w1 AS _lag_1, LAG(t.b, 1, -1) OVER _w2 AS _lag_2, LEAD(t.b, 1, -1) OVER _w1 AS _lead_1, LEAD(t.b, 1, -1) OVER _w2 AS _lead_2 FROM T AS t WINDOW _w1 AS (PARTITION BY t.a ORDER BY t.b, t.c), _w2 AS (PARTITION BY t.a ORDER BY t.b DESC, t.c DESC);
 
 
 -- PartiQL does not support the feature, aggregation, window frame etc

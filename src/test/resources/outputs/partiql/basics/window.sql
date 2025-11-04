@@ -26,10 +26,10 @@ SELECT "T"['a'] AS "a", LAG("T"['a'], 1, NULL) RESPECT NULLS OVER (ORDER BY "T"[
 SELECT "T"['a'] AS "a", LEAD("T"['a'], 1, NULL) RESPECT NULLS OVER (ORDER BY "T"['a'] ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
 
 --#[window-09]
-SELECT "T"['a'] AS "a", LAG("T"['a'], 2, 'DEFAULT') RESPECT NULLS OVER (ORDER BY "T"['a'] ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
+SELECT "T"['a'] AS "a", LAG("T"['a'], 2, false) RESPECT NULLS OVER (ORDER BY "T"['a'] ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
 
 --#[window-10]
-SELECT "T"['a'] AS "a", LEAD("T"['a'], 2, 'DEFAULT') RESPECT NULLS OVER (ORDER BY "T"['a'] ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
+SELECT "T"['a'] AS "a", LEAD("T"['a'], 2, false) RESPECT NULLS OVER (ORDER BY "T"['a'] ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
 
 -- Window functions with NULLS handling
 -- #[window-11]
@@ -73,4 +73,4 @@ SELECT "T"['a'] AS "a", "T"['b'] AS "b", RANK() OVER (PARTITION BY "T"['a'] ORDE
 
 -- Complex comprehensive example
 --#[window-22]
-SELECT "t"['a'] AS "_id", "t"['b'] AS "_name", RANK() OVER "_w1" AS "_rank_1", RANK() OVER "_w2" AS "_rank_2", DENSE_RANK() OVER "_w1" AS "_dense_rank_1", DENSE_RANK() OVER "_w2" AS "_dense_rank_2", ROW_NUMBER() OVER "_w1" AS "_row_number_1", ROW_NUMBER() OVER "_w2" AS "_row_number_2", LAG("t"['b'], 1, 'UNKNOWN') RESPECT NULLS OVER "_w1" AS "_lag_1", LAG("t"['b'], 1, 'UNKNOWN') RESPECT NULLS OVER "_w2" AS "_lag_2", LEAD("t"['b'], 1, 'UNKNOWN') RESPECT NULLS OVER "_w1" AS "_lead_1", LEAD("t"['b'], 1, 'UNKNOWN') RESPECT NULLS OVER "_w2" AS "_lead_2" FROM "default"."T" AS "t" WINDOW "_w1" AS (PARTITION BY "t"['a'] ORDER BY "t"['b'] ASC NULLS LAST, "t"['c'] ASC NULLS LAST), "_w2" AS (PARTITION BY "t"['a'] ORDER BY "t"['b'] DESC NULLS FIRST, "t"['c'] DESC NULLS FIRST);
+SELECT "t"['a'] AS "_id", "t"['b'] AS "_name", RANK() OVER "_w1" AS "_rank_1", RANK() OVER "_w2" AS "_rank_2", DENSE_RANK() OVER "_w1" AS "_dense_rank_1", DENSE_RANK() OVER "_w2" AS "_dense_rank_2", ROW_NUMBER() OVER "_w1" AS "_row_number_1", ROW_NUMBER() OVER "_w2" AS "_row_number_2", LAG("t"['b'], 1, -1) RESPECT NULLS OVER "_w1" AS "_lag_1", LAG("t"['b'], 1, -1) RESPECT NULLS OVER "_w2" AS "_lag_2", LEAD("t"['b'], 1, -1) RESPECT NULLS OVER "_w1" AS "_lead_1", LEAD("t"['b'], 1, -1) RESPECT NULLS OVER "_w2" AS "_lead_2" FROM "default"."T" AS "t" WINDOW "_w1" AS (PARTITION BY "t"['a'] ORDER BY "t"['b'] ASC NULLS LAST, "t"['c'] ASC NULLS LAST), "_w2" AS (PARTITION BY "t"['a'] ORDER BY "t"['b'] DESC NULLS FIRST, "t"['c'] DESC NULLS FIRST);
