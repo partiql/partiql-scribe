@@ -10,6 +10,7 @@ import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
+import org.partiql.ast.WindowFunctionType
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
@@ -319,5 +320,34 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             datetimeField += " (${node.endFieldFractionalPrecision})"
         }
         return tail concat datetimeField
+    }
+
+    override fun visitWindowFunctionTypeLead(node: WindowFunctionType.Lead, tail: SqlBlock): SqlBlock {
+        var t = tail concat "LEAD("
+        t = visitExpr(node.extent, t)
+        node.offset?.let {
+            t = t concat ", $it"
+        }
+
+        t = t concat ")"
+        node.nullTreatment?.let { nullTreatment ->
+            t = t concat " ${nullTreatment.name()}"
+        }
+
+        return t
+    }
+
+    override fun visitWindowFunctionTypeLag(node: WindowFunctionType.Lag, tail: SqlBlock): SqlBlock {
+        var t = tail concat "LAG("
+        t = visitExpr(node.extent, t)
+        node.offset?.let {
+            t = t concat ", $it"
+        }
+
+        t = t concat ")"
+        node.nullTreatment?.let { nullTreatment ->
+            t = t concat " ${nullTreatment.name()}"
+        }
+        return t
     }
 }
