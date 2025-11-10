@@ -44,6 +44,34 @@ internal fun Expr.inferredAlias(): String? {
     }
 }
 
+internal fun Expr.toIdentifier(): Identifier? {
+    return when (this) {
+        is ExprVarRef -> this.identifier
+        is ExprPath -> {
+            val rootId = this.root.toIdentifier() ?: return null
+            val pathParts = mutableListOf(rootId.identifier.text)
+
+            for (step in this.steps) {
+                when (step) {
+                    is PathStep.Field -> pathParts.add(step.field.text)
+                    is PathStep.Element -> {
+                        val element = step.element
+                        if (element is ExprLit && element.lit.code() == Literal.STRING) {
+                            pathParts.add(element.lit.stringValue())
+                        } else {
+                            return null
+                        }
+                    }
+                    else -> return null
+                }
+            }
+
+            Identifier.delimited(pathParts)
+        }
+        else -> null
+    }
+}
+
 private fun Identifier.Simple.inferredAlias(): String {
     return this.text
 }

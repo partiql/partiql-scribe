@@ -84,6 +84,7 @@ import org.partiql.plan.rel.RelWith
 import org.partiql.plan.rex.RexLit
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.sql.utils.toIdentifier
 
 /**
  * Data class to hold the state to create an [ExprQuerySet].
@@ -754,7 +755,7 @@ public open class RelConverter(
                 val partitionClause =
                     if (rel.partitions.isNotEmpty()) {
                         rel.partitions.map { partition ->
-                            windowPartition(rexConverter.apply(partition))
+                            windowPartition(rexConverter.apply(partition).toIdentifier()!!)
                         }
                     } else {
                         emptyList()
@@ -836,7 +837,7 @@ public open class RelConverter(
             val partitionClause =
                 if (rel.partitions.isNotEmpty()) {
                     rel.partitions.map { partition ->
-                        windowPartition(rexConverter.apply(partition))
+                        windowPartition(rexConverter.apply(partition).toIdentifier()!!)
                     }
                 } else {
                     emptyList()
