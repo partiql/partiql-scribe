@@ -172,10 +172,10 @@ internal class QueryBodySetOpFactory(
  * plan to AST transformation.
  */
 public open class RelConverter(
-    private val transform: PlanToAst,
-    private val context: ScribeContext,
+    internal val transform: PlanToAst,
+    internal val context: ScribeContext,
 ) : OperatorVisitor<ExprQuerySetFactory, Unit> {
-    private val listener = context.getProblemListener()
+    internal val listener = context.getProblemListener()
 
     /**
      * Converts a [Rel] to an [ExprQuerySetFactory].
@@ -206,7 +206,7 @@ public open class RelConverter(
         return defaultReturn(operator, ctx)
     }
 
-    private fun visitRelSFW(
+    internal fun visitRelSFW(
         node: Rel,
         ctx: Unit,
     ): QueryBodySFWFactory {
@@ -585,7 +585,7 @@ public open class RelConverter(
         )
     }
 
-    private fun convertCollationOrder(order: Collation.Order): Order {
+    internal fun convertCollationOrder(order: Collation.Order): Order {
         return when (order.code()) {
             Collation.Order.ASC -> Order.ASC()
             Collation.Order.DESC -> Order.DESC()
@@ -600,7 +600,7 @@ public open class RelConverter(
         }
     }
 
-    private fun convertCollationNulls(nulls: Collation.Nulls): Nulls {
+    internal fun convertCollationNulls(nulls: Collation.Nulls): Nulls {
         return when (nulls.code()) {
             Collation.Nulls.FIRST -> Nulls.FIRST()
             Collation.Nulls.LAST -> Nulls.LAST()
@@ -789,7 +789,7 @@ public open class RelConverter(
         return exprWindowFunction(windowType, windowSpec)
     }
 
-    private fun createWindowFunctionType(
+    internal fun createWindowFunctionType(
         windowFunction: WindowFunctionNode,
         rexConverter: RexConverter,
     ): WindowFunctionType {

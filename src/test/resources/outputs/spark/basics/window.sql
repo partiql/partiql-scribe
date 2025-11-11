@@ -26,7 +26,7 @@ SELECT `T`.`a` AS `a`, LAG(`T`.`a`, 1, NULL) RESPECT NULLS OVER (ORDER BY `T`.`a
 SELECT `T`.`a` AS `a`, LEAD(`T`.`a`, 1, NULL) RESPECT NULLS OVER (ORDER BY `T`.`a` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[window-09]
-SELECT `T`.`a` AS `a`, LAG(`T`.`a`, 2, false) RESPECT NULLS OVER (ORDER BY `T`.`a` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `T`.`a` AS `a`, LAG(`T`.`a`, 2, NULL) RESPECT NULLS OVER (ORDER BY `T`.`a` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[window-10]
 SELECT `T`.`a` AS `a`, LEAD(`T`.`a`, 2, false) RESPECT NULLS OVER (ORDER BY `T`.`a` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
