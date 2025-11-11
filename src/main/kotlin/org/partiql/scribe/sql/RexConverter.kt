@@ -70,9 +70,42 @@ public typealias TypeEnv = List<PTypeField>
 public class Locals(
     public val env: TypeEnv,
     public val aggregations: List<Expr> = emptyList(),
+    public val windowFunctions: List<Expr> = emptyList(),
 ) {
+    private var aggFuncOffset: Int = -1
+    private var windowFuncOffset: Int = -1
+
+    init {
+        aggFuncOffset = env.indexOfFirst { it.name.startsWith("\$agg_") }
+        windowFuncOffset = env.indexOfFirst { it.name.startsWith("\$window_func_") }
+    }
+
+    public fun getExprOrNull(offset: Int): Expr? {
+        val binding = env.getOrNull(offset)
+
+        return if (binding != null) {
+            // For aggregations and windowFunctions, we should report scribe problem
+            // if aggregation/windowFunctions list does not match reference count in [env].
+            // However, reporting scribe problem requires a scribe api change.
+            if (binding.name.startsWith("\$agg_")) {
+                aggregations.getOrNull(offset - aggFuncOffset)
+            } else if (binding.name.startsWith("\$window_func_")) {
+                windowFunctions.getOrNull(offset - windowFuncOffset)
+            } else {
+                return exprVarRef(
+                    identifier = binder(binding.name),
+                    isQualified = false,
+                )
+            }
+        } else {
+            null
+        }
+    }
+
+    private fun binder(symbol: String): Identifier = Identifier.delimited(symbol)
+
     public companion object {
-        public val EMPTY: Locals = Locals(env = emptyList(), aggregations = emptyList())
+        public val EMPTY: Locals = Locals(env = emptyList(), aggregations = emptyList(), windowFunctions = emptyList())
     }
 }
 
@@ -888,19 +921,11 @@ public open class RexConverter(
     ): Expr {
         val scope = rex.scope // TODO currently unused
         val offset = rex.offset
-        if (0 <= offset && offset < locals.aggregations.size) {
-            return locals.aggregations[offset]
-        }
-        val binding =
-            locals.env.getOrNull(offset) ?: listener.reportAndThrow(
-                ScribeProblem.simpleError(
-                    ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
-                ),
-            )
-        val identifier = binder(binding.name)
-        return exprVarRef(
-            identifier = identifier,
-            isQualified = false,
+
+        return locals.getExprOrNull(offset) ?: listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
+            ),
         )
     }
 
@@ -926,8 +951,8 @@ public open class RexConverter(
     // Private helpers
     private fun Locals.dump(): String {
         val pairs = this.env.joinToString { "${it.name}: ${it.type}" }
-        return "< $pairs >"
+        val aggCount = this.aggregations.size
+        val winCount = this.windowFunctions.size
+        return "< $pairs > (agg: $aggCount, win: $winCount)"
     }
-
-    private fun binder(symbol: String): Identifier = Identifier.delimited(symbol)
 }

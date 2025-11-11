@@ -8,6 +8,7 @@ import org.partiql.ast.Ast.excludeStepCollWildcard
 import org.partiql.ast.Ast.excludeStepStructField
 import org.partiql.ast.Ast.excludeStepStructWildcard
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprWindowFunction
 import org.partiql.ast.Ast.from
 import org.partiql.ast.Ast.fromExpr
 import org.partiql.ast.Ast.fromJoin
@@ -19,6 +20,10 @@ import org.partiql.ast.Ast.selectList
 import org.partiql.ast.Ast.selectStar
 import org.partiql.ast.Ast.selectValue
 import org.partiql.ast.Ast.sort
+import org.partiql.ast.Ast.windowClause
+import org.partiql.ast.Ast.windowClauseDefinition
+import org.partiql.ast.Ast.windowPartition
+import org.partiql.ast.Ast.windowSpecification
 import org.partiql.ast.Ast.withListElement
 import org.partiql.ast.Exclude
 import org.partiql.ast.ExcludePath
@@ -41,6 +46,9 @@ import org.partiql.ast.SelectValue
 import org.partiql.ast.SetOp
 import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
+import org.partiql.ast.WindowClause
+import org.partiql.ast.WindowFunctionNullTreatment
+import org.partiql.ast.WindowFunctionType
 import org.partiql.ast.With
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
@@ -52,6 +60,7 @@ import org.partiql.plan.Exclusion
 import org.partiql.plan.JoinType
 import org.partiql.plan.Operator
 import org.partiql.plan.OperatorVisitor
+import org.partiql.plan.WindowFunctionNode
 import org.partiql.plan.rel.Rel
 import org.partiql.plan.rel.RelAggregate
 import org.partiql.plan.rel.RelCorrelate
@@ -70,9 +79,12 @@ import org.partiql.plan.rel.RelSort
 import org.partiql.plan.rel.RelType
 import org.partiql.plan.rel.RelUnion
 import org.partiql.plan.rel.RelUnpivot
+import org.partiql.plan.rel.RelWindow
 import org.partiql.plan.rel.RelWith
+import org.partiql.plan.rex.RexLit
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.sql.utils.toIdentifier
 
 /**
  * Data class to hold the state to create an [ExprQuerySet].
@@ -120,8 +132,11 @@ internal data class QueryBodySFWFactory(
     var groupBy: GroupBy? = null,
     var having: Expr? = null,
     var aggregations: List<Expr>? = null,
+    var windowFunctions: MutableList<Expr>? = null,
+    var windowDefinitions: MutableList<WindowClause.Definition>? = null,
 ) : QueryBodyFactory {
     override fun toQueryBody(): QueryBody {
+        val window = windowDefinitions?.let { windowClause(windowDefinitions!!) }
         return QueryBody.SFW.builder()
             .select(select!!)
             .exclude(exclude)
@@ -130,6 +145,7 @@ internal data class QueryBodySFWFactory(
             .where(where)
             .groupBy(groupBy)
             .having(having)
+            .windowClause(window)
             .build()
     }
 }
@@ -471,6 +487,7 @@ public open class RelConverter(
             Locals(
                 env = input.type.fields.toList(),
                 aggregations = sfw.aggregations ?: emptyList(),
+                windowFunctions = sfw.windowFunctions ?: emptyList(),
             )
 
         val rexConverter = transform.getRexConverter(locals)
@@ -687,6 +704,196 @@ public open class RelConverter(
                 isRecursive = false,
             )
         return querySet
+    }
+
+    override fun visitWindow(
+        rel: RelWindow,
+        ctx: Unit,
+    ): ExprQuerySetFactory {
+        val sfw = visitRelSFW(rel.input, ctx)
+        val rexConverter = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
+
+        // Convert window functions to AST expressions
+        val windowFunctionExprs =
+            rel.windowFunctions.map { windowFunction ->
+                convertWindowFunctionToExpr(windowFunction, rel, rexConverter)
+            }
+
+        // Store window functions for projection reference
+        // Window functions are appended after input fields in the output schema
+        if (windowFunctionExprs.isNotEmpty()) {
+            sfw.windowFunctions =
+                sfw.windowFunctions?.apply { addAll(windowFunctionExprs) } ?: windowFunctionExprs.toMutableList()
+        }
+
+        // Create named window definitions if needed
+        val namedWindow = createNamedWindowDefinition(rel, rexConverter)
+        if (namedWindow != null) {
+            // When we create relWindow, we visit each window sequentially.
+            // However, we should reversely add to the window list when we reconstruct the window clause.
+            sfw.windowDefinitions =
+                sfw.windowDefinitions?.apply { add(0, namedWindow) } ?: mutableListOf(namedWindow)
+        }
+        return ExprQuerySetFactory(
+            queryBody = sfw,
+        )
+    }
+
+    private fun convertWindowFunctionToExpr(
+        windowFunction: WindowFunctionNode,
+        rel: RelWindow,
+        rexConverter: RexConverter,
+    ): Expr {
+        val windowType = createWindowFunctionType(windowFunction, rexConverter)
+
+        val windowSpec =
+            if (rel.name != null) {
+                // Named window - reference by name
+                windowSpecification(
+                    existingName = Identifier.Simple.delimited(rel.name),
+                    partitionClause = emptyList(),
+                    orderByClause = null,
+                )
+            } else {
+                // Inline window specification
+                val partitionClause =
+                    if (rel.partitions.isNotEmpty()) {
+                        rel.partitions.map { partition ->
+                            windowPartition(rexConverter.apply(partition).toIdentifier()!!)
+                        }
+                    } else {
+                        emptyList()
+                    }
+
+                val orderClause =
+                    if (rel.collations.isNotEmpty()) {
+                        val sorts =
+                            rel.collations.map { collation ->
+                                val orderByField = rexConverter.apply(collation.column)
+                                val order = convertCollationOrder(collation.order)
+                                val nullOrder = convertCollationNulls(collation.nulls)
+                                sort(orderByField, order, nullOrder)
+                            }
+                        orderBy(sorts)
+                    } else {
+                        null
+                    }
+
+                windowSpecification(
+                    existingName = null,
+                    partitionClause = partitionClause,
+                    orderByClause = orderClause,
+                )
+            }
+
+        return exprWindowFunction(windowType, windowSpec)
+    }
+
+    private fun createWindowFunctionType(
+        windowFunction: WindowFunctionNode,
+        rexConverter: RexConverter,
+    ): WindowFunctionType {
+        val functionName = windowFunction.signature.name
+        val arguments = windowFunction.arguments
+
+        val nullTreatment =
+            if (windowFunction.signature.isIgnoreNulls) {
+                WindowFunctionNullTreatment.IGNORE_NULLS()
+            } else {
+                WindowFunctionNullTreatment.RESPECT_NULLS()
+            }
+
+        return when (functionName.uppercase()) {
+            "ROW_NUMBER" -> WindowFunctionType.RowNumber()
+            "RANK" -> WindowFunctionType.Rank()
+            "DENSE_RANK" -> WindowFunctionType.DenseRank()
+            "PERCENT_RANK" -> WindowFunctionType.PercentRank()
+            "CUME_DIST" -> WindowFunctionType.CumeDist()
+            "LAG", "LEAD" -> {
+                val expr = rexConverter.apply(arguments[0])
+                val offset =
+                    if (arguments[1] is RexLit) {
+                        (arguments[1] as RexLit).datum.long
+                    } else {
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                message = "Unexpected offset type: ${arguments[1]}",
+                            ),
+                        )
+                    }
+                val default = rexConverter.apply(arguments[2])
+
+                if (functionName.uppercase() == "LAG") {
+                    WindowFunctionType.Lag(
+                        expr,
+                        offset,
+                        default,
+                        nullTreatment,
+                    )
+                } else {
+                    WindowFunctionType.Lead(
+                        expr,
+                        offset,
+                        default,
+                        nullTreatment,
+                    )
+                }
+            }
+            else -> {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                        message = "Unsupported window function: $functionName",
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun createNamedWindowDefinition(
+        rel: RelWindow,
+        rexConverter: RexConverter,
+    ): WindowClause.Definition? {
+        return if (rel.name != null) {
+            // Create window definition for named window
+            val partitionClause =
+                if (rel.partitions.isNotEmpty()) {
+                    rel.partitions.map { partition ->
+                        windowPartition(rexConverter.apply(partition).toIdentifier()!!)
+                    }
+                } else {
+                    emptyList()
+                }
+
+            val orderClause =
+                if (rel.collations.isNotEmpty()) {
+                    val sorts =
+                        rel.collations.map { collation ->
+                            val orderByField = rexConverter.apply(collation.column)
+                            val order = convertCollationOrder(collation.order)
+                            val nullOrder = convertCollationNulls(collation.nulls)
+                            sort(orderByField, order, nullOrder)
+                        }
+                    orderBy(sorts)
+                } else {
+                    null
+                }
+
+            val windowSpec =
+                windowSpecification(
+                    existingName = null,
+                    partitionClause = partitionClause,
+                    orderByClause = orderClause,
+                )
+
+            windowClauseDefinition(
+                name = Identifier.Simple.delimited(rel.name),
+                spec = windowSpec,
+            )
+        } else {
+            null
+        }
     }
 
     // Private helpers
