@@ -72,6 +72,37 @@ public class Locals(
     public val aggregations: List<Expr> = emptyList(),
     public val windowFunctions: List<Expr> = emptyList(),
 ) {
+    private var aggFuncOffset: Int = -1;
+    private var windowFuncOffset: Int = -1;
+    init {
+        aggFuncOffset = env.indexOfFirst { it.name.startsWith("\$agg_") }
+        windowFuncOffset = env.indexOfFirst { it.name.startsWith("\$window_func_") }
+    }
+
+    public fun getExprOrNull(offset: Int): Expr? {
+        val binding = env.getOrNull(offset)
+
+        return if (binding != null) {
+            // For aggregations and windowFunctions, we should report scribe problem
+            // if aggregation/windowFunctions list does not match reference count in [env].
+            // However, reporting scribe problem requires a scribe api change.
+            if (binding.name.startsWith("\$agg_")) {
+                aggregations.getOrNull(offset - aggFuncOffset)
+            } else if (binding.name.startsWith("\$window_func_")) {
+                windowFunctions.getOrNull(offset - windowFuncOffset)
+            } else {
+                return exprVarRef(
+                    identifier = binder(binding.name),
+                    isQualified = false,
+                )
+            }
+        } else {
+            null
+        }
+    }
+
+    private fun binder(symbol: String): Identifier = Identifier.delimited(symbol)
+
     public companion object {
         public val EMPTY: Locals = Locals(env = emptyList(), aggregations = emptyList(), windowFunctions = emptyList())
     }
@@ -890,36 +921,10 @@ public open class RexConverter(
         val scope = rex.scope // TODO currently unused
         val offset = rex.offset
 
-        // The offset means the offset from locals.env, which may include local refs, aggregation function or window function.
-        // The order of the output shema differs by Rel.
-        val binding =
-            locals.env.getOrNull(offset) ?: listener.reportAndThrow(
-                ScribeProblem.simpleError(
-                    ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
-                ),
-            )
-
-        if (binding.name.startsWith("\$agg_")) {
-            // The output schema for RelAggregate [PlanTyper.visitRelOpAggregate] is [aggregation function, groups]
-            // Aggregation function starts from index 0 from env. So reuse offset
-            if (0 <= offset && offset < locals.aggregations.size) {
-                return locals.aggregations[offset]
-            }
-        }
-
-        if (binding.name.startsWith("\$window_func_")) {
-            // The output schema for RelWindow [PlanTyper.visitRelOpWindow] is [columns, window function]
-            // Window function are in indices start from env - windowFunctions
-            if (locals.env.size - locals.windowFunctions.size <= offset && offset <= locals.env.size) {
-                val newOffset = offset - (locals.env.size - locals.windowFunctions.size)
-                return locals.windowFunctions[newOffset]
-            }
-        }
-
-        val identifier = binder(binding.name)
-        return exprVarRef(
-            identifier = identifier,
-            isQualified = false,
+        return locals.getExprOrNull(offset) ?: listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
+            ),
         )
     }
 
@@ -949,6 +954,4 @@ public open class RexConverter(
         val winCount = this.windowFunctions.size
         return "< $pairs > (agg: $aggCount, win: $winCount)"
     }
-
-    private fun binder(symbol: String): Identifier = Identifier.delimited(symbol)
 }

@@ -20,13 +20,13 @@ SELECT a, DENSE_RANK() OVER (PARTITION BY b ORDER BY a) FROM T;
 
 -- LAG and LEAD functions
 --#[window-07]
-SELECT a, LAG(a, 1) OVER (ORDER BY a) FROM T;
+SELECT a, LAG(a) OVER (ORDER BY a) FROM T;
 
 --#[window-08]
 SELECT a, LEAD(a, 1) OVER (ORDER BY a) FROM T;
 
 --#[window-09]
-SELECT a, LAG(a, 2, FALSE) OVER (ORDER BY a) FROM T;
+SELECT a, LAG(a, 2, NULL) OVER (ORDER BY a) FROM T;
 
 --#[window-10]
 SELECT a, LEAD(a, 2, FALSE) OVER (ORDER BY a) FROM T;

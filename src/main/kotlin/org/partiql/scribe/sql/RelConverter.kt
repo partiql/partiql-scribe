@@ -131,11 +131,12 @@ internal data class QueryBodySFWFactory(
     var where: Expr? = null,
     var groupBy: GroupBy? = null,
     var having: Expr? = null,
-    var window: WindowClause? = null,
     var aggregations: List<Expr>? = null,
-    var windowFunctions: List<Expr>? = null,
+    var windowFunctions: MutableList<Expr>? = null,
+    var windowDefinitions: MutableList<WindowClause.Definition>? = null,
 ) : QueryBodyFactory {
     override fun toQueryBody(): QueryBody {
+        val window = windowDefinitions?.let { windowClause(windowDefinitions!!) }
         return QueryBody.SFW.builder()
             .select(select!!)
             .exclude(exclude)
@@ -720,16 +721,19 @@ public open class RelConverter(
 
         // Store window functions for projection reference
         // Window functions are appended after input fields in the output schema
-        val combined = (sfw.windowFunctions ?: listOf()) + windowFunctionExprs
-        sfw.windowFunctions = combined
-
-        // Create named window definitions if needed
-        val namedWindows = createNamedWindowDefinitions(rel, rexConverter)
-        if (namedWindows.isNotEmpty()) {
-            val combined = namedWindows + (sfw.window?.definitions ?: listOf())
-            sfw.window = windowClause(combined)
+        if (windowFunctionExprs.isNotEmpty()) {
+            sfw.windowFunctions =
+                sfw.windowFunctions?.apply { addAll(windowFunctionExprs) } ?: windowFunctionExprs.toMutableList()
         }
 
+        // Create named window definitions if needed
+        val namedWindow = createNamedWindowDefinition(rel, rexConverter)
+        if(namedWindow != null) {
+            // When we create relWindow, we visit each window sequentially.
+            // However, we should reversely add to the window list when we reconstruct the window clause.
+            sfw.windowDefinitions =
+                sfw.windowDefinitions?.apply { add(0, namedWindow) } ?: mutableListOf(namedWindow)
+        }
         return ExprQuerySetFactory(
             queryBody = sfw,
         )
@@ -805,17 +809,25 @@ public open class RelConverter(
             "DENSE_RANK" -> WindowFunctionType.DenseRank()
             "PERCENT_RANK" -> WindowFunctionType.PercentRank()
             "CUME_DIST" -> WindowFunctionType.CumeDist()
-            "LAG" -> {
+            "LAG", "LEAD"-> {
                 val expr = rexConverter.apply(arguments[0])
-                val offset = (arguments[1] as RexLit).datum.long
+                val offset = if (arguments[1] is RexLit) {
+                    (arguments[1] as RexLit).datum.long
+                } else {
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                            message = "Unexpected offset type: ${arguments[1]}",
+                        ),
+                    )
+                }
                 val default = rexConverter.apply(arguments[2])
-                WindowFunctionType.Lag(expr, offset, default, nullTreatment)
-            }
-            "LEAD" -> {
-                val expr = rexConverter.apply(arguments[0])
-                val offset = (arguments[1] as RexLit).datum.long
-                val default = rexConverter.apply(arguments[2])
-                WindowFunctionType.Lead(expr, offset, default, nullTreatment)
+
+                if (functionName.uppercase() == "LAG") {
+                    WindowFunctionType.Lag(expr, offset, default, nullTreatment)
+                } else {
+                    WindowFunctionType.Lead(expr, offset, default, nullTreatment)
+                }
             }
             else -> {
                 listener.reportAndThrow(
@@ -828,10 +840,10 @@ public open class RelConverter(
         }
     }
 
-    private fun createNamedWindowDefinitions(
+    private fun createNamedWindowDefinition(
         rel: RelWindow,
         rexConverter: RexConverter,
-    ): List<WindowClause.Definition> {
+    ): WindowClause.Definition? {
         return if (rel.name != null) {
             // Create window definition for named window
             val partitionClause =
@@ -864,14 +876,13 @@ public open class RelConverter(
                     orderByClause = orderClause,
                 )
 
-            listOf(
-                windowClauseDefinition(
-                    name = Identifier.Simple.delimited(rel.name),
-                    spec = windowSpec,
-                ),
+
+            windowClauseDefinition(
+                name = Identifier.Simple.delimited(rel.name),
+                spec = windowSpec,
             )
         } else {
-            emptyList()
+            null
         }
     }
 
