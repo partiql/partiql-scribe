@@ -322,7 +322,10 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         return tail concat datetimeField
     }
 
-    override fun visitWindowFunctionTypeLead(node: WindowFunctionType.Lead, tail: SqlBlock): SqlBlock {
+    override fun visitWindowFunctionTypeLead(
+        node: WindowFunctionType.Lead,
+        tail: SqlBlock,
+    ): SqlBlock {
         var t = tail concat "LEAD("
         t = visitExpr(node.extent, t)
         node.offset?.let {
@@ -337,7 +340,10 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         return t
     }
 
-    override fun visitWindowFunctionTypeLag(node: WindowFunctionType.Lag, tail: SqlBlock): SqlBlock {
+    override fun visitWindowFunctionTypeLag(
+        node: WindowFunctionType.Lag,
+        tail: SqlBlock,
+    ): SqlBlock {
         var t = tail concat "LAG("
         t = visitExpr(node.extent, t)
         node.offset?.let {

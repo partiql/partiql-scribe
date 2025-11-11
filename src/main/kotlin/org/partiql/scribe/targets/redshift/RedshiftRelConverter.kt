@@ -15,10 +15,12 @@ import org.partiql.scribe.sql.RelConverter
 import org.partiql.scribe.sql.RexConverter
 import org.partiql.scribe.sql.utils.toIdentifier
 
-public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext) : RelConverter(transform, context)
-{
+public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext) : RelConverter(transform, context) {
     // Redshift does not support window clause. So we convert
-    override fun visitWindow(rel: RelWindow, ctx: Unit): ExprQuerySetFactory {
+    override fun visitWindow(
+        rel: RelWindow,
+        ctx: Unit,
+    ): ExprQuerySetFactory {
         val sfw = visitRelSFW(rel.input, ctx)
         val rexConverter = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
 
@@ -70,11 +72,12 @@ public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: Sc
                 null
             }
 
-        val windowSpec = windowSpecification(
-            existingName = null,
-            partitionClause = partitionClause,
-            orderByClause = orderClause,
-        )
+        val windowSpec =
+            windowSpecification(
+                existingName = null,
+                partitionClause = partitionClause,
+                orderByClause = orderClause,
+            )
 
         return exprWindowFunction(windowType, windowSpec)
     }
