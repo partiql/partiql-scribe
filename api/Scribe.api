@@ -146,6 +146,7 @@ public final class org/partiql/scribe/sql/Locals {
 	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAggregations ()Ljava/util/List;
 	public final fun getEnv ()Ljava/util/List;
+	public final fun getExprOrNull (I)Lorg/partiql/ast/expr/Expr;
 	public final fun getWindowFunctions ()Ljava/util/List;
 }
 
