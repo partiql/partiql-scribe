@@ -728,7 +728,7 @@ public open class RelConverter(
 
         // Create named window definitions if needed
         val namedWindow = createNamedWindowDefinition(rel, rexConverter)
-        if(namedWindow != null) {
+        if (namedWindow != null) {
             // When we create relWindow, we visit each window sequentially.
             // However, we should reversely add to the window list when we reconstruct the window clause.
             sfw.windowDefinitions =
@@ -809,24 +809,35 @@ public open class RelConverter(
             "DENSE_RANK" -> WindowFunctionType.DenseRank()
             "PERCENT_RANK" -> WindowFunctionType.PercentRank()
             "CUME_DIST" -> WindowFunctionType.CumeDist()
-            "LAG", "LEAD"-> {
+            "LAG", "LEAD" -> {
                 val expr = rexConverter.apply(arguments[0])
-                val offset = if (arguments[1] is RexLit) {
-                    (arguments[1] as RexLit).datum.long
-                } else {
-                    listener.reportAndThrow(
-                        ScribeProblem.simpleError(
-                            code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                            message = "Unexpected offset type: ${arguments[1]}",
-                        ),
-                    )
-                }
+                val offset =
+                    if (arguments[1] is RexLit) {
+                        (arguments[1] as RexLit).datum.long
+                    } else {
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                message = "Unexpected offset type: ${arguments[1]}",
+                            ),
+                        )
+                    }
                 val default = rexConverter.apply(arguments[2])
 
                 if (functionName.uppercase() == "LAG") {
-                    WindowFunctionType.Lag(expr, offset, default, nullTreatment)
+                    WindowFunctionType.Lag(
+                        expr,
+                        offset,
+                        default,
+                        nullTreatment,
+                    )
                 } else {
-                    WindowFunctionType.Lead(expr, offset, default, nullTreatment)
+                    WindowFunctionType.Lead(
+                        expr,
+                        offset,
+                        default,
+                        nullTreatment,
+                    )
                 }
             }
             else -> {
@@ -875,7 +886,6 @@ public open class RelConverter(
                     partitionClause = partitionClause,
                     orderByClause = orderClause,
                 )
-
 
             windowClauseDefinition(
                 name = Identifier.Simple.delimited(rel.name),

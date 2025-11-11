@@ -72,8 +72,9 @@ public class Locals(
     public val aggregations: List<Expr> = emptyList(),
     public val windowFunctions: List<Expr> = emptyList(),
 ) {
-    private var aggFuncOffset: Int = -1;
-    private var windowFuncOffset: Int = -1;
+    private var aggFuncOffset: Int = -1
+    private var windowFuncOffset: Int = -1
+
     init {
         aggFuncOffset = env.indexOfFirst { it.name.startsWith("\$agg_") }
         windowFuncOffset = env.indexOfFirst { it.name.startsWith("\$window_func_") }
