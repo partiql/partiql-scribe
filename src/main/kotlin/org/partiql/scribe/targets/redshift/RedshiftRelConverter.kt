@@ -9,6 +9,7 @@ import org.partiql.ast.expr.Expr
 import org.partiql.plan.WindowFunctionNode
 import org.partiql.plan.rel.RelWindow
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.ExprQuerySetFactory
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
@@ -52,7 +53,16 @@ public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: Sc
         val partitionClause =
             if (rel.partitions.isNotEmpty()) {
                 rel.partitions.map { partition ->
-                    windowPartition(rexConverter.apply(partition).toIdentifier()!!)
+                    val columnReference = rexConverter.apply(partition).toIdentifier()
+                    if (columnReference == null) {
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                message = "Unsupported partition key: $partition",
+                            ),
+                        )
+                    }
+                    windowPartition(columnReference)
                 }
             } else {
                 null

@@ -759,7 +759,16 @@ public open class RelConverter(
                 val partitionClause =
                     if (rel.partitions.isNotEmpty()) {
                         rel.partitions.map { partition ->
-                            windowPartition(rexConverter.apply(partition).toIdentifier()!!)
+                            val columnReference = rexConverter.apply(partition).toIdentifier()
+                            if (columnReference == null) {
+                                listener.reportAndThrow(
+                                    ScribeProblem.simpleError(
+                                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                        message = "Unsupported partition key: $partition",
+                                    ),
+                                )
+                            }
+                            windowPartition(columnReference)
                         }
                     } else {
                         emptyList()
@@ -860,7 +869,16 @@ public open class RelConverter(
             val partitionClause =
                 if (rel.partitions.isNotEmpty()) {
                     rel.partitions.map { partition ->
-                        windowPartition(rexConverter.apply(partition).toIdentifier()!!)
+                        val columnReference = rexConverter.apply(partition).toIdentifier()
+                        if (columnReference == null) {
+                            listener.reportAndThrow(
+                                ScribeProblem.simpleError(
+                                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                    message = "Unsupported partition key: $partition",
+                                ),
+                            )
+                        }
+                        windowPartition(columnReference)
                     }
                 } else {
                     emptyList()
