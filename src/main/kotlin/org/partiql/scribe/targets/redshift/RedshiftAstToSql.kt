@@ -10,7 +10,9 @@ import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
+import org.partiql.ast.WindowFunctionNullTreatment
 import org.partiql.ast.WindowFunctionType
+import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
@@ -322,36 +324,40 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         return tail concat datetimeField
     }
 
+    @Deprecated("This feature is experimental and is subject to change.")
     override fun visitWindowFunctionTypeLead(
         node: WindowFunctionType.Lead,
         tail: SqlBlock,
     ): SqlBlock {
-        var t = tail concat "LEAD("
-        t = visitExpr(node.extent, t)
-        node.offset?.let {
-            t = t concat ", $it"
-        }
+        return visitWindowFunctionTypeLeadOrLag("LEAD(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
 
-        t = t concat ")"
-        node.nullTreatment?.let { nullTreatment ->
-            t = t concat " ${nullTreatment.name()}"
-        }
-
-        return t
     }
 
+    @Deprecated("This feature is experimental and is subject to change.")
     override fun visitWindowFunctionTypeLag(
         node: WindowFunctionType.Lag,
         tail: SqlBlock,
     ): SqlBlock {
-        var t = tail concat "LAG("
-        t = visitExpr(node.extent, t)
-        node.offset?.let {
+        return visitWindowFunctionTypeLeadOrLag("LAG(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
+
+    }
+
+    private fun visitWindowFunctionTypeLeadOrLag(
+        prefix: String,
+        extent: Expr,
+        offset: Long?,
+        defaultValue: Expr?,
+        nullTreatment: WindowFunctionNullTreatment?,
+        tail: SqlBlock
+    ): SqlBlock {
+        var t = tail concat prefix
+        t = visitExpr(extent, t)
+        offset?.let {
             t = t concat ", $it"
         }
 
         t = t concat ")"
-        node.nullTreatment?.let { nullTreatment ->
+        nullTreatment?.let { nullTreatment ->
             t = t concat " ${nullTreatment.name()}"
         }
         return t

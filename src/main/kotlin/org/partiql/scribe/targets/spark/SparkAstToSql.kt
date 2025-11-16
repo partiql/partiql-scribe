@@ -93,7 +93,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     }
 
     /**
-     * For quoted identifiers change the rewriter to use backticks rather than double-quotes.
+     * For quoted identifiers, change the rewriter to use backticks rather than double-quotes.
      */
     override fun visitIdentifierSimple(
         node: Identifier.Simple,

@@ -55,7 +55,7 @@ public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: Sc
                     windowPartition(rexConverter.apply(partition).toIdentifier()!!)
                 }
             } else {
-                emptyList()
+                null
             }
 
         val orderClause =

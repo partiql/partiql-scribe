@@ -33,14 +33,14 @@ SELECT "T"."a", LEAD("T"."a", 2) RESPECT NULLS OVER (ORDER BY "T"."a" ASC NULLS 
 
 -- Window functions with NULLS handling
 -- #[window-11]
--- ERROR: Redshift doesn't support IGNORE NULLS
+-- PError{code=FEATURE_NOT_SUPPORTED, severity=ERROR, kind=SEMANTIC, location=null, properties={FEATURE_NAME=IGNORE NULLS}}
 -- SELECT "T"."a", LAG("T"."a", 1, NULL) IGNORE NULLS OVER (ORDER BY "T"."a" ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
 
 --#[window-12]
 SELECT "T"."a", LAG("T"."a", 1) RESPECT NULLS OVER (ORDER BY "T"."a" ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
 
 -- #[window-13]
--- ERROR: Redshift doesn't support IGNORE NULLS
+-- PError{code=FEATURE_NOT_SUPPORTED, severity=ERROR, kind=SEMANTIC, location=null, properties={FEATURE_NAME=IGNORE NULLS}}
 -- SELECT "T"."a", LEAD("T"."a", 1) IGNORE NULLS OVER (ORDER BY "T"."a" ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
 
 --#[window-14]
