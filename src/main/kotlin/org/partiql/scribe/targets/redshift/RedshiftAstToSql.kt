@@ -330,7 +330,6 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         return visitWindowFunctionTypeLeadOrLag("LEAD(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
-
     }
 
     @Deprecated("This feature is experimental and is subject to change.")
@@ -339,7 +338,6 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         return visitWindowFunctionTypeLeadOrLag("LAG(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
-
     }
 
     private fun visitWindowFunctionTypeLeadOrLag(
@@ -348,7 +346,7 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         offset: Long?,
         defaultValue: Expr?,
         nullTreatment: WindowFunctionNullTreatment?,
-        tail: SqlBlock
+        tail: SqlBlock,
     ): SqlBlock {
         var t = tail concat prefix
         t = visitExpr(extent, t)
