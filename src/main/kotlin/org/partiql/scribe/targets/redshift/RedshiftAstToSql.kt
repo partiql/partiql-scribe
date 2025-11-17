@@ -10,6 +10,9 @@ import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
 import org.partiql.ast.SelectItem
+import org.partiql.ast.WindowFunctionNullTreatment
+import org.partiql.ast.WindowFunctionType
+import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
@@ -319,5 +322,53 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             datetimeField += " (${node.endFieldFractionalPrecision})"
         }
         return tail concat datetimeField
+    }
+
+    @Deprecated("This feature is experimental and is subject to change.")
+    override fun visitWindowFunctionTypeLead(
+        node: WindowFunctionType.Lead,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return visitWindowFunctionTypeLeadOrLag("LEAD(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
+    }
+
+    @Deprecated("This feature is experimental and is subject to change.")
+    override fun visitWindowFunctionTypeLag(
+        node: WindowFunctionType.Lag,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return visitWindowFunctionTypeLeadOrLag("LAG(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
+    }
+
+    private fun visitWindowFunctionTypeLeadOrLag(
+        prefix: String,
+        extent: Expr,
+        offset: Long?,
+        defaultValue: Expr?,
+        nullTreatment: WindowFunctionNullTreatment?,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail concat prefix
+        t = visitExpr(extent, t)
+        offset?.let {
+            t = t concat ", $it"
+        }
+
+        // Redshift does not support DEFAULT in window functions LEAD and LAG
+        defaultValue?.let {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "Redshift does not support DEFAULT in window functions LEAD and LAG. " +
+                            "DEFAULT has been omitted in the output.",
+                ),
+            )
+        }
+        t = t concat ")"
+        nullTreatment?.let { nullTreatment ->
+            t = t concat " ${nullTreatment.name()}"
+        }
+        return t
     }
 }

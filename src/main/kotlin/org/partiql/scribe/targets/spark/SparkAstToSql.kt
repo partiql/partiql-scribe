@@ -92,6 +92,16 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         return tail concat path
     }
 
+    /**
+     * For quoted identifiers, change the rewriter to use backticks rather than double-quotes.
+     */
+    override fun visitIdentifierSimple(
+        node: Identifier.Simple,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return tail concat node.sql()
+    }
+
     override fun visitSelectItemExpr(
         node: SelectItem.Expr,
         tail: SqlBlock,
