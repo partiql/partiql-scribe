@@ -49,6 +49,7 @@ import org.partiql.ast.SetQuantifier
 import org.partiql.ast.WindowClause
 import org.partiql.ast.WindowFunctionNullTreatment
 import org.partiql.ast.WindowFunctionType
+import org.partiql.ast.WindowSpecification
 import org.partiql.ast.With
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
@@ -751,48 +752,12 @@ public open class RelConverter(
                 // Named window - reference by name
                 windowSpecification(
                     existingName = Identifier.Simple.delimited(rel.name),
-                    partitionClause = emptyList(),
+                    partitionClause = null,
                     orderByClause = null,
                 )
             } else {
                 // Inline window specification
-                val partitionClause =
-                    if (rel.partitions.isNotEmpty()) {
-                        rel.partitions.map { partition ->
-                            val columnReference = rexConverter.apply(partition).toIdentifier()
-                            if (columnReference == null) {
-                                listener.reportAndThrow(
-                                    ScribeProblem.simpleError(
-                                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                                        message = "Unsupported partition key: $partition",
-                                    ),
-                                )
-                            }
-                            windowPartition(columnReference)
-                        }
-                    } else {
-                        emptyList()
-                    }
-
-                val orderClause =
-                    if (rel.collations.isNotEmpty()) {
-                        val sorts =
-                            rel.collations.map { collation ->
-                                val orderByField = rexConverter.apply(collation.column)
-                                val order = convertCollationOrder(collation.order)
-                                val nullOrder = convertCollationNulls(collation.nulls)
-                                sort(orderByField, order, nullOrder)
-                            }
-                        orderBy(sorts)
-                    } else {
-                        null
-                    }
-
-                windowSpecification(
-                    existingName = null,
-                    partitionClause = partitionClause,
-                    orderByClause = orderClause,
-                )
+                createInlineWindowSpecification(rel, rexConverter)
             }
 
         return exprWindowFunction(windowType, windowSpec)
@@ -865,46 +830,8 @@ public open class RelConverter(
         rexConverter: RexConverter,
     ): WindowClause.Definition? {
         return if (rel.name != null) {
+            val windowSpec = createInlineWindowSpecification(rel, rexConverter)
             // Create window definition for named window
-            val partitionClause =
-                if (rel.partitions.isNotEmpty()) {
-                    rel.partitions.map { partition ->
-                        val columnReference = rexConverter.apply(partition).toIdentifier()
-                        if (columnReference == null) {
-                            listener.reportAndThrow(
-                                ScribeProblem.simpleError(
-                                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                                    message = "Unsupported partition key: $partition",
-                                ),
-                            )
-                        }
-                        windowPartition(columnReference)
-                    }
-                } else {
-                    emptyList()
-                }
-
-            val orderClause =
-                if (rel.collations.isNotEmpty()) {
-                    val sorts =
-                        rel.collations.map { collation ->
-                            val orderByField = rexConverter.apply(collation.column)
-                            val order = convertCollationOrder(collation.order)
-                            val nullOrder = convertCollationNulls(collation.nulls)
-                            sort(orderByField, order, nullOrder)
-                        }
-                    orderBy(sorts)
-                } else {
-                    null
-                }
-
-            val windowSpec =
-                windowSpecification(
-                    existingName = null,
-                    partitionClause = partitionClause,
-                    orderByClause = orderClause,
-                )
-
             windowClauseDefinition(
                 name = Identifier.Simple.delimited(rel.name),
                 spec = windowSpec,
@@ -912,6 +839,49 @@ public open class RelConverter(
         } else {
             null
         }
+    }
+
+    internal fun createInlineWindowSpecification(
+        rel: RelWindow,
+        rexConverter: RexConverter,
+    ): WindowSpecification {
+        val partitionClause =
+            if (rel.partitions.isNotEmpty()) {
+                rel.partitions.map { partition ->
+                    val columnReference = rexConverter.apply(partition).toIdentifier()
+                    if (columnReference == null) {
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                                message = "Unsupported partition key: $partition",
+                            ),
+                        )
+                    }
+                    windowPartition(columnReference)
+                }
+            } else {
+                emptyList()
+            }
+
+        val orderClause =
+            if (rel.collations.isNotEmpty()) {
+                val sorts =
+                    rel.collations.map { collation ->
+                        val orderByField = rexConverter.apply(collation.column)
+                        val order = convertCollationOrder(collation.order)
+                        val nullOrder = convertCollationNulls(collation.nulls)
+                        sort(orderByField, order, nullOrder)
+                    }
+                orderBy(sorts)
+            } else {
+                null
+            }
+
+        return windowSpecification(
+            existingName = null,
+            partitionClause = partitionClause,
+            orderByClause = orderClause,
+        )
     }
 
     // Private helpers

@@ -354,6 +354,17 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
             t = t concat ", $it"
         }
 
+        // Redshift does not support DEFAULT in window functions LEAD and LAG
+        defaultValue?.let {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "Redshift does not support DEFAULT in window functions LEAD and LAG. " +
+                            "DEFAULT has been omitted in the output.",
+                ),
+            )
+        }
         t = t concat ")"
         nullTreatment?.let { nullTreatment ->
             t = t concat " ${nullTreatment.name()}"
