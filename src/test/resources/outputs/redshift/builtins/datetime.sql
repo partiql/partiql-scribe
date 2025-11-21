@@ -102,3 +102,87 @@ SELECT CASE WHEN TIMESTAMP '2023-12-19 12:34:56' = CAST("t"."foo"."keep" AS TIME
 -- Explicit cast for top-level timestamp in comparison
 --#[datetime-40]
 SELECT "T"."timestamp_2", CAST("T"."timestamp_1" AS TIMESTAMP) < CAST("T"."timestamp_2" AS TIMESTAMP) AS "result" FROM "default"."T" AS "T" WHERE CAST("T"."timestamp_1" AS TIMESTAMP) > TIMESTAMP '2023-12-19 12:34:56';
+
+--#[datetime-41]
+SELECT DATEDIFF(SECOND, CAST("T"."col_time" AS TIME), CAST("T"."col_time" AS TIME)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-42]
+SELECT DATEDIFF(SECOND, CAST("T"."col_time" AS TIMETZ), CAST("T"."col_timez" AS TIMETZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-43]
+SELECT DATEDIFF(SECOND, CAST("T"."col_timez" AS TIMETZ), CAST("T"."col_time" AS TIMETZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-44]
+SELECT DATEDIFF(SECOND, CAST("T"."col_timez" AS TIMETZ), CAST("T"."col_timez" AS TIMETZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-45]
+SELECT DATEDIFF(DAY, CAST("T"."col_date" AS DATE), CAST("T"."col_date" AS DATE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-46]
+SELECT DATEDIFF(DAY, CAST("T"."col_date" AS TIMESTAMP), CAST("T"."col_timestamp" AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- Redshift function pg_catalog.date_diff("unknown", timestamp with time zone, timestamp with time zone) does not exist
+-- --#[datetime-47]
+-- SELECT DATEDIFF(DAY, CAST("T"."col_date" AS TIMESTAMPTZ), CAST("T"."col_timestampz" AS TIMESTAMPTZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-48]
+SELECT DATEDIFF(DAY, CAST("T"."col_timestamp" AS TIMESTAMP), CAST("T"."col_date" AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-49]
+SELECT DATEDIFF(DAY, CAST("T"."col_timestamp" AS TIMESTAMP), CAST("T"."col_timestamp" AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- Redshift function pg_catalog.date_diff("unknown", timestamp with time zone, timestamp with time zone) does not exist
+-- --#[datetime-50]
+-- SELECT DATEDIFF(DAY, CAST("T"."col_timestamp" AS TIMESTAMPTZ), CAST("T"."col_timestampz" AS TIMESTAMPTZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- --#[datetime-51]
+-- SELECT DATEDIFF(DAY, CAST("T"."col_timestampz" AS TIMESTAMPTZ), CAST("T"."col_date" AS TIMESTAMPTZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+--
+-- --#[datetime-52]
+-- SELECT DATEDIFF(DAY, CAST("T"."col_timestampz" AS TIMESTAMPTZ), CAST("T"."col_timestamp" AS TIMESTAMPTZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+--
+-- --#[datetime-53]
+-- SELECT DATEDIFF(DAY, CAST("T"."col_timestampz" AS TIMESTAMPTZ), CAST("T"."col_timestampz" AS TIMESTAMPTZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- NOTE: Redshift does not support top-level expression syntax.
+
+--#[datetime-54]
+SELECT DATEDIFF(SECOND, TIME '12:34:56', TIME '13:45:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-55]
+SELECT DATEDIFF(SECOND, CAST(TIME '12:34:56' AS TIMETZ), TIMETZ '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-56]
+SELECT DATEDIFF(SECOND, TIMETZ '12:34:56+08:00', CAST(TIME '13:45:00' AS TIMETZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-57]
+SELECT DATEDIFF(SECOND, TIMETZ '12:34:56+08:00', TIMETZ '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-58]
+SELECT DATEDIFF(DAY, DATE '2023-01-15', DATE '2023-12-25') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-59]
+SELECT DATEDIFF(DAY, CAST(DATE '2023-01-15' AS TIMESTAMP), TIMESTAMP '2023-12-25 10:30:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- Redshift function pg_catalog.date_diff("unknown", timestamp with time zone, timestamp with time zone) does not exist
+-- #[datetime-60]
+-- SELECT DATEDIFF(DAY, CAST(DATE '2023-01-15' AS TIMESTAMPTZ), TIMESTAMPTZ '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-61]
+SELECT DATEDIFF(DAY, TIMESTAMP '2023-01-15 08:00:00', CAST(DATE '2023-12-25' AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-62]
+SELECT DATEDIFF(DAY, TIMESTAMP '2023-01-15 08:00:00', TIMESTAMP '2023-12-25 10:30:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- Redshift function pg_catalog.date_diff("unknown", timestamp with time zone, timestamp with time zone) does not exist
+-- #[datetime-63]
+-- SELECT DATEDIFF(DAY, CAST(TIMESTAMP '2023-01-15 08:00:00' AS TIMESTAMPTZ), TIMESTAMPTZ '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- #[datetime-64]
+-- SELECT DATEDIFF(DAY, TIMESTAMPTZ '2023-01-15 08:00:00+08:00', CAST(DATE '2023-12-25' AS TIMESTAMPTZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- #[datetime-65]
+-- SELECT DATEDIFF(DAY, TIMESTAMPTZ '2023-01-15 08:00:00+08:00', CAST(TIMESTAMP '2023-12-25 10:30:00' AS TIMESTAMPTZ)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- #[datetime-66]
+-- SELECT DATEDIFF(DAY, TIMESTAMPTZ '2023-01-15 08:00:00+08:00', TIMESTAMPTZ '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";

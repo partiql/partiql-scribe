@@ -54,8 +54,16 @@
         type: "time",
       },
       {
+        name: "col_timez",
+        type: "timez",
+      },
+      {
         name: "col_timestamp",
         type: "timestamp",
+      },
+      {
+        name: "col_timestampz",
+        type: "timestampz",
       },
       {
         name: "col_blob",

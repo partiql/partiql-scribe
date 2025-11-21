@@ -14,16 +14,16 @@ SELECT TIME '01:02:03.456' AS "_1" FROM "default"."T" AS "T";
 
 -- --#[datetime-04]
 -- previous test includes timezone offset for TIME
--- SELECT TIME WITH TIME ZONE '01:02:03.456-00:00' AS "_1" FROM "default"."T" AS "T";
+-- SELECT TIMETZ '01:02:03.456-00:00' AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-05]
-SELECT TIME WITH TIME ZONE '01:02:03.456+00:00' AS "_1" FROM "default"."T" AS "T";
+SELECT TIMETZ '01:02:03.456+00:00' AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-06]
-SELECT TIME WITH TIME ZONE '01:02:03.456+00:30' AS "_1" FROM "default"."T" AS "T";
+SELECT TIMETZ '01:02:03.456+00:30' AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-07]
-SELECT TIME WITH TIME ZONE '01:02:03.456-00:30' AS "_1" FROM "default"."T" AS "T";
+SELECT TIMETZ '01:02:03.456-00:30' AS "_1" FROM "default"."T" AS "T";
 
 -- TIMESTAMP
 --#[datetime-08]
@@ -34,13 +34,13 @@ SELECT TIMESTAMP '0001-02-03 04:05:06.78' AS "_1" FROM "default"."T" AS "T";
 -- SELECT TIMESTAMPTZ '0001-02-03 04:05:06.78-00:00' AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-10]
-SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 04:05:06.78+00:00' AS "_1" FROM "default"."T" AS "T";
+SELECT TIMESTAMPTZ '0001-02-03 04:05:06.78+00:00' AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-11]
-SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 04:05:06.78+00:30' AS "_1" FROM "default"."T" AS "T";
+SELECT TIMESTAMPTZ '0001-02-03 04:05:06.78+00:30' AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-12]
-SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 04:05:06.78-00:30' AS "_1" FROM "default"."T" AS "T";
+SELECT TIMESTAMPTZ '0001-02-03 04:05:06.78-00:30' AS "_1" FROM "default"."T" AS "T";
 
 -- Ion Timestamp not yet supported in Scribe-vNext
 -- -- Ion Timestamp -> map to SQL timestamp literal
