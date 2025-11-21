@@ -65,6 +65,11 @@ SELECT "T"."b" >= 1 AS "_1" FROM "default"."T" AS "T";
 -- SELECT "T"."b" >= "T"."x" AS "_1" FROM "default"."T" AS "T";
 
 --#[not-00]
+SELECT NOT ("T"."a") AS "_1" FROM "default"."T" AS "T";
+
+--#[not-01]
+SELECT NOT (NOT ("T"."a")) AS "_1" FROM "default"."T" AS "T";
+
 -- Time comparisons
 --#[comparison-datetime-00]
 SELECT CAST("T"."col_time" AS TIME) > CAST("T"."col_time" AS TIME) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";

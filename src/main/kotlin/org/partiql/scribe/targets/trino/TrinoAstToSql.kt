@@ -310,7 +310,7 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
                     }
                 }
             }
-        // types are modeled as text; as we don't way to reflow
+        // types are modeled as text; as we don't want to reflow
         return SqlBlock.Text(t)
     }
 }
