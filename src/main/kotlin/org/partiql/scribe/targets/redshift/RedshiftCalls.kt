@@ -101,7 +101,7 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
             ),
         )
 
-        if (args.any{arg -> arg.type.code() == PType.TIMESTAMPZ }) {
+        if (args.any { arg -> arg.type.code() == PType.TIMESTAMPZ }) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,

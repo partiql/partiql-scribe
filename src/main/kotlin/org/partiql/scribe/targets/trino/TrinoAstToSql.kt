@@ -293,18 +293,23 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         return t
     }
 
-    private fun type(symbol: String, vararg args: Int?, gap: Boolean = false): SqlBlock {
+    private fun type(
+        symbol: String,
+        vararg args: Int?,
+        gap: Boolean = false,
+    ): SqlBlock {
         val p = args.filterNotNull()
-        val t = when {
-            p.isEmpty() -> symbol
-            else -> {
-                val a = p.joinToString(",")
-                when (gap) {
-                    true -> "$symbol ($a)"
-                    else -> "$symbol($a)"
+        val t =
+            when {
+                p.isEmpty() -> symbol
+                else -> {
+                    val a = p.joinToString(",")
+                    when (gap) {
+                        true -> "$symbol ($a)"
+                        else -> "$symbol($a)"
+                    }
                 }
             }
-        }
         // types are modeled as text; as we don't way to reflow
         return SqlBlock.Text(t)
     }
