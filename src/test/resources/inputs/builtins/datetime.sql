@@ -127,3 +127,83 @@ SELECT CASE WHEN TIMESTAMP '2023-12-19 12:34:56' = t.foo.keep THEN TIMESTAMP '20
 -- Explicit cast for top-level timestamp in comparison
 --#[datetime-40]
 SELECT timestamp_2, timestamp_1 < timestamp_2 AS result FROM T WHERE timestamp_1 > TIMESTAMP '2023-12-19 12:34:56';
+
+-- DATE_DIFF test cases using T_ALL_TYPES columns
+--#[datetime-41]
+SELECT DATE_DIFF(SECOND, T.col_time, T.col_time) FROM T_ALL_TYPES AS T;
+
+--#[datetime-42]
+SELECT DATE_DIFF(SECOND, T.col_time, T.col_timez) FROM T_ALL_TYPES AS T;
+
+--#[datetime-43]
+SELECT DATE_DIFF(SECOND, T.col_timez, T.col_time) FROM T_ALL_TYPES AS T;
+
+--#[datetime-44]
+SELECT DATE_DIFF(SECOND, T.col_timez, T.col_timez) FROM T_ALL_TYPES AS T;
+
+--#[datetime-45]
+SELECT DATE_DIFF(DAY, T.col_date, T.col_date) FROM T_ALL_TYPES AS T;
+
+--#[datetime-46]
+SELECT DATE_DIFF(DAY, T.col_date, T.col_timestamp) FROM T_ALL_TYPES AS T;
+
+--#[datetime-47]
+SELECT DATE_DIFF(DAY, T.col_date, T.col_timestampz) FROM T_ALL_TYPES AS T;
+
+--#[datetime-48]
+SELECT DATE_DIFF(DAY, T.col_timestamp, T.col_date) FROM T_ALL_TYPES AS T;
+
+--#[datetime-49]
+SELECT DATE_DIFF(DAY, T.col_timestamp, T.col_timestamp) FROM T_ALL_TYPES AS T;
+
+--#[datetime-50]
+SELECT DATE_DIFF(DAY, T.col_timestamp, T.col_timestampz) FROM T_ALL_TYPES AS T;
+
+--#[datetime-51]
+SELECT DATE_DIFF(DAY, T.col_timestampz, T.col_date) FROM T_ALL_TYPES AS T;
+
+--#[datetime-52]
+SELECT DATE_DIFF(DAY, T.col_timestampz, T.col_timestamp) FROM T_ALL_TYPES AS T;
+
+--#[datetime-53]
+SELECT DATE_DIFF(DAY, T.col_timestampz, T.col_timestampz) FROM T_ALL_TYPES AS T;
+
+-- DATE_DIFF test cases using datetime literals
+--#[datetime-54]
+SELECT DATE_DIFF(SECOND, TIME '12:34:56', TIME '13:45:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-55]
+SELECT DATE_DIFF(SECOND, TIME '12:34:56', TIME WITH TIME ZONE '13:45:00+08:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-56]
+SELECT DATE_DIFF(SECOND, TIME WITH TIME ZONE '12:34:56+08:00', TIME '13:45:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-57]
+SELECT DATE_DIFF(SECOND, TIME WITH TIME ZONE '12:34:56+08:00', TIME WITH TIME ZONE '13:45:00+08:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-58]
+SELECT DATE_DIFF(DAY, DATE '2023-01-15', DATE '2023-12-25') FROM T_ALL_TYPES AS T;
+
+--#[datetime-59]
+SELECT DATE_DIFF(DAY, DATE '2023-01-15', TIMESTAMP '2023-12-25 10:30:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-60]
+SELECT DATE_DIFF(DAY, DATE '2023-01-15', TIMESTAMP WITH TIME ZONE '2023-12-25 10:30:00+08:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-61]
+SELECT DATE_DIFF(DAY, TIMESTAMP '2023-01-15 08:00:00', DATE '2023-12-25') FROM T_ALL_TYPES AS T;
+
+--#[datetime-62]
+SELECT DATE_DIFF(DAY, TIMESTAMP '2023-01-15 08:00:00', TIMESTAMP '2023-12-25 10:30:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-63]
+SELECT DATE_DIFF(DAY, TIMESTAMP '2023-01-15 08:00:00', TIMESTAMP WITH TIME ZONE '2023-12-25 10:30:00+08:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-64]
+SELECT DATE_DIFF(DAY, TIMESTAMP WITH TIME ZONE '2023-01-15 08:00:00+08:00', DATE '2023-12-25') FROM T_ALL_TYPES AS T;
+
+--#[datetime-65]
+SELECT DATE_DIFF(DAY, TIMESTAMP WITH TIME ZONE '2023-01-15 08:00:00+08:00', TIMESTAMP '2023-12-25 10:30:00') FROM T_ALL_TYPES AS T;
+
+--#[datetime-66]
+SELECT DATE_DIFF(DAY, TIMESTAMP WITH TIME ZONE '2023-01-15 08:00:00+08:00', TIMESTAMP WITH TIME ZONE '2023-12-25 10:30:00+08:00') FROM T_ALL_TYPES AS T;

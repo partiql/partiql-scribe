@@ -70,7 +70,7 @@
       {
         name: "col_timez",
         type: {
-          type: "time",
+          type: "timez",
           withTimeZone: true
         }
       },
@@ -81,7 +81,7 @@
       {
         name: "col_timestampz",
         type: {
-          type: "timestamp",
+          type: "timestampz",
           withTimeZone: true
         }
       },

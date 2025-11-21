@@ -8,7 +8,7 @@ SELECT CAST("T"."col_date" AS DATE) - CAST("T"."col_date" AS DATE) AS "res" FROM
 --
 -- --#[dt-minus-dt-02]
 -- time/datetime related subtraction not working https://github.com/partiql/partiql-scribe/issues/120
--- SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timez" AS TIMETZ) - CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --
 -- --#[dt-minus-dt-03]
 -- time/datetime related subtraction not working https://github.com/partiql/partiql-scribe/issues/120
@@ -16,7 +16,7 @@ SELECT CAST("T"."col_date" AS DATE) - CAST("T"."col_date" AS DATE) AS "res" FROM
 --
 -- --#[dt-minus-dt-04]
 -- time/datetime related subtraction not working https://github.com/partiql/partiql-scribe/issues/120
--- SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- DATETIME + INTERVAL -> DATETIME and DATETIME - INTERVAL -> DATETIME and INTERVAL + DATETIME -> DATETIME
 
@@ -80,33 +80,33 @@ SELECT CAST("T"."col_time" AS TIME) + "T"."col_m2s" AS "res" FROM "default"."T_I
 
 -- By SQL2023: 6.42, error
 -- --#[dt-plus-interval-26]
--- SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
 -- By SQL2023: 6.42, error
 -- --#[dt-plus-interval-27]
--- SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-28]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-29]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-30]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-31]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 -- By SQL2023: 6.42, error
 -- --#[dt-plus-interval-32]
--- SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-33]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-34]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-35]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-36]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-37]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-38]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) + "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) + "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 --#[dt-plus-interval-39]
 SELECT CAST("T"."col_timestamp" AS TIMESTAMP) + "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
@@ -136,31 +136,31 @@ SELECT CAST("T"."col_timestamp" AS TIMESTAMP) + "T"."col_h2s" AS "res" FROM "def
 SELECT CAST("T"."col_timestamp" AS TIMESTAMP) + "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 --#[dt-plus-interval-52]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-53]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-54]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-55]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-56]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-57]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-58]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-59]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-60]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-61]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-62]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-63]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-64]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) + "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) + "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- DATETIME - INTERVAL -> DATETIME
 --#[dt-minus-interval-00]
@@ -222,33 +222,33 @@ SELECT CAST("T"."col_time" AS TIME) - "T"."col_m2s" AS "res" FROM "default"."T_I
 
 -- By SQL2023: 6.42, error
 -- --#[dt-minus-interval-26]
--- SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
 -- By SQL2023: 6.42, error
 -- --#[dt-minus-interval-27]
--- SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-28]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-29]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-30]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-31]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 -- By SQL2023: 6.42, error
 -- --#[dt-minus-interval-32]
--- SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-33]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-34]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-35]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-36]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-37]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-38]
-SELECT CAST("T"."col_timez" AS TIME WITH TIME ZONE) - "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timez" AS TIMETZ) - "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 --#[dt-minus-interval-39]
 SELECT CAST("T"."col_timestamp" AS TIMESTAMP) - "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
@@ -278,31 +278,31 @@ SELECT CAST("T"."col_timestamp" AS TIMESTAMP) - "T"."col_h2s" AS "res" FROM "def
 SELECT CAST("T"."col_timestamp" AS TIMESTAMP) - "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 --#[dt-minus-interval-52]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-53]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-54]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-55]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-56]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-57]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-58]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-59]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-60]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-61]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-62]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-63]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-64]
-SELECT CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) - "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT CAST("T"."col_timestampz" AS TIMESTAMPTZ) - "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 
 -- INTERVAL + DATETIME -> DATETIME
@@ -365,33 +365,33 @@ SELECT "T"."col_m2s" + CAST("T"."col_time" AS TIME) AS "res" FROM "default"."T_I
 
 -- By SQL2023: 6.42, error
 -- --#[interval-plus-26]
--- SELECT "T"."col_y" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT "T"."col_y" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 -- By SQL2023: 6.42, error
 -- --#[interval-plus-27]
--- SELECT "T"."col_mon" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT "T"."col_mon" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-28]
-SELECT "T"."col_d" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-29]
-SELECT "T"."col_h" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_h" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-30]
-SELECT "T"."col_min" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_min" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-31]
-SELECT "T"."col_s" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_s" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 -- By SQL2023: 6.42, error
 -- --#[interval-plus-32]
--- SELECT "T"."col_y2mon" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+-- SELECT "T"."col_y2mon" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-33]
-SELECT "T"."col_d2h" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d2h" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-34]
-SELECT "T"."col_d2min" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d2min" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-35]
-SELECT "T"."col_d2s" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d2s" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-36]
-SELECT "T"."col_h2min" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_h2min" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-37]
-SELECT "T"."col_h2s" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_h2s" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-38]
-SELECT "T"."col_m2s" + CAST("T"."col_timez" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_m2s" + CAST("T"."col_timez" AS TIMETZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 --#[interval-plus-39]
 SELECT "T"."col_y" + CAST("T"."col_timestamp" AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T";
@@ -421,31 +421,31 @@ SELECT "T"."col_h2s" + CAST("T"."col_timestamp" AS TIMESTAMP) AS "res" FROM "def
 SELECT "T"."col_m2s" + CAST("T"."col_timestamp" AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 --#[interval-plus-52]
-SELECT "T"."col_y" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_y" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-53]
-SELECT "T"."col_mon" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_mon" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-54]
-SELECT "T"."col_d" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-55]
-SELECT "T"."col_h" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_h" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-56]
-SELECT "T"."col_min" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_min" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-57]
-SELECT "T"."col_s" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_s" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-58]
-SELECT "T"."col_y2mon" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_y2mon" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-59]
-SELECT "T"."col_d2h" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d2h" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-60]
-SELECT "T"."col_d2min" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d2min" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-61]
-SELECT "T"."col_d2s" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_d2s" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-62]
-SELECT "T"."col_h2min" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_h2min" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-63]
-SELECT "T"."col_h2s" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_h2s" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-64]
-SELECT "T"."col_m2s" + CAST("T"."col_timestampz" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T";
+SELECT "T"."col_m2s" + CAST("T"."col_timestampz" AS TIMESTAMPTZ) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- INTERVAL + INTERVAL -> INTERVAL
 --#[interval-plus-interval-00]

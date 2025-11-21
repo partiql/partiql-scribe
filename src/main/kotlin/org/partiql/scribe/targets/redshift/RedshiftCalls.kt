@@ -12,6 +12,7 @@ import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.utils.unquotedStringExpr
+import org.partiql.spi.types.PType
 
 public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
     private val listener = context.getProblemListener()
@@ -99,6 +100,16 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
                 message = "PartiQL `date_diff` was replaced by Redshift `datediff`",
             ),
         )
+
+        if (args.any{arg -> arg.type.code() == PType.TIMESTAMPZ }) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Redshift DATEDIFF function does not support TIMESTAMPZ type.",
+                ),
+            )
+        }
+
         val arg0 = unquotedStringExpr(part.name().uppercase())
         val arg1 = args[0].expr
         val arg2 = args[1].expr
