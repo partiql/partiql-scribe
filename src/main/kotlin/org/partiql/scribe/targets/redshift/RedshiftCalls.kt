@@ -105,6 +105,7 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,
+                    // https://docs.aws.amazon.com/redshift/latest/dg/r_DATEDIFF_function.html#r_DATEDIFF_function-synopsis
                     "Redshift DATEDIFF function does not support TIMESTAMPZ type.",
                 ),
             )
