@@ -138,6 +138,8 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.INT8 -> tail concat "BIGINT"
             DataType.DOUBLE_PRECISION -> tail concat "DOUBLE"
             DataType.STRING -> tail concat "VARCHAR"
+            DataType.TIME, DataType.TIME_WITH_TIME_ZONE -> tail concat type("TIME", node.precision, gap = true)
+            DataType.TIMESTAMP, DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat type("TIMESTAMP", node.precision, gap = true)
             else -> super.visitDataType(node, tail)
         }
     }
@@ -289,5 +291,26 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         t = visitDataType(node.asType, t)
         t = t concat ")"
         return t
+    }
+
+    private fun type(
+        symbol: String,
+        vararg args: Int?,
+        gap: Boolean = false,
+    ): SqlBlock {
+        val p = args.filterNotNull()
+        val t =
+            when {
+                p.isEmpty() -> symbol
+                else -> {
+                    val a = p.joinToString(",")
+                    when (gap) {
+                        true -> "$symbol ($a)"
+                        else -> "$symbol($a)"
+                    }
+                }
+            }
+        // types are modeled as text; as we don't want to reflow
+        return SqlBlock.Text(t)
     }
 }

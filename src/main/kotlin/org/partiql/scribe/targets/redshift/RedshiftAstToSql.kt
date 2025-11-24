@@ -207,6 +207,12 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
                 )
                 tail concat type("VARCHAR", 65535, gap = false)
             }
+
+            // Redshift does not honor the precision but store values with up to a maximum of six digits of precision for fractional seconds.
+            // https://docs.aws.amazon.com/redshift/latest/dg/r_Datetime_types.html
+            DataType.TIME, DataType.TIMESTAMP -> tail concat node.name()
+            DataType.TIME_WITH_TIME_ZONE -> tail concat "TIMETZ"
+            DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMPTZ"
             else -> super.visitDataType(node, tail)
         }
     }
