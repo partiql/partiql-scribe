@@ -36,8 +36,11 @@ SELECT a FROM T ORDER BY T.a ASC NULLS LAST, T.b DESC NULLS FIRST;
 SELECT a, MAX(b) FROM T GROUP BY a ORDER BY MAX(b);
 
 --#[order-by-12]
-SELECT a, MAX(b) as mx FROM T GROUP BY a ORDER BY mx;
+SELECT a, MAX(b) FROM T GROUP BY a ORDER BY MIN(b);
 
 --#[order-by-13]
+SELECT a, MAX(b) as c FROM T GROUP BY a ORDER BY c;
+
+--#[order-by-14]
 SELECT a, b as c FROM T ORDER BY c;
 

@@ -36,7 +36,10 @@ SELECT "T"['a'] AS "a" FROM "default"."T" AS "T" ORDER BY "T"['a'] ASC NULLS LAS
 SELECT "a" AS "a", max("T"['b']) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'] ORDER BY max("T"['b']) ASC NULLS LAST;
 
 --#[order-by-12]
-SELECT "a" AS "a", max("T"['b']) AS "mx" FROM "default"."T" AS "T" GROUP BY "T"['a'] ORDER BY max("T"['b']) ASC NULLS LAST;
+SELECT "a" AS "a", max("T"['b']) AS "_1" FROM "default"."T" AS "T" GROUP BY "T"['a'] ORDER BY min("T"['b']) ASC NULLS LAST;
 
 --#[order-by-13]
+SELECT "a" AS "a", max("T"['b']) AS "c" FROM "default"."T" AS "T" GROUP BY "T"['a'] ORDER BY max("T"['b']) ASC NULLS LAST;
+
+--#[order-by-14]
 SELECT "T"['a'] AS "a", "T"['b'] AS "c" FROM "default"."T" AS "T" ORDER BY "T"['b'] ASC NULLS LAST;
