@@ -643,7 +643,7 @@ public open class RelConverter(
                     listener.reportAndThrow(
                         ScribeProblem.simpleError(
                             code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                            message = "Unsupported ORDER BY Plan.",
+                            message = "Unsupported query body type for ORDER BY: ${input.queryBody::class.simpleName}.",
                         ),
                     )
             }
