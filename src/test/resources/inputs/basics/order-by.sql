@@ -30,3 +30,17 @@ SELECT a FROM T ORDER BY T.a ASC NULLS LAST, T.b DESC NULLS FIRST;
 
 --#[order-by-10]
 (SELECT T.flds FROM EXCLUDE_T AS T) UNION (SELECT T.flds FROM EXCLUDE_T AS T) ORDER BY flds.c.field_x;
+
+-- Order by aggregations or alias from SELECT. The alias in order by is lost during planning, thus the alias is replaced with original references in transcribed results
+--#[order-by-11]
+SELECT a, MAX(b) FROM T GROUP BY a ORDER BY MAX(b);
+
+--#[order-by-12]
+SELECT a, MAX(b) FROM T GROUP BY a ORDER BY MIN(b);
+
+--#[order-by-13]
+SELECT a, MAX(b) as c FROM T GROUP BY a ORDER BY c;
+
+--#[order-by-14]
+SELECT a, b as c FROM T ORDER BY c;
+

@@ -621,7 +621,34 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val input = visit(rel.input, Unit)
-        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+
+        val locals =
+            when (input.queryBody) {
+                is QueryBodySFWFactory -> {
+                    val sfw = input.queryBody as QueryBodySFWFactory
+
+                    Locals(
+                        env = rel.type.fields.toList(),
+                        // OrderBy may contain aggregation function or alias from select
+                        aggregations = sfw.aggregations ?: emptyList(),
+                    )
+                }
+                is QueryBodySetOpFactory -> {
+                    Locals(
+                        env = rel.type.fields.toList(),
+                    )
+                }
+
+                else ->
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                            message = "Unsupported query body type for ORDER BY: ${input.queryBody::class.simpleName}.",
+                        ),
+                    )
+            }
+
+        val rexConverter = transform.getRexConverter(locals)
         val sorts =
             rel.collations.map { collation ->
                 val orderByField = rexConverter.apply(collation.column)
