@@ -12,6 +12,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
+import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprCast
@@ -291,6 +292,13 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         t = visitDataType(node.asType, t)
         t = t concat ")"
         return t
+    }
+
+    override fun visitExprArray(
+        node: ExprArray,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return tail concat list(this, "ARRAY[", "]") { node.values }
     }
 
     private fun type(
