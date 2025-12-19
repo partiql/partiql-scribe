@@ -383,3 +383,34 @@ SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 12:30:45+08:00' >= TIMESTAMP WITH TI
 
 --#[comparison-datetime-103]
 SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 12:30:45+08:00' <= TIMESTAMP WITH TIME ZONE '2023-12-25 12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- Array equality comparisons
+--#[comparison-array-01]
+SELECT [1, 2, 3] = [1, 2, 3] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-02]
+SELECT [1, 2, 3] = [1, 2, 4] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-03]
+SELECT [1, 2, 3] <> [1, 2, 4] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-04]
+SELECT [1, 2] = [1, 2, 3] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-05]
+SELECT [] = [] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-06]
+SELECT ['a', 'b', 'c'] = ['a', 'b', 'c'] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-07]
+SELECT [DATE '2023-01-01', DATE '2023-12-31'] = [DATE '2023-01-01', DATE '2023-12-31'] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-08]
+SELECT [[1, 2], [3, 4]] = [[1, 2], [3, 4]] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-09]
+SELECT [[1, 2], [3, 4]] = [[1, 2], [3, 5]] AS "_1" FROM "default"."T" AS "T";
+
+--#[comparison-array-10]
+SELECT [NULL, 1, 2] = [NULL, 1, 2] AS "_1" FROM "default"."T" AS "T";

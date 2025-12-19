@@ -179,6 +179,13 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         return tail concat list(this, "(", ")") { node.values }
     }
 
+    override fun visitExprArray(
+        node: ExprArray,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return tail concat list(this, "ARRAY(", ")") { node.values }
+    }
+
     /**
      * Type mappings for Redshift
      * - STRING -> VARCHAR(65535)
