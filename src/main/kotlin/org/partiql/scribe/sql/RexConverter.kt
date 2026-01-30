@@ -67,10 +67,36 @@ import kotlin.math.absoluteValue
 
 public typealias TypeEnv = List<PTypeField>
 
+/**
+ * Strategy for RexVar resolution in Scribe.
+ *
+ * Background:
+ * - During planning, RexVar.scope tracks depth from variable resolution (0=current, 1=parent, etc.)
+ * - For correlated subqueries: table reference variables have scope=1 from [PlanTyper.visitRexOpSubquery] and [PlanTyper.visitRexOpSelect]
+ * - For CTEs: CTE references have scope=1 (found in parent [PlanTyper.visitRelOpWith])
+ * - Scribe ignores the scope field in RexVar during resolution before and cause problem for correlated subquery
+ *
+ *
+ * Problems:
+ * - Correlated queries were broken before honoring scope
+ * - WITH (CTEs) broke after honoring scope because the variable is in local rather than outer
+ * - Hard to match scope index correctly for WITH statements as it is local after [rel.type]
+ *
+ * Solution:
+ * - LOCAL (default): Ignores RexVar.scope, uses as default (preserves original behavior)
+ * - GLOBAL: Uses RexVar.scope to traverse outer environments (only for correlated queries in [visitFilter])
+ */
+public enum class Strategy {
+    LOCAL, // Search local Type Env only, ignore scope in [RexVar]
+    GLOBAL, // Search global Type Env, honor scope in [RexVar]
+}
+
 public class Locals(
     public val env: TypeEnv,
     public val aggregations: List<Expr> = emptyList(),
     public val windowFunctions: List<Expr> = emptyList(),
+    public val outer: Locals? = null,
+    public val strategy: Strategy = Strategy.LOCAL,
 ) {
     private var aggFuncOffset: Int = -1
     private var windowFuncOffset: Int = -1
@@ -80,17 +106,23 @@ public class Locals(
         windowFuncOffset = env.indexOfFirst { it.name.startsWith("\$window_func_") }
     }
 
-    public fun getExprOrNull(offset: Int): Expr? {
-        val binding = env.getOrNull(offset)
+    public fun getExprOrNull(
+        scope: Int,
+        offset: Int,
+    ): Expr? {
+        val targetLocals =
+            if (strategy == Strategy.LOCAL) {
+                this
+            } else {
+                getScope(scope) ?: return null
+            }
+        val binding = targetLocals.env.getOrNull(offset)
 
         return if (binding != null) {
-            // For aggregations and windowFunctions, we should report scribe problem
-            // if aggregation/windowFunctions list does not match reference count in [env].
-            // However, reporting scribe problem requires a scribe api change.
             if (binding.name.startsWith("\$agg_")) {
-                aggregations.getOrNull(offset - aggFuncOffset)
+                targetLocals.aggregations.getOrNull(offset - targetLocals.aggFuncOffset)
             } else if (binding.name.startsWith("\$window_func_")) {
-                windowFunctions.getOrNull(offset - windowFuncOffset)
+                targetLocals.windowFunctions.getOrNull(offset - targetLocals.windowFuncOffset)
             } else {
                 return exprVarRef(
                     identifier = binder(binding.name),
@@ -99,6 +131,13 @@ public class Locals(
             }
         } else {
             null
+        }
+    }
+
+    private fun getScope(depth: Int): Locals? {
+        return when (depth) {
+            0 -> this
+            else -> outer?.getScope(depth - 1)
         }
     }
 
@@ -819,7 +858,7 @@ public open class RexConverter(
         ctx: Unit,
     ): Expr {
         val inputRel = rex.input
-        val relConverter = transform.getRelConverter()
+        val relConverter = transform.getRelConverter(locals)
         return relConverter.apply(inputRel, ctx).toExprQuerySet()
     }
 
@@ -846,7 +885,7 @@ public open class RexConverter(
         // For `IN` and `EXISTS`, it was planned as RexSelect Node and get handled by visitSelect
         // For comparison operators, it was planned as RexSubquery and get handled by visitSubquery
         val transform = transform
-        val relConverter = transform.getRelConverter()
+        val relConverter = transform.getRelConverter(locals)
         return relConverter.apply(rex.input, ctx).toExprQuerySet()
     }
 
@@ -919,12 +958,12 @@ public open class RexConverter(
         rex: RexVar,
         ctx: Unit,
     ): Expr {
-        val scope = rex.scope // TODO currently unused
+        val scope = rex.scope
         val offset = rex.offset
 
-        return locals.getExprOrNull(offset) ?: listener.reportAndThrow(
+        return locals.getExprOrNull(scope, offset) ?: listener.reportAndThrow(
             ScribeProblem.simpleError(
-                ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var $offset) not in ${locals.dump()}",
+                ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var scope=$scope offset=$offset) not in ${locals.dump()}",
             ),
         )
     }

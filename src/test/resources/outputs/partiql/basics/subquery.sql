@@ -63,7 +63,26 @@ SELECT "T"['b'] AS "b", (SELECT "t2"['v'] AS "v" FROM "default"."T" AS "t2" WHER
 -- #[subquery-15]
 -- SELECT "T"['v'] AS "v" FROM "default"."T" AS "T" WHERE "T"['b'] > (SELECT "T"['b'] AS "b" FROM "default"."T" AS "T" WHERE "T"['b'] > 0) AND EXISTS (SELECT "t2"['a'] AS "a" FROM "default"."T" AS "t2" WHERE "t2"['b'] > 0);
 
--- Correlated subquery
--- Bug for correlated subquery, tracking with https://github.com/partiql/partiql-scribe/issues/119
--- #[subquery-16]
--- SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE "t1"['b'] = (SELECT "t2"['b'] AS "b" FROM "default"."T" AS "t2" WHERE "t1"['b'] = "t2"['b']);
+-- Correlated subquery with aggregation
+--#[subquery-16]
+SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE "t1"['b'] > (SELECT avg("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE "t1"['a'] = "t2"['a']);
+
+-- Correlated IN subquery
+--#[subquery-17]
+SELECT "t1"['b'] AS "b" FROM "default"."T" AS "t1" WHERE "t1"['b'] IN (SELECT "t2"['b'] AS "b" FROM "default"."T" AS "t2" WHERE "t2"['a'] = "t1"['a']);
+
+-- Correlated subquery in SELECT
+--#[subquery-18]
+SELECT "t1"['a'] AS "a", (SELECT max("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE "t2"['a'] = "t1"['a']) AS "max_b" FROM "default"."T" AS "t1";
+
+-- Multiple correlated subqueries
+--#[subquery-19]
+SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE ("t1"['b'] > (SELECT avg("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE "t2"['a'] = "t1"['a'])) AND "t1"['v'] IN (SELECT "t3"['v'] AS "v" FROM "default"."T" AS "t3" WHERE "t3"['b'] = "t1"['b']);
+
+-- Nested correlated subqueries
+--#[subquery-20]
+SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE "t1"['b'] > (SELECT avg("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE ("t2"['a'] = "t1"['a']) AND ("t2"['b'] > (SELECT min("t3"['b']) AS "_1" FROM "default"."T" AS "t3" WHERE "t3"['a'] = "t1"['a'])));
+
+-- Correlated with multiple references
+--#[subquery-21]
+SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE (SELECT sum("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE ("t2"['a'] = "t1"['a']) AND ("t2"['v'] = "t1"['v'])) > CAST(10 AS BIGINT);
