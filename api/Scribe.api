@@ -142,11 +142,11 @@ public final class org/partiql/scribe/sql/ExprQuerySetFactory {
 
 public final class org/partiql/scribe/sql/Locals {
 	public static final field Companion Lorg/partiql/scribe/sql/Locals$Companion;
-	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Lorg/partiql/scribe/sql/Locals;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Lorg/partiql/scribe/sql/Locals;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAggregations ()Ljava/util/List;
 	public final fun getEnv ()Ljava/util/List;
-	public final fun getExprOrNull (I)Lorg/partiql/ast/expr/Expr;
+	public final fun getExprOrNull (II)Lorg/partiql/ast/expr/Expr;
 	public final fun getWindowFunctions ()Ljava/util/List;
 }
 
@@ -159,7 +159,9 @@ public class org/partiql/scribe/sql/PlanToAst {
 	public fun apply (Lorg/partiql/plan/Plan;)Lorg/partiql/ast/AstNode;
 	public fun getFunction (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getGlobal (Lorg/partiql/spi/catalog/Identifier;)Lorg/partiql/ast/Identifier;
-	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public final fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRelConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RelConverter;
+	public static synthetic fun getRelConverter$default (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;ILjava/lang/Object;)Lorg/partiql/scribe/sql/RelConverter;
 	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
 }
 
@@ -168,7 +170,8 @@ public abstract interface class org/partiql/scribe/sql/QueryBodyFactory {
 }
 
 public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisitor {
-	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;)V
+	public synthetic fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun apply (Lorg/partiql/plan/rel/Rel;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun defaultReturn (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
@@ -406,13 +409,14 @@ public class org/partiql/scribe/targets/redshift/RedshiftPlanToAst : org/partiql
 	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
 	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
-	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRelConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RelConverter;
 	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
 	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
 }
 
 public class org/partiql/scribe/targets/redshift/RedshiftRelConverter : org/partiql/scribe/sql/RelConverter {
-	public fun <init> (Lorg/partiql/scribe/targets/redshift/RedshiftPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+	public fun <init> (Lorg/partiql/scribe/targets/redshift/RedshiftPlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;)V
+	public synthetic fun <init> (Lorg/partiql/scribe/targets/redshift/RedshiftPlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun visitWindow (Lorg/partiql/plan/rel/RelWindow;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitWindow (Lorg/partiql/plan/rel/RelWindow;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 }
@@ -512,13 +516,14 @@ public class org/partiql/scribe/targets/spark/SparkPlanToAst : org/partiql/scrib
 	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
 	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
-	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRelConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RelConverter;
 	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
 	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
 }
 
 public class org/partiql/scribe/targets/spark/SparkRelConverter : org/partiql/scribe/sql/RelConverter {
-	public fun <init> (Lorg/partiql/scribe/targets/spark/SparkPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+	public fun <init> (Lorg/partiql/scribe/targets/spark/SparkPlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;)V
+	public synthetic fun <init> (Lorg/partiql/scribe/targets/spark/SparkPlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public class org/partiql/scribe/targets/spark/SparkRewriter : org/partiql/plan/OperatorRewriter {
@@ -602,13 +607,14 @@ public final class org/partiql/scribe/targets/trino/TrinoPlanToAst : org/partiql
 	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
 	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
-	public fun getRelConverter ()Lorg/partiql/scribe/sql/RelConverter;
+	public fun getRelConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RelConverter;
 	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
 	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
 }
 
 public class org/partiql/scribe/targets/trino/TrinoRelConverter : org/partiql/scribe/sql/RelConverter {
-	public fun <init> (Lorg/partiql/scribe/targets/trino/TrinoPlanToAst;Lorg/partiql/scribe/ScribeContext;)V
+	public fun <init> (Lorg/partiql/scribe/targets/trino/TrinoPlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;)V
+	public synthetic fun <init> (Lorg/partiql/scribe/targets/trino/TrinoPlanToAst;Lorg/partiql/scribe/ScribeContext;Lorg/partiql/scribe/sql/Locals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
 public class org/partiql/scribe/targets/trino/TrinoRewriter : org/partiql/plan/OperatorRewriter {

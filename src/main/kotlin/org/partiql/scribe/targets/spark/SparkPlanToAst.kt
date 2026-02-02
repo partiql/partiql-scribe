@@ -17,7 +17,7 @@ public open class SparkPlanToAst(
         return SparkRexConverter(this, locals, context)
     }
 
-    override fun getRelConverter(): RelConverter {
-        return SparkRelConverter(this, context)
+    override fun getRelConverter(outer: Locals?): RelConverter {
+        return SparkRelConverter(this, context, outer)
     }
 }
