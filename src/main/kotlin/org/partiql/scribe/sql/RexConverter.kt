@@ -96,8 +96,8 @@ public class Locals(
     public val aggregations: List<Expr> = emptyList(),
     public val windowFunctions: List<Expr> = emptyList(),
     internal val outer: Locals? = null,
-    internal var ctes: List<String> = emptyList()
-    ) {
+    internal var ctes: List<String> = emptyList(),
+) {
     private var aggFuncOffset: Int = -1
     private var windowFuncOffset: Int = -1
 
@@ -112,8 +112,7 @@ public class Locals(
     ): Expr? {
         val targetLocals = getScope(scope) ?: return null
 
-        if (!targetLocals.ctes.isNullOrEmpty())
-        {
+        if (!targetLocals.ctes.isNullOrEmpty()) {
             return exprVarRef(
                 identifier = binder(targetLocals.ctes[offset]),
                 isQualified = false,

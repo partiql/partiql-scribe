@@ -380,7 +380,8 @@ public open class RelConverter(
             val locals =
                 Locals(
                     rel.type.fields.toList(),
-                    outer = outer,)
+                    outer = outer,
+                )
             val rexConverter = transform.getRexConverter(locals)
             sfw.where = rexConverter.apply(rel.predicate)
         }
