@@ -26,6 +26,6 @@ WITH "cte1" AS (SELECT "t1"['a'] AS "a", "t2"['b'] AS "b" FROM "default"."SIMPLE
 -- CTE with subquery
 WITH "cte1" AS (SELECT "SIMPLE_T"['a'] AS "a" FROM "default"."SIMPLE_T" AS "SIMPLE_T" WHERE "SIMPLE_T"['b'] > (SELECT avg("SIMPLE_T"['b']) AS "_1" FROM "default"."SIMPLE_T" AS "SIMPLE_T")) SELECT "cte1"['a'] AS "a" FROM "cte1" AS "cte1";
 
--- #[with-07]
+--#[with-07]
 -- CTE used multiple times - not supported, alias is lost with join
--- WITH "cte1" AS (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT "c1"['a'] AS "a", "c1"['b'] AS "b", "c2"['a'] AS "a", "c2"['b'] AS "b" FROM "cte1" AS "c1" INNER JOIN "cte1" AS "c2" ON "c1"['a'] = "c2"['a'];
+WITH "cte1" AS (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT "c1"['a'] AS "a", "c1"['b'] AS "b", "c2"['a'] AS "a", "c2"['b'] AS "b" FROM "cte1" AS "c1" INNER JOIN "cte1" AS "c2" ON "c1"['a'] = "c2"['a'];

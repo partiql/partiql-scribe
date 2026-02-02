@@ -53,9 +53,9 @@ WITH cte1 AS (
 )
 SELECT * FROM cte1;
 
--- #[with-07]
+--#[with-07]
 -- CTE used multiple times - not supported, alias is lost with join. https://github.com/partiql/partiql-scribe/issues/138
--- WITH cte1 AS (
---     SELECT a, b FROM SIMPLE_T
--- )
--- SELECT * FROM cte1 AS c1 JOIN cte1 AS c2 ON c1.a = c2.a;
+WITH cte1 AS (
+    SELECT a, b FROM SIMPLE_T
+)
+SELECT * FROM cte1 AS c1 JOIN cte1 AS c2 ON c1.a = c2.a;

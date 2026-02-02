@@ -68,36 +68,36 @@ import kotlin.math.absoluteValue
 public typealias TypeEnv = List<PTypeField>
 
 /**
- * Strategy for RexVar resolution in Scribe.
+ * Locals for [RexVar] resolution in Scribe
  *
  * Background:
- * - During planning, RexVar.scope tracks depth from variable resolution (0=current, 1=parent, etc.)
- * - For correlated subqueries: table reference variables have scope=1 from [PlanTyper.visitRexOpSubquery] and [PlanTyper.visitRexOpSelect]
- * - For CTEs: CTE references have scope=1 (found in parent [PlanTyper.visitRelOpWith])
- * - Scribe ignores the scope field in RexVar during resolution before and cause problem for correlated subquery
+ * During planning, [RexVar.scope] tracks depth from variable resolution (0=current, 1=parent, etc.).
+ * Currently, scopes are stacked when visiting subqueries by [PlanTyper.visitRexOpSubquery] and [PlanTyper.visitRexOpSelect],
+ * CTEs by [PlanTyper.visitRelOpWith] and joins by [PlanTyper.visitRelOpJoin].
  *
+ * E.g
+ * For correlated subqueries: field name from outer query have scope=1.
+ * For CTEs: CTE names are currently modeled as an extra Rel and have different scope.
+ * For JOIN: JOIN different scopes for left table and right table where right table has deeper scope as left cannot reference right variables.
  *
- * Problems:
- * - Correlated queries were broken before honoring scope
- * - WITH (CTEs) broke after honoring scope because the variable is in local rather than outer
- * - Hard to match scope index correctly for WITH statements as it is local after [rel.type]
+ * Problem:
+ * Previously, Scribe ignores the field [RexVar.scope] during resolution, causing issues for correlated subquery.
+ * but not WITH/JOIN (which have field type info in [rel.type.fields] from [RelScan]).
  *
- * Solution:
- * - LOCAL (default): Ignores RexVar.scope, uses as default (preserves original behavior)
- * - GLOBAL: Uses RexVar.scope to traverse outer environments (only for correlated queries in [visitFilter])
+ * After this fix:
+ * Scribe respects scope in [RexVar]. [Locals.outer] holds parent field type information, and [Locals.ctes] stores
+ * the common expression table names as the parent field name is not correct.
+ * Now, we need to create RelConverter which takes [Locals] with [Locals.outer] set to current locals to match
+ * how scopes are stacked in PLK mentioned in the background section. Changes to PLK's scope logic may break this index-based approach.
  */
-public enum class Strategy {
-    LOCAL, // Search local Type Env only, ignore scope in [RexVar]
-    GLOBAL, // Search global Type Env, honor scope in [RexVar]
-}
 
 public class Locals(
     public val env: TypeEnv,
     public val aggregations: List<Expr> = emptyList(),
     public val windowFunctions: List<Expr> = emptyList(),
-    public val outer: Locals? = null,
-    public val strategy: Strategy = Strategy.LOCAL,
-) {
+    internal val outer: Locals? = null,
+    internal var ctes: List<String> = emptyList()
+    ) {
     private var aggFuncOffset: Int = -1
     private var windowFuncOffset: Int = -1
 
@@ -110,12 +110,16 @@ public class Locals(
         scope: Int,
         offset: Int,
     ): Expr? {
-        val targetLocals =
-            if (strategy == Strategy.LOCAL) {
-                this
-            } else {
-                getScope(scope) ?: return null
-            }
+        val targetLocals = getScope(scope) ?: return null
+
+        if (!targetLocals.ctes.isNullOrEmpty())
+        {
+            return exprVarRef(
+                identifier = binder(targetLocals.ctes[offset]),
+                isQualified = false,
+            )
+        }
+
         val binding = targetLocals.env.getOrNull(offset)
 
         return if (binding != null) {

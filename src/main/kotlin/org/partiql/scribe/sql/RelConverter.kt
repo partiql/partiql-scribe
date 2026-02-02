@@ -175,7 +175,7 @@ internal class QueryBodySetOpFactory(
 public open class RelConverter(
     internal val transform: PlanToAst,
     internal val context: ScribeContext,
-    protected val outer: Locals? = null,
+    internal val outer: Locals? = null,
 ) : OperatorVisitor<ExprQuerySetFactory, Unit> {
     internal val listener = context.getProblemListener()
 
@@ -373,7 +373,6 @@ public open class RelConverter(
                     rel.type.fields.toList(),
                     sfw.aggregations ?: emptyList(),
                     outer = outer,
-                    strategy = Strategy.GLOBAL,
                 )
             val rexConverter = transform.getRexConverter(locals)
             sfw.having = rexConverter.apply(rel.predicate)
@@ -381,9 +380,7 @@ public open class RelConverter(
             val locals =
                 Locals(
                     rel.type.fields.toList(),
-                    outer = outer,
-                    strategy = Strategy.GLOBAL,
-                )
+                    outer = outer,)
             val rexConverter = transform.getRexConverter(locals)
             sfw.where = rexConverter.apply(rel.predicate)
         }
@@ -430,7 +427,11 @@ public open class RelConverter(
         val lhs = visitRelSFW(rel.left, ctx)
         val lhsFrom = assertNotNull(lhs.from)
         assert(lhsFrom.tableRefs.size == 1)
-        val rhs = visitRelSFW(rel.right, ctx)
+
+        // The right table has extra scope level
+        val rightConverter = transform.getRelConverter(Locals(rel.left.type.fields.toList(), outer = outer))
+        val rhs = rightConverter.visitRelSFW(rel.right, ctx)
+
         val rhsFrom = assertNotNull(rhs.from)
         assert(rhsFrom.tableRefs.size == 1)
         val locals = Locals(rel.left.type.fields.toList() + rel.right.type.fields.toList(), outer = outer)
@@ -733,10 +734,11 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList(), outer = outer))
-        val querySet = visit(rel.input, ctx)
+        val ctes = mutableListOf<String>()
         val withElements =
             rel.elements.map { element ->
                 val name = element.name
+                ctes.add(name)
                 val repr = rexConverter.apply(element.representation)
                 withListElement(
                     queryName = Identifier.Simple.delimited(name),
@@ -744,6 +746,8 @@ public open class RelConverter(
                     columnList = null,
                 )
             }
+        outer?.ctes = ctes.toList()
+        val querySet = visit(rel.input, ctx)
         querySet.with =
             Ast.with(
                 elements = withElements,
