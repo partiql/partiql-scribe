@@ -484,11 +484,15 @@ public open class RelConverter(
         val inputQuerySet = visit(rel.input, ctx)
         val sfw = inputQuerySet.queryBody as QueryBodySFWFactory
 
+        // Group by keys needs to be added to aggregations to match the original column reference.
+        val groupByExprs = sfw.groupBy?.keys?.map { it.expr } ?: emptyList()
+        val allAggregations = (sfw.aggregations ?: emptyList()) + groupByExprs
+        
         val locals =
             Locals(
                 env = input.type.fields.toList(),
-                aggregations = sfw.aggregations ?: emptyList(),
-                windowFunctions = sfw.windowFunctions ?: emptyList(),
+                aggregations = allAggregations,
+                windowFunctions = sfw.windowFunctions ?: emptyList()
             )
 
         val rexConverter = transform.getRexConverter(locals)
