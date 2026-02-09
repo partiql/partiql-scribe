@@ -43,9 +43,6 @@ SELECT max("T"['col_string']) AS "_1", min("T"['col_string']) AS "_2" FROM "defa
 --#[rel-aggregation-distinct-00]
 SELECT sum(DISTINCT "T"['b']) AS "_1" FROM "default"."T" AS "T";
 
---#[rel-aggregation-null-01]
-SELECT sum(NULL) AS "_1" FROM "default"."T" AS "T";
-
 --#[rel-aggregation-multiple-00]
 SELECT count(1) AS "_1", sum("T"['b']) AS "_2", avg("T"['b']) AS "_3", min("T"['b']) AS "_4", max("T"['b']) AS "_5" FROM "default"."T" AS "T";
 

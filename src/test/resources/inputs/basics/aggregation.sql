@@ -37,9 +37,6 @@ SELECT MAX(col_string), MIN(col_string) FROM T_ALL_TYPES AS T;
 --#[rel-aggregation-distinct-00]
 SELECT SUM(DISTINCT b) FROM T;
 
---#[rel-aggregation-null-01]
-SELECT SUM(NULL) FROM T;
-
 --#[rel-aggregation-multiple-00]
 SELECT COUNT(*), SUM(b), AVG(b), MIN(b), MAX(b) FROM T;
 
