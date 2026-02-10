@@ -31,7 +31,6 @@ SELECT "T"."a" AS "a" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST,
 --#[order-by-10]
 (SELECT "T"."flds" AS "flds" FROM "default"."EXCLUDE_T" AS "T") UNION DISTINCT (SELECT "T"."flds" AS "flds" FROM "default"."EXCLUDE_T" AS "T") ORDER BY "flds"."c"."field_x" ASC NULLS LAST;
 
--- "a" becomes column reference of group by key instead of path reference internally when group by is present, thus "a" is used instead of "T"."a"
 --#[order-by-11]
 SELECT "T"."a" AS "a", max("T"."b") AS "_1" FROM "default"."T" AS "T" GROUP BY "T"."a" ORDER BY max("T"."b") ASC NULLS LAST;
 
@@ -43,3 +42,7 @@ SELECT "T"."a" AS "a", max("T"."b") AS "c" FROM "default"."T" AS "T" GROUP BY "T
 
 --#[order-by-14]
 SELECT "T"."a" AS "a", "T"."b" AS "c" FROM "default"."T" AS "T" ORDER BY "T"."b" ASC NULLS LAST;
+
+--#[order-by-15]
+SELECT "T"."a" AS "a", max("T"."b") AS "c" FROM "default"."T" AS "T" GROUP BY "T"."a" ORDER BY "T"."a" ASC NULLS LAST;
+

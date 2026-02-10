@@ -74,3 +74,6 @@ SELECT `T`.`a` AS `a`, `T`.`b` AS `b`, RANK() OVER (PARTITION BY `T`.`a` ORDER B
 -- Complex comprehensive example
 --#[window-22]
 SELECT `t`.`a` AS `_id`, `t`.`b` AS `_name`, RANK() OVER `_w1` AS `_rank_1`, RANK() OVER `_w2` AS `_rank_2`, DENSE_RANK() OVER `_w1` AS `_dense_rank_1`, DENSE_RANK() OVER `_w2` AS `_dense_rank_2`, ROW_NUMBER() OVER `_w1` AS `_row_number_1`, ROW_NUMBER() OVER `_w2` AS `_row_number_2`, LAG(`t`.`b`, 1, -1) RESPECT NULLS OVER `_w1` AS `_lag_1`, LAG(`t`.`b`, 1, -1) RESPECT NULLS OVER `_w2` AS `_lag_2`, LEAD(`t`.`b`, 1, -1) RESPECT NULLS OVER `_w1` AS `_lead_1`, LEAD(`t`.`b`, 1, -1) RESPECT NULLS OVER `_w2` AS `_lead_2` FROM `default`.`T` AS `t` WINDOW `_w1` AS (PARTITION BY `t`.`a` ORDER BY `t`.`b` ASC NULLS LAST, `t`.`c` ASC NULLS LAST), `_w2` AS (PARTITION BY `t`.`a` ORDER BY `t`.`b` DESC NULLS FIRST, `t`.`c` DESC NULLS FIRST);
+
+--#[window-34]
+SELECT `T`.`a` AS `a`, `count`(1) AS `_1`, ROW_NUMBER() OVER (ORDER BY `count`(1) ASC NULLS LAST) AS `_2` FROM `default`.`T` AS `T` GROUP BY `T`.`a`;

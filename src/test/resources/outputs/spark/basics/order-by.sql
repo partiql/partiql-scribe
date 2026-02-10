@@ -42,3 +42,7 @@ SELECT `T`.`a` AS `a`, `max`(`T`.`b`) AS `c` FROM `default`.`T` AS `T` GROUP BY 
 
 --#[order-by-14]
 SELECT `T`.`a` AS `a`, `T`.`b` AS `c` FROM `default`.`T` AS `T` ORDER BY `T`.`b` ASC NULLS LAST;
+
+--#[order-by-15]
+SELECT `T`.`a` AS `a`, `max`(`T`.`b`) AS `c` FROM `default`.`T` AS `T` GROUP BY `T`.`a` ORDER BY `T`.`a` ASC NULLS LAST;
+

@@ -44,3 +44,6 @@ SELECT a, MAX(b) as c FROM T GROUP BY a ORDER BY c;
 --#[order-by-14]
 SELECT a, b as c FROM T ORDER BY c;
 
+--#[order-by-15]
+SELECT a, MAX(b) as c FROM T GROUP BY a ORDER BY a;
+
