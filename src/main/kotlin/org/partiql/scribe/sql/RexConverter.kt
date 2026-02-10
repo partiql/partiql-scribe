@@ -81,7 +81,7 @@ public class Locals(
 
     public fun getExprOrNull(offset: Int): Expr? {
         // Handle aggregation first as RelAggregate creates a new schema with aggregations plus group keys
-        if (aggregations.isNotEmpty()) {
+        if (aggregations.isNotEmpty() && offset < aggregations.size) {
             return aggregations.getOrNull(offset)
         }
 

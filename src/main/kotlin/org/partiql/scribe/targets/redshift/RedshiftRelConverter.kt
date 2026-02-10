@@ -17,7 +17,13 @@ public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: Sc
         ctx: Unit,
     ): ExprQuerySetFactory {
         val sfw = visitRelSFW(rel.input, ctx)
-        val rexConverter = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
+        val locals =
+            Locals(
+                env = rel.type.fields.toList(),
+                aggregations = constructAggregationSchema(sfw),
+            )
+
+        val rexConverter = transform.getRexConverter(locals)
 
         // Convert window functions to AST expressions
         val windowFunctionExprs =

@@ -369,8 +369,8 @@ public open class RelConverter(
         if (rel.input is RelAggregate) {
             val locals =
                 Locals(
-                    rel.type.fields.toList(),
-                    constructAggregationSchema(sfw),
+                    env = rel.type.fields.toList(),
+                    aggregations = constructAggregationSchema(sfw),
                 )
 
             val rexConverter = transform.getRexConverter(locals)
@@ -517,7 +517,7 @@ public open class RelConverter(
         return inputQuerySet
     }
 
-    private fun constructAggregationSchema(sfw: QueryBodySFWFactory): List<Expr> {
+    internal fun constructAggregationSchema(sfw: QueryBodySFWFactory): List<Expr> {
         // Group by keys needs to be added to aggregations to match the generated schema in plan.
         val groupByExprs = sfw.groupBy?.keys?.map { it.expr } ?: emptyList()
         val aggregations = (sfw.aggregations ?: emptyList())
@@ -752,7 +752,12 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val sfw = visitRelSFW(rel.input, ctx)
-        val rexConverter = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
+        val locals =
+            Locals(
+                env = rel.type.fields.toList(),
+                aggregations = constructAggregationSchema(sfw),
+            )
+        val rexConverter = transform.getRexConverter(locals)
 
         // Convert window functions to AST expressions
         val windowFunctionExprs =
