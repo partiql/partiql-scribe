@@ -31,6 +31,8 @@ SELECT "T1"."c", "T2"."z", "T1"."a" FROM "default"."T" AS "T1" LEFT JOIN "defaul
 SELECT "T1"."b", "T2"."c", "T1"."v" FROM "default"."T" AS "T1" LEFT JOIN "default"."T" AS "T2" ON true;
 
 -- Full join with true condition
+-- Redshift is failing on this query and likely a bug in redshift
+-- ERROR: could not devise a query plan for the given query [ErrorId: 1-698c0a0c-49191b3e14f0d41c6bd39898]
 --#[join-08]
 SELECT "T1"."a", "T2"."b", "T1"."z" FROM "default"."T" AS "T1" FULL JOIN "default"."T" AS "T2" ON true;
 
@@ -88,11 +90,11 @@ SELECT "T1"."c", "T1"."z", "T1"."a" FROM "default"."T" AS "T1" LEFT JOIN "defaul
 
 -- Join with aggregation and GROUP BY
 --#[join-22]
-SELECT "c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T1"."c";
+SELECT "T1"."c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T1"."c";
 
 -- Left join with aggregation
 --#[join-23]
-SELECT "b", sum("T2"."b") AS "_1" FROM "default"."T" AS "T1" LEFT JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T1"."b";
+SELECT "T1"."b", sum("T2"."b") AS "_1" FROM "default"."T" AS "T1" LEFT JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T1"."b";
 
 -- Join with ORDER BY
 --#[join-24]
@@ -131,4 +133,4 @@ SELECT "T1"."c", "T2"."a", "T1"."v" FROM "default"."T" AS "T1" INNER JOIN "defau
 
 -- Join with HAVING clause
 --#[join-33]
-SELECT "c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T1"."c" HAVING count(1) > CAST(5 AS BIGINT);
+SELECT "T2"."c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T2"."c" HAVING count(1) > CAST(5 AS BIGINT);

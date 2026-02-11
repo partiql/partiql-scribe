@@ -88,11 +88,11 @@ SELECT `T1`.`c` AS `c`, `T1`.`z` AS `z`, `T1`.`a` AS `a` FROM `default`.`T` AS `
 
 -- Join with aggregation and GROUP BY
 --#[join-22]
-SELECT `c` AS `c`, `count`(1) AS `_1` FROM `default`.`T` AS `T1` INNER JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` GROUP BY `T1`.`c`;
+SELECT `T1`.`c` AS `c`, `count`(1) AS `_1` FROM `default`.`T` AS `T1` INNER JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` GROUP BY `T1`.`c`;
 
 -- Left join with aggregation
 --#[join-23]
-SELECT `b` AS `b`, `sum`(`T2`.`b`) AS `_1` FROM `default`.`T` AS `T1` LEFT JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` GROUP BY `T1`.`b`;
+SELECT `T1`.`b` AS `b`, `sum`(`T2`.`b`) AS `_1` FROM `default`.`T` AS `T1` LEFT JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` GROUP BY `T1`.`b`;
 
 -- Join with ORDER BY
 --#[join-24]
@@ -133,4 +133,4 @@ SELECT `T1`.`c` AS `c`, `T2`.`a` AS `a`, `T1`.`v` AS `v` FROM `default`.`T` AS `
 
 -- Join with HAVING clause
 --#[join-33]
-SELECT `c` AS `c`, `count`(1) AS `_1` FROM `default`.`T` AS `T1` INNER JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` GROUP BY `T1`.`c` HAVING `count`(1) > CAST(5 AS BIGINT);
+SELECT `T2`.`c` AS `c`, `count`(1) AS `_1` FROM `default`.`T` AS `T1` INNER JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` GROUP BY `T2`.`c` HAVING `count`(1) > CAST(5 AS BIGINT);
