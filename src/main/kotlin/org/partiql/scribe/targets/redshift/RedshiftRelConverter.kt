@@ -19,7 +19,7 @@ public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: Sc
         val sfw = visitRelSFW(rel.input, ctx)
         val locals =
             Locals(
-                env = rel.type.fields.toList(),
+                env = rel.input.type.fields.toList(),
                 aggregations = constructAggregationSchema(sfw),
             )
 

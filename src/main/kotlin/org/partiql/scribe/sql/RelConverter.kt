@@ -754,7 +754,7 @@ public open class RelConverter(
         val sfw = visitRelSFW(rel.input, ctx)
         val locals =
             Locals(
-                env = rel.type.fields.toList(),
+                env = rel.input.type.fields.toList(),
                 aggregations = constructAggregationSchema(sfw),
             )
         val rexConverter = transform.getRexConverter(locals)
