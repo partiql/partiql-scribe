@@ -72,24 +72,22 @@ public class Locals(
     public val aggregations: List<Expr> = emptyList(),
     public val windowFunctions: List<Expr> = emptyList(),
 ) {
-    private var aggFuncOffset: Int = -1
     private var windowFuncOffset: Int = -1
 
     init {
-        aggFuncOffset = env.indexOfFirst { it.name.startsWith("\$agg_") }
         windowFuncOffset = env.indexOfFirst { it.name.startsWith("\$window_func_") }
     }
 
     public fun getExprOrNull(offset: Int): Expr? {
+        // Handle aggregation first as RelAggregate creates a new schema with aggregations plus group keys
+        if (aggregations.isNotEmpty() && offset < aggregations.size) {
+            return aggregations.getOrNull(offset)
+        }
+
         val binding = env.getOrNull(offset)
 
         return if (binding != null) {
-            // For aggregations and windowFunctions, we should report scribe problem
-            // if aggregation/windowFunctions list does not match reference count in [env].
-            // However, reporting scribe problem requires a scribe api change.
-            if (binding.name.startsWith("\$agg_")) {
-                aggregations.getOrNull(offset - aggFuncOffset)
-            } else if (binding.name.startsWith("\$window_func_")) {
+            if (binding.name.startsWith("\$window_func_")) {
                 windowFunctions.getOrNull(offset - windowFuncOffset)
             } else {
                 return exprVarRef(

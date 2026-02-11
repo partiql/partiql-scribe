@@ -110,3 +110,7 @@ SELECT t.a AS _id, t.b AS _name, RANK() OVER _w1 AS _rank_1, RANK() OVER _w2 AS 
 
 -- --#[window-33]
 -- SELECT a, SUM(b) OVER (ORDER BY a RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM T;
+
+-- Window function with GROUP BY
+--#[window-34]
+SELECT a, COUNT(*), ROW_NUMBER() OVER (ORDER BY COUNT(*)) FROM T GROUP BY a;
