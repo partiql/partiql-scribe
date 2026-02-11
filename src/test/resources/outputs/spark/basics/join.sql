@@ -114,11 +114,6 @@ SELECT `T1`.`b` AS `b`, `T2`.`c` AS `c`, `T1`.`z` AS `z` FROM `default`.`T` AS `
 --#[join-28]
 SELECT `T1`.`a` AS `a`, `T2`.`v` AS `v`, `T1`.`c` AS `c` FROM `default`.`T` AS `T1` INNER JOIN `default`.`T` AS `T2` ON (`T1`.`timestamp_1` <= `T2`.`timestamp_1`) AND (`T1`.`timestamp_2` >= `T2`.`timestamp_1`);
 
--- Skipped Not supported
--- Join using USING clause (single column)
--- Left join using USING clause (multiple columns)
--- Natural join
-
 -- Four table joins
 --#[join-30]
 SELECT `T1`.`a` AS `a`, `T2`.`c` AS `c`, `T3`.`v` AS `v`, `T4`.`z` AS `z` FROM `default`.`T` AS `T1` INNER JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` INNER JOIN `default`.`T` AS `T3` ON `T2`.`b` = `T3`.`b` INNER JOIN `default`.`T` AS `T4` ON `T3`.`b` = `T4`.`b`;

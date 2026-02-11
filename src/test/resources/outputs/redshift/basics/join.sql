@@ -32,7 +32,7 @@ SELECT "T1"."b", "T2"."c", "T1"."v" FROM "default"."T" AS "T1" LEFT JOIN "defaul
 
 -- Full join with true condition
 -- Redshift is failing on this query and likely a bug in redshift
--- ERROR: could not devise a query plan for the given query [ErrorId: 1-698c0a0c-49191b3e14f0d41c6bd39898]
+-- ERROR: could not devise a query plan for the given query
 --#[join-08]
 SELECT "T1"."a", "T2"."b", "T1"."z" FROM "default"."T" AS "T1" FULL JOIN "default"."T" AS "T2" ON true;
 
@@ -116,9 +116,6 @@ SELECT "T1"."b", "T2"."c", "T1"."z" FROM "default"."T" AS "T1" INNER JOIN "defau
 --#[join-28]
 SELECT "T1"."a", "T2"."v", "T1"."c" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON (CAST("T1"."timestamp_1" AS TIMESTAMP) <= CAST("T2"."timestamp_1" AS TIMESTAMP)) AND (CAST("T1"."timestamp_2" AS TIMESTAMP) >= CAST("T2"."timestamp_1" AS TIMESTAMP));
 
--- Join using USING clause (single column)
--- Left join using USING clause (multiple columns)
--- Natural join
 -- Four table joins
 --#[join-30]
 SELECT "T1"."a", "T2"."c", "T3"."v", "T4"."z" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" INNER JOIN "default"."T" AS "T3" ON "T2"."b" = "T3"."b" INNER JOIN "default"."T" AS "T4" ON "T3"."b" = "T4"."b";
