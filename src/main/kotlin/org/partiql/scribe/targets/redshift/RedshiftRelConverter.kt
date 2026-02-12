@@ -10,7 +10,11 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
 import org.partiql.scribe.sql.RexConverter
 
-public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext) : RelConverter(transform, context) {
+public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext, outer: Locals? = null) : RelConverter(
+    transform,
+    context,
+    outer,
+) {
     // Redshift does not support the SQL window clause. So we convert window clauses to inline window specifications.
     override fun visitWindow(
         rel: RelWindow,
