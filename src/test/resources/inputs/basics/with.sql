@@ -59,3 +59,10 @@ WITH cte1 AS (
     SELECT a, b FROM SIMPLE_T
 )
 SELECT * FROM cte1 AS c1 JOIN cte1 AS c2 ON c1.a = c2.a;
+
+--#[with-08]
+-- CTE with window function, COUNT(*), and GROUP BY in outer query
+WITH cte1 AS (
+    SELECT a, b FROM SIMPLE_T
+)
+SELECT ROW_NUMBER() OVER (ORDER BY a) AS rn, COUNT(*) AS cnt, a FROM cte1 GROUP BY a;

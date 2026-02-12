@@ -12,7 +12,7 @@ WITH "cte1" AS (SELECT "wle1"."a" FROM "default"."SIMPLE_T" AS "wle1") SELECT "c
 
 --#[with-03]
 -- CTE with aggregation
-WITH "cte1" AS (SELECT "a", count(1) AS "cnt" FROM "default"."SIMPLE_T" AS "SIMPLE_T" GROUP BY "SIMPLE_T"."a") SELECT "cte1"."a", "cte1"."cnt" FROM "cte1" AS "cte1" WHERE "cte1"."cnt" > CAST(1 AS BIGINT);
+WITH "cte1" AS (SELECT "SIMPLE_T"."a", count(1) AS "cnt" FROM "default"."SIMPLE_T" AS "SIMPLE_T" GROUP BY "SIMPLE_T"."a") SELECT "cte1"."a", "cte1"."cnt" FROM "cte1" AS "cte1" WHERE "cte1"."cnt" > CAST(1 AS BIGINT);
 
 --#[with-04]
 -- CTE with JOIN
@@ -29,3 +29,7 @@ WITH "cte1" AS (SELECT "SIMPLE_T"."a" FROM "default"."SIMPLE_T" AS "SIMPLE_T" WH
 --#[with-07]
 -- CTE used multiple times - not supported, alias is lost with join
 WITH "cte1" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT "c1"."a", "c1"."b", "c2"."a", "c2"."b" FROM "cte1" AS "c1" INNER JOIN "cte1" AS "c2" ON "c1"."a" = "c2"."a";
+
+--#[with-08]
+-- CTE with window function, COUNT(*), and GROUP BY in outer query
+WITH "cte1" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT ROW_NUMBER() OVER (ORDER BY "cte1"."a" ASC NULLS LAST) AS "rn", count(1) AS "cnt", "cte1"."a" FROM "cte1" AS "cte1" GROUP BY "cte1"."a";

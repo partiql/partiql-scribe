@@ -104,12 +104,15 @@ public class Locals(
         windowFuncOffset = env.indexOfFirst { it.name.startsWith("\$window_func_") }
     }
 
-    public fun getExprOrNull(offset: Int): Expr? {
+    public fun getExprOrNull(
+        scope: Int,
+        offset: Int,
+    ): Expr? {
         val targetLocals = getScope(scope) ?: return null
 
         // Handle aggregation first as RelAggregate creates a new schema with aggregations plus group keys
         if (targetLocals.aggregations.isNotEmpty() && offset < aggregations.size) {
-            return aggregations.getOrNull(offset)
+            return targetLocals.aggregations.getOrNull(offset)
         }
 
         if (!targetLocals.ctes.isNullOrEmpty()) {
