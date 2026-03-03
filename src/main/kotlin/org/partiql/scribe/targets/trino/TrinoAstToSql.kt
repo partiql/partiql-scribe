@@ -196,7 +196,10 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
     /**
      * The only difference between this and [super.visitExprQuerySet] is that trino requires OFFSET comes before LIMIT
      */
-    private fun visitExprQuerySetPrivate(node: ExprQuerySet, tail: SqlBlock): SqlBlock {
+    private fun visitExprQuerySetPrivate(
+        node: ExprQuerySet,
+        tail: SqlBlock,
+    ): SqlBlock {
         var t = tail
         t = if (node.with != null) visitWith(node.with!!, t) else t
         // visit body (SFW or other SQL set op)
