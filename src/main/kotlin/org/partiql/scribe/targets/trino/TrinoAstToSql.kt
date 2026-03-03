@@ -188,9 +188,29 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
                     offset = node.offset,
                     orderBy = orderBy(newSorts),
                 )
-            return super.visitExprQuerySet(newNode, tail)
+            return visitExprQuerySetPrivate(newNode, tail)
         }
-        return super.visitExprQuerySet(node, tail)
+        return visitExprQuerySetPrivate(node, tail)
+    }
+
+    /**
+     * The only difference between this and [super.visitExprQuerySet] is that trino requires OFFSET comes before LIMIT
+     */
+    private fun visitExprQuerySetPrivate(node: ExprQuerySet, tail: SqlBlock): SqlBlock {
+        var t = tail
+        t = if (node.with != null) visitWith(node.with!!, t) else t
+        // visit body (SFW or other SQL set op)
+        t = visit(node.body, t)
+        // ORDER BY
+        val orderBy = node.orderBy
+        t = if (orderBy != null) visitOrderBy(orderBy, t concat " ") else t
+        // OFFSET
+        val offset = node.offset
+        t = if (offset != null) visitExprWrapped(offset, t concat " OFFSET ") else t
+        // LIMIT
+        val limit = node.limit
+        t = if (limit != null) visitExprWrapped(limit, t concat " LIMIT ") else t
+        return t
     }
 
     /**

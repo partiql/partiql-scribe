@@ -26,7 +26,7 @@ SELECT "T"."a" AS "a" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST,
 (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST) UNION DISTINCT (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST) ORDER BY "a" ASC NULLS LAST;
 
 --#[order-by-09]
-(SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST LIMIT 1 OFFSET 2) UNION DISTINCT (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST LIMIT 3 OFFSET 4) ORDER BY "a" ASC NULLS LAST LIMIT 5 OFFSET 6;
+(SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST OFFSET 2 LIMIT 1) UNION DISTINCT (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST OFFSET 4 LIMIT 3) ORDER BY "a" ASC NULLS LAST OFFSET 6 LIMIT 5;
 
 --#[order-by-10]
 (SELECT "T"."flds" AS "flds" FROM "default"."EXCLUDE_T" AS "T") UNION DISTINCT (SELECT "T"."flds" AS "flds" FROM "default"."EXCLUDE_T" AS "T") ORDER BY "flds"."c"."field_x" ASC NULLS LAST;
