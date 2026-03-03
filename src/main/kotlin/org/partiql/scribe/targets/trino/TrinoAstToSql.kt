@@ -194,7 +194,7 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
     }
 
     /**
-     * The only difference between this and [super.visitExprQuerySet] is that trino requires OFFSET comes before LIMIT
+     * The only difference between this and [super.visitExprQuerySet] is that trino requires `OFFSET` before `LIMIT`
      */
     private fun visitExprQuerySetPrivate(
         node: ExprQuerySet,
