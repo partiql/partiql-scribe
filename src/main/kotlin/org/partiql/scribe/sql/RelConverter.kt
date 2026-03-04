@@ -175,7 +175,7 @@ internal class QueryBodySetOpFactory(
 public open class RelConverter(
     internal val transform: PlanToAst,
     internal val context: ScribeContext,
-    internal val outer: Locals? = null,
+    internal val outer: List<Locals> = emptyList(),
 ) : OperatorVisitor<ExprQuerySetFactory, Unit> {
     internal val listener = context.getProblemListener()
 
@@ -430,7 +430,7 @@ public open class RelConverter(
         assert(lhsFrom.tableRefs.size == 1)
 
         // The right table has extra scope level
-        val rightConverter = transform.getRelConverter(Locals(rel.left.type.fields.toList(), outer = outer))
+        val rightConverter = transform.getRelConverter(outer + listOf(Locals(rel.left.type.fields.toList(), outer = outer)))
         val rhs = rightConverter.visitRelSFW(rel.right, ctx)
 
         val rhsFrom = assertNotNull(rhs.from)
@@ -741,12 +741,12 @@ public open class RelConverter(
         rel: RelWith,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList(), outer = outer))
-        val ctes = mutableListOf<String>()
+        val ctes = rel.elements.map { it.name }
+        val withLocals = Locals(rel.type.fields.toList(), outer = outer, ctes = ctes)
+        val rexConverter = transform.getRexConverter(withLocals)
         val withElements =
             rel.elements.map { element ->
                 val name = element.name
-                ctes.add(name)
                 val repr = rexConverter.apply(element.representation)
                 withListElement(
                     queryName = Identifier.Simple.delimited(name),
@@ -754,8 +754,7 @@ public open class RelConverter(
                     columnList = null,
                 )
             }
-        outer?.ctes = ctes.toList()
-        val querySet = visit(rel.input, ctx)
+        val querySet = transform.getRelConverter(outer + listOf(withLocals)).visit(rel.input, ctx)
         querySet.with =
             Ast.with(
                 elements = withElements,

@@ -33,3 +33,7 @@ WITH "cte1" AS (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "defa
 --#[with-08]
 -- CTE with window function, COUNT(*), and GROUP BY in outer query
 WITH "cte1" AS (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT ROW_NUMBER() OVER (ORDER BY "cte1"['a'] ASC NULLS LAST) AS "rn", count(1) AS "cnt", "cte1"['a'] AS "a" FROM "cte1" AS "cte1" GROUP BY "cte1"['a'];
+
+--#[with-09]
+-- Nested WITH clauses
+WITH "cte1" AS (WITH "cte2" AS (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT "cte2"['a'] AS "a", "cte2"['b'] AS "b" FROM "cte2" AS "cte2") SELECT "_0"['a'] AS "a", "_0"['b'] AS "b" FROM (WITH "cte3" AS (SELECT "cte1"['a'] AS "a", "cte1"['b'] AS "b" FROM "cte1" AS "cte1") SELECT "cte3"['a'] AS "a", "cte3"['b'] AS "b" FROM "cte3" AS "cte3") AS "_0";

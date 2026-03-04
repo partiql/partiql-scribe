@@ -66,3 +66,14 @@ WITH cte1 AS (
     SELECT a, b FROM SIMPLE_T
 )
 SELECT ROW_NUMBER() OVER (ORDER BY a) AS rn, COUNT(*) AS cnt, a FROM cte1 GROUP BY a;
+
+--#[with-09]
+-- Nested WITH clauses
+WITH cte1 AS (
+  WITH cte2 AS (SELECT a, b FROM SIMPLE_T)
+  SELECT a, b FROM cte2
+)
+SELECT a, b FROM (
+  WITH cte3 AS (SELECT a, b FROM cte1)
+  SELECT a, b FROM cte3
+);

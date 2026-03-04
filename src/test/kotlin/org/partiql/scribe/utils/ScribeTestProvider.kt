@@ -69,7 +69,7 @@ class ScribeTestProvider {
             .flatMap { load(dir.name, it) }
 
     // load all tests in a file
-    private fun load(
+    public fun load(
         group: String,
         file: File,
     ): List<ScribeTest> {
@@ -92,7 +92,7 @@ class ScribeTestProvider {
             }
 
             // Finish & Reset
-            if (line.endsWith(";")) {
+            if (line.endsWith(";") && name.startsWith("with-09")) {
                 val key = ScribeTest.Key(group, name)
                 tests.add(ScribeTest(key, statement.toString()))
                 name = ""

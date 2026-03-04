@@ -10,7 +10,7 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
 import org.partiql.scribe.sql.RexConverter
 
-public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext, outer: Locals? = null) : RelConverter(
+public open class RedshiftRelConverter(transform: RedshiftPlanToAst, context: ScribeContext, outer: List<Locals> = emptyList()) : RelConverter(
     transform,
     context,
     outer,

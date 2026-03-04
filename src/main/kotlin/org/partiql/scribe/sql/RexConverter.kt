@@ -87,16 +87,16 @@ public typealias TypeEnv = List<PTypeField>
  * After this fix:
  * Scribe respects scope in [RexVar]. [Locals.outer] holds parent field type information, and [Locals.ctes] stores
  * the common expression table names as the parent field name is not correct.
- * Now, we need to create RelConverter which takes [Locals] with [Locals.outer] set to current locals to match
- * how scopes are stacked in PLK mentioned in the background section. Changes to PLK's scope logic may break this index-based approach.
+ * Now, we need to create RelConverter which takes [outer], a stack of outer schemas [Locals]. !!!Currently in PartiQL Scribe,
+ * we simulate how scopes are stacked in PLK mentioned above. Changes to PLK's scope logic may break this index-based approach.!!!
  */
 
 public class Locals(
     public val env: TypeEnv,
     public val aggregations: List<Expr> = emptyList(),
     public val windowFunctions: List<Expr> = emptyList(),
-    internal val outer: Locals? = null,
-    internal var ctes: List<String> = emptyList(),
+    internal val outer: List<Locals> = emptyList(),
+    internal val ctes: List<String> = emptyList(),
 ) {
     private var windowFuncOffset: Int = -1
 
@@ -104,9 +104,10 @@ public class Locals(
         windowFuncOffset = env.indexOfFirst { it.name.startsWith("\$window_func_") }
     }
 
+    @JvmOverloads
     public fun getExprOrNull(
-        scope: Int,
         offset: Int,
+        scope: Int = 0,
     ): Expr? {
         val targetLocals = getScope(scope) ?: return null
 
@@ -115,7 +116,7 @@ public class Locals(
             return targetLocals.aggregations.getOrNull(offset)
         }
 
-        if (!targetLocals.ctes.isNullOrEmpty()) {
+        if (targetLocals.ctes.isNotEmpty()) {
             return exprVarRef(
                 identifier = binder(targetLocals.ctes[offset]),
                 isQualified = false,
@@ -141,7 +142,7 @@ public class Locals(
     private fun getScope(depth: Int): Locals? {
         return when (depth) {
             0 -> this
-            else -> outer?.getScope(depth - 1)
+            else -> outer.takeIf { it.isNotEmpty() }?.last()?.getScope(depth - 1)
         }
     }
 
@@ -862,7 +863,7 @@ public open class RexConverter(
         ctx: Unit,
     ): Expr {
         val inputRel = rex.input
-        val relConverter = transform.getRelConverter(locals)
+        val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(inputRel, ctx).toExprQuerySet()
     }
 
@@ -889,7 +890,7 @@ public open class RexConverter(
         // For `IN` and `EXISTS`, it was planned as RexSelect Node and get handled by visitSelect
         // For comparison operators, it was planned as RexSubquery and get handled by visitSubquery
         val transform = transform
-        val relConverter = transform.getRelConverter(locals)
+        val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(rex.input, ctx).toExprQuerySet()
     }
 
@@ -965,7 +966,7 @@ public open class RexConverter(
         val scope = rex.scope
         val offset = rex.offset
 
-        return locals.getExprOrNull(scope, offset) ?: listener.reportAndThrow(
+        return locals.getExprOrNull(offset, scope) ?: listener.reportAndThrow(
             ScribeProblem.simpleError(
                 ScribeProblem.INVALID_PLAN, "Malformed plan, resolved local (\$var scope=$scope offset=$offset) not in ${locals.dump()}",
             ),

@@ -17,7 +17,7 @@ public open class RedshiftPlanToAst(
         return RedshiftRexConverter(this, locals, context)
     }
 
-    override fun getRelConverter(outer: Locals?): RelConverter {
+    override fun getRelConverter(outer: List<Locals>): RelConverter {
         return RedshiftRelConverter(this, context, outer)
     }
 }

@@ -4,7 +4,7 @@ import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
 
-public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeContext, outer: Locals? = null) : RelConverter(
+public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeContext, outer: List<Locals> = emptyList()) : RelConverter(
     transform,
     context,
     outer,
