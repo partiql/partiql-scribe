@@ -17,7 +17,7 @@ public class TrinoPlanToAst(
         return TrinoRexConverter(this, locals, context)
     }
 
-    override fun getRelConverter(): RelConverter {
-        return TrinoRelConverter(this, context)
+    public override fun getRelConverter(outer: List<Locals>): RelConverter {
+        return TrinoRelConverter(this, context, outer)
     }
 }

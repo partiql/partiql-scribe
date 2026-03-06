@@ -60,6 +60,26 @@ SELECT b, (SELECT v FROM T AS t2 WHERE t2.b = 0) AS match_v FROM T;
 --#[subquery-15]
 SELECT v FROM T WHERE b > (SELECT b FROM T WHERE b > 0) AND EXISTS (SELECT a FROM T AS t2 WHERE t2.b > 0);
 
--- Correlated subquery
+-- Correlated subquery with aggregation
 --#[subquery-16]
-SELECT a FROM T as t1 WHERE b = (SELECT t2.b FROM T AS t2 WHERE t1.b = t2.b);
+SELECT a FROM T as t1 WHERE b > (SELECT avg(t2.b) FROM T AS t2 WHERE t1.a = t2.a);
+
+-- Correlated IN subquery
+--#[subquery-17]
+SELECT b FROM T as t1 WHERE t1.b IN (SELECT t2.b FROM T AS t2 WHERE t2.a = t1.a);
+
+-- Correlated subquery in SELECT
+--#[subquery-18]
+SELECT a, (SELECT MAX(t2.b) FROM T AS t2 WHERE t2.a = t1.a) AS max_b FROM T as t1;
+
+-- Multiple correlated subqueries
+--#[subquery-19]
+SELECT a FROM T as t1 WHERE b > (SELECT AVG(t2.b) FROM T AS t2 WHERE t2.a = t1.a) AND v IN (SELECT t3.v FROM T AS t3 WHERE t3.b = t1.b);
+
+-- Nested correlated subqueries
+--#[subquery-20]
+SELECT a FROM T as t1 WHERE b > (SELECT AVG(t2.b) FROM T AS t2 WHERE t2.a = t1.a AND t2.b > (SELECT MIN(t3.b) FROM T AS t3 WHERE t3.a = t1.a));
+
+-- Correlated with multiple references
+--#[subquery-21]
+SELECT a FROM T as t1 WHERE (SELECT SUM(t2.b) FROM T AS t2 WHERE t2.a = t1.a AND t2.v = t1.v) > 10;

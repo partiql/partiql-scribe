@@ -46,7 +46,8 @@ public open class PlanToAst(
 
     public open fun getRexConverter(locals: Locals): RexConverter = RexConverter(this, locals, context)
 
-    public open fun getRelConverter(): RelConverter = RelConverter(this, context)
+    @JvmOverloads
+    public open fun getRelConverter(outer: List<Locals> = emptyList()): RelConverter = RelConverter(this, context, outer)
 
     public open fun getFunction(
         name: String,

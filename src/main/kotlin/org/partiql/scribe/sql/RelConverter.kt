@@ -175,6 +175,7 @@ internal class QueryBodySetOpFactory(
 public open class RelConverter(
     internal val transform: PlanToAst,
     internal val context: ScribeContext,
+    internal val outer: List<Locals> = emptyList(),
 ) : OperatorVisitor<ExprQuerySetFactory, Unit> {
     internal val listener = context.getProblemListener()
 
@@ -221,7 +222,7 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val sfw = visitRelSFW(rel.input, ctx)
-        val rexToSql = transform.getRexConverter(Locals(rel.input.type.fields.toList()))
+        val rexToSql = transform.getRexConverter(Locals(rel.input.type.fields.toList(), outer = outer))
         if (rel.groups.isNotEmpty()) {
             sfw.groupBy =
                 groupBy(
@@ -349,7 +350,7 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val relCtx = visitRelSFW(rel.input, ctx)
-        val rexToSql = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        val rexToSql = transform.getRexConverter(Locals(rel.type.fields.toList(), outer = outer))
         relCtx.exclude =
             exclude(
                 rel.exclusions.flatMap { exclusion ->
@@ -371,12 +372,17 @@ public open class RelConverter(
                 Locals(
                     env = rel.type.fields.toList(),
                     aggregations = constructAggregationSchema(sfw),
+                    outer = outer,
                 )
-
             val rexConverter = transform.getRexConverter(locals)
             sfw.having = rexConverter.apply(rel.predicate)
         } else {
-            val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+            val locals =
+                Locals(
+                    rel.type.fields.toList(),
+                    outer = outer,
+                )
+            val rexConverter = transform.getRexConverter(locals)
             sfw.where = rexConverter.apply(rel.predicate)
         }
         return ExprQuerySetFactory(
@@ -422,10 +428,14 @@ public open class RelConverter(
         val lhs = visitRelSFW(rel.left, ctx)
         val lhsFrom = assertNotNull(lhs.from)
         assert(lhsFrom.tableRefs.size == 1)
-        val rhs = visitRelSFW(rel.right, ctx)
+
+        // The right table has extra scope level
+        val rightConverter = transform.getRelConverter(outer + listOf(Locals(rel.left.type.fields.toList(), outer = outer)))
+        val rhs = rightConverter.visitRelSFW(rel.right, ctx)
+
         val rhsFrom = assertNotNull(rhs.from)
         assert(rhsFrom.tableRefs.size == 1)
-        val locals = Locals(rel.left.type.fields.toList() + rel.right.type.fields.toList())
+        val locals = Locals(rel.left.type.fields.toList() + rel.right.type.fields.toList(), outer = outer)
         val condition = transform.getRexConverter(locals).apply(rel.condition)
         val joinType =
             when (rel.joinType.code()) {
@@ -464,7 +474,7 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val input = visit(rel.input, Unit)
-        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList(), outer = outer))
         return input.copy(
             limit = rexConverter.visit(rel.limit, Unit),
         )
@@ -475,7 +485,7 @@ public open class RelConverter(
         ctx: Unit,
     ): ExprQuerySetFactory {
         val input = visit(rel.input, Unit)
-        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
+        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList(), outer = outer))
         return input.copy(
             offset = rexConverter.visit(rel.offset, Unit),
         )
@@ -495,6 +505,7 @@ public open class RelConverter(
                 env = input.type.fields.toList(),
                 aggregations = constructAggregationSchema(sfw),
                 windowFunctions = sfw.windowFunctions ?: emptyList(),
+                outer = outer,
             )
 
         val rexConverter = transform.getRexConverter(locals)
@@ -578,6 +589,7 @@ public open class RelConverter(
                 Locals(
                     env = type.fields.toList(),
                     aggregations = emptyList(),
+                    outer = outer,
                     // no projections
                 ),
             )
@@ -644,11 +656,13 @@ public open class RelConverter(
                         env = rel.type.fields.toList(),
                         // OrderBy may contain aggregation function or alias from select
                         aggregations = constructAggregationSchema(sfw),
+                        outer = outer,
                     )
                 }
                 is QueryBodySetOpFactory -> {
                     Locals(
                         env = rel.type.fields.toList(),
+                        outer = outer,
                     )
                 }
 
@@ -727,8 +741,9 @@ public open class RelConverter(
         rel: RelWith,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        val rexConverter = transform.getRexConverter(Locals(rel.type.fields.toList()))
-        val querySet = visit(rel.input, ctx)
+        val ctes = rel.elements.map { it.name }
+        val withLocals = Locals(rel.type.fields.toList(), outer = outer, ctes = ctes)
+        val rexConverter = transform.getRexConverter(withLocals)
         val withElements =
             rel.elements.map { element ->
                 val name = element.name
@@ -739,6 +754,7 @@ public open class RelConverter(
                     columnList = null,
                 )
             }
+        val querySet = transform.getRelConverter(outer + listOf(withLocals)).visit(rel.input, ctx)
         querySet.with =
             Ast.with(
                 elements = withElements,
@@ -756,6 +772,7 @@ public open class RelConverter(
             Locals(
                 env = rel.input.type.fields.toList(),
                 aggregations = constructAggregationSchema(sfw),
+                outer = outer,
             )
         val rexConverter = transform.getRexConverter(locals)
 
