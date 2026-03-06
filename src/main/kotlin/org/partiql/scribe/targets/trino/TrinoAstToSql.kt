@@ -188,31 +188,51 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
                     offset = node.offset,
                     orderBy = orderBy(newSorts),
                 )
-            return visitExprQuerySetPrivate(newNode, tail)
+            return visitExprQuerySetLimitOffsetTReorder(newNode, tail)
         }
-        return visitExprQuerySetPrivate(node, tail)
+        return visitExprQuerySetLimitOffsetTReorder(node, tail)
     }
 
-    /**
-     * The only difference between this and [super.visitExprQuerySet] is that trino requires `OFFSET` before `LIMIT`
-     */
-    private fun visitExprQuerySetPrivate(
+    private fun visitExprQuerySetLimitOffsetTReorder(
         node: ExprQuerySet,
         tail: SqlBlock,
     ): SqlBlock {
-        var t = tail
-        t = if (node.with != null) visitWith(node.with!!, t) else t
-        // visit body (SFW or other SQL set op)
-        t = visit(node.body, t)
-        // ORDER BY
-        val orderBy = node.orderBy
-        t = if (orderBy != null) visitOrderBy(orderBy, t concat " ") else t
-        // OFFSET
-        val offset = node.offset
-        t = if (offset != null) visitExprWrapped(offset, t concat " OFFSET ") else t
-        // LIMIT
-        val limit = node.limit
-        t = if (limit != null) visitExprWrapped(limit, t concat " LIMIT ") else t
+        var t = super.visitExprQuerySet(node, tail)
+
+        if (node.limit != null && node.offset != null) {
+            var current = tail
+            var limitBlock: SqlBlock? = null
+            var offsetBlock: SqlBlock? = null
+
+            // locate last occurence of LIMIT and OFFSET node
+            while (current.next != null) {
+                val next = current.next!!
+                if (next is SqlBlock.Text) {
+                    if (next.text.trim() == "LIMIT") {
+                        limitBlock = current
+                    } else if (next.text.trim() == "OFFSET") {
+                        offsetBlock = current
+                    }
+                }
+                current = next
+            }
+
+            if (limitBlock != null && offsetBlock != null) {
+                // swap the order of LIMIT and OFFSET clauses
+                val limit = limitBlock.next!!
+                val offset = offsetBlock.next!!
+                val end = offset.next!!.next
+                limitBlock.next = offset
+                offset.next!!.next = limit
+                limit.next!!.next = end
+
+                // update the tail to point to the new end if needed
+                if (end == null) {
+                    t = limit.next!!
+                }
+            }
+        }
+
         return t
     }
 
