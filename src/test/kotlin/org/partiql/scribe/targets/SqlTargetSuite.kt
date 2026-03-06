@@ -94,7 +94,7 @@ abstract class SqlTargetSuite {
         file: File,
     ): DynamicContainer {
         val group = parent.name
-        val tests = ScribeTestProvider().load(group, file)
+        val tests = parse(group, file)
         val scribe = Scribe(scribeContext = scribeContext)
 
         val children =

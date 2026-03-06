@@ -112,7 +112,7 @@ public class Locals(
         val targetLocals = getScope(scope) ?: return null
 
         // Handle aggregation first as RelAggregate creates a new schema with aggregations plus group keys
-        if (targetLocals.aggregations.isNotEmpty() && offset < aggregations.size) {
+        if (targetLocals.aggregations.isNotEmpty() && offset < targetLocals.aggregations.size) {
             return targetLocals.aggregations.getOrNull(offset)
         }
 

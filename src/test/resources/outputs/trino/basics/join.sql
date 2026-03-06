@@ -129,3 +129,7 @@ SELECT "T1"."c" AS "c", "T2"."a" AS "a", "T1"."v" AS "v" FROM "default"."T" AS "
 -- Join with HAVING clause
 --#[join-33]
 SELECT "T2"."c" AS "c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T2"."c" HAVING count(1) > CAST(5 AS BIGINT);
+
+-- Join with Path navigation
+--#[join-34]
+SELECT "E"."a" AS "a" FROM "default"."T" AS "E" INNER JOIN "E"."b" AS "item" ON true;
