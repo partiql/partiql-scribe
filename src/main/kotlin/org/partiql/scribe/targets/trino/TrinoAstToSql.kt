@@ -139,8 +139,8 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.INT8 -> tail concat "BIGINT"
             DataType.DOUBLE_PRECISION -> tail concat "DOUBLE"
             DataType.STRING -> tail concat "VARCHAR"
-            DataType.TIME, DataType.TIME_WITH_TIME_ZONE -> tail concat type("TIME", node.precision, gap = true)
-            DataType.TIMESTAMP, DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat type("TIMESTAMP", node.precision, gap = true)
+            DataType.TIME, DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME"
+            DataType.TIMESTAMP, DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP"
             else -> super.visitDataType(node, tail)
         }
     }

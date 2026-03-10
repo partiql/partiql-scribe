@@ -108,25 +108,25 @@ SELECT CAST("T"."timestamp_1" AS DATE) AS "res" FROM "default"."T" AS "T";
 SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-34]
-SELECT CAST("T"."timestamp_1" AS TIME (6)) AS "res" FROM "default"."T" AS "T";
+SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-35]
 SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-36]
-SELECT CAST("T"."timestamp_1" AS TIME (6)) AS "res" FROM "default"."T" AS "T";
+SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-37]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-38]
-SELECT CAST("T"."timestamp_1" AS TIMESTAMP (6)) AS "res" FROM "default"."T" AS "T";
+SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-39]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-40]
-SELECT CAST("T"."timestamp_1" AS TIMESTAMP (6)) AS "res" FROM "default"."T" AS "T";
+SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
 -- INTERVAL YEAR-MONTH
 -- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
