@@ -144,6 +144,7 @@ public abstract class SqlCalls(context: ScribeContext) {
             "current_date" to sessionAttribute(SessionAttribute.CURRENT_DATE()),
             // in collection
             "in_collection" to { args -> inCollection(args) },
+            "sql_in_collection" to { args -> inCollection(args) },
             // between
             "between" to { args -> between(args) },
             // ABS for intervals and numbers

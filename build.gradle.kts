@@ -24,7 +24,7 @@ object Versions {
 
     // Deps
     const val JUNIT_5 = "5.9.3"
-    const val PARTIQL = "1.2.2-SNAPSHOT"
+    const val PARTIQL = "1.3.7"
 }
 
 object Deps {
