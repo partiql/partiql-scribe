@@ -139,8 +139,27 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.INT8 -> tail concat "BIGINT"
             DataType.DOUBLE_PRECISION -> tail concat "DOUBLE"
             DataType.STRING -> tail concat "VARCHAR"
-            DataType.TIME, DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME"
-            DataType.TIMESTAMP, DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP"
+            DataType.TIME -> tail concat "TIME"
+
+            // According to https://trino.io/docs/current/language/types.html#timestamp-p-with-time-zone,
+            // Trino does not support precision and `WITH TIME ZONE` in TIME/TIMESTAMP in time literal,
+            // but support them in the CAST target type.
+            // e.g. SELECT cast(TIMESTAMP '2020-06-10 15:55:23.383345' as TIMESTAMP(12));
+            DataType.TIME_WITH_TIME_ZONE -> {
+                if (tail is SqlBlock.Text && tail.text.trim() == "AS"){
+                    tail concat "TIME WITH TIME ZONE"
+                } else {
+                    tail concat "TIME"
+                }
+            }
+            DataType.TIMESTAMP -> tail concat "TIMESTAMP"
+            DataType.TIMESTAMP_WITH_TIME_ZONE -> {
+                if (tail is SqlBlock.Text && tail.text.trim() == "AS"){
+                    tail concat  "TIMESTAMP WITH TIME ZONE"
+                } else {
+                    tail concat "TIMESTAMP"
+                }
+            }
             else -> super.visitDataType(node, tail)
         }
     }
