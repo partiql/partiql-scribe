@@ -145,8 +145,9 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             // Trino does not support precision and `WITH TIME ZONE` in TIME/TIMESTAMP in time literal,
             // but support them in the CAST target type.
             // e.g. SELECT cast(TIMESTAMP '2020-06-10 15:55:23.383345' as TIMESTAMP(12));
+            // However, there are complaints that precision is not supported in trino derived products, drop precision for now.
             DataType.TIME_WITH_TIME_ZONE -> {
-                if (tail is SqlBlock.Text && tail.text.trim() == "AS"){
+                if (tail is SqlBlock.Text && tail.text.trim() == "AS") {
                     tail concat "TIME WITH TIME ZONE"
                 } else {
                     tail concat "TIME"
@@ -154,8 +155,8 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             }
             DataType.TIMESTAMP -> tail concat "TIMESTAMP"
             DataType.TIMESTAMP_WITH_TIME_ZONE -> {
-                if (tail is SqlBlock.Text && tail.text.trim() == "AS"){
-                    tail concat  "TIMESTAMP WITH TIME ZONE"
+                if (tail is SqlBlock.Text && tail.text.trim() == "AS") {
+                    tail concat "TIMESTAMP WITH TIME ZONE"
                 } else {
                     tail concat "TIMESTAMP"
                 }
