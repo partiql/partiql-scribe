@@ -6,7 +6,7 @@ SELECT CAST('abc' AS VARCHAR) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-01]
 SELECT CAST('abc' AS VARCHAR(5)) AS "res" FROM "default"."T" AS "T";
-git
+
 --#[cast-02]
 SELECT CAST('abc' AS CHAR) AS "res" FROM "default"."T" AS "T";
 

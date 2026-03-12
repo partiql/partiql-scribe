@@ -74,11 +74,26 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         val v = node.lit
+        var t = tail
         if (v.code() == Literal.INT_NUM && intValueOutOfRange(v.bigDecimalValue())) {
             // CAST('<v>' AS DECIMAL(38,0))
             val lit = Literal.string(v.bigDecimalValue().toString())
             val ast = exprCast(exprLit(lit), DataType.DECIMAL(38, 0))
             return visitExprCast(ast, tail)
+        }
+
+        if (v.code() == Literal.TYPED_STRING) {
+            val lit = node.lit
+            val dataType = lit.dataType().code()
+            if(dataType == DataType.TIME || dataType == DataType.TIME_WITH_TIME_ZONE) {
+                t = t concat String.format("TIME '%s'", lit.stringValue())
+                return t
+            }
+
+            if(dataType == DataType.TIMESTAMP || dataType == DataType.TIMESTAMP_WITH_TIME_ZONE) {
+                t = t concat String.format("TIMESTAMP '%s'", lit.stringValue())
+                return t
+            }
         }
         return super.visitExprLit(node, tail)
     }
@@ -146,21 +161,9 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             // but support them in the CAST target type.
             // e.g. SELECT cast(TIMESTAMP '2020-06-10 15:55:23.383345' as TIMESTAMP(12));
             // However, there are complaints that precision is not supported in trino derived products, drop precision for now.
-            DataType.TIME_WITH_TIME_ZONE -> {
-                if (tail is SqlBlock.Text && tail.text.trim() == "AS") {
-                    tail concat "TIME WITH TIME ZONE"
-                } else {
-                    tail concat "TIME"
-                }
-            }
+            DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME WITH TIME ZONE"
             DataType.TIMESTAMP -> tail concat "TIMESTAMP"
-            DataType.TIMESTAMP_WITH_TIME_ZONE -> {
-                if (tail is SqlBlock.Text && tail.text.trim() == "AS") {
-                    tail concat "TIMESTAMP WITH TIME ZONE"
-                } else {
-                    tail concat "TIMESTAMP"
-                }
-            }
+            DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP WITH TIME ZONE"
             else -> super.visitDataType(node, tail)
         }
     }
