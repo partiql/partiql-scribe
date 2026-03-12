@@ -74,11 +74,26 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         val v = node.lit
+        var t = tail
         if (v.code() == Literal.INT_NUM && intValueOutOfRange(v.bigDecimalValue())) {
             // CAST('<v>' AS DECIMAL(38,0))
             val lit = Literal.string(v.bigDecimalValue().toString())
             val ast = exprCast(exprLit(lit), DataType.DECIMAL(38, 0))
             return visitExprCast(ast, tail)
+        }
+
+        if (v.code() == Literal.TYPED_STRING) {
+            val lit = node.lit
+            val dataType = lit.dataType().code()
+            if (dataType == DataType.TIME || dataType == DataType.TIME_WITH_TIME_ZONE) {
+                t = t concat String.format("TIME '%s'", lit.stringValue())
+                return t
+            }
+
+            if (dataType == DataType.TIMESTAMP || dataType == DataType.TIMESTAMP_WITH_TIME_ZONE) {
+                t = t concat String.format("TIMESTAMP '%s'", lit.stringValue())
+                return t
+            }
         }
         return super.visitExprLit(node, tail)
     }
@@ -139,8 +154,16 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.INT8 -> tail concat "BIGINT"
             DataType.DOUBLE_PRECISION -> tail concat "DOUBLE"
             DataType.STRING -> tail concat "VARCHAR"
-            DataType.TIME, DataType.TIME_WITH_TIME_ZONE -> tail concat type("TIME", node.precision, gap = true)
-            DataType.TIMESTAMP, DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat type("TIMESTAMP", node.precision, gap = true)
+            DataType.TIME -> tail concat "TIME"
+
+            // According to https://trino.io/docs/current/language/types.html#timestamp-p-with-time-zone,
+            // Trino does not support precision and `WITH TIME ZONE` in TIME/TIMESTAMP in time literal,
+            // but support them in the CAST target type.
+            // e.g. SELECT cast(TIMESTAMP '2020-06-10 15:55:23.383345' as TIMESTAMP(12));
+            // However, there are complaints that precision is not supported in trino derived products, drop precision for now.
+            DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME WITH TIME ZONE"
+            DataType.TIMESTAMP -> tail concat "TIMESTAMP"
+            DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP WITH TIME ZONE"
             else -> super.visitDataType(node, tail)
         }
     }
