@@ -85,12 +85,12 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         if (v.code() == Literal.TYPED_STRING) {
             val lit = node.lit
             val dataType = lit.dataType().code()
-            if(dataType == DataType.TIME || dataType == DataType.TIME_WITH_TIME_ZONE) {
+            if (dataType == DataType.TIME || dataType == DataType.TIME_WITH_TIME_ZONE) {
                 t = t concat String.format("TIME '%s'", lit.stringValue())
                 return t
             }
 
-            if(dataType == DataType.TIMESTAMP || dataType == DataType.TIMESTAMP_WITH_TIME_ZONE) {
+            if (dataType == DataType.TIMESTAMP || dataType == DataType.TIMESTAMP_WITH_TIME_ZONE) {
                 t = t concat String.format("TIMESTAMP '%s'", lit.stringValue())
                 return t
             }
