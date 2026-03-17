@@ -86,11 +86,13 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             val lit = node.lit
             val dataType = lit.dataType().code()
             if (dataType == DataType.TIME || dataType == DataType.TIME_WITH_TIME_ZONE) {
+                // Trino does not support precision in TIME literal and `WITH TIME ZONE`.
                 t = t concat String.format("TIME '%s'", lit.stringValue())
                 return t
             }
 
             if (dataType == DataType.TIMESTAMP || dataType == DataType.TIMESTAMP_WITH_TIME_ZONE) {
+                // Trino does not support precision in TIMESTAMP literal and `WITH TIME ZONE`
                 t = t concat String.format("TIMESTAMP '%s'", lit.stringValue())
                 return t
             }
@@ -158,9 +160,11 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
 
             // According to https://trino.io/docs/current/language/types.html#timestamp-p-with-time-zone,
             // Trino does not support precision and `WITH TIME ZONE` in TIME/TIMESTAMP in time literal,
-            // but support them in the CAST target type.
+            // but support them in the scenarios like cast or table creation.
             // e.g. SELECT cast(TIMESTAMP '2020-06-10 15:55:23.383345' as TIMESTAMP(12));
-            // However, there are complaints that precision is not supported in trino derived products, drop precision for now.
+            // However, due to limit of Datum limitation, unspecified precision information is not preserved. So we ignore
+            // the precision information here.
+            // TODO precision https://github.com/partiql/partiql-scribe/issues/145
             DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME WITH TIME ZONE"
             DataType.TIMESTAMP -> tail concat "TIMESTAMP"
             DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP WITH TIME ZONE"
