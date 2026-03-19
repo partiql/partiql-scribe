@@ -596,14 +596,17 @@ public open class RexConverter(
             PType.CHAR, PType.VARCHAR, PType.STRING -> Literal.string(this.string)
             // Date literal
             PType.DATE -> Literal.typedString(DataType.DATE(), this.localDate.toString())
-            PType.TIME -> Literal.typedString(DataType.TIME(), this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+            PType.TIME ->
+                // TODO precision https://github.com/partiql/partiql-scribe/issues/145
+                Literal.typedString(DataType.TIME(), this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
             PType.TIMESTAMP ->
+                // TODO precision https://github.com/partiql/partiql-scribe/issues/145
                 Literal.typedString(
                     DataType.TIMESTAMP(),
                     "${this.localDate} ${this.localTime.format(DateTimeFormatter.ISO_LOCAL_TIME)}",
                 )
             PType.TIMEZ -> {
-                // TODO precision
+                // TODO precision https://github.com/partiql/partiql-scribe/issues/145
                 val offsetString =
                     when (val offset = this.offsetTime.offset) {
                         ZoneOffset.UTC -> "+00:00"
@@ -615,7 +618,7 @@ public open class RexConverter(
                 )
             }
             PType.TIMESTAMPZ -> {
-                // TODO precision
+                // TODO precision https://github.com/partiql/partiql-scribe/issues/145
                 val offsetString =
                     when (val offset = this.offsetTime.offset) {
                         ZoneOffset.UTC -> "+00:00"

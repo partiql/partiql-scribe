@@ -112,7 +112,7 @@ SELECT CAST(`T`.`timestamp_1` AS DATE) AS `res` FROM `default`.`T` AS `T`;
 -- SELECT CAST(`T`.`timestamp_1` AS TIME (6)) AS `res` FROM `default`.`T` AS `T`;
 --
 -- --#[cast-35]
--- SELECT CAST(`T`.`timestamp_1` AS TIME WITH TIME ZONE) AS `res` FROM `default`.`T` AS `T`;
+-- SELECT CAST(`T`.`timestamp_1` AS TIMESTAMP) AS `res` FROM `default`.`T` AS `T`;
 --
 -- --#[cast-36]
 -- SELECT CAST(`T`.`timestamp_1` AS TIME (6) WITH TIME ZONE) AS `res` FROM `default`.`T` AS `T`;
@@ -229,3 +229,30 @@ SELECT CAST(`T`.`col_d2s` AS INTERVAL MINUTE TO SECOND) AS `res` FROM `default`.
 
 --#[cast-73]
 SELECT CAST(`T`.`col_d2s` AS INTERVAL MINUTE TO SECOND) AS `res` FROM `default`.`T_INTERVALS` AS `T`;
+
+-- Test precision during cast, transcribed result should preserve previous precision if possible
+
+-- Spark does not have a TIME type
+--#[cast-74]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;
+
+--#[cast-75]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;
+
+--#[cast-76]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;
+
+--#[cast-77]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;
+
+--#[cast-78]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;
+
+--#[cast-79]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;
+
+--#[cast-80]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;
+
+--#[cast-81]
+SELECT CAST(TIMESTAMP_NTZ '2023-01-15 12:30:45' AS TIMESTAMP) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS `_1` FROM `default`.`T_ALL_TYPES` AS `T`;

@@ -108,25 +108,25 @@ SELECT CAST("T"."timestamp_1" AS DATE) AS "res" FROM "default"."T" AS "T";
 SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-34]
-SELECT CAST("T"."timestamp_1" AS TIME (6)) AS "res" FROM "default"."T" AS "T";
-
---#[cast-35]
 SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
+--#[cast-35]
+SELECT CAST("T"."timestamp_1" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
+
 --#[cast-36]
-SELECT CAST("T"."timestamp_1" AS TIME (6)) AS "res" FROM "default"."T" AS "T";
+SELECT CAST("T"."timestamp_1" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-37]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-38]
-SELECT CAST("T"."timestamp_1" AS TIMESTAMP (6)) AS "res" FROM "default"."T" AS "T";
-
---#[cast-39]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
+--#[cast-39]
+SELECT CAST("T"."timestamp_1" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
+
 --#[cast-40]
-SELECT CAST("T"."timestamp_1" AS TIMESTAMP (6)) AS "res" FROM "default"."T" AS "T";
+SELECT CAST("T"."timestamp_1" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
 
 -- INTERVAL YEAR-MONTH
 -- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
@@ -259,3 +259,29 @@ SELECT CAST("T"."col_d2s" AS INTERVAL DAY TO SECOND) AS "res" FROM "default"."T_
 -- Trino only supports casting to YEAR-MONTH and DAY-SECOND intervals
 -- --#[cast-73]
 -- SELECT CAST("T"."col_d2s" AS INTERVAL MINUTE (2) TO SECOND (3)) AS "res" FROM "default"."T_INTERVALS" AS "T";
+
+-- Test precision during cast, transcribed result should preserve previous precision if possible
+
+--#[cast-74]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[cast-75]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[cast-76]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[cast-77]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[cast-78]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[cast-79]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[cast-80]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[cast-81]
+SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMP '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
