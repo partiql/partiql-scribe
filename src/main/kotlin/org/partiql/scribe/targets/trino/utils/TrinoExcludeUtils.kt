@@ -80,24 +80,25 @@ private fun PType.toRexCastRow(
     prefixPath: Rex,
     context: ScribeContext,
 ): RexCall {
-    val rowValues = if (prefixPath is RexStruct) {
-        // For the original Rex is raw RexStruct, we should return fields directly instead of recreation.
-        prefixPath.fields.map { field -> field.value }
-    } else {
-        this.fields.map { field ->
-            val newPath =
-                RexPathKey.create(
-                    prefixPath,
-                    RexLit.create(Datum.string(field.name)),
-                )
-            val newV =
-                field.type.toRexTrino(
-                    prefixPath = newPath,
-                    context = context,
-                )
-            newV
+    val rowValues =
+        if (prefixPath is RexStruct) {
+            // For the original Rex is raw RexStruct, we should return fields directly instead of recreation.
+            prefixPath.fields.map { field -> field.value }
+        } else {
+            this.fields.map { field ->
+                val newPath =
+                    RexPathKey.create(
+                        prefixPath,
+                        RexLit.create(Datum.string(field.name)),
+                    )
+                val newV =
+                    field.type.toRexTrino(
+                        prefixPath = newPath,
+                        context = context,
+                    )
+                newV
+            }
         }
-    }
     val castType = RexLit.create(Datum.string(this.toTrinoString(context)))
     return RexCall.create(
         cast_row_fn_sig,
