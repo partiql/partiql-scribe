@@ -35,7 +35,7 @@ SELECT `t1`.`flds` AS `flds`, NAMED_STRUCT('a', `t2`.`flds`.`a`, 'c', NAMED_STRU
 
 --#[exclude-10]
 -- EXCLUDE with multiple JOIN and WHERE clause
-SELECT NAMED_STRUCT('b', NAMED_STRUCT('field_x', `t1`.`flds`.`b`.`field_x`, 'field_y', `t1`.`flds`.`b`.`field_y`), 'c', NAMED_STRUCT('field_x', `t1`.`flds`.`c`.`field_x`, 'field_y', `t1`.`flds`.`c`.`field_y`)) AS `flds`, `t1`.`foo` AS `foo`, NAMED_STRUCT('a', NAMED_STRUCT('field_x', `t2`.`flds`.`a`.`field_x`, 'field_y', `t2`.`flds`.`a`.`field_y`), 'c', NAMED_STRUCT('field_x', `t2`.`flds`.`c`.`field_x`, 'field_y', `t2`.`flds`.`c`.`field_y`)) AS `flds`, `t2`.`foo` AS `foo`, NAMED_STRUCT('a', NAMED_STRUCT('field_x', `t3`.`flds`.`a`.`field_x`, 'field_y', `t3`.`flds`.`a`.`field_y`), 'b', NAMED_STRUCT('field_x', `t3`.`flds`.`b`.`field_x`, 'field_y', `t3`.`flds`.`b`.`field_y`)) AS `flds`, `t3`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`);
+SELECT NAMED_STRUCT('b', `t1`.`flds`.`b`, 'c', `t1`.`flds`.`c`) AS `flds`, `t1`.`foo` AS `foo`, NAMED_STRUCT('a', `t2`.`flds`.`a`, 'c', `t2`.`flds`.`c`) AS `flds`, `t2`.`foo` AS `foo`, NAMED_STRUCT('a', `t3`.`flds`.`a`, 'b', `t3`.`flds`.`b`) AS `flds`, `t3`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`);
 
 --#[exclude-11]
 -- EXCLUDE with select projection list and multiple JOINs
