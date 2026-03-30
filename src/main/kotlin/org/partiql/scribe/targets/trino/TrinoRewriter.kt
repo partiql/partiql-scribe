@@ -53,7 +53,7 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
                 val type = field.value.type
                 // Rewrite any structs that have a field that's a ROW type and is a var reference or path.
                 val newOp =
-                    if (fieldValue is RexVar || fieldValue.isPathRex()) {
+                    if (fieldValue is RexVar || fieldValue.isPathRex() || fieldValue is RexStruct) {
                         type.pType.toRexTrino(
                             prefixPath = fieldValue,
                             context = context,

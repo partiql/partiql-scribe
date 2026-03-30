@@ -88,15 +88,41 @@
         },
       },
       {
-        name: "col_struct",
+        name: "col_struct_simple",
         type: {
           type: "struct",
           constraints: [ closed, ordered, unique ],
           fields: [
+            { name: "level1_col_int", type: "int32" },
+            { name: "level1_col_double", type: "float64" },
+            { name: "level1_col_string", type: "string" },
+            { name: "level1_col_timestamp", type: "timestamp" },
+          ]
+        },
+      },
+      {
+        name: "col_struct_nested",
+        type: {
+          type: "struct",
+          constraints: [ closed, ordered, unique ],
+          fields: [
+            { name: "level1_col_int", type: "int32" },
+            { name: "level1_col_double", type: "float64" },
+            { name: "level1_col_string", type: "string" },
+            { name: "level1_col_timestamp", type: "timestamp" },
             {
-              name: "nested_field",
-              type: "string"
-            }
+              name: "level1_col_struct",
+              type: {
+                type: "struct",
+                constraints: [ closed, ordered, unique ],
+                fields: [
+                  { name: "level2_col_int", type: "int32" },
+                  { name: "level2_col_double", type: "float64" },
+                  { name: "level2_col_string", type: "string" },
+                  { name: "level2_col_timestamp", type: "timestamp" },
+                ]
+              },
+            },
           ]
         },
       },

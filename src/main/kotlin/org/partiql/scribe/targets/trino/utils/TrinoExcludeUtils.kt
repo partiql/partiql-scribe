@@ -5,6 +5,7 @@ import org.partiql.plan.rex.RexArray
 import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexPathKey
+import org.partiql.plan.rex.RexStruct
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.utils.containsExcludedFieldMeta
@@ -43,19 +44,20 @@ internal fun PType.toRexTrino(
     context: ScribeContext,
 ): Rex {
     val type = this
-    if (!type.containsExcludedFieldMeta()) {
-        return prefixPath
-    }
-    return when (type.code()) {
-        PType.ROW -> {
-            when (type.fields.size) {
-                0 -> context.logError("Currently Trino does not allow empty ROWs. Consider `EXCLUDE` on the outer struct")
-                else -> type.toRexCastRow(prefixPath, context)
+    if (this.containsExcludedFieldMeta() || prefixPath is RexStruct) {
+        return when (type.code()) {
+            PType.ROW -> {
+                when (type.fields.size) {
+                    0 -> context.logError("Currently Trino does not allow empty ROWs. Consider `EXCLUDE` on the outer struct")
+                    else -> type.toRexCastRow(prefixPath, context)
+                }
             }
+            PType.ARRAY, PType.BAG -> type.toRexCallTransform(prefixPath, context)
+            else -> prefixPath
         }
-        PType.ARRAY, PType.BAG -> type.toRexCallTransform(prefixPath, context)
-        else -> prefixPath
     }
+
+    return prefixPath
 }
 
 private val cast_row_fn_sig =
@@ -78,7 +80,10 @@ private fun PType.toRexCastRow(
     prefixPath: Rex,
     context: ScribeContext,
 ): RexCall {
-    val rowValues =
+    val rowValues = if (prefixPath is RexStruct) {
+        // For the original Rex is raw RexStruct, we should return fields directly instead of recreation.
+        prefixPath.fields.map { field -> field.value }
+    } else {
         this.fields.map { field ->
             val newPath =
                 RexPathKey.create(
@@ -92,6 +97,7 @@ private fun PType.toRexCastRow(
                 )
             newV
         }
+    }
     val castType = RexLit.create(Datum.string(this.toTrinoString(context)))
     return RexCall.create(
         cast_row_fn_sig,
@@ -267,7 +273,7 @@ private fun PType.toTrinoString(context: ScribeContext): String {
         }
         PType.REAL -> "REAL"
         PType.DOUBLE -> "DOUBLE"
-        PType.UNKNOWN -> "NULL"
+        PType.UNKNOWN -> context.logError("Not able to convert PType $this to Trino")
         PType.ARRAY, PType.BAG -> {
             val head = "ARRAY<"
             val elementType = type.typeParameter.toTrinoString(context)

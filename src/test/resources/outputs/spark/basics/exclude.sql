@@ -5,16 +5,16 @@ SELECT `t`.`flds` AS `flds` FROM `default`.`EXCLUDE_T` AS `t`;
 SELECT `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-02]
-SELECT STRUCT(`t`.`flds`.`a` AS `a`, `t`.`flds`.`c` AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
+SELECT NAMED_STRUCT('a', `t`.`flds`.`a`, 'c', `t`.`flds`.`c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-03]
-SELECT STRUCT(`t`.`flds`.`a` AS `a`, `t`.`flds`.`b` AS `b`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
+SELECT NAMED_STRUCT('a', `t`.`flds`.`a`, 'b', `t`.`flds`.`b`, 'c', NAMED_STRUCT('field_y', `t`.`flds`.`c`.`field_y`)) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-04]
-SELECT STRUCT(`t`.`flds`.`a` AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
+SELECT NAMED_STRUCT('a', `t`.`flds`.`a`, 'c', NAMED_STRUCT('field_y', `t`.`flds`.`c`.`field_y`)) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-05]
-SELECT STRUCT(`t`.`flds`.`a` AS `a`, `t`.`flds`.`b` AS `b`, STRUCT(`t`.`flds`.`c`.`field_x` AS `field_x`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
+SELECT NAMED_STRUCT('a', `t`.`flds`.`a`, 'b', `t`.`flds`.`b`, 'c', NAMED_STRUCT('field_x', `t`.`flds`.`c`.`field_x`)) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 -- --#[exclude-06]
 -- Exclude all the fields of `t.flds.c`; Spark support for empty structs is confusing and varies across versions.
@@ -24,22 +24,22 @@ SELECT STRUCT(`t`.`flds`.`a` AS `a`, `t`.`flds`.`b` AS `b`, STRUCT(`t`.`flds`.`c
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 --#[exclude-07]
-SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> STRUCT(`___coll_wildcard___`.`field_y` AS `field_y`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`;
+SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> NAMED_STRUCT('field_y', `___coll_wildcard___`.`field_y`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`;
 
 --#[exclude-08]
-SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> STRUCT(`___coll_wildcard___`.`field_x` AS `field_x`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`;
+SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> NAMED_STRUCT('field_x', `___coll_wildcard___`.`field_x`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_COLL_WILDCARD` AS `t`;
 
 --#[exclude-09]
 -- EXCLUDE with JOIN and WHERE clause
-SELECT `t1`.`flds` AS `flds`, STRUCT(`t2`.`flds`.`a` AS `a`, STRUCT(`t2`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t2`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true WHERE `t1`.`foo` = `t2`.`foo`;
+SELECT `t1`.`flds` AS `flds`, NAMED_STRUCT('a', `t2`.`flds`.`a`, 'c', NAMED_STRUCT('field_y', `t2`.`flds`.`c`.`field_y`)) AS `flds`, `t2`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true WHERE `t1`.`foo` = `t2`.`foo`;
 
 --#[exclude-10]
 -- EXCLUDE with multiple JOIN and WHERE clause
-SELECT STRUCT(STRUCT(`t1`.`flds`.`b`.`field_x` AS `field_x`, `t1`.`flds`.`b`.`field_y` AS `field_y`) AS `b`, STRUCT(`t1`.`flds`.`c`.`field_x` AS `field_x`, `t1`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t1`.`foo` AS `foo`, STRUCT(STRUCT(`t2`.`flds`.`a`.`field_x` AS `field_x`, `t2`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t2`.`flds`.`c`.`field_x` AS `field_x`, `t2`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t2`.`foo` AS `foo`, STRUCT(STRUCT(`t3`.`flds`.`a`.`field_x` AS `field_x`, `t3`.`flds`.`a`.`field_y` AS `field_y`) AS `a`, STRUCT(`t3`.`flds`.`b`.`field_x` AS `field_x`, `t3`.`flds`.`b`.`field_y` AS `field_y`) AS `b`) AS `flds`, `t3`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`)
+SELECT NAMED_STRUCT('b', NAMED_STRUCT('field_x', `t1`.`flds`.`b`.`field_x`, 'field_y', `t1`.`flds`.`b`.`field_y`), 'c', NAMED_STRUCT('field_x', `t1`.`flds`.`c`.`field_x`, 'field_y', `t1`.`flds`.`c`.`field_y`)) AS `flds`, `t1`.`foo` AS `foo`, NAMED_STRUCT('a', NAMED_STRUCT('field_x', `t2`.`flds`.`a`.`field_x`, 'field_y', `t2`.`flds`.`a`.`field_y`), 'c', NAMED_STRUCT('field_x', `t2`.`flds`.`c`.`field_x`, 'field_y', `t2`.`flds`.`c`.`field_y`)) AS `flds`, `t2`.`foo` AS `foo`, NAMED_STRUCT('a', NAMED_STRUCT('field_x', `t3`.`flds`.`a`.`field_x`, 'field_y', `t3`.`flds`.`a`.`field_y`), 'b', NAMED_STRUCT('field_x', `t3`.`flds`.`b`.`field_x`, 'field_y', `t3`.`flds`.`b`.`field_y`)) AS `flds`, `t3`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`);
 
 --#[exclude-11]
 -- EXCLUDE with select projection list and multiple JOINs
-SELECT STRUCT(`t1`.`flds`.`b` AS `b`, `t1`.`flds`.`c` AS `c`) AS `flds`, STRUCT(`t2`.`flds`.`a` AS `a`, `t2`.`flds`.`c` AS `c`) AS `flds`, STRUCT(`t3`.`flds`.`a` AS `a`, `t3`.`flds`.`b` AS `b`) AS `flds` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`);
+SELECT NAMED_STRUCT('b', `t1`.`flds`.`b`, 'c', `t1`.`flds`.`c`) AS `flds`, NAMED_STRUCT('a', `t2`.`flds`.`a`, 'c', `t2`.`flds`.`c`) AS `flds`, NAMED_STRUCT('a', `t3`.`flds`.`a`, 'b', `t3`.`flds`.`b`) AS `flds` FROM `default`.`EXCLUDE_T` AS `t1` INNER JOIN `default`.`EXCLUDE_T` AS `t2` ON true INNER JOIN `default`.`EXCLUDE_T` AS `t3` ON true WHERE (`t1`.`foo` = `t2`.`foo`) AND (`t2`.`foo` = `t3`.`foo`);
 
 -- Tests for EXCLUDE on top-level columns only --
 -- Baseline query without `EXCLUDE`
@@ -104,16 +104,16 @@ WHERE `t1`.`a` AND `t2`.`a`;
 
 --#[exclude-49]
 -- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
-SELECT STRUCT(`t`.`flds`.`a` AS `a`, STRUCT(`t`.`flds`.`c`.`field_y` AS `field_y`) AS `c`) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
+SELECT NAMED_STRUCT('a', `t`.`flds`.`a`, 'c', NAMED_STRUCT('field_y', `t`.`flds`.`c`.`field_y`)) AS `flds`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T` AS `t`;
 
 --#[exclude-50]
-SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> STRUCT(`___coll_wildcard___`.`field_y` AS `field_y`, `___coll_wildcard___`.`field_z` AS `field_z`, `___coll_wildcard___`.`nested_list` AS `nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
+SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> NAMED_STRUCT('field_y', `___coll_wildcard___`.`field_y`, 'field_z', `___coll_wildcard___`.`field_z`, 'nested_list', `___coll_wildcard___`.`nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
 
 --#[exclude-51]
-SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> STRUCT(`___coll_wildcard___`.`field_x` AS `field_x`, `___coll_wildcard___`.`field_z` AS `field_z`, `___coll_wildcard___`.`nested_list` AS `nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
+SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> NAMED_STRUCT('field_x', `___coll_wildcard___`.`field_x`, 'field_z', `___coll_wildcard___`.`field_z`, 'nested_list', `___coll_wildcard___`.`nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
 
 --#[exclude-52]
-SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> STRUCT(`___coll_wildcard___`.`field_x` AS `field_x`, `___coll_wildcard___`.`field_y` AS `field_y`, `___coll_wildcard___`.`nested_list` AS `nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
+SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> NAMED_STRUCT('field_x', `___coll_wildcard___`.`field_x`, 'field_y', `___coll_wildcard___`.`field_y`, 'nested_list', `___coll_wildcard___`.`nested_list`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
 
 --#[exclude-53]
-SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> STRUCT(`___coll_wildcard___`.`field_x` AS `field_x`, `___coll_wildcard___`.`field_y` AS `field_y`, `___coll_wildcard___`.`field_z` AS `field_z`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;
+SELECT `transform`(`t`.`a`, `___coll_wildcard___` -> NAMED_STRUCT('field_x', `___coll_wildcard___`.`field_x`, 'field_y', `___coll_wildcard___`.`field_y`, 'field_z', `___coll_wildcard___`.`field_z`)) AS `a`, `t`.`foo` AS `foo` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `t`;

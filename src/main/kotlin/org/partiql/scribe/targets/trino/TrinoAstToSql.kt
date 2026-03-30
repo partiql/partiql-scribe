@@ -19,6 +19,7 @@ import org.partiql.ast.expr.ExprCast
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprSessionAttribute
+import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
 import org.partiql.ast.sql.sql
@@ -390,5 +391,16 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             }
         // types are modeled as text; as we don't want to reflow
         return SqlBlock.Text(t)
+    }
+
+    override fun visitExprStruct(
+        node: ExprStruct,
+        tail: SqlBlock,
+    ): SqlBlock {
+        listener.report(ScribeProblem.simpleError(
+            code = ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
+            message = "Error when converting PartiQL struct. `Struct` is rewritten in plan to ROW function and should not reach here.",
+        ))
+        return tail
     }
 }
