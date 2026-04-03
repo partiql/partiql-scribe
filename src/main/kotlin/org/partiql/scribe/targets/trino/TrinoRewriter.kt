@@ -75,8 +75,28 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         rex: RexPathKey,
         ctx: ScribeContext,
     ): Operator {
-        if (rex.operand.type.pType.code() != PType.ROW) {
-            error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${rex.operand.type}")
+        // First, visit the operand so nested rewrites are applied
+        val operand = rex.operand.accept(this, ctx) as org.partiql.plan.rex.Rex
+
+        // Constant-fold: if operand is an inline struct literal, resolve the field at rewrite time.
+        // This handles the case where PartiQL's `{'x': expr1, 'y': expr2}."x"` is simplified to `expr1`.
+        // None of Scribe's transpilation targets support inline struct literal path access.
+        if (operand is RexStruct) {
+            if (rex.key !is RexLit || rex.key.type.pType.code() != PType.STRING) {
+                error("Trino path expression on struct literal must use a string literal key.")
+            }
+            val keyName = (rex.key as RexLit).datum.string
+            for (field in operand.fields) {
+                val fieldKey = field.key
+                if (fieldKey is RexLit && fieldKey.datum.string == keyName) {
+                    return field.value
+                }
+            }
+            error("Struct literal does not contain field '$keyName'.")
+        }
+
+        if (operand.type.pType.code() != PType.ROW) {
+            error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${operand.type}")
         }
         if (rex.key !is RexLit) {
             error("Trino does not support path non-literal path expressions, found ${rex.key}")
@@ -84,7 +104,10 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         if (rex.key.type.pType.code() != PType.STRING) {
             error("Trino path expression must be a string literal.")
         }
-        return super.visitPathKey(rex, ctx)
+        // Rebuild with the visited operand
+        val result = RexPathKey.create(operand, rex.key)
+        result.type = rex.type
+        return result
     }
 
     override fun visitPathSymbol(
