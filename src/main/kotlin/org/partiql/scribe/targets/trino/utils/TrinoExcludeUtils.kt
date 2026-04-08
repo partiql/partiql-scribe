@@ -48,7 +48,7 @@ internal fun PType.toRexTrino(
         return when (type.code()) {
             PType.ROW -> {
                 when (type.fields.size) {
-                    0 -> context.logError("Currently Trino does not allow empty ROWs. Consider `EXCLUDE` on the outer struct")
+                    0 -> context.logError("Currently Trino does not allow empty ROW/struct values.")
                     else -> type.toRexCastRow(prefixPath, context)
                 }
             }

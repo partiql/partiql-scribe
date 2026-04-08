@@ -155,7 +155,7 @@ SELECT CAST(ROW(42, 3.14, 'hello', false) AS ROW("count" INTEGER, "rate" DECIMAL
 SELECT CAST(ROW(CAST(ROW(100, 'test@example.com') AS ROW("id" INTEGER, "email" VARCHAR)), '2023-01-01T00:00:00Z') AS ROW("user" ROW("id" INTEGER, "email" VARCHAR), "timestamp" VARCHAR)) AS "record" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- --#[struct-28]
--- -- Construct struct with null values, Unknown type NULL cannot be converted trino.
+-- -- Construct struct with null values, Unknown type NULL cannot be converted to a trino data type.
 -- SELECT CAST(ROW(123, NULL, 'test') AS ROW("value" INTEGER, "optional_field" NULL, "description" VARCHAR)) AS "data" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[struct-29]
