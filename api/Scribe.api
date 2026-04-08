@@ -425,6 +425,12 @@ public class org/partiql/scribe/targets/redshift/RedshiftRelConverter : org/part
 
 public class org/partiql/scribe/targets/redshift/RedshiftRewriter : org/partiql/plan/OperatorRewriter {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
 	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
