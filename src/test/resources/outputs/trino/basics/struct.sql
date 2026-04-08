@@ -161,3 +161,19 @@ SELECT CAST(ROW(CAST(ROW(100, 'test@example.com') AS ROW("id" INTEGER, "email" V
 --#[struct-29]
 -- Construct struct with arithmetic expressions
 SELECT CAST(ROW(10 + 5, 3 * 7, 100.0 / CAST(4 AS DECIMAL(10,0))) AS ROW("sum" INTEGER, "product" INTEGER, "ratio" DECIMAL(15, 12))) AS "calculations" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- ----------------------------------------
+--  Access field in constructed struct
+-- ----------------------------------------
+
+--#[struct-30]
+-- Access field from a constructed struct
+SELECT CAST(ROW("T"."col_int32", "T"."col_string") AS ROW("a" INTEGER, "b" VARCHAR))."a" AS "a_val" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[struct-31]
+-- Access field from a struct constructed from struct fields
+SELECT CAST(ROW("T"."col_struct_simple"."level1_col_int", "T"."col_struct_simple"."level1_col_string") AS ROW("x" INTEGER, "y" VARCHAR))."y" AS "y_val" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[struct-32]
+-- Access nested field from a constructed nested struct
+SELECT CAST(ROW(CAST(ROW("T"."col_struct_nested"."level1_col_struct"."level2_col_int") AS ROW("inner_val" INTEGER))) AS ROW("outer" ROW("inner_val" INTEGER)))."outer"."inner_val" AS "inner_val" FROM "default"."T_ALL_TYPES" AS "T";

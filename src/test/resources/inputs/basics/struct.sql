@@ -161,3 +161,19 @@ SELECT { 'value': 123, 'optional_field': NULL, 'description': 'test' } AS data F
 --#[struct-29]
 -- Construct struct with arithmetic expressions
 SELECT { 'sum': 10 + 5, 'product': 3 * 7, 'ratio': 100.0 / 4 } AS calculations FROM T_ALL_TYPES AS T;
+
+-- ----------------------------------------
+--  Access field in constructed struct
+-- ----------------------------------------
+
+--#[struct-30]
+-- Access field from a constructed struct
+SELECT { 'a': T.col_int32, 'b': T.col_string }.a AS a_val FROM T_ALL_TYPES AS T;
+
+--#[struct-31]
+-- Access field from a struct constructed from struct fields
+SELECT { 'x': T.col_struct_simple.level1_col_int, 'y': T.col_struct_simple.level1_col_string }.y AS y_val FROM T_ALL_TYPES AS T;
+
+--#[struct-32]
+-- Access nested field from a constructed nested struct
+SELECT { 'outer': { 'inner_val': T.col_struct_nested.level1_col_struct.level2_col_int } }."outer".inner_val AS inner_val FROM T_ALL_TYPES AS T;

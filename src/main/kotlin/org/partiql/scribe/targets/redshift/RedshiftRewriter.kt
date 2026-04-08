@@ -4,14 +4,18 @@ import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.rel.RelExclude
 import org.partiql.plan.rel.RelProject
+import org.partiql.plan.rex.RexPathKey
+import org.partiql.plan.rex.RexPathSymbol
 import org.partiql.plan.rex.RexStruct
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.utils.isPathRex
 import org.partiql.scribe.targets.redshift.utils.rewriteToObjectTransform
 import org.partiql.spi.types.PType
 
 public open class RedshiftRewriter(context: ScribeContext) : OperatorRewriter<ScribeContext>() {
+    private val listener = context.getProblemListener()
     override fun visitProject(
         rel: RelProject,
         ctx: ScribeContext?,
@@ -32,6 +36,38 @@ public open class RedshiftRewriter(context: ScribeContext) : OperatorRewriter<Sc
                 rel
             }
         return super.visitProject(newNode, ctx)
+    }
+
+    override fun visitPathKey(
+        rex: RexPathKey,
+        ctx: ScribeContext,
+    ): Operator {
+        val visited = super.visitPathKey(rex, ctx) as RexPathKey
+        if (visited.operand is RexStruct) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_OPERATION,
+                    message = "Redshift does not support field access on constructed structs.",
+                ),
+            )
+        }
+        return visited
+    }
+
+    override fun visitPathSymbol(
+        rex: RexPathSymbol,
+        ctx: ScribeContext,
+    ): Operator {
+        val visited = super.visitPathSymbol(rex, ctx) as RexPathSymbol
+        if (visited.operand is RexStruct) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_OPERATION,
+                    message = "Redshift does not support field access on constructed structs.",
+                ),
+            )
+        }
+        return visited
     }
 
     override fun visitStruct(

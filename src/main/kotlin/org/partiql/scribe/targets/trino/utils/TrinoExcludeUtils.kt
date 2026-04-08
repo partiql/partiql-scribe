@@ -82,7 +82,8 @@ private fun PType.toRexCastRow(
 ): RexCall {
     val rowValues =
         if (prefixPath is RexStruct) {
-            // For the original Rex is raw RexStruct, we should return fields directly instead of recreation.
+            // For the original Rex is raw RexStruct, we should return fields directly.
+            // Nested structs have already been processed by TrinoRewriter.visitStruct.
             prefixPath.fields.map { field -> field.value }
         } else {
             this.fields.map { field ->
