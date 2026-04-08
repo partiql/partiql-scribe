@@ -16,6 +16,7 @@ import org.partiql.spi.types.PType
 
 public open class RedshiftRewriter(context: ScribeContext) : OperatorRewriter<ScribeContext>() {
     private val listener = context.getProblemListener()
+
     override fun visitProject(
         rel: RelProject,
         ctx: ScribeContext?,
