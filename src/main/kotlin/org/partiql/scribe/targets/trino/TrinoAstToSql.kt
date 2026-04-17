@@ -399,7 +399,7 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
     ): SqlBlock {
         listener.report(
             ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
+                code = ScribeProblem.INVALID_PLAN,
                 message = "Error when converting PartiQL struct. `Struct` is rewritten in plan to ROW function and should not reach here.",
             ),
         )
