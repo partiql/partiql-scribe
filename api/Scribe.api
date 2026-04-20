@@ -425,6 +425,12 @@ public class org/partiql/scribe/targets/redshift/RedshiftRelConverter : org/part
 
 public class org/partiql/scribe/targets/redshift/RedshiftRewriter : org/partiql/plan/OperatorRewriter {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
 	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
@@ -478,6 +484,8 @@ public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe
 	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprTrim (Lorg/partiql/ast/expr/ExprTrim;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitFromExpr (Lorg/partiql/ast/FromExpr;Ljava/lang/Object;)Ljava/lang/Object;
@@ -581,6 +589,8 @@ public class org/partiql/scribe/targets/trino/TrinoAstToSql : org/partiql/scribe
 	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitIntervalQualifier (Lorg/partiql/ast/IntervalQualifier;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitIntervalQualifier (Lorg/partiql/ast/IntervalQualifier;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Ljava/lang/Object;)Ljava/lang/Object;

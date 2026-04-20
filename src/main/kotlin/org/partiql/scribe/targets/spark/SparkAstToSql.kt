@@ -2,9 +2,7 @@ package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Ast.exprPathStepField
 import org.partiql.ast.Ast.exprQuerySet
-import org.partiql.ast.Ast.identifierSimple
 import org.partiql.ast.Ast.orderBy
-import org.partiql.ast.Ast.selectItemExpr
 import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
 import org.partiql.ast.FromExpr
@@ -145,24 +143,24 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         return tail concat ".${node.field.sql()}"
     }
 
-    // Spark's equivalent for PartiQL's STRUCT type is struct type. Can use the `STRUCT` function to create Spark
-    // structs: https://spark.apache.org/docs/latest/api/sql/#struct. Names are provided by using an `AS` alias.
+    // Spark's equivalent for PartiQL's STRUCT type is struct type. Can use the `NAMED_STRUCT` function to create Spark
+    // structs: https://spark.apache.org/docs/latest/api/sql/#named_struct.
     override fun visitExprStruct(
         node: ExprStruct,
         tail: SqlBlock,
     ): SqlBlock {
-        val fieldsAsSparkStructs =
-            node.fields.map { field ->
-                selectItemExpr(
-                    expr = field.value,
-                    asAlias =
-                        identifierSimple(
-                            symbol = (field.name as ExprLit).lit.stringValue(),
-                            isRegular = true,
-                        ),
-                )
-            }
-        return tail concat list(this, "STRUCT(", ")") { fieldsAsSparkStructs }
+        return tail concat list(this, "NAMED_STRUCT(", ")") { node.fields }
+    }
+
+    override fun visitExprStructField(
+        node: ExprStruct.Field,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        t = visitExprWrapped(node.name, t)
+        t = t concat ", "
+        t = visitExprWrapped(node.value, t)
+        return t
     }
 
     override fun visitExprArray(

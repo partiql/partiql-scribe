@@ -53,7 +53,7 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
                 val type = field.value.type
                 // Rewrite any structs that have a field that's a ROW type and is a var reference or path.
                 val newOp =
-                    if (fieldValue is RexVar || fieldValue.isPathRex()) {
+                    if (fieldValue is RexVar || fieldValue.isPathRex() || fieldValue is RexStruct) {
                         type.pType.toRexTrino(
                             prefixPath = fieldValue,
                             context = context,
@@ -84,7 +84,16 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         if (rex.key.type.pType.code() != PType.STRING) {
             error("Trino path expression must be a string literal.")
         }
-        return super.visitPathKey(rex, ctx)
+        val visited = super.visitPathKey(rex, ctx) as RexPathKey
+        // Wrap RexStruct operand in CAST(ROW(...) AS ROW(...))
+        val operand = visited.operand
+        if (operand is RexStruct) {
+            val wrapped = operand.type.pType.toRexTrino(prefixPath = operand, context = context)
+            val newPath = RexPathKey.create(wrapped, visited.key)
+            newPath.type = visited.type
+            return newPath
+        }
+        return visited
     }
 
     override fun visitPathSymbol(
@@ -94,7 +103,16 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         if (rex.operand.type.pType.code() != PType.ROW) {
             error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${rex.operand.type}")
         }
-        return super.visitPathSymbol(rex, ctx)
+        val visited = super.visitPathSymbol(rex, ctx) as RexPathSymbol
+        // Wrap RexStruct operand in CAST(ROW(...) AS ROW(...))
+        val operand = visited.operand
+        if (operand is RexStruct) {
+            val wrapped = operand.type.pType.toRexTrino(prefixPath = operand, context = context)
+            val newPath = RexPathSymbol.create(wrapped, visited.symbol)
+            newPath.type = visited.type
+            return newPath
+        }
+        return visited
     }
 
     /**
