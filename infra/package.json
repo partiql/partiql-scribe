@@ -1,0 +1,17 @@
+{
+  "name": "scribe-integ-infra",
+  "version": "1.0.0",
+  "description": "CDK stack for Scribe integration test infrastructure",
+  "scripts": {
+    "build": "tsc",
+    "cdk": "cdk"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.150.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.4.0",
+    "aws-cdk": "^2.150.0"
+  }
+}
