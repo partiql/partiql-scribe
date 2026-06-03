@@ -10,8 +10,10 @@ import com.github.ajalt.clikt.parameters.options.split
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.clikt.parameters.types.path
 import org.partiql.scribe.integ.config.Config
+import org.partiql.scribe.integ.engine.AthenaSparkClient
 import org.partiql.scribe.integ.engine.AthenaTrinoClient
 import org.partiql.scribe.integ.engine.EngineClient
+import org.partiql.scribe.integ.engine.RedshiftClient
 import org.partiql.scribe.integ.engine.Status
 import org.partiql.scribe.integ.executor.SkipList
 import org.partiql.scribe.integ.executor.TestExecutor
@@ -128,8 +130,16 @@ class TestCommand : CliktCommand(
                     appConfig = config,
                     timeoutMs = timeout * 1000L,
                 )
-                Target.REDSHIFT -> echo("Redshift client not yet implemented (Phase 2)")
-                Target.SPARK -> echo("Spark client not yet implemented (Phase 2)")
+                Target.REDSHIFT -> engines[target] = RedshiftClient(
+                    redshiftConfig = config.redshift,
+                    appConfig = config,
+                    timeoutMs = timeout * 1000L,
+                )
+                Target.SPARK -> engines[target] = AthenaSparkClient(
+                    athenaConfig = config.athena,
+                    appConfig = config,
+                    timeoutMs = timeout * 1000L,
+                )
             }
         }
         return engines
@@ -157,6 +167,10 @@ class LoadDataCommand : CliktCommand(
     private val scribePath by option("--scribe-path", help = "Path to partiql-scribe root")
         .path(mustExist = true)
         .default(Path.of("."))
+
+    private val targets by option("--targets", help = "Comma-separated targets to load: glue,redshift")
+        .split(",")
+        .default(listOf("glue"))
 
     private val check by option("--check", help = "Only check staleness, don't reload")
         .flag()
@@ -198,10 +212,20 @@ class LoadDataCommand : CliktCommand(
         val generator = org.partiql.scribe.integ.data.DataGenerator()
         val tables = generator.generate(schemas)
 
-        echo("Uploading to S3 and creating Glue tables...")
-        loader.load(tables, catalogDir)
+        if ("glue" in targets) {
+            echo("Uploading to S3 and creating Glue tables...")
+            loader.load(tables, catalogDir)
+            echo("Glue: Loaded ${tables.size} tables with ${tables.sumOf { it.rows.size }} total rows.")
+        }
 
-        echo("Done. Loaded ${tables.size} tables with ${tables.sumOf { it.rows.size }} total rows.")
+        if ("redshift" in targets) {
+            echo("Loading data into Redshift (scribe-cluster)...")
+            val rsLoader = org.partiql.scribe.integ.data.RedshiftDataLoader(config)
+            rsLoader.load(tables)
+            echo("Redshift: Loaded ${tables.size} tables with ${tables.sumOf { it.rows.size }} total rows.")
+        }
+
+        echo("Done.")
     }
 }
 
@@ -223,7 +247,8 @@ class HealthCommand : CliktCommand(
         for (target in requestedTargets) {
             val client: EngineClient? = when (target) {
                 Target.TRINO -> AthenaTrinoClient(athenaConfig = config.athena, appConfig = config)
-                else -> null
+                Target.REDSHIFT -> RedshiftClient(redshiftConfig = config.redshift, appConfig = config)
+                Target.SPARK -> AthenaSparkClient(athenaConfig = config.athena, appConfig = config)
             }
             if (client == null) {
                 echo("${target.name.lowercase()}: NOT IMPLEMENTED")
