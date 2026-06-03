@@ -19,6 +19,33 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.io.File
 import java.security.MessageDigest
 
+fun toGlueType(type: ColumnType): String {
+    return when (type) {
+        is ColumnType.Bool -> "boolean"
+        is ColumnType.Int16 -> "smallint"
+        is ColumnType.Int32 -> "int"
+        is ColumnType.Int64 -> "bigint"
+        is ColumnType.Float32 -> "float"
+        is ColumnType.Float64 -> "double"
+        is ColumnType.StringType -> "string"
+        is ColumnType.Char -> "string"
+        is ColumnType.Decimal -> "decimal(38,10)"
+        is ColumnType.Timestamp -> "timestamp"
+        is ColumnType.TimestampTz -> "timestamp"
+        is ColumnType.Time -> "string"
+        is ColumnType.TimeTz -> "string"
+        is ColumnType.Date -> "date"
+        is ColumnType.Interval -> "string"
+        is ColumnType.Blob -> "binary"
+        is ColumnType.Any -> "string"
+        is ColumnType.Struct -> {
+            val fields = type.fields.joinToString(",") { "${it.name}:${toGlueType(it.type)}" }
+            "struct<$fields>"
+        }
+        is ColumnType.Array -> "array<${toGlueType(type.items)}>"
+    }
+}
+
 class DataLoader(private val config: Config) {
 
     private val mapper = ObjectMapper().registerKotlinModule()
@@ -71,7 +98,7 @@ class DataLoader(private val config: Config) {
         val columns = schema.columns.map { col ->
             Column.builder()
                 .name(col.name)
-                .type(toGlueType(col.type))
+                .type(glueType(col.type))
                 .build()
         }
 
@@ -112,24 +139,8 @@ class DataLoader(private val config: Config) {
         )
     }
 
-    private fun toGlueType(type: ColumnType): String {
-        return when (type) {
-            is ColumnType.Bool -> "boolean"
-            is ColumnType.Int32 -> "int"
-            is ColumnType.Int64 -> "bigint"
-            is ColumnType.Float64 -> "double"
-            is ColumnType.StringType -> "string"
-            is ColumnType.Decimal -> "decimal(38,10)"
-            is ColumnType.Timestamp -> "timestamp"
-            is ColumnType.Date -> "date"
-            is ColumnType.Any -> "string"
-            is ColumnType.Struct -> {
-                val fields = type.fields.joinToString(",") { "${it.name}:${toGlueType(it.type)}" }
-                "struct<$fields>"
-            }
-            is ColumnType.Array -> "array<${toGlueType(type.items)}>"
-        }
-    }
+    private fun glueType(type: ColumnType): String = toGlueType(type)
+
 
     private fun computeCatalogHash(catalogDir: File): String {
         val digest = MessageDigest.getInstance("SHA-256")

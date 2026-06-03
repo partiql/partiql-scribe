@@ -1,4024 +1,1636 @@
 {
   "expected_failures": [
     {
-      "test": "limit-offset-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "limit-offset-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "subquery-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "window-34",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-count-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-count-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-count-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-count-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-min-date",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-min-time",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-min-timez",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-min-timestamp",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-min-timestampz",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-max-min-string",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-distinct-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-multiple-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-multiple-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-multiple-group-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-multiple-group-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-multiple-group-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "rel-aggregation-where-group-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "select-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-23",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-24",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-25",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-26",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-27",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-29",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-30",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-31",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "struct-32",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
       "test": "exclude-12",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-13",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-14",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-15",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-18",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-19",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-20",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-21",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-22",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-23",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-25",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-26",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-27",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-28",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-29",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-30",
-      "reason": "Schema qualification uses catalog name instead of schema name"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "exclude-31",
-      "reason": "Schema qualification uses catalog name instead of schema name"
-    },
-    {
-      "test": "exclude-36",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-37",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-38",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-39",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-40",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-41",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-42",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-43",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-44",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-45",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-46",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-49",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "exclude-50",
-      "reason": "Unsupported function in Athena Trino"
-    },
-    {
-      "test": "exclude-51",
-      "reason": "Unsupported function in Athena Trino"
-    },
-    {
-      "test": "exclude-52",
-      "reason": "Unsupported function in Athena Trino"
-    },
-    {
-      "test": "exclude-53",
-      "reason": "Unsupported function in Athena Trino"
-    },
-    {
-      "test": "exclude-54",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-23",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-24",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-25",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-26",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-27",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-28",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-30",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-31",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-32",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-33",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "join-34",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "paths-sfw-23",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "distinct-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "distinct-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "distinct-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "distinct-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "distinct-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-23",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-24",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-25",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-26",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-27",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-28",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-29",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-30",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-31",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-32",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-33",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-34",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-35",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-36",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-37",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-38",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-39",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-40",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-41",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-42",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-43",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-44",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-45",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-46",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-47",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-48",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-49",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-50",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-51",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-52",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-53",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-54",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-55",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-56",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-57",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-58",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-59",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-60",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-61",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-62",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-63",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-64",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-65",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-66",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-67",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-68",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-69",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-70",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-71",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-72",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-73",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-74",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-75",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-76",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "interval-77",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "case-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "case-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "case-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "case-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "case-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "case-09",
-      "reason": "Known Athena Trino limitation"
-    },
-    {
-      "test": "having-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "having-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "having-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "having-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "literal-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "literal-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "literal-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "literal-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "literal-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "literal-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "literal-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "like-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "like-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "like-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "like-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "order-by-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "between-04",
-      "reason": "Known Athena Trino limitation"
-    },
-    {
-      "test": "between-05",
-      "reason": "Known Athena Trino limitation"
-    },
-    {
-      "test": "between-06",
-      "reason": "Known Athena Trino limitation"
-    },
-    {
-      "test": "cast-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-23",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-24",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-25",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-26",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-27",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-28",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-29",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-30",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-31",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-32",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-33",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-34",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-35",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-36",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-37",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-38",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-39",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-40",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena catalog is awsdatacatalog, not default \u2014 valid on standalone Trino"
     },
     {
       "test": "cast-45",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store INTERVAL as column type"
     },
     {
       "test": "cast-46",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store INTERVAL as column type"
     },
     {
       "test": "cast-60",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store INTERVAL as column type"
     },
     {
       "test": "cast-61",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store INTERVAL as column type"
     },
     {
       "test": "cast-62",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store INTERVAL as column type"
     },
     {
       "test": "cast-63",
-      "reason": "Known Athena Trino limitation"
-    },
-    {
-      "test": "cast-74",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-75",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-76",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-77",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-78",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-79",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-80",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "cast-81",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store INTERVAL as column type"
     },
     {
       "test": "dt-minus-dt-01",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-dt-02",
-      "reason": "Interval arithmetic transpiled as string operations"
-    },
-    {
-      "test": "dt-minus-dt-04",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-00",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-01",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-02",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-06",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-15",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-16",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-17",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-18",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-20",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-21",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-22",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-23",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-24",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-25",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-28",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-29",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-30",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-31",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-33",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-34",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-35",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-36",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-37",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-38",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-39",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-40",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-41",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-42",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-43",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-44",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-45",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-46",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-47",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-48",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-49",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-50",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-51",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-52",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-53",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-54",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-55",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-56",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-57",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-58",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-59",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-60",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-61",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-62",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-63",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-plus-interval-64",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-00",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-01",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-02",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-06",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-15",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-16",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-17",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-18",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-20",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-21",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-22",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-23",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-24",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-25",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-28",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-29",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-30",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-31",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-33",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-34",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-35",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-36",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-37",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-38",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-39",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-40",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-41",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-42",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-43",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-44",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-45",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-46",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-47",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-48",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-49",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-50",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-51",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-52",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-53",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-54",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-55",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-56",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-57",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-58",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-59",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-60",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-61",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-62",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-63",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "dt-minus-interval-64",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-00",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-01",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-02",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-06",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-15",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-16",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-17",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-18",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-20",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-21",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-22",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-23",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-24",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-25",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-28",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-29",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-30",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-31",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-33",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-34",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-35",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-36",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-37",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-38",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-39",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-40",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-41",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-42",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-43",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-44",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-45",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-46",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-47",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-48",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-49",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-50",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-51",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-52",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-53",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-54",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-55",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-56",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-57",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-58",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-59",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-60",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-61",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-62",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-63",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-64",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-00",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-01",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-02",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-03",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-04",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-05",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-06",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-07",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-08",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-09",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-10",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-11",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-12",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-13",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-14",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-15",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-16",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-17",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-18",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-19",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-20",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-21",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-22",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-23",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-24",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-25",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-26",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-27",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-28",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-29",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-30",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-31",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-32",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-33",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-34",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-35",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-36",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-37",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-38",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-39",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-40",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-41",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-42",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-43",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-44",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-45",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-46",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-47",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-48",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-49",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-50",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-51",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-52",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-53",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-54",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-55",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-56",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-57",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-58",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-59",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-60",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-61",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-62",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-63",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-64",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-65",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-66",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-67",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-68",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-69",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-70",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-71",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-72",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-73",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-74",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-75",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-76",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-77",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-78",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-79",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-80",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-81",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-82",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-83",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-84",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-85",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-86",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-87",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-88",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-89",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-90",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-91",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-92",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-93",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-94",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-95",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-96",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-97",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-98",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-99",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-100",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-101",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-102",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-103",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-104",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-plus-interval-105",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-00",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-01",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-02",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-03",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-04",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-05",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-06",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-07",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-08",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-09",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-10",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-11",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-12",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-13",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-14",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-15",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-16",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-17",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-18",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-19",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-20",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-21",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-22",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-23",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-24",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-25",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-26",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-27",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-28",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-29",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-30",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-31",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-32",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-33",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-34",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-35",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-36",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-37",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-38",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-39",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-40",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-41",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-42",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-43",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-44",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-45",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-46",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-47",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-48",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-49",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-50",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-51",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-52",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-53",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-54",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-55",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-56",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-57",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-58",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-59",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-60",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-61",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-62",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-63",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-64",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-65",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-66",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-67",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-68",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-69",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-70",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-71",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-72",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-73",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-74",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-75",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-76",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-77",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-78",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-79",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-80",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-81",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-82",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-83",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-84",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-85",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-86",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-87",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-88",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-89",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-90",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-91",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-92",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-93",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-94",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-95",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-96",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-97",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-98",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-99",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-100",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-101",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-102",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-103",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-104",
-      "reason": "Interval arithmetic transpiled as string operations"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "interval-minus-interval-105",
-      "reason": "Interval arithmetic transpiled as string operations"
-    },
-    {
-      "test": "in-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "in-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "in-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "in-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "in-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "in-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "eq-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "eq-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "eq-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "eq-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "eq-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "neq-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "neq-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "neq-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "neq-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "neq-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "lt-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "lte-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "gt-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "gte-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "not-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "not-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "comparison-datetime-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-23",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-24",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-25",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-26",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-27",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-28",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-29",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-30",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-31",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-32",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-33",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-34",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-35",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-36",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-37",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-38",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-39",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-40",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-41",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-42",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-43",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-44",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-45",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-46",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-47",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-48",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-49",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-50",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-51",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-52",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-53",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-54",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-55",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-56",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-57",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-58",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-59",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-60",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-61",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-62",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-63",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-64",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-65",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-66",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-67",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-68",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-69",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-70",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-71",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-72",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-73",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-74",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-75",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-76",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-77",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-78",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-79",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-80",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-81",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-82",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-83",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-84",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-85",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-86",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-87",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-88",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-89",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-90",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-91",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-92",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-93",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-94",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-95",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-96",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-97",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-98",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-99",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-100",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-101",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-102",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-datetime-103",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-07",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "comparison-array-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "trim-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "trim-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "trim-02",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "trim-03",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "trim-04",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "trim-05",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "trim-06",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-08",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-09",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME/INTERVAL as column types"
     },
     {
       "test": "datetime-41",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "datetime-42",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "datetime-43",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "datetime-44",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-45",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-46",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-47",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-48",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-49",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-50",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-51",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-52",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-53",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-54",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-55",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-56",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-57",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-58",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-59",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-60",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-61",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-62",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-63",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-64",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-65",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "datetime-66",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-49",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-50",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-51",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-52",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-53",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-54",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-55",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-56",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-57",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-58",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-59",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-60",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-61",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-62",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-63",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-64",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-65",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-66",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-67",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-68",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-69",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-70",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-71",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-72",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-73",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-74",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-75",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-76",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "extract-77",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-87",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-88",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-89",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-90",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-91",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-92",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-93",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-94",
-      "reason": "Known Athena Trino limitation"
+      "reason": "Athena cannot store TIME as column type"
     },
     {
       "test": "extract-95",
-      "reason": "Known Athena Trino limitation"
-    },
-    {
-      "test": "abs-select-1",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-2",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-3",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-4",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-5",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-6",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-7",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-8",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-9",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-10",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-11",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-12",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-13",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-14",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-15",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-16",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-17",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-18",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-19",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-20",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-21",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-22",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-23",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "abs-select-24",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "split-sfw-00",
-      "reason": "ROW() constructor not supported in Athena Trino"
-    },
-    {
-      "test": "split-sfw-01",
-      "reason": "ROW() constructor not supported in Athena Trino"
+      "reason": "Athena cannot store TIME as column type"
     }
   ],
   "skip": []
