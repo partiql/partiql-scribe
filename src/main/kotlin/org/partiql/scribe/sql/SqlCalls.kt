@@ -246,12 +246,17 @@ public abstract class SqlCalls(context: ScribeContext) {
             }
             is ExprBetween -> exprBetween(arg.value, arg.from, arg.to, arg.isNot.flip())
             is ExprInCollection -> {
-                val collection =
+                val lhs =
+                    when (val l = arg.lhs) {
+                        is ExprArray -> exprRowValue(l.values)
+                        else -> l
+                    }
+                val rhs =
                     when (val coll = arg.rhs) {
-                        is ExprArray -> exprRowValue(coll.values)
+                        is ExprArray -> exprRowValue(coll.values.map { arrayToRowValue(it) })
                         else -> coll
                     }
-                exprInCollection(arg.lhs, collection, arg.isNot.flip())
+                exprInCollection(lhs, rhs, arg.isNot.flip())
             }
             is ExprIsType -> exprIsType(arg.value, arg.type, arg.isNot.flip())
             is ExprLike -> exprLike(arg.value, arg.pattern, arg.escape, arg.isNot.flip())
@@ -319,13 +324,24 @@ public abstract class SqlCalls(context: ScribeContext) {
 
     // functions to operator
     public open fun inCollection(args: SqlArgs): Expr {
-        val collection =
+        val lhs =
+            when (val arg0 = args[0].expr) {
+                is ExprArray -> exprRowValue(arg0.values)
+                else -> arg0
+            }
+        val rhs =
             when (val arg1 = args[1].expr) {
-                is ExprArray -> exprRowValue(arg1.values)
+                is ExprArray -> exprRowValue(arg1.values.map { arrayToRowValue(it) })
                 else -> arg1
             }
-        return exprInCollection(args[0].expr, collection, false)
+        return exprInCollection(lhs, rhs, false)
     }
+
+    private fun arrayToRowValue(expr: Expr): Expr =
+        when (expr) {
+            is ExprArray -> exprRowValue(expr.values)
+            else -> expr
+        }
 
     public open fun between(args: SqlArgs): Expr = exprBetween(args[0].expr, args[1].expr, args[2].expr, false)
 

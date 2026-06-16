@@ -15,3 +15,9 @@ SELECT * FROM T WHERE b NOT IN [1, 2];
 
 --#[in-05]
 SELECT * FROM T WHERE b NOT IN << 1, 2 >>;
+
+--#[in-06]
+SELECT * FROM T WHERE (b, c) IN ((1, 'hello'), (2, 'world'));
+
+--#[in-07]
+SELECT * FROM T WHERE (b, c) NOT IN ((1, 'hello'), (2, 'world'));
