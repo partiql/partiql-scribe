@@ -14,6 +14,7 @@ import org.partiql.plan.rex.RexCase
 import org.partiql.plan.rex.RexCast
 import org.partiql.plan.rex.RexDispatch
 import org.partiql.plan.rex.RexLit
+import org.partiql.plan.rex.RexMap
 import org.partiql.plan.rex.RexNullIf
 import org.partiql.plan.rex.RexPathIndex
 import org.partiql.plan.rex.RexPathKey
@@ -81,6 +82,22 @@ public open class RedshiftRexConverter(
                 exprCaseBranch(condition, result)
             }
         return exprCase(matchExpr, branches, default)
+    }
+
+    @Suppress("DEPRECATION")
+    override fun visitMap(
+        rex: RexMap,
+        ctx: Unit,
+    ): Expr {
+        if (rex.keyType.code() != PType.STRING && rex.keyType.code() != PType.VARCHAR && rex.keyType.code() != PType.CHAR) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_OPERATION,
+                    message = "Redshift SUPER OBJECT requires string keys. Found key type: ${rex.keyType}",
+                ),
+            )
+        }
+        return super.visitMap(rex, ctx)
     }
 
     override fun visitLit(

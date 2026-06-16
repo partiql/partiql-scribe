@@ -75,8 +75,8 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         rex: RexPathKey,
         ctx: ScribeContext,
     ): Operator {
-        if (rex.operand.type.pType.code() != PType.ROW) {
-            error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${rex.operand.type}")
+        if (rex.operand.type.pType.code() != PType.ROW && rex.operand.type.pType.code() != PType.MAP) {
+            error("Trino path expression must be on a ROW or MAP type, found ${rex.operand.type}")
         }
         if (rex.key !is RexLit) {
             error("Trino does not support path non-literal path expressions, found ${rex.key}")
@@ -100,8 +100,8 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         rex: RexPathSymbol,
         ctx: ScribeContext,
     ): Operator {
-        if (rex.operand.type.pType.code() != PType.ROW) {
-            error("Trino path expression must be on a ROW type (PartiQL STRUCT), found ${rex.operand.type}")
+        if (rex.operand.type.pType.code() != PType.ROW && rex.operand.type.pType.code() != PType.MAP) {
+            error("Trino path expression must be on a ROW or MAP type, found ${rex.operand.type}")
         }
         val visited = super.visitPathSymbol(rex, ctx) as RexPathSymbol
         // Wrap RexStruct operand in CAST(ROW(...) AS ROW(...))
@@ -128,8 +128,13 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         node: RexPathIndex,
         ctx: ScribeContext,
     ): Operator {
-        // Assert root type
+        // MAP subscript access — pass through without rewriting
         val type = node.operand.type
+        if (type.pType.code() == PType.MAP) {
+            return node
+        }
+
+        // Assert root type
         if (type.pType.code() != PType.ARRAY) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(

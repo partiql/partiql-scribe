@@ -127,6 +127,22 @@
         },
       },
       {
+        name: "col_map_str_key",
+        type: {
+          type: "map",
+          key: "string",
+          value: "int32",
+        },
+      },
+      {
+        name: "col_map_float_key",
+        type: {
+          type: "map",
+          key: "float64",
+          value: "string",
+        },
+      },
+      {
         name: "col_any",
         type: "any",
       },

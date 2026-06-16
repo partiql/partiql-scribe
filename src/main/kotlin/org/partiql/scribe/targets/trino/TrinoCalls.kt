@@ -3,6 +3,7 @@ package org.partiql.scribe.targets.trino
 import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.Ast.exprOperator
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
@@ -29,6 +30,11 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
             this.remove("bitwise_and")
             this["cast_row"] = ::castrow
             this["transform"] = ::transform
+            this["contains_key"] = ::containsKey
+            this["map_get"] = ::mapGet
+            this["size"] = ::sizeFn
+            this["cardinality"] = ::cardinalityFn
+            this["exists"] = ::existsFn
         }
 
     /**
@@ -175,6 +181,75 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
             )
         }
         return super.minusFn(args)
+    }
+
+    /**
+     * PartiQL `contains_key(map, key)` -> Trino `contains(map_keys(map), key)`
+     */
+    private fun containsKey(args: SqlArgs): Expr {
+        val containsId = Identifier.regular("contains")
+        val mapKeysId = Identifier.regular("map_keys")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `contains_key` was replaced by Trino `contains(map_keys(...), ...)`",
+            ),
+        )
+        val mapExpr = args[0].expr
+        val keyExpr = args[1].expr
+        val mapKeysCall = exprCall(mapKeysId, listOf(mapExpr))
+        return exprCall(containsId, listOf(mapKeysCall, keyExpr))
+    }
+
+    /**
+     * PartiQL `map_get(map, key)` -> Trino `element_at(map, key)`
+     */
+    private fun mapGet(args: SqlArgs): Expr {
+        val id = Identifier.regular("element_at")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `map_get` was replaced by Trino `element_at`",
+            ),
+        )
+        return exprCall(id, listOf(args[0].expr, args[1].expr))
+    }
+
+    /**
+     * PartiQL `size(collection)` -> Trino `cardinality(collection)`
+     */
+    private fun sizeFn(args: SqlArgs): Expr {
+        val id = Identifier.regular("cardinality")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `size` was replaced by Trino `cardinality`",
+            ),
+        )
+        return exprCall(id, listOf(args[0].expr))
+    }
+
+    /**
+     * PartiQL `cardinality(collection)` -> Trino `cardinality(collection)` (native)
+     */
+    private fun cardinalityFn(args: SqlArgs): Expr {
+        val id = Identifier.regular("cardinality")
+        return exprCall(id, listOf(args[0].expr))
+    }
+
+    /**
+     * PartiQL `exists(collection)` -> Trino `cardinality(collection) > 0`
+     */
+    private fun existsFn(args: SqlArgs): Expr {
+        val cardId = Identifier.regular("cardinality")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `exists` was replaced by Trino `cardinality(...) > 0`",
+            ),
+        )
+        val cardCall = exprCall(cardId, listOf(args[0].expr))
+        return exprOperator(">", cardCall, exprLit(Literal.intNum(0)))
     }
 
     override fun overlaps(args: SqlArgs): Expr {

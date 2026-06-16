@@ -1,9 +1,15 @@
 package org.partiql.scribe.targets.spark
 
+import org.partiql.ast.Ast.exprPath
+import org.partiql.ast.Ast.exprPathStepElement
+import org.partiql.ast.Ast.exprPathStepField
+import org.partiql.ast.Identifier
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprVarRef
 import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexLit
+import org.partiql.plan.rex.RexPathKey
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.Locals
@@ -36,6 +42,44 @@ public open class SparkRexConverter(
                 }
             }
             else -> super.visitLit(rex, ctx)
+        }
+    }
+
+    /**
+     * For MAP operands, keep bracket notation (SparkSQL requires `map_col['key']`).
+     * For STRUCT operands, use dot notation via [exprPathStepField] (SparkSQL uses `struct_col.field`).
+     */
+    override fun visitPathKey(
+        rex: RexPathKey,
+        ctx: Unit,
+    ): Expr {
+        val operandType =
+            try {
+                rex.operand.type.pType
+            } catch (_: UnsupportedOperationException) {
+                null
+            }
+        if (operandType != null && operandType.code() == PType.MAP) {
+            val prev = visitRex(rex.operand, ctx)
+            val step = exprPathStepElement(visitRex(rex.key, ctx))
+            return if (prev is ExprPath) {
+                exprPath(prev.root, prev.steps + step)
+            } else {
+                exprPath(prev, listOf(step))
+            }
+        }
+        val prev = visitRex(rex.operand, ctx)
+        val keyRex = rex.key
+        val step =
+            if (keyRex is RexLit && keyRex.type.pType.code() == PType.STRING) {
+                exprPathStepField(Identifier.Simple.regular(keyRex.datum.string))
+            } else {
+                exprPathStepElement(visitRex(keyRex, ctx))
+            }
+        return if (prev is ExprPath) {
+            exprPath(prev.root, prev.steps + step)
+        } else {
+            exprPath(prev, listOf(step))
         }
     }
 

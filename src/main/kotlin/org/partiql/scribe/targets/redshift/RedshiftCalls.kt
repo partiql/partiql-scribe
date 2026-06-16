@@ -23,6 +23,11 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
             // Extensions
             this["split"] = ::split
             this["OBJECT_TRANSFORM"] = ::objectTransform
+            // MAP functions
+            this["map_keys"] = ::mapKeys
+            this["map_values"] = ::mapValues
+            this["map_entries"] = ::mapEntries
+            this["map_get"] = ::mapGet
         }
 
     /**
@@ -115,6 +120,98 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         val arg1 = args[0].expr
         val arg2 = args[1].expr
         return exprCall(id, listOf(arg0, arg1, arg2))
+    }
+
+    private fun mapKeys(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `map_keys` on SUPER type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun mapValues(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `map_values` on SUPER type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun mapEntries(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `map_entries` on SUPER type. No equivalent function available.",
+            ),
+        )
+    }
+
+    /**
+     * PartiQL `map_get(map, key)` -> Redshift dot notation `map.key`
+     * Only supports string literal keys since Redshift SUPER uses dot notation.
+     */
+    private fun mapGet(args: SqlArgs): Expr {
+        val mapExpr = args[0].expr
+        val keyExpr = args[1].expr
+        if (keyExpr !is org.partiql.ast.expr.ExprLit || keyExpr.lit.code() != org.partiql.ast.Literal.STRING) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Redshift `map_get` only supports string literal keys. Use dot notation (e.g. map.key) for static key access.",
+                ),
+            )
+        }
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `map_get` was replaced by Redshift dot notation access on SUPER type",
+            ),
+        )
+        val step = org.partiql.ast.Ast.exprPathStepElement(keyExpr)
+        return if (mapExpr is org.partiql.ast.expr.ExprPath) {
+            org.partiql.ast.Ast.exprPath(mapExpr.root, mapExpr.steps + step)
+        } else {
+            org.partiql.ast.Ast.exprPath(mapExpr, listOf(step))
+        }
+    }
+
+    private fun containsKey(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `contains_key`. No equivalent function available for SUPER type.",
+            ),
+        )
+    }
+
+    private fun sizeFn(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `size` on SUPER map type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun cardinalityFn(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `cardinality` on SUPER map type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun existsFn(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `exists` on SUPER map type. No equivalent function available.",
+            ),
+        )
     }
 
     override fun overlaps(args: SqlArgs): Expr {

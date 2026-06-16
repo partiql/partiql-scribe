@@ -169,10 +169,18 @@ internal fun removePathRoot(expr: Expr): Expr {
             if (first is PathStep.Element && first.element is ExprLit) {
                 val newFirst = exprVarRef(Identifier.delimited((first.element as ExprLit).lit.stringValue()), isQualified = false)
                 if (steps.size == 1) {
-                    // One path step so just return that expr
                     newFirst
                 } else {
-                    // Create a new path
+                    exprPath(
+                        newFirst,
+                        steps.drop(1),
+                    )
+                }
+            } else if (first is PathStep.Field) {
+                val newFirst = exprVarRef(Identifier.delimited(first.field.text), isQualified = false)
+                if (steps.size == 1) {
+                    newFirst
+                } else {
                     exprPath(
                         newFirst,
                         steps.drop(1),
