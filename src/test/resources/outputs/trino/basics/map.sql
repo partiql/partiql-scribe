@@ -52,7 +52,7 @@ SELECT "T"."col_map_str_key"['a'] AS "a" FROM "default"."T_ALL_TYPES" AS "T" WHE
 
 --#[map-10]
 -- Lookup map with bracket notation (float key)
-SELECT "T"."col_map_float_key"[1.0] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE contains(map_keys("T"."col_map_float_key"), 1.0);
+SELECT "T"."col_map_float_key"[CAST(1.0 AS DOUBLE)] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE contains(map_keys("T"."col_map_float_key"), CAST(1.0 AS DOUBLE));
 
 --#[map-11]
 -- Lookup map with bracket notation using column as key
@@ -107,19 +107,19 @@ SELECT cardinality("T"."col_map_str_key") AS "_1" FROM "default"."T_ALL_TYPES" A
 SELECT cardinality("T"."col_map_str_key") > 0 AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
---  Map functions — contains_key
+--  Map functions — map_contains_key
 -- ----------------------------------------
 
 --#[map-22]
--- contains_key with string key that exists
+-- map_contains_key with string key that exists
 SELECT contains(map_keys("T"."col_map_str_key"), 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[map-23]
--- contains_key with column reference as key
+-- map_contains_key with column reference as key
 SELECT contains(map_keys("T"."col_map_str_key"), "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[map-24]
--- contains_key with float key
+-- map_contains_key with float key
 SELECT contains(map_keys("T"."col_map_float_key"), "T"."col_float64") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
@@ -136,7 +136,7 @@ SELECT element_at("T"."col_map_str_key", "T"."col_string") AS "_1" FROM "default
 
 --#[map-27]
 -- map_get with float key
-SELECT element_at("T"."col_map_float_key", 1.0) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT element_at("T"."col_map_float_key", CAST(1.0 AS DOUBLE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
 --  Filtering
@@ -147,7 +147,7 @@ SELECT element_at("T"."col_map_float_key", 1.0) AS "_1" FROM "default"."T_ALL_TY
 SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE "T"."col_map_str_key"['a'] > 10;
 
 --#[map-32]
--- Filter with contains_key
+-- Filter with map_contains_key
 SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE contains(map_keys("T"."col_map_str_key"), 'a');
 
 --#[map-33]

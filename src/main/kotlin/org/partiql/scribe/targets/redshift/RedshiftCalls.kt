@@ -28,6 +28,7 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
             this["map_values"] = ::mapValues
             this["map_entries"] = ::mapEntries
             this["map_get"] = ::mapGet
+            this["map_contains_key"] = ::mapContainsKey
         }
 
     /**
@@ -178,11 +179,11 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         }
     }
 
-    private fun containsKey(args: SqlArgs): Expr {
+    private fun mapContainsKey(args: SqlArgs): Expr {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 ScribeProblem.UNSUPPORTED_OPERATION,
-                "Redshift does not support `contains_key`. No equivalent function available for SUPER type.",
+                "Redshift does not support `map_contains_key`. No equivalent function available for SUPER type.",
             ),
         )
     }

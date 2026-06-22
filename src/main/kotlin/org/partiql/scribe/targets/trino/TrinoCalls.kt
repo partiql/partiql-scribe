@@ -30,7 +30,7 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
             this.remove("bitwise_and")
             this["cast_row"] = ::castrow
             this["transform"] = ::transform
-            this["contains_key"] = ::containsKey
+            this["map_contains_key"] = ::mapContainsKey
             this["map_get"] = ::mapGet
             this["size"] = ::sizeFn
             this["cardinality"] = ::cardinalityFn
@@ -184,15 +184,15 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     /**
-     * PartiQL `contains_key(map, key)` -> Trino `contains(map_keys(map), key)`
+     * PartiQL `map_contains_key(map, key)` -> Trino `contains(map_keys(map), key)`
      */
-    private fun containsKey(args: SqlArgs): Expr {
+    private fun mapContainsKey(args: SqlArgs): Expr {
         val containsId = Identifier.regular("contains")
         val mapKeysId = Identifier.regular("map_keys")
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `contains_key` was replaced by Trino `contains(map_keys(...), ...)`",
+                message = "PartiQL `map_contains_key` was replaced by Trino `contains(map_keys(...), ...)`",
             ),
         )
         val mapExpr = args[0].expr

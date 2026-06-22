@@ -48,15 +48,15 @@ SELECT T.col_map_float_key FROM T_ALL_TYPES AS T;
 
 --#[map-09]
 -- Lookup map with bracket notation (string key)
-SELECT T.col_map_str_key['a'] FROM T_ALL_TYPES AS T WHERE contains_key(T.col_map_str_key, 'a');
+SELECT T.col_map_str_key['a'] FROM T_ALL_TYPES AS T WHERE map_contains_key(T.col_map_str_key, 'a');
 
 --#[map-10]
 -- Lookup map with bracket notation (float key)
-SELECT T.col_map_float_key[1.0] FROM T_ALL_TYPES AS T WHERE contains_key(T.col_map_float_key, 1.0);
+SELECT T.col_map_float_key[1.0] FROM T_ALL_TYPES AS T WHERE map_contains_key(T.col_map_float_key, 1.0);
 
 --#[map-11]
 -- Lookup map with bracket notation using column as key
-SELECT T.col_map_str_key[T.col_string] FROM T_ALL_TYPES AS T WHERE contains_key(T.col_map_str_key, T.col_string);
+SELECT T.col_map_str_key[T.col_string] FROM T_ALL_TYPES AS T WHERE map_contains_key(T.col_map_str_key, T.col_string);
 
 -- ----------------------------------------
 --  Map functions — map_keys, map_values, map_entries
@@ -107,20 +107,20 @@ SELECT cardinality(T.col_map_str_key) FROM T_ALL_TYPES AS T;
 SELECT exists(T.col_map_str_key) FROM T_ALL_TYPES AS T;
 
 -- ----------------------------------------
---  Map functions — contains_key
+--  Map functions — map_contains_key
 -- ----------------------------------------
 
 --#[map-22]
--- contains_key with string key that exists
-SELECT contains_key(T.col_map_str_key, 'a') FROM T_ALL_TYPES AS T;
+-- map_contains_key with string key that exists
+SELECT map_contains_key(T.col_map_str_key, 'a') FROM T_ALL_TYPES AS T;
 
 --#[map-23]
--- contains_key with column reference as key
-SELECT contains_key(T.col_map_str_key, T.col_string) FROM T_ALL_TYPES AS T;
+-- map_contains_key with column reference as key
+SELECT map_contains_key(T.col_map_str_key, T.col_string) FROM T_ALL_TYPES AS T;
 
 --#[map-24]
--- contains_key with float key
-SELECT contains_key(T.col_map_float_key, T.col_float64) FROM T_ALL_TYPES AS T;
+-- map_contains_key with float key
+SELECT map_contains_key(T.col_map_float_key, T.col_float64) FROM T_ALL_TYPES AS T;
 
 -- ----------------------------------------
 --  Map functions — map_get
@@ -167,8 +167,8 @@ SELECT CAST(T.col_map_str_key AS MAP<STRING, BIGINT>) FROM T_ALL_TYPES AS T;
 SELECT T.col_int32 FROM T_ALL_TYPES AS T WHERE T.col_map_str_key['a'] > 10;
 
 --#[map-32]
--- Filter with contains_key
-SELECT T.col_int32 FROM T_ALL_TYPES AS T WHERE contains_key(T.col_map_str_key, 'a');
+-- Filter with map_contains_key
+SELECT T.col_int32 FROM T_ALL_TYPES AS T WHERE map_contains_key(T.col_map_str_key, 'a');
 
 --#[map-33]
 -- Filter with map size

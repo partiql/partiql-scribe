@@ -24,7 +24,6 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
             this["utcnow"] = ::utcnow
             this["current_user"] = ::currentUser
             this["transform"] = ::transform
-            this["contains_key"] = ::containsKey
             this["map_get"] = ::mapGet
             this["cardinality"] = ::cardinalityFn
             this["exists"] = ::existsFn
@@ -243,20 +242,6 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                     ),
                 )
         }
-
-    /**
-     * PartiQL `contains_key(map, key)` -> Spark `map_contains_key(map, key)`
-     */
-    private fun containsKey(args: SqlArgs): Expr {
-        val id = Identifier.regular("map_contains_key")
-        listener.report(
-            ScribeProblem.simpleInfo(
-                code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `contains_key` was replaced by Spark `map_contains_key`",
-            ),
-        )
-        return exprCall(id, listOf(args[0].expr, args[1].expr))
-    }
 
     /**
      * PartiQL `map_get(map, key)` -> Spark `element_at(map, key)`
