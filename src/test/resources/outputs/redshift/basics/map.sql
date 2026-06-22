@@ -36,7 +36,9 @@ SELECT "T"."col_int32", "T"."col_string", "T"."col_map_str_key" FROM "default"."
 -- Select map column with float key type
 SELECT "T"."col_map_float_key" FROM "default"."T_ALL_TYPES" AS "T";
 
--- map-09 (bracket lookup with map_contains_key guard) is not supported — Redshift does not have map_contains_key
+--#[map-09]
+-- Bracket lookup (string key) with map_contains_key guard
+SELECT "T"."col_map_str_key"."a" FROM "default"."T_ALL_TYPES" AS "T" WHERE "T"."col_map_str_key"."a" IS NOT NULL;
 
 -- map-10 (float key bracket lookup) is not supported — Redshift SUPER uses dot notation for string keys only
 
@@ -46,7 +48,12 @@ SELECT "T"."col_map_float_key" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- map-18 to map-21 (size, cardinality, exists) are not supported — Redshift does not have equivalent functions for SUPER map type
 
--- map-22 to map-24 (map_contains_key) are not supported — Redshift does not have equivalent functions for SUPER map type
+--#[map-22]
+-- map_contains_key with string key
+SELECT "T"."col_map_str_key"."a" IS NOT NULL AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+-- map-23 (map_contains_key with column reference) is not supported — Redshift only supports string literal keys
+-- map-24 (map_contains_key with float key) is not supported — Redshift only supports string literal keys
 
 -- ----------------------------------------
 --  Map functions — map_get
@@ -67,7 +74,9 @@ SELECT "T"."col_map_str_key"."a" AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 -- Filter with map lookup comparison
 SELECT "T"."col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE "T"."col_map_str_key"."a" > 10;
 
--- map-32 (filter with map_contains_key) is not supported — Redshift does not have equivalent function
+--#[map-32]
+-- Filter with map_contains_key
+SELECT "T"."col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE "T"."col_map_str_key"."a" IS NOT NULL;
 
 -- map-33 (filter with size) is not supported — Redshift does not have equivalent function
 
