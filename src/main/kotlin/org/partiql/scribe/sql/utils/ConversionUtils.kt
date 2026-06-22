@@ -166,27 +166,27 @@ internal fun removePathRoot(expr: Expr): Expr {
         is ExprPath -> {
             val steps = expr.steps
             val first = expr.steps.first()
-            if (first is PathStep.Element && first.element is ExprLit) {
+            if (first is PathStep.Element && first.element is ExprLit) { // e.g. T['a'] — bracket notation with literal key
                 val newFirst = exprVarRef(Identifier.delimited((first.element as ExprLit).lit.stringValue()), isQualified = false)
-                if (steps.size == 1) {
+                if (steps.size == 1) { // T['a'] -> "a"
                     newFirst
-                } else {
+                } else { // T['a']['b'] -> "a"['b']
                     exprPath(
                         newFirst,
                         steps.drop(1),
                     )
                 }
-            } else if (first is PathStep.Field) {
+            } else if (first is PathStep.Field) { // e.g. T.a — dot notation field access
                 val newFirst = exprVarRef(Identifier.delimited(first.field.text), isQualified = false)
-                if (steps.size == 1) {
+                if (steps.size == 1) { // T.a -> "a"
                     newFirst
-                } else {
+                } else { // T.a.b -> "a".b
                     exprPath(
                         newFirst,
                         steps.drop(1),
                     )
                 }
-            } else {
+            } else { // unsupported path step type (e.g. wildcard), return as-is
                 expr
             }
         }
