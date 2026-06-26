@@ -134,3 +134,46 @@ SELECT "T2"['c'] AS "c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN 
 -- Join with Path navigation
 --#[join-34]
 SELECT "E"['a'] AS "a" FROM "default"."T" AS "E" INNER JOIN "E"['b'] AS "item" ON true;
+
+--#[join-35]
+SELECT "E"['a'] AS "a" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "item" ON true;
+
+-- Correlated: explicit INNER JOIN path ON TRUE
+--#[join-36]
+SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "item" ON true;
+
+-- Correlated: implicit path (unqualified)
+--#[join-37]
+SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "item" ON true;
+
+-- Correlated: path lateral with ON condition
+--#[join-38]
+SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "item" ON "item" > 1;
+
+-- Correlated: subquery referencing LHS
+--#[join-39]
+SELECT "T2"['b'] AS "b" FROM "default"."T" AS "T1" INNER JOIN (SELECT "T"['b'] AS "b" FROM "default"."T" AS "T" WHERE "T"['b'] <= "T1"['b']) AS "T2" ON true;
+
+-- Correlated: LEFT JOIN path lateral
+--#[join-40]
+SELECT "E"['a'] AS "a", "item" AS "item" FROM "default"."T" AS "E" LEFT JOIN "E"['array'] AS "item" ON true;
+
+-- Correlated: ON condition with LHS reference
+--#[join-41]
+SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "item" ON "item" = "E"['b'];
+
+-- Correlated: chained correlated joins
+--#[join-42]
+SELECT "item" AS "item" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "E" INNER JOIN "E"['a'] AS "nested" ON true INNER JOIN "nested"['nested_list'] AS "item" ON true;
+
+-- Correlated: mixed correlated and non-correlated
+--#[join-43]
+SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON true INNER JOIN "E"['array'] AS "item" ON true;
+
+-- Non-correlated: subquery references outer not LHS
+--#[join-44]
+SELECT (SELECT "E"['b'] AS "b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"['b'] > "O"['b']) AS "_1" FROM "default"."T" AS "O";
+
+-- Non-correlated despite deep nesting
+--#[join-45]
+SELECT "T2"['b'] AS "b" FROM "default"."T" AS "T1" INNER JOIN (SELECT "T3"['b'] AS "b" FROM "default"."T" AS "T3" INNER JOIN (SELECT "T"['b'] AS "b" FROM "default"."T" AS "T") AS "T4" ON true) AS "T2" ON true;

@@ -106,24 +106,31 @@ abstract class SqlTargetSuite {
 
                 // Assert
                 dynamicTest(displayName) {
+                    val expected = test.statement
+                    val expectedBody = expected.lines().filter { !it.startsWith("--#[") }.joinToString("\n").trim()
+                    val expectError = expectedBody.equals("ERROR;", ignoreCase = true)
                     try {
                         val plan = partiqlStatementToPlan(statement, session)
                         // PLAN -> AST -> DIALECT TEXT
                         val result = scribe.compile(plan, session, target)
+                        if (expectError) {
+                            fail { "Expected ERROR but got result: ${result.output.value}" }
+                        }
                         val actual = result.output.value
-                        val expected = test.statement
-
                         comparator.assertEquals(expected, actual) {
                             this.appendLine("Input Query: $statement")
                             this.appendLine("Expected result: $expected")
                             this.appendLine("Actual result: $actual")
                         }
                     } catch (ex: ScribeException) {
-                        fail {
-                            buildString {
-                                appendLine(ex.toString())
+                        if (!expectError) {
+                            fail {
+                                buildString {
+                                    appendLine(ex.toString())
+                                }
                             }
                         }
+                        // else: expected error, test passes
                     }
                 }
             }

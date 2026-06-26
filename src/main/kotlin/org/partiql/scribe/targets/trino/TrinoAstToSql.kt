@@ -34,6 +34,54 @@ import java.math.BigDecimal
 public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
 
+    override fun visitFrom(
+        node: org.partiql.ast.From,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        node.tableRefs.forEachIndexed { i, ref ->
+            if (i > 0) {
+                val isUnnest =
+                    ref is org.partiql.ast.FromExpr && ref.expr is ExprCall &&
+                        (ref.expr as ExprCall).function.identifier.getText() == TrinoRelConverter.MARKER_UNNEST
+                if (isUnnest) {
+                    t = t concat " CROSS JOIN "
+                } else {
+                    t = t concat ", "
+                }
+            }
+            t = ref.accept(this, t)
+        }
+        return t
+    }
+
+    override fun visitFromExpr(
+        node: org.partiql.ast.FromExpr,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var h = tail
+        val expr = node.expr
+        // UNNEST: render as UNNEST(expr) AS _alias(item)
+        if (expr is ExprCall && expr.function.identifier.getText() == TrinoRelConverter.MARKER_UNNEST) {
+            h = visitExprWrapped(expr, h)
+            val tableAlias = node.asAlias!!.sql()
+            val itemAlias = Identifier.Simple.delimited(node.asAlias!!.getText().removePrefix("_")).sql()
+            h = h concat " AS $tableAlias($itemAlias)"
+            return h
+        }
+        // LATERAL: render as LATERAL (subquery) AS alias
+        if (expr is ExprCall && expr.function.identifier.getText() == TrinoRelConverter.MARKER_LATERAL) {
+            h = h concat "LATERAL "
+            h = visitExprWrapped(expr.args[0], h)
+            h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
+            return h
+        }
+        // Default rendering
+        h = visitExprWrapped(node.expr, h)
+        h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
+        return h
+    }
+
     override fun visitExprSessionAttribute(
         node: ExprSessionAttribute,
         tail: SqlBlock,
