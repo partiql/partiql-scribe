@@ -70,6 +70,7 @@ private object LocalSchema {
             "list" -> error("`list` is not an atomic type")
             "sexp" -> error("`sexp` is not an atomic type")
             "struct" -> error("`struct` is not an atomic type")
+            "map" -> error("`map` is not an atomic type")
             // unsupported
             "interval" -> error("`interval` is currently not supported")
             "symbol" -> error("`symbol` is currently not supported")
@@ -119,6 +120,7 @@ private object LocalSchema {
                     "bag" -> bag()
                     "list" -> list()
                     "struct" -> struct()
+                    "map" -> map()
                     "any" -> PType.dynamic()
                     "null", "missing" -> PType.unknown()
                     else -> error("Invalid type `$this`")
@@ -239,6 +241,13 @@ private object LocalSchema {
         PType.array(
             load(getAngry<IonElement>("items")),
         )
+
+    @Suppress("DEPRECATION")
+    private fun StructElement.map(): PType {
+        val keyType = load(getAngry<IonElement>("key"))
+        val valueType = load(getAngry<IonElement>("value"))
+        return PType.map(keyType, valueType)
+    }
 
     private fun StructElement.struct(): PType {
 // Constraints

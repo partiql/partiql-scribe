@@ -26,6 +26,7 @@ import org.partiql.ast.Literal
 import org.partiql.ast.SetOpType
 import org.partiql.ast.SetQuantifier
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprMap
 import org.partiql.ast.expr.ExprPath
 import org.partiql.plan.Operator
 import org.partiql.plan.OperatorVisitor
@@ -40,6 +41,7 @@ import org.partiql.plan.rex.RexCoalesce
 import org.partiql.plan.rex.RexDispatch
 import org.partiql.plan.rex.RexError
 import org.partiql.plan.rex.RexLit
+import org.partiql.plan.rex.RexMap
 import org.partiql.plan.rex.RexNullIf
 import org.partiql.plan.rex.RexPathIndex
 import org.partiql.plan.rex.RexPathKey
@@ -490,6 +492,15 @@ public open class RexConverter(
                         )
                 }
             }
+            PType.MAP -> {
+                val keyType = pType.keyType.toDataType()
+                val valueType = pType.valueType.toDataType()
+                if (keyType == null || valueType == null) {
+                    null
+                } else {
+                    DataType.MAP(keyType, valueType)
+                }
+            }
             else -> null
         }
     }
@@ -882,6 +893,21 @@ public open class RexConverter(
                 )
             }
         return exprStruct(fields)
+    }
+
+    @Suppress("DEPRECATION")
+    override fun visitMap(
+        rex: RexMap,
+        ctx: Unit,
+    ): Expr {
+        val entries =
+            rex.entries.map {
+                ExprMap.Entry(
+                    visitRex(it.key, ctx),
+                    visitRex(it.value, ctx),
+                )
+            }
+        return ExprMap(entries)
     }
 
     override fun visitSubquery(

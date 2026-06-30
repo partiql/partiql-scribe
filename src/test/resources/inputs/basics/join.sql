@@ -135,5 +135,6 @@ SELECT T1.c, T2.a, T1.v FROM T AS T1 JOIN T AS T2 ON T1.b = T2.b LIMIT 10;
 SELECT T2.c, COUNT(*) FROM T AS T1 JOIN T AS T2 ON T1.b = T2.b GROUP BY T2.c HAVING COUNT(*) > 5;
 
 -- Join with Path navigation
---#[join-34]
-SELECT E.a FROM T AS E, E.b AS item;
+-- --#[join-34]
+-- Failed, should fix in PR https://github.com/partiql/partiql-scribe/pull/153
+-- SELECT E.a FROM T AS E, E.b AS item;

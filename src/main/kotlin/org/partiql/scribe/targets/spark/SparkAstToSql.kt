@@ -1,6 +1,5 @@
 package org.partiql.scribe.targets.spark
 
-import org.partiql.ast.Ast.exprPathStepField
 import org.partiql.ast.Ast.exprQuerySet
 import org.partiql.ast.Ast.orderBy
 import org.partiql.ast.Ast.sort
@@ -16,7 +15,7 @@ import org.partiql.ast.WithListElement
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
-import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprMap
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.expr.ExprTrim
@@ -111,29 +110,11 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         return h
     }
 
-    /**
-     * Spark does not support x['y'] syntax; replace with x.y
-     */
     override fun visitPathStepElement(
         node: PathStep.Element,
         tail: SqlBlock,
     ): SqlBlock {
-        val key = node.element
-        return if (key is ExprLit && key.lit.code() == Literal.STRING) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    code = ScribeProblem.TRANSLATION_INFO,
-                    message =
-                        "SparkSQL does not support PartiQL's path element syntax (e.g. x['y']). " +
-                            "Replaced with path step field syntax (e.g. x.y)",
-                ),
-            )
-            val elemString = key.lit.stringValue()
-            val stepField = exprPathStepField(Identifier.Simple.regular(elemString))
-            visitPathStepField(stepField, tail)
-        } else {
-            super.visitPathStepElement(node, tail)
-        }
+        return super.visitPathStepElement(node, tail)
     }
 
     override fun visitPathStepField(
@@ -160,6 +141,26 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         t = visitExprWrapped(node.name, t)
         t = t concat ", "
         t = visitExprWrapped(node.value, t)
+        return t
+    }
+
+    // Spark's MAP constructor: MAP(key1, val1, key2, val2, ...)
+    // https://spark.apache.org/docs/latest/api/sql/#map
+    @Suppress("DEPRECATION")
+    override fun visitExprMap(
+        node: ExprMap,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail concat "MAP("
+        node.entries.forEachIndexed { index, entry ->
+            t = visitExprWrapped(entry.key, t)
+            t = t concat ", "
+            t = visitExprWrapped(entry.value, t)
+            if (index < node.entries.size - 1) {
+                t = t concat ", "
+            }
+        }
+        t = t concat ")"
         return t
     }
 
@@ -280,6 +281,14 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
                         "TIME WITH TIME ZONE type is not supported in Spark.",
                     ),
                 )
+            DataType.MAP -> {
+                var t = tail concat "MAP<"
+                t = visitDataType(node.keyType, t)
+                t = t concat ", "
+                t = visitDataType(node.elementType, t)
+                t = t concat ">"
+                t
+            }
             else -> super.visitDataType(node, tail)
         }
     }
