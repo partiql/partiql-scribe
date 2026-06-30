@@ -259,43 +259,11 @@ public open class RelConverter(
         rel: RelCorrelate,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        val lhs = visitRelSFW(rel.left, ctx)
-        val lhsFrom = assertNotNull(lhs.from)
-        assert(lhsFrom.tableRefs.size == 1)
-
-        val rightConverter = transform.getRelConverter(outer + listOf(Locals(rel.left.type.fields.toList(), outer = outer)))
-        val rhs = rightConverter.visitRelSFW(rel.right, ctx)
-
-        val rhsFrom = assertNotNull(rhs.from)
-        assert(rhsFrom.tableRefs.size == 1)
-        val joinType =
-            when (rel.joinType.code()) {
-                JoinType.LEFT -> org.partiql.ast.JoinType.LEFT()
-                JoinType.INNER -> org.partiql.ast.JoinType.INNER()
-                else -> {
-                    listener.reportAndThrow(
-                        ScribeProblem.simpleError(
-                            code = ScribeProblem.INTERNAL_ERROR,
-                            "Unsupported correlate join type: ${rel.joinType}",
-                        ),
-                    )
-                }
-            }
-        val condition = Ast.exprLit(Literal.bool(true))
-        lhs.from =
-            from(
-                tableRefs =
-                    listOf(
-                        fromJoin(
-                            lhs = lhsFrom.tableRefs.first(),
-                            rhs = rhsFrom.tableRefs.first(),
-                            joinType = joinType,
-                            condition = condition,
-                        ),
-                    ),
-            )
-        return ExprQuerySetFactory(
-            queryBody = lhs,
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "CORRELATE is not yet supported",
+            ),
         )
     }
 

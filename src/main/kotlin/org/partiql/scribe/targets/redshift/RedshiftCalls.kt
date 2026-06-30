@@ -35,6 +35,9 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
             this["map_entries"] = ::mapEntries
             this["map_get"] = ::mapGet
             this["map_contains_key"] = ::mapContainsKey
+            this["size"] = ::sizeFn
+            this["cardinality"] = ::cardinalityFn
+            this["exists"] = ::existsFn
         }
 
     /**

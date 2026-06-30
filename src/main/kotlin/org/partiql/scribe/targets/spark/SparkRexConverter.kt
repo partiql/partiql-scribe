@@ -53,6 +53,8 @@ public open class SparkRexConverter(
         rex: RexPathKey,
         ctx: Unit,
     ): Expr {
+        // Resolve the operand's type to decide bracket vs dot notation; may throw if type is not available.
+        // Operand type may be unresolved in partially-compiled plans
         val operandType =
             try {
                 rex.operand.type.pType
