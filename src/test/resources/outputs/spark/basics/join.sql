@@ -130,7 +130,59 @@ SELECT `T1`.`c` AS `c`, `T2`.`a` AS `a`, `T1`.`v` AS `v` FROM `default`.`T` AS `
 --#[join-33]
 SELECT `T2`.`c` AS `c`, `count`(1) AS `_1` FROM `default`.`T` AS `T1` INNER JOIN `default`.`T` AS `T2` ON `T1`.`b` = `T2`.`b` GROUP BY `T2`.`c` HAVING `count`(1) > CAST(5 AS BIGINT);
 
--- Join with Path navigation
--- --#[join-34]
--- Failed, should fix in PR https://github.com/partiql/partiql-scribe/pull/153
--- SELECT `E`.`a` AS `a` FROM `default`.`T` AS `E` INNER JOIN `E`.`b` AS `item` ON true;
+-- Join with Path navigation (scalar)
+--#[join-34]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+-- Join with Path navigation (array)
+--#[join-35]
+SELECT `E`.`a` AS `a` FROM `default`.`T` AS `E` LATERAL VIEW `EXPLODE`(`E`.`array`) `_item` AS `item`;
+
+-- Correlated: explicit INNER JOIN path ON TRUE
+--#[join-36]
+SELECT `item` AS `item` FROM `default`.`T` AS `E` LATERAL VIEW `EXPLODE`(`E`.`array`) `_item` AS `item`;
+
+-- Correlated: implicit path (unqualified)
+--#[join-37]
+SELECT `item` AS `item` FROM `default`.`T` AS `E` LATERAL VIEW `EXPLODE`(`E`.`array`) `_item` AS `item`;
+
+-- Correlated: path lateral with ON condition
+--#[join-38]
+SELECT `item` AS `item` FROM `default`.`T` AS `E` LATERAL VIEW `EXPLODE`(`E`.`array`) `_item` AS `item` WHERE `item` > 1;
+
+-- Correlated: subquery referencing LHS
+--#[join-39]
+SELECT `T2`.`b` AS `b` FROM `default`.`T` AS `T1` INNER JOIN LATERAL (SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T` WHERE `T`.`b` <= `T1`.`b`) AS `T2` ON true;
+
+-- Correlated: LEFT JOIN path lateral
+--#[join-40]
+SELECT `E`.`a` AS `a`, `item` AS `item` FROM `default`.`T` AS `E` LATERAL VIEW OUTER `EXPLODE`(`E`.`array`) `_item` AS `item`;
+
+-- Correlated: ON condition with LHS reference
+--#[join-41]
+SELECT `item` AS `item` FROM `default`.`T` AS `E` LATERAL VIEW `EXPLODE`(`E`.`array`) `_item` AS `item` WHERE `item` = `E`.`b`;
+
+-- Correlated: chained correlated joins
+--#[join-42]
+SELECT `item` AS `item` FROM `default`.`EXCLUDE_T_NESTED_LIST` AS `E` LATERAL VIEW `EXPLODE`(`E`.`a`) `_nested` AS `nested` LATERAL VIEW `EXPLODE`(`nested`.`nested_list`) `_item` AS `item`;
+
+-- Correlated: mixed correlated and non-correlated
+--#[join-43]
+SELECT `item` AS `item` FROM `default`.`T` AS `E` INNER JOIN `default`.`T` AS `T2` ON true LATERAL VIEW `EXPLODE`(`E`.`array`) `_item` AS `item`;
+
+-- Non-correlated: subquery references outer not LHS
+-- A scalar subquery (used as an expression in SELECT) must return at most 1 row at runtime.
+--#[join-44]
+SELECT (SELECT `E`.`b` AS `b` FROM `default`.`T` AS `E` INNER JOIN `default`.`T` AS `T2` ON `T2`.`b` > `O`.`b` LIMIT 1) AS `_1` FROM `default`.`T` AS `O`;
+
+-- Non-correlated despite deep nesting
+--#[join-45]
+SELECT `T2`.`b` AS `b` FROM `default`.`T` AS `T1` INNER JOIN (SELECT `T3`.`b` AS `b` FROM `default`.`T` AS `T3` INNER JOIN (SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T`) AS `T4` ON true) AS `T2` ON true;
+
+-- Non-correlated: subquery in WHERE with IN
+--#[join-46]
+SELECT `O`.`b` AS `b` FROM `default`.`T` AS `O` WHERE `O`.`b` IN (SELECT `E`.`b` AS `b` FROM `default`.`T` AS `E` INNER JOIN `default`.`T` AS `T2` ON `T2`.`b` > `O`.`b`);
+
+-- Non-correlated: subquery in FROM
+--#[join-47]
+SELECT `O`.`b` AS `b` FROM `default`.`T` AS `O` WHERE `O`.`b` IN (SELECT `sub`.`b` AS `b` FROM (SELECT `E`.`b` AS `b` FROM `default`.`T` AS `E` INNER JOIN `default`.`T` AS `T2` ON `T2`.`b` > `E`.`b`) AS `sub` WHERE `sub`.`b` > `O`.`b`);

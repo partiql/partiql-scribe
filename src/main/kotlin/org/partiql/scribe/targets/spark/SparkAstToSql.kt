@@ -34,11 +34,71 @@ import org.partiql.scribe.sql.utils.type
 public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
 
+    private fun isExplodeMarker(ref: org.partiql.ast.FromTableRef): Boolean {
+        if (ref !is FromExpr) return false
+        val call = ref.expr as? ExprCall ?: return false
+        return call.function.identifier.getText() == SparkRelConverter.MARKER_EXPLODE
+    }
+
+    override fun visitFrom(
+        node: org.partiql.ast.From,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        node.tableRefs.forEachIndexed { i, ref ->
+            if (i > 0) {
+                if (isExplodeMarker(ref)) {
+                    t = t concat " "
+                } else {
+                    t = t concat ", "
+                }
+            }
+            t = ref.accept(this, t)
+        }
+        return t
+    }
+
+    override fun visitFromJoin(
+        node: org.partiql.ast.FromJoin,
+        tail: SqlBlock,
+    ): SqlBlock {
+        // LEFT JOIN with EXPLODE RHS → LATERAL VIEW OUTER EXPLODE
+        if (isExplodeMarker(node.rhs)) {
+            val rhs = node.rhs as FromExpr
+            var t = visitFromTableRef(node.lhs, tail)
+            t = t concat " LATERAL VIEW OUTER "
+            val expr = rhs.expr as ExprCall
+            t = visitExprWrapped(expr, t)
+            val tableAlias = rhs.asAlias!!.sql()
+            val itemAlias = Identifier.Simple.delimited(rhs.asAlias!!.getText().removePrefix("_")).sql()
+            t = t concat " $tableAlias AS $itemAlias"
+            return t
+        }
+        return super.visitFromJoin(node, tail)
+    }
+
     override fun visitFromExpr(
         node: FromExpr,
         tail: SqlBlock,
     ): SqlBlock {
         var h = tail
+        val expr = node.expr
+        // LATERAL VIEW EXPLODE (INNER join case — appended as table ref)
+        if (isExplodeMarker(node)) {
+            h = h concat "LATERAL VIEW "
+            h = visitExprWrapped(expr, h)
+            val tableAlias = node.asAlias!!.sql()
+            val itemAlias = Identifier.Simple.delimited(node.asAlias!!.getText().removePrefix("_")).sql()
+            h = h concat " $tableAlias AS $itemAlias"
+            return h
+        }
+        // Check if this is a LATERAL subquery (correlated subquery join)
+        if (expr is org.partiql.ast.expr.ExprCall && expr.function.identifier.getText() == SparkRelConverter.MARKER_LATERAL) {
+            h = h concat "LATERAL "
+            h = visitExprWrapped(expr.args[0], h)
+            h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
+            return h
+        }
         h =
             when (node.fromType.code()) {
                 FromType.SCAN -> h

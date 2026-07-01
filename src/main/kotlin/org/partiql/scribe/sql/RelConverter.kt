@@ -259,12 +259,67 @@ public open class RelConverter(
         rel: RelCorrelate,
         ctx: Unit,
     ): ExprQuerySetFactory {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "CORRELATE is not yet supported",
-            ),
-        )
+        val lhs = visitRelSFW(rel.left, ctx)
+        val lhsFrom = assertNotNull(lhs.from)
+
+        // Separate the RHS into the scan and the join condition (filter predicate).
+        val rhsRel: Rel
+        val condition: Expr
+        if (rel.right is RelFilter) {
+            val filter = rel.right as RelFilter
+            rhsRel = filter.input
+            // The filter predicate was typed in the RHS scope: depth=0 is RHS, depth=1 is LHS.
+            val lhsLocals = Locals(rel.left.type.fields.toList(), outer = outer)
+            val filterLocals = Locals(filter.input.type.fields.toList(), outer = outer + listOf(lhsLocals))
+            condition = transform.getRexConverter(filterLocals).apply(filter.predicate)
+        } else {
+            rhsRel = rel.right
+            condition = ExprLit(Literal.bool(true))
+        }
+
+        val rightConverter = transform.getRelConverter(outer + listOf(Locals(rel.left.type.fields.toList(), outer = outer)))
+        val rhs = rightConverter.visitRelSFW(rhsRel, ctx)
+        val rhsFrom = assertNotNull(rhs.from)
+        assert(rhsFrom.tableRefs.size == 1)
+
+        val joinType =
+            when (rel.joinType.code()) {
+                JoinType.INNER -> org.partiql.ast.JoinType.INNER()
+                JoinType.LEFT -> org.partiql.ast.JoinType.LEFT()
+                else -> {
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            code = ScribeProblem.INTERNAL_ERROR,
+                            "Unsupported correlated join type: ${rel.joinType}",
+                        ),
+                    )
+                }
+            }
+
+        // Chain: wrap all existing LHS table refs into a single join tree if needed
+        val lhsTableRef =
+            if (lhsFrom.tableRefs.size == 1) {
+                lhsFrom.tableRefs.first()
+            } else {
+                // Multiple table refs from chained correlates — fold them into nested joins
+                lhsFrom.tableRefs.reduce { acc, ref ->
+                    fromJoin(lhs = acc, rhs = ref, joinType = org.partiql.ast.JoinType.INNER(), condition = ExprLit(Literal.bool(true)))
+                }
+            }
+
+        lhs.from =
+            from(
+                tableRefs =
+                    listOf(
+                        fromJoin(
+                            lhs = lhsTableRef,
+                            rhs = rhsFrom.tableRefs.first(),
+                            joinType = joinType,
+                            condition = condition,
+                        ),
+                    ),
+            )
+        return ExprQuerySetFactory(queryBody = lhs)
     }
 
     override fun visitDistinct(
@@ -409,7 +464,7 @@ public open class RelConverter(
         )
     }
 
-    private fun <T> assertNotNull(v: T?): T {
+    internal fun <T> assertNotNull(v: T?): T {
         if (v == null) {
             listener.report(
                 ScribeProblem.simpleError(

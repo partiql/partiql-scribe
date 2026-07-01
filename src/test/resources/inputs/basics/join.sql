@@ -135,6 +135,57 @@ SELECT T1.c, T2.a, T1.v FROM T AS T1 JOIN T AS T2 ON T1.b = T2.b LIMIT 10;
 SELECT T2.c, COUNT(*) FROM T AS T1 JOIN T AS T2 ON T1.b = T2.b GROUP BY T2.c HAVING COUNT(*) > 5;
 
 -- Join with Path navigation
--- --#[join-34]
--- Failed, should fix in PR https://github.com/partiql/partiql-scribe/pull/153
--- SELECT E.a FROM T AS E, E.b AS item;
+--#[join-34]
+SELECT E.a FROM T AS E, E.b AS item;
+
+--#[join-35]
+SELECT E.a FROM T AS E, E."array" AS item;
+
+-- Correlated: explicit INNER JOIN path ON TRUE
+--#[join-36]
+SELECT item FROM T AS E INNER JOIN E."array" AS item ON true;
+
+-- Correlated: implicit path (unqualified)
+--#[join-37]
+SELECT item FROM T AS E INNER JOIN "array" AS item ON true;
+
+-- Correlated: path lateral with ON condition
+--#[join-38]
+SELECT item FROM T AS E INNER JOIN E."array" AS item ON item > 1;
+
+-- Correlated: subquery referencing LHS
+--#[join-39]
+SELECT T2.b FROM T AS T1 INNER JOIN (SELECT T.b FROM T WHERE T.b <= T1.b) AS T2 ON true;
+
+-- Correlated: LEFT JOIN path lateral
+--#[join-40]
+SELECT E.a, item FROM T AS E LEFT JOIN E."array" AS item ON true;
+
+-- Correlated: ON condition with LHS reference
+--#[join-41]
+SELECT item FROM T AS E INNER JOIN E."array" AS item ON item = E.b;
+
+-- Correlated: chained correlated joins
+--#[join-42]
+SELECT item FROM EXCLUDE_T_NESTED_LIST AS E, E.a AS nested, nested.nested_list AS item;
+
+-- Correlated: mixed correlated and non-correlated
+--#[join-43]
+SELECT item FROM T AS E, T AS T2, E."array" AS item;
+
+-- Non-correlated: subquery references outer not LHS
+-- A scalar subquery (used as an expression in SELECT) must return at most 1 row at runtime.
+--#[join-44]
+SELECT (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > O.b LIMIT 1) FROM T AS O;
+
+-- Non-correlated despite deep nesting
+--#[join-45]
+SELECT T2.b FROM T AS T1 INNER JOIN (SELECT T3.b FROM T AS T3 INNER JOIN (SELECT T.b FROM T) AS T4 ON true) AS T2 ON true;
+
+-- Non-correlated: subquery in WHERE with IN (references outer scope O)
+--#[join-46]
+SELECT O.b FROM T AS O WHERE O.b IN (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > O.b);
+
+-- Non-correlated: subquery in FROM with join inside
+--#[join-47]
+SELECT O.b FROM T AS O WHERE O.b IN (SELECT sub.b FROM (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > E.b) AS sub WHERE sub.b > O.b);
