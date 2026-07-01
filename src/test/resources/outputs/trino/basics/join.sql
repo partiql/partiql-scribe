@@ -132,7 +132,7 @@ SELECT "T2"."c" AS "c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "
 
 -- Join with Path navigation (scalar)
 --#[join-34]
-ERROR;
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
 --#[join-35]
 SELECT "E"."a" AS "a" FROM "default"."T" AS "E" CROSS JOIN UNNEST("E"."array") AS "_item"("item");
@@ -162,6 +162,7 @@ SELECT "E"."a" AS "a", "item" AS "item" FROM "default"."T" AS "E" LEFT JOIN UNNE
 SELECT "item" AS "item" FROM "default"."T" AS "E" CROSS JOIN UNNEST("E"."array") AS "_item"("item") WHERE "item" = "E"."b";
 
 -- Correlated: chained correlated joins
+-- TODO: produces invalid SQL for UNNEST of array-of-structs (https://github.com/partiql/partiql-scribe/issues/154)
 --#[join-42]
 SELECT "item" AS "item" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "E" CROSS JOIN UNNEST("E"."a") AS "_nested"("nested") CROSS JOIN UNNEST("nested"."nested_list") AS "_item"("item");
 

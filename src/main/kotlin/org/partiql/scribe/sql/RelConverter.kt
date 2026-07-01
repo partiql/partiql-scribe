@@ -464,7 +464,7 @@ public open class RelConverter(
         )
     }
 
-    protected fun <T> assertNotNull(v: T?): T {
+    internal fun <T> assertNotNull(v: T?): T {
         if (v == null) {
             listener.report(
                 ScribeProblem.simpleError(

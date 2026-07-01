@@ -132,7 +132,7 @@ SELECT `T2`.`c` AS `c`, `count`(1) AS `_1` FROM `default`.`T` AS `T1` INNER JOIN
 
 -- Join with Path navigation (scalar)
 --#[join-34]
-ERROR;
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
 -- Join with Path navigation (array)
 --#[join-35]

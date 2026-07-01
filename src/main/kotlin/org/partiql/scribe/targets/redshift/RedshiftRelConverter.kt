@@ -7,6 +7,7 @@ import org.partiql.plan.rel.RelCorrelate
 import org.partiql.plan.rel.RelFilter
 import org.partiql.plan.rel.RelScan
 import org.partiql.plan.rel.RelWindow
+import org.partiql.plan.rex.RexLit
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.ExprQuerySetFactory
@@ -35,12 +36,17 @@ public open class RedshiftRelConverter(
                 else -> null
             }
 
-        // For non-scan RHS or subquery RHS, use base implementation
+        // Redshift does not support lateral correlated subqueries
         if (rhsScan == null ||
             rhsScan.rex is org.partiql.plan.rex.RexSelect ||
             rhsScan.rex is org.partiql.plan.rex.RexSubquery
         ) {
-            return super.visitCorrelate(rel, ctx)
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_OPERATION,
+                    message = "Redshift does not support lateral correlated subqueries",
+                ),
+            )
         }
 
         // Reject scalar types
@@ -52,6 +58,20 @@ public open class RedshiftRelConverter(
                     message = "Redshift does not support correlated join on non-collection type: $rexType",
                 ),
             )
+        }
+
+        // Redshift SUPER unnest join only supports ON TRUE — reject non-trivial conditions
+        if (rel.right is RelFilter) {
+            val predicate = (rel.right as RelFilter).predicate
+            val isLiteralTrue = predicate is RexLit && predicate.datum.boolean
+            if (!isLiteralTrue) {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        code = ScribeProblem.UNSUPPORTED_OPERATION,
+                        message = "Redshift does not support correlated join with a condition other than ON TRUE for SUPER unnest joins",
+                    ),
+                )
+            }
         }
 
         // Redshift supports PartiQL-style path navigation natively

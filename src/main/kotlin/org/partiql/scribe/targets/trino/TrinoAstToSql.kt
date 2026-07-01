@@ -6,6 +6,7 @@ import org.partiql.ast.Ast.exprQuerySet
 import org.partiql.ast.Ast.orderBy
 import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
+import org.partiql.ast.Identifier
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal

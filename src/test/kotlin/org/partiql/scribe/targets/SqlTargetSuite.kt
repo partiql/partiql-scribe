@@ -108,7 +108,8 @@ abstract class SqlTargetSuite {
                 dynamicTest(displayName) {
                     val expected = test.statement
                     val expectedBody = expected.lines().filter { !it.startsWith("--#[") }.joinToString("\n").trim()
-                    val expectError = expectedBody.equals("ERROR;", ignoreCase = true)
+                    val expectedError = parseExpectedError(expectedBody)
+                    val expectError = expectedError != null
                     try {
                         val plan = partiqlStatementToPlan(statement, session)
                         // PLAN -> AST -> DIALECT TEXT
@@ -130,7 +131,9 @@ abstract class SqlTargetSuite {
                                 }
                             }
                         }
-                        // else: expected error, test passes
+                        if (expectedError != null) {
+                            assertScribeException(ex, expectedError)
+                        }
                     }
                 }
             }
@@ -176,6 +179,43 @@ abstract class SqlTargetSuite {
             }
         }
         return plan
+    }
+
+    private data class ExpectedError(val exceptionName: String, val code: String?, val message: String?)
+
+    private fun parseExpectedError(body: String): ExpectedError? {
+        val regex = Regex("""\[(\w+)(?:\{(.*)\})?];""")
+        val match = regex.matchEntire(body) ?: return null
+        val exceptionName = match.groupValues[1]
+        val props = match.groupValues[2]
+        var code: String? = null
+        var message: String? = null
+        if (props.isNotEmpty()) {
+            val codeMatch = Regex("""code=(\w+)""").find(props)
+            code = codeMatch?.groupValues?.get(1)
+            val messageMatch = Regex("""message="(.*?)"""").find(props)
+            message = messageMatch?.groupValues?.get(1)
+        }
+        return ExpectedError(exceptionName = exceptionName, code = code, message = message)
+    }
+
+    private fun assertScribeException(ex: ScribeException, expected: ExpectedError) {
+        val actualName = ex::class.simpleName ?: ""
+        if (actualName != expected.exceptionName) {
+            fail { "Expected exception ${expected.exceptionName} but got $actualName" }
+        }
+        if (expected.code != null) {
+            val actualCode = ex.error.name()
+            if (actualCode != expected.code) {
+                fail { "Expected error code ${expected.code} but got $actualCode" }
+            }
+        }
+        if (expected.message != null) {
+            val actualMessage = ex.error.getOrNull("MESSAGE", String::class.java) ?: ""
+            if (actualMessage != expected.message) {
+                fail { "Expected error message \"${expected.message}\" but got \"$actualMessage\"" }
+            }
+        }
     }
 
     // from org.partiql.planner.testFixtures

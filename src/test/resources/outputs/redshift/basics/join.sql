@@ -134,7 +134,7 @@ SELECT "T2"."c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "default
 
 -- Join with Path navigation (scalar)
 --#[join-34]
-ERROR;
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
 --#[join-35]
 SELECT "E"."a" FROM "default"."T" AS "E" INNER JOIN "E"."array" AS "item" ON true;
@@ -149,11 +149,11 @@ SELECT "item" FROM "default"."T" AS "E" INNER JOIN "E"."array" AS "item" ON true
 
 -- Correlated: path lateral with ON condition
 --#[join-38]
-SELECT "item" FROM "default"."T" AS "E" INNER JOIN "E"."array" AS "item" ON "item" > 1;
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Redshift does not support correlated join with a condition other than ON TRUE for SUPER unnest joins"}];
 
 -- Correlated: subquery referencing LHS
 --#[join-39]
-SELECT "T2"."b" FROM "default"."T" AS "T1" INNER JOIN (SELECT "T"."b" FROM "default"."T" AS "T" WHERE "T"."b" <= "T1"."b") AS "T2" ON true;
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Redshift does not support lateral correlated subqueries"}];
 
 -- Correlated: LEFT JOIN path lateral
 --#[join-40]
@@ -161,7 +161,7 @@ SELECT "E"."a", "item" FROM "default"."T" AS "E" LEFT JOIN "E"."array" AS "item"
 
 -- Correlated: ON condition with LHS reference
 --#[join-41]
-SELECT "item" FROM "default"."T" AS "E" INNER JOIN "E"."array" AS "item" ON "item" = "E"."b";
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Redshift does not support correlated join with a condition other than ON TRUE for SUPER unnest joins"}];
 
 -- Correlated: chained correlated joins
 --#[join-42]

@@ -177,7 +177,6 @@ public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisi
 	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;Ljava/util/List;)V
 	public synthetic fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/ScribeContext;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun apply (Lorg/partiql/plan/rel/Rel;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
-	protected final fun assertNotNull (Ljava/lang/Object;)Ljava/lang/Object;
 	public synthetic fun defaultReturn (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun defaultReturn (Lorg/partiql/plan/Operator;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun defaultVisit (Lorg/partiql/plan/Operator;Ljava/lang/Object;)Ljava/lang/Object;
