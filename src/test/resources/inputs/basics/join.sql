@@ -174,9 +174,18 @@ SELECT item FROM EXCLUDE_T_NESTED_LIST AS E, E.a AS nested, nested.nested_list A
 SELECT item FROM T AS E, T AS T2, E."array" AS item;
 
 -- Non-correlated: subquery references outer not LHS
+-- A scalar subquery (used as an expression in SELECT) must return at most 1 row at runtime.
 --#[join-44]
-SELECT (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > O.b) FROM T AS O;
+SELECT (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > O.b LIMIT 1) FROM T AS O;
 
 -- Non-correlated despite deep nesting
 --#[join-45]
 SELECT T2.b FROM T AS T1 INNER JOIN (SELECT T3.b FROM T AS T3 INNER JOIN (SELECT T.b FROM T) AS T4 ON true) AS T2 ON true;
+
+-- Non-correlated: subquery in WHERE with IN (references outer scope O)
+--#[join-46]
+SELECT O.b FROM T AS O WHERE O.b IN (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > O.b);
+
+-- Non-correlated: subquery in FROM with join inside
+--#[join-47]
+SELECT O.b FROM T AS O WHERE O.b IN (SELECT sub.b FROM (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > E.b) AS sub WHERE sub.b > O.b);

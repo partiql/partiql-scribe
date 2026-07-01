@@ -171,9 +171,18 @@ SELECT "item" AS "item" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "E" CROSS JOIN
 SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON true CROSS JOIN UNNEST("E"."array") AS "_item"("item");
 
 -- Non-correlated: subquery references outer not LHS
+-- A scalar subquery (used as an expression in SELECT) must return at most 1 row at runtime.
 --#[join-44]
-SELECT (SELECT "E"."b" AS "b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"."b" > "O"."b") AS "_1" FROM "default"."T" AS "O";
+SELECT (SELECT "E"."b" AS "b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"."b" > "O"."b" LIMIT 1) AS "_1" FROM "default"."T" AS "O";
 
 -- Non-correlated despite deep nesting
 --#[join-45]
 SELECT "T2"."b" AS "b" FROM "default"."T" AS "T1" INNER JOIN (SELECT "T3"."b" AS "b" FROM "default"."T" AS "T3" INNER JOIN (SELECT "T"."b" AS "b" FROM "default"."T" AS "T") AS "T4" ON true) AS "T2" ON true;
+
+-- Non-correlated: subquery in WHERE with IN
+--#[join-46]
+SELECT "O"."b" AS "b" FROM "default"."T" AS "O" WHERE "O"."b" IN (SELECT "E"."b" AS "b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"."b" > "O"."b");
+
+-- Non-correlated: subquery in FROM
+--#[join-47]
+SELECT "O"."b" AS "b" FROM "default"."T" AS "O" WHERE "O"."b" IN (SELECT "sub"."b" AS "b" FROM (SELECT "E"."b" AS "b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"."b" > "E"."b") AS "sub" WHERE "sub"."b" > "O"."b");

@@ -199,7 +199,10 @@ abstract class SqlTargetSuite {
         return ExpectedError(exceptionName = exceptionName, code = code, message = message)
     }
 
-    private fun assertScribeException(ex: ScribeException, expected: ExpectedError) {
+    private fun assertScribeException(
+        ex: ScribeException,
+        expected: ExpectedError,
+    ) {
         val actualName = ex::class.simpleName ?: ""
         if (actualName != expected.exceptionName) {
             fail { "Expected exception ${expected.exceptionName} but got $actualName" }
