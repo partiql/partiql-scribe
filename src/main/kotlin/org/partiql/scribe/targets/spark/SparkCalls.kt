@@ -24,6 +24,9 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
             this["utcnow"] = ::utcnow
             this["current_user"] = ::currentUser
             this["transform"] = ::transform
+            this["map_get"] = ::mapGet
+            this["cardinality"] = ::cardinalityFn
+            this["exists"] = ::existsFn
         }
 
     private fun currentUser(args: List<SqlArg>): Expr {
@@ -239,6 +242,49 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                     ),
                 )
         }
+
+    /**
+     * PartiQL `map_get(map, key)` -> Spark `element_at(map, key)`
+     */
+    private fun mapGet(args: SqlArgs): Expr {
+        val id = Identifier.regular("element_at")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `map_get` was replaced by Spark `element_at`",
+            ),
+        )
+        return exprCall(id, listOf(args[0].expr, args[1].expr))
+    }
+
+    /**
+     * PartiQL `cardinality(collection)` -> Spark `size(collection)`
+     */
+    private fun cardinalityFn(args: SqlArgs): Expr {
+        val id = Identifier.regular("size")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `cardinality` was replaced by Spark `size`",
+            ),
+        )
+        return exprCall(id, listOf(args[0].expr))
+    }
+
+    /**
+     * PartiQL `exists(collection)` -> Spark `size(collection) > 0`
+     */
+    private fun existsFn(args: SqlArgs): Expr {
+        val sizeId = Identifier.regular("size")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `exists` was replaced by Spark `size(...) > 0`",
+            ),
+        )
+        val sizeCall = exprCall(sizeId, listOf(args[0].expr))
+        return exprOperator(">", sizeCall, exprLit(Literal.intNum(0)))
+    }
 
     override fun overlaps(args: SqlArgs): Expr {
         listener.reportAndThrow(

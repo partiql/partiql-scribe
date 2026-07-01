@@ -2,13 +2,11 @@ package org.partiql.scribe.targets.trino
 
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
-import org.partiql.ast.Ast.exprPathStepField
 import org.partiql.ast.Ast.exprQuerySet
 import org.partiql.ast.Ast.orderBy
 import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
-import org.partiql.ast.Identifier
 import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
@@ -17,6 +15,7 @@ import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprCast
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprMap
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprSessionAttribute
 import org.partiql.ast.expr.ExprStruct
@@ -90,32 +89,14 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
     }
 
     /**
-     * Trino does not support x['y'] syntax; replace with x.y.
-     *
-     * @param node
-     * @param tail
-     * @return
+     * Bracket notation is kept as-is for MAP subscript access.
+     * For ROW field access, the conversion to dot notation is done at plan level in [TrinoRexConverter].
      */
     override fun visitPathStepElement(
         node: PathStep.Element,
         tail: SqlBlock,
     ): SqlBlock {
-        val key = node.element
-        return if (key is ExprLit && key.lit.code() == Literal.STRING) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    code = ScribeProblem.TRANSLATION_INFO,
-                    message =
-                        "Trino does not support PartiQL's path element syntax (e.g. x['y']). " +
-                            "Replaced with path step field syntax (e.g. x.y)",
-                ),
-            )
-            val elemString = key.lit.stringValue()
-            val stepField = exprPathStepField(Identifier.Simple.delimited(elemString))
-            visitPathStepField(stepField, tail)
-        } else {
-            super.visitPathStepElement(node, tail)
-        }
+        return super.visitPathStepElement(node, tail)
     }
 
     override fun visitExprLit(
@@ -217,6 +198,14 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME WITH TIME ZONE"
             DataType.TIMESTAMP -> tail concat "TIMESTAMP"
             DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP WITH TIME ZONE"
+            DataType.MAP -> {
+                var t = tail concat "MAP("
+                t = visitDataType(node.keyType, t)
+                t = t concat ", "
+                t = visitDataType(node.elementType, t)
+                t = t concat ")"
+                t
+            }
             else -> super.visitDataType(node, tail)
         }
     }
@@ -452,5 +441,30 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
             ),
         )
         return tail
+    }
+
+    // Trino's MAP constructor: MAP(ARRAY[key1, key2, ...], ARRAY[val1, val2, ...])
+    // https://trino.io/docs/current/functions/map.html
+    @Suppress("DEPRECATION")
+    override fun visitExprMap(
+        node: ExprMap,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail concat "MAP(ARRAY["
+        node.entries.forEachIndexed { index, entry ->
+            t = visitExprWrapped(entry.key, t)
+            if (index < node.entries.size - 1) {
+                t = t concat ", "
+            }
+        }
+        t = t concat "], ARRAY["
+        node.entries.forEachIndexed { index, entry ->
+            t = visitExprWrapped(entry.value, t)
+            if (index < node.entries.size - 1) {
+                t = t concat ", "
+            }
+        }
+        t = t concat "])"
+        return t
     }
 }

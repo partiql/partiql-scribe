@@ -1,10 +1,16 @@
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprNullPredicate
+import org.partiql.ast.Ast.exprPath
+import org.partiql.ast.Ast.exprPathStepElement
 import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
+import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprPath
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.SqlArg
@@ -23,6 +29,15 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
             // Extensions
             this["split"] = ::split
             this["OBJECT_TRANSFORM"] = ::objectTransform
+            // MAP functions
+            this["map_keys"] = ::mapKeys
+            this["map_values"] = ::mapValues
+            this["map_entries"] = ::mapEntries
+            this["map_get"] = ::mapGet
+            this["map_contains_key"] = ::mapContainsKey
+            this["size"] = ::sizeFn
+            this["cardinality"] = ::cardinalityFn
+            this["exists"] = ::existsFn
         }
 
     /**
@@ -115,6 +130,116 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         val arg1 = args[0].expr
         val arg2 = args[1].expr
         return exprCall(id, listOf(arg0, arg1, arg2))
+    }
+
+    private fun mapKeys(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `map_keys` on SUPER type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun mapValues(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `map_values` on SUPER type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun mapEntries(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `map_entries` on SUPER type. No equivalent function available.",
+            ),
+        )
+    }
+
+    /**
+     * PartiQL `map_get(map, key)` -> Redshift dot notation `map.key`
+     * Only supports string literal keys since Redshift SUPER uses dot notation.
+     */
+    private fun mapGet(args: SqlArgs): Expr {
+        val mapExpr = args[0].expr
+        val keyExpr = args[1].expr
+        if (keyExpr !is ExprLit || keyExpr.lit.code() != Literal.STRING) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Redshift `map_get` only supports string literal keys. Use dot notation (e.g. map.key) for static key access.",
+                ),
+            )
+        }
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `map_get` was replaced by Redshift dot notation access on SUPER type",
+            ),
+        )
+        val step = exprPathStepElement(keyExpr)
+        return if (mapExpr is ExprPath) {
+            exprPath(mapExpr.root, mapExpr.steps + step)
+        } else {
+            exprPath(mapExpr, listOf(step))
+        }
+    }
+
+    private fun mapContainsKey(args: SqlArgs): Expr {
+        val mapExpr = args[0].expr
+        val keyExpr = args[1].expr
+        if (keyExpr !is ExprLit || keyExpr.lit.code() != Literal.STRING) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Redshift `map_contains_key` only supports string literal keys.",
+                ),
+            )
+        }
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `map_contains_key` was replaced by Redshift `map.\"key\" IS NOT NULL`",
+            ),
+        )
+        val step = exprPathStepElement(keyExpr)
+        val pathExpr =
+            if (mapExpr is ExprPath) {
+                exprPath(mapExpr.root, mapExpr.steps + step)
+            } else {
+                exprPath(mapExpr, listOf(step))
+            }
+        return exprNullPredicate(pathExpr, not = true)
+    }
+
+    private fun sizeFn(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `size` on SUPER map type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun cardinalityFn(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `cardinality` on SUPER map type. No equivalent function available.",
+            ),
+        )
+    }
+
+    private fun existsFn(args: SqlArgs): Expr {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Redshift does not support `exists` on SUPER map type. No equivalent function available.",
+            ),
+        )
     }
 
     override fun overlaps(args: SqlArgs): Expr {

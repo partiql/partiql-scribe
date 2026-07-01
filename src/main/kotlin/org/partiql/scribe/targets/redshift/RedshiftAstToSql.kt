@@ -17,6 +17,7 @@ import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprMap
 import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprStruct
@@ -77,6 +78,26 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         t = visitExprWrapped(node.name, t)
         t = t concat ", "
         t = visitExprWrapped(node.value, t)
+        return t
+    }
+
+    // Redshift's equivalent for PartiQL's MAP type is SUPER OBJECT. Use the `OBJECT` function.
+    // https://docs.aws.amazon.com/redshift/latest/dg/r_object_function.html
+    @Suppress("DEPRECATION")
+    override fun visitExprMap(
+        node: ExprMap,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail concat "OBJECT("
+        node.entries.forEachIndexed { index, entry ->
+            t = visitExprWrapped(entry.key, t)
+            t = t concat ", "
+            t = visitExprWrapped(entry.value, t)
+            if (index < node.entries.size - 1) {
+                t = t concat ", "
+            }
+        }
+        t = t concat ")"
         return t
     }
 
@@ -213,6 +234,17 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
                     ),
                 )
                 tail concat type("VARCHAR", 65535, gap = false)
+            }
+            DataType.MAP -> {
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "Redshift does not support PartiQL's MAP type. " +
+                                "Replaced with SUPER.",
+                    ),
+                )
+                tail concat "SUPER"
             }
 
             // Redshift does not honor the precision but store values with up to a maximum of six digits of precision for fractional seconds.
