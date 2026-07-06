@@ -800,6 +800,31 @@ public open class RexConverter(
         rex: RexPathKey,
         ctx: Unit,
     ): Expr {
+        val operandType =
+            try {
+                rex.operand.type.pType
+            } catch (_: UnsupportedOperationException) {
+                null
+            }
+        if (operandType != null && operandType.code() == PType.MAP) {
+            val prev = visitRex(rex.operand, ctx)
+            val step = exprPathStepElement(visitRex(rex.key, ctx))
+            return if (prev is ExprPath) {
+                exprPath(prev.root, prev.steps + step)
+            } else {
+                exprPath(prev, listOf(step))
+            }
+        }
+        val key = rex.key
+        if (key is RexLit && key.type.pType.code() == PType.STRING) {
+            val prev = visitRex(rex.operand, ctx)
+            val step = exprPathStepField(Identifier.Simple.delimited(key.datum.string))
+            return if (prev is ExprPath) {
+                exprPath(prev.root, prev.steps + step)
+            } else {
+                exprPath(prev, listOf(step))
+            }
+        }
         val prev = visitRex(rex.operand, ctx)
         val step = exprPathStepElement(visitRex(rex.key, ctx))
         return if (prev is ExprPath) {
