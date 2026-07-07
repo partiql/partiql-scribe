@@ -52,11 +52,11 @@ public open class TrinoRexConverter(
     ): Expr {
         val operandType =
             try {
-                rex.operand.type.pType.code()
+                rex.operand.type.pType
             } catch (_: UnsupportedOperationException) {
-                -1
+                null
             }
-        if (operandType == PType.MAP) {
+        if (operandType != null && operandType.code() == PType.MAP) {
             return super.visitPathKey(rex, ctx)
         }
         // For non-MAP (ROW/struct/other): convert bracket to dot notation
