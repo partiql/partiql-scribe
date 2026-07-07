@@ -1,7 +1,6 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Ast.exprPath
-import org.partiql.ast.Ast.exprPathStepElement
 import org.partiql.ast.Ast.exprPathStepField
 import org.partiql.ast.Identifier
 import org.partiql.ast.expr.Expr
@@ -62,27 +61,19 @@ public open class SparkRexConverter(
                 null
             }
         if (operandType != null && operandType.code() == PType.MAP) {
+            return super.visitPathKey(rex, ctx)
+        }
+        val key = rex.key
+        if (key is RexLit && key.type.pType.code() == PType.STRING) {
             val prev = visitRex(rex.operand, ctx)
-            val step = exprPathStepElement(visitRex(rex.key, ctx))
+            val step = exprPathStepField(Identifier.Simple.regular(key.datum.string))
             return if (prev is ExprPath) {
                 exprPath(prev.root, prev.steps + step)
             } else {
                 exprPath(prev, listOf(step))
             }
         }
-        val prev = visitRex(rex.operand, ctx)
-        val keyRex = rex.key
-        val step =
-            if (keyRex is RexLit && keyRex.type.pType.code() == PType.STRING) {
-                exprPathStepField(Identifier.Simple.regular(keyRex.datum.string))
-            } else {
-                exprPathStepElement(visitRex(keyRex, ctx))
-            }
-        return if (prev is ExprPath) {
-            exprPath(prev.root, prev.steps + step)
-        } else {
-            exprPath(prev, listOf(step))
-        }
+        return super.visitPathKey(rex, ctx)
     }
 
     /**
