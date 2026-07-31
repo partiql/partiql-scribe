@@ -10,17 +10,19 @@ import org.partiql.spi.types.PType
 class Functions {
     companion object {
         /**
-         * Function overload to test that a UDF (`split`) can be transpiled.
+         * Function overload to test that a UDF can be transpiled.
+         *
+         * NOTE: `split` used to be registered here as a test UDF, but it is now a PartiQL builtin
+         * (see PLK `FnSplit`), so it resolves without a registered overload.
          */
-        val scalarSplit =
-            FnOverload.Builder("split")
+        val scalarUdf =
+            FnOverload.Builder("my_udf")
                 .addParameters(
                     listOf(
                         Parameter("value", PType.string()),
-                        Parameter("delimiter", PType.string()),
                     ),
                 )
-                .returns(PType.array())
+                .returns(PType.string())
                 .build()
     }
 }

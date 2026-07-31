@@ -291,6 +291,7 @@ public abstract class org/partiql/scribe/sql/SqlCalls {
 	public fun between (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun binary (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun bitwiseAnd (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun charLength (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun concatFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
@@ -314,7 +315,11 @@ public abstract class org/partiql/scribe/sql/SqlCalls {
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun posFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun position (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun replace (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public final fun retarget (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun timesFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun trim (Ljava/util/List;Lorg/partiql/ast/expr/TrimSpec;)Lorg/partiql/ast/expr/Expr;
 	public fun unary (Ljava/lang/String;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
@@ -407,6 +412,7 @@ public class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scr
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -532,6 +538,7 @@ public class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sq
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/spark/SparkFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -629,19 +636,21 @@ public class org/partiql/scribe/targets/trino/TrinoAstToSql : org/partiql/scribe
 
 public class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sql/SqlCalls {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public fun charLength (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
 	public fun minusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public final class org/partiql/scribe/targets/trino/TrinoFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
 	public fun <init> ()V
 }
 
-public final class org/partiql/scribe/targets/trino/TrinoPlanToAst : org/partiql/scribe/sql/PlanToAst {
+public class org/partiql/scribe/targets/trino/TrinoPlanToAst : org/partiql/scribe/sql/PlanToAst {
 	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
 	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;

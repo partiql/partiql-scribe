@@ -38,6 +38,42 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         }
 
     /**
+     * Trino does not support the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` special form. Instead it uses the
+     * comma-argument function form `substring(<value>, <start>[, <length>])` (1-based).
+     *
+     * https://trino.io/docs/current/functions/string.html#substring
+     */
+    override fun substring(args: SqlArgs): Expr {
+        val id = Identifier.regular("substring")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message =
+                    "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was replaced by Trino " +
+                        "`substring(<value>, <start>, <length>)` because Trino does not support the FROM ... FOR syntax.",
+            ),
+        )
+        val exprs = args.map { it.expr }
+        return exprCall(id, exprs)
+    }
+
+    /**
+     * Trino does not have `char_length`; use `length` instead.
+     *
+     * https://trino.io/docs/current/functions/string.html#length
+     */
+    override fun charLength(args: SqlArgs): Expr {
+        val id = Identifier.regular("length")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `char_length` was replaced by Trino `length`",
+            ),
+        )
+        return exprCall(id, listOf(args[0].expr))
+    }
+
+    /**
      * https://trino.io/docs/current/functions/datetime.html#date_add
      */
     override fun dateAdd(

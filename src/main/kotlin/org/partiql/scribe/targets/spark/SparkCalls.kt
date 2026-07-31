@@ -9,6 +9,7 @@ import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprLit
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.SqlArg
@@ -18,6 +19,14 @@ import org.partiql.scribe.sql.SqlCalls
 
 public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
     private val listener = context.getProblemListener()
+
+    private companion object {
+        /**
+         * Java regex metacharacters, which must be escaped for a delimiter to match literally. Spark compiles the
+         * `split` regex with `java.util.regex.Pattern`.
+         */
+        private val REGEX_METACHARACTERS = setOf('\\', '.', '[', ']', '{', '}', '(', ')', '*', '+', '-', '?', '^', '$', '|')
+    }
 
     override val rules: Map<String, SqlCallFn> =
         super.rules.toMutableMap().apply {
@@ -242,6 +251,106 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                     ),
                 )
         }
+
+    /**
+     * PartiQL `split(<string>, <delimiter>) -> list<string>` matches the delimiter **literally**, but Spark's
+     * `split(str, regex)` interprets its second argument as a Java regular expression. Passing the delimiter through
+     * unchanged silently mis-splits whenever it holds a regex metacharacter, e.g. PartiQL `split(v, '.')` splits on a
+     * literal dot while Spark `split(v, '.')` splits on *every* character.
+     *
+     * We restore literal semantics by quoting the delimiter:
+     *  - String literals are escaped at transpile time, which keeps the emitted SQL readable, e.g. `split(v, '\\.')`.
+     *  - Any other expression (a column, a call, ...) is unknown until runtime, so we wrap it with Spark `concat` into
+     *    a `\Q...\E` quoted region, mirroring Java's `Pattern.quote`.
+     *
+     * Notes:
+     *  > https://spark.apache.org/docs/latest/api/sql/index.html#split
+     *  > https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#quote-java.lang.String-
+     */
+    override fun split(args: SqlArgs): Expr {
+        val id = Identifier.regular("SPLIT")
+        val string = args[0].expr
+        val delimiter = args[1].expr
+        val quotedDelimiter =
+            when {
+                delimiter is ExprLit && delimiter.lit.code() == Literal.STRING -> {
+                    listener.report(
+                        ScribeProblem.simpleInfo(
+                            code = ScribeProblem.TRANSLATION_INFO,
+                            message =
+                                "PartiQL `split(<string>, <delimiter>)` matches the delimiter literally whereas Spark " +
+                                    "`split(str, regex)` takes a regex; the delimiter literal was regex-escaped.",
+                        ),
+                    )
+                    exprLit(Literal.string(escapeRegex(delimiter.lit.stringValue())))
+                }
+                else -> {
+                    listener.report(
+                        ScribeProblem.simpleInfo(
+                            code = ScribeProblem.TRANSLATION_INFO,
+                            message =
+                                "PartiQL `split(<string>, <delimiter>)` matches the delimiter literally whereas Spark " +
+                                    "`split(str, regex)` takes a regex; the non-literal delimiter was wrapped in a " +
+                                    "`\\Q...\\E` quoted region.",
+                        ),
+                    )
+                    patternQuote(delimiter)
+                }
+            }
+        return exprCall(id, listOf(string, quotedDelimiter))
+    }
+
+    /**
+     * Escape the Java regex metacharacters in [delimiter] so that it matches literally.
+     *
+     * There are two layers of unescaping between this string and the regex engine, so escaping happens in two stages:
+     *  1. Regex: prefix each metacharacter with a backslash, so `.` becomes `\.`.
+     *  2. String literal: Spark's parser also processes backslash escapes inside string literals, so every backslash is
+     *     doubled to survive that pass, turning `\.` into `\\.`.
+     *
+     * This yields the standard Spark idiom -- splitting on a literal `.` is written `split(v, '\\.')`. Note a literal
+     * backslash needs all four: regex `\\` written as `'\\\\'`.
+     */
+    private fun escapeRegex(delimiter: String): String {
+        val regexEscaped =
+            delimiter.flatMap { char ->
+                when (char) {
+                    in REGEX_METACHARACTERS -> listOf('\\', char)
+                    else -> listOf(char)
+                }
+            }.joinToString("")
+        // Double every backslash so it survives Spark's string-literal unescaping.
+        return regexEscaped.replace("\\", "\\\\")
+    }
+
+    /**
+     * Wrap [delimiter] in a `\Q...\E` quoted region, equivalent to Java's `Pattern.quote`.
+     *
+     * Any `\E` already inside the delimiter would terminate the region early and expose the remainder to the regex
+     * engine, so occurrences are closed and reopened (`\E\\E\Q`) exactly as `Pattern.quote` does. The
+     * [replace][exprCall] runs in Spark, since the delimiter's value is not known at transpile time.
+     */
+    private fun patternQuote(delimiter: Expr): Expr {
+        val sanitized =
+            exprCall(
+                function = Identifier.regular("REPLACE"),
+                args =
+                    listOf(
+                        delimiter,
+                        exprLit(Literal.string("\\\\E")),
+                        exprLit(Literal.string("\\\\E\\\\\\\\E\\\\Q")),
+                    ),
+            )
+        return exprCall(
+            function = Identifier.regular("CONCAT"),
+            args =
+                listOf(
+                    exprLit(Literal.string("\\\\Q")),
+                    sanitized,
+                    exprLit(Literal.string("\\\\E")),
+                ),
+        )
+    }
 
     /**
      * PartiQL `map_get(map, key)` -> Spark `element_at(map, key)`

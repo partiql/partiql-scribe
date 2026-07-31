@@ -15,7 +15,7 @@ class TrinoTargetSuite : SqlTargetSuite() {
             // some additional function overloads to test transpilation of UDFs
             scalarOverloads =
                 mapOf(
-                    "split" to Functions.scalarSplit,
+                    "my_udf" to Functions.scalarUdf,
                 ),
         )
 }

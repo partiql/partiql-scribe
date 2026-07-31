@@ -27,7 +27,6 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         super.rules.toMutableMap().apply {
             this["utcnow"] = ::utcnow
             // Extensions
-            this["split"] = ::split
             this["OBJECT_TRANSFORM"] = ::objectTransform
             // MAP functions
             this["map_keys"] = ::mapKeys
@@ -57,8 +56,8 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
     /**
      * https://docs.aws.amazon.com/redshift/latest/dg/split_to_array.html
      */
-    private fun split(args: SqlArgs): Expr {
-        val id = Identifier.regular("split_to_array")
+    override fun split(args: SqlArgs): Expr {
+        val id = Identifier.regular("SPLIT_TO_ARRAY")
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,

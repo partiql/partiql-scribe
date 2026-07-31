@@ -12,8 +12,10 @@ import org.partiql.ast.Ast.exprNot
 import org.partiql.ast.Ast.exprNullPredicate
 import org.partiql.ast.Ast.exprOperator
 import org.partiql.ast.Ast.exprOverlaps
+import org.partiql.ast.Ast.exprPosition
 import org.partiql.ast.Ast.exprRowValue
 import org.partiql.ast.Ast.exprSessionAttribute
+import org.partiql.ast.Ast.exprSubstring
 import org.partiql.ast.Ast.exprTrim
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
@@ -158,6 +160,12 @@ public abstract class SqlCalls(context: ScribeContext) {
             "extract_second" to { args -> extract(DatetimeField.SECOND(), args) },
             // OVERLAPS
             "overlaps" to { args -> overlaps(args) },
+            // String value functions
+            "substring" to { args -> substring(args) },
+            "position" to { args -> position(args) },
+            "char_length" to { args -> charLength(args) },
+            "replace" to { args -> replace(args) },
+            "split" to { args -> split(args) },
         )
 
     private fun removeSystemPrefix(name: String): String {
@@ -402,5 +410,61 @@ public abstract class SqlCalls(context: ScribeContext) {
      */
     public open fun overlaps(args: SqlArgs): Expr {
         return exprOverlaps(args[0].expr, args[1].expr)
+    }
+
+    /**
+     * SQL SUBSTRING — SUBSTRING( <value> FROM <start> [ FOR <length> ] )
+     *
+     * PartiQL's planner lowers `SUBSTRING` to the `substring` function with a start position that
+     * defaults to 1 when omitted, so [args] always has at least the value and start.
+     */
+    public open fun substring(args: SqlArgs): Expr {
+        val value = args[0].expr
+        val start = args.getOrNull(1)?.expr
+        val length = args.getOrNull(2)?.expr
+        return exprSubstring(value, start, length)
+    }
+
+    /**
+     * SQL POSITION — POSITION( <substring> IN <string> )
+     *
+     * Returns the 1-based starting position of the first occurrence of <substring> within <string>, or 0 when
+     * <substring> is not found. [args] is `[<substring>, <string>]`.
+     */
+    public open fun position(args: SqlArgs): Expr {
+        return exprPosition(args[0].expr, args[1].expr)
+    }
+
+    /**
+     * SQL CHAR_LENGTH — CHAR_LENGTH( <value> )
+     *
+     * Returns the length of <value> in characters (code points), not bytes.
+     */
+    public open fun charLength(args: SqlArgs): Expr {
+        val call = Identifier.regular("CHAR_LENGTH")
+        return exprCall(call, listOf(args[0].expr))
+    }
+
+    /**
+     * REPLACE( <value>, <from>, <to> )
+     *
+     * Registered so the function name is emitted as an unquoted, uppercase regular identifier rather than falling
+     * through to [default], which delimits (quotes) the name.
+     */
+    public open fun replace(args: SqlArgs): Expr {
+        val call = Identifier.regular("REPLACE")
+        return exprCall(call, args.map { it.expr })
+    }
+
+    /**
+     * SPLIT( <string>, <delimiter> )
+     *
+     * Registered so the function name is emitted as an unquoted, uppercase regular identifier rather than falling
+     * through to [default], which delimits (quotes) the name. Targets whose `split` semantics differ from PartiQL's
+     * literal-delimiter match override this (e.g. Spark's takes a regex).
+     */
+    public open fun split(args: SqlArgs): Expr {
+        val call = Identifier.regular("SPLIT")
+        return exprCall(call, args.map { it.expr })
     }
 }

@@ -18,3 +18,48 @@ SELECT trim(LEADING 'xxx' FROM `T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[trim-06]
 SELECT trim(TRAILING 'xxx' FROM `T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[substring-00]
+SELECT SUBSTRING(`T`.`c` FROM 2) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[substring-01]
+SELECT SUBSTRING(`T`.`c` FROM 2 FOR 3) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[substring-02]
+SELECT SUBSTRING(`T`.`c` FROM 2) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[substring-03]
+SELECT SUBSTRING(`T`.`c` FROM 2 FOR 3) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[position-00]
+SELECT POSITION('a' IN `T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[char-length-00]
+SELECT `CHAR_LENGTH`(`T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[replace-00]
+SELECT `REPLACE`(`T`.`c`, 'a', 'b') AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-00]
+SELECT `SPLIT`(`T`.`c`, ',') AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-01]
+SELECT `SPLIT`(`T`.`c`, '\\.') AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-02]
+SELECT `SPLIT`(`T`.`c`, '\\|') AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-03]
+SELECT `SPLIT`(`T`.`c`, '\\\\') AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-04]
+SELECT `SPLIT`(`T`.`c`, '::') AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-05]
+SELECT `SPLIT`(`T`.`c`, `CONCAT`('\\Q', `REPLACE`(`T`.`z`, '\\E', '\\E\\\\E\\Q'), '\\E')) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-06]
+SELECT `SPLIT`(`T`.`c`, '\\[a\\-z\\]\\+') AS `_1` FROM `default`.`T` AS `T`;
+
+--#[split-07]
+SELECT `SPLIT`(`T`.`z`, `CONCAT`('\\Q', `REPLACE`(`T`.`c`, '\\E', '\\E\\\\E\\Q'), '\\E')) AS `_1` FROM `default`.`T` AS `T`;
