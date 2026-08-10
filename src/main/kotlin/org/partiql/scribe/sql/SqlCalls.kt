@@ -415,8 +415,10 @@ public abstract class SqlCalls(context: ScribeContext) {
     /**
      * SQL SUBSTRING — SUBSTRING( <value> FROM <start> [ FOR <length> ] )
      *
-     * PartiQL's planner lowers `SUBSTRING` to the `substring` function with a start position that
-     * defaults to 1 when omitted, so [args] always has at least the value and start.
+     * PartiQL follows the SQL-92 substring semantics implemented by PLK: the planner lowers `SUBSTRING` to the
+     * `substring` function with a start position that defaults to 1 when omitted, so [args] always has at least the
+     * value and start. Starts less than 1 are clamped to the beginning using the SQL-standard length arithmetic, and a
+     * negative length raises a substring error.
      */
     public open fun substring(args: SqlArgs): Expr {
         val value = args[0].expr

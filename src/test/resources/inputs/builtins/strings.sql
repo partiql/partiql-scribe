@@ -52,6 +52,21 @@ SELECT SUBSTRING(c, 2) FROM T;
 --#[substring-03]
 SELECT SUBSTRING(c, 2, 3) FROM T;
 
+--#[substring-10]
+SELECT SUBSTRING(c FROM -2) FROM T;
+
+--#[substring-11]
+SELECT SUBSTRING(c FROM 0) FROM T;
+
+--#[substring-12]
+SELECT SUBSTRING(c FROM -2 FOR 6) FROM T;
+
+--#[substring-13]
+SELECT SUBSTRING('abc' FROM -9 FOR 2) FROM T;
+
+--#[substring-14]
+SELECT SUBSTRING(c FROM 0 FOR 2) FROM T;
+
 --#[position-00]
 SELECT POSITION('a' IN c) FROM T;
 
@@ -84,3 +99,6 @@ SELECT split(c, '[a-z]+') FROM T;
 
 --#[split-07]
 SELECT split(z, c) FROM T;
+
+--#[split-08]
+SELECT split(c, '') FROM T;

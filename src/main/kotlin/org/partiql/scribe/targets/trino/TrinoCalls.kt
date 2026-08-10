@@ -20,6 +20,7 @@ import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
+import java.math.BigDecimal
 
 public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
     private val listener = context.getProblemListener()
@@ -41,20 +42,89 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
      * Trino does not support the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` special form. Instead it uses the
      * comma-argument function form `substring(<value>, <start>[, <length>])` (1-based).
      *
+     * Trino diverges from PartiQL on start/length values. We reject literal `start < 1` and literal `length < 0`
+     * during transpilation. For any non-literal expression, we preserve Trino's native `substring` call and report
+     * the potential semantic mismatch instead of rewriting it.
+     *
      * https://trino.io/docs/current/functions/string.html#substring
      */
     override fun substring(args: SqlArgs): Expr {
+        val value = args[0].expr
+        val start = args[1].expr
+        val length = args.getOrNull(2)?.expr
         val id = Identifier.regular("substring")
-        listener.report(
-            ScribeProblem.simpleInfo(
-                code = ScribeProblem.TRANSLATION_INFO,
-                message =
-                    "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was replaced by Trino " +
-                        "`substring(<value>, <start>, <length>)` because Trino does not support the FROM ... FOR syntax.",
-            ),
+        rejectLiteralStartLessThanOne(
+            target = "Trino",
+            start = start,
         )
-        val exprs = args.map { it.expr }
-        return exprCall(id, exprs)
+        length?.let { lengthArg ->
+            rejectNegativeLiteralLength(
+                target = "Trino",
+                length = lengthArg,
+            )
+        }
+        return when (args.size) {
+            2 -> {
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "PartiQL `SUBSTRING(<value> FROM <start>)` was replaced by Trino " +
+                                "`substring(<value>, <start>)` because Trino does not support the FROM ... FOR syntax. " +
+                                "Scribe rejects literal starts less than 1, but non-literal start expressions are " +
+                                "passed through unchanged, so Trino may still diverge from PartiQL if `<start>` " +
+                                "evaluates less than 1 at runtime.",
+                    ),
+                )
+                exprCall(id, listOf(value, start))
+            }
+            else -> {
+                val lengthArg = checkNotNull(length)
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was replaced by Trino " +
+                                "`substring(<value>, <start>, <length>)` because Trino does not support the FROM ... FOR syntax. " +
+                                "Scribe rejects literal starts less than 1 and negative literal lengths, but " +
+                                "non-literal start/length expressions are passed through unchanged, so Trino may " +
+                                "still diverge from PartiQL if `<start>` evaluates less than 1 or `<length>` " +
+                                "evaluates negative at runtime.",
+                    ),
+                )
+                exprCall(id, listOf(value, start, lengthArg))
+            }
+        }
+    }
+
+    private fun rejectLiteralStartLessThanOne(
+        target: String,
+        start: Expr,
+    ) {
+        if (start is ExprLit && start.lit.code() == Literal.INT_NUM && start.lit.bigDecimalValue() < BigDecimal.ONE) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "$target substring with a literal start less than 1 is unsupported. " +
+                        "Scribe does not rewrite target-specific substring semantics for start < 1.",
+                ),
+            )
+        }
+    }
+
+    private fun rejectNegativeLiteralLength(
+        target: String,
+        length: Expr,
+    ) {
+        if (length is ExprLit && length.lit.code() == Literal.INT_NUM && length.lit.bigDecimalValue() < BigDecimal.ZERO) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "$target substring with a negative literal length is unsupported. " +
+                        "Scribe does not rewrite target-specific negative substring semantics.",
+                ),
+            )
+        }
     }
 
     /**
@@ -71,6 +141,26 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
             ),
         )
         return exprCall(id, listOf(args[0].expr))
+    }
+
+    /**
+     * Trino rejects an empty string delimiter, while PartiQL returns the original string as a single-element list.
+     * Scribe cannot know whether a non-literal delimiter expression evaluates to `''` at runtime, so it always
+     * reports this edge case.
+     */
+    override fun split(args: SqlArgs): Expr {
+        val string = args[0].expr
+        val delimiter = args[1].expr
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message =
+                    "PartiQL `split(<string>, <delimiter>)` was kept as Trino `split(string, delimiter)`. " +
+                        "If the delimiter is `''` or evaluates to `''` at runtime, PartiQL returns the original " +
+                        "string as a single-element list, but Trino fails with `INVALID_FUNCTION_ARGUMENT`.",
+            ),
+        )
+        return exprCall(Identifier.regular("SPLIT"), listOf(string, delimiter))
     }
 
     /**

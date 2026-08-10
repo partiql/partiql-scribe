@@ -31,6 +31,21 @@ SELECT SUBSTRING("T"."c" FROM 2) AS "_1" FROM "default"."T" AS "T";
 --#[substring-03]
 SELECT SUBSTRING("T"."c" FROM 2 FOR 3) AS "_1" FROM "default"."T" AS "T";
 
+--#[substring-10]
+SELECT SUBSTRING("T"."c" FROM -2) AS "_1" FROM "default"."T" AS "T";
+
+--#[substring-11]
+SELECT SUBSTRING("T"."c" FROM 0) AS "_1" FROM "default"."T" AS "T";
+
+--#[substring-12]
+SELECT SUBSTRING("T"."c" FROM -2 FOR 6) AS "_1" FROM "default"."T" AS "T";
+
+--#[substring-13]
+SELECT SUBSTRING('abc' FROM -9 FOR 2) AS "_1" FROM "default"."T" AS "T";
+
+--#[substring-14]
+SELECT SUBSTRING("T"."c" FROM 0 FOR 2) AS "_1" FROM "default"."T" AS "T";
+
 --#[position-00]
 SELECT POSITION('a' IN "T"."c") AS "_1" FROM "default"."T" AS "T";
 
@@ -64,3 +79,6 @@ SELECT SPLIT_TO_ARRAY("T"."c", '[a-z]+') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-07]
 SELECT SPLIT_TO_ARRAY("T"."z", "T"."c") AS "_1" FROM "default"."T" AS "T";
+
+--#[split-08]
+SELECT SPLIT_TO_ARRAY("T"."c", '') AS "_1" FROM "default"."T" AS "T";
