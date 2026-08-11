@@ -20,16 +20,16 @@ SELECT TRIM(LEADING 'xxx' FROM "T"."c") AS "_1" FROM "default"."T" AS "T";
 SELECT TRIM(TRAILING 'xxx' FROM "T"."c") AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-00]
-SELECT substring("T"."c", 2) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-01]
-SELECT substring("T"."c", 2, 3) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2, 3) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-02]
-SELECT substring("T"."c", 2) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-03]
-SELECT substring("T"."c", 2, 3) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2, 3) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-10]
 [ScribeException{code=UNSUPPORTED_OPERATION, message="Scribe rejects Trino substring with a literal start less than 1 because Trino accepts start values less than 1 with different semantics. Non-literal start/length expressions are passed through unchanged."}];

@@ -413,6 +413,7 @@ public class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scr
 	public fun getRules ()Ljava/util/Map;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {

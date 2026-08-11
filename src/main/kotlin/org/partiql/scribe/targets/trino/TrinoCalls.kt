@@ -53,7 +53,7 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         val value = args[0].expr
         val start = args[1].expr
         val length = args.getOrNull(2)?.expr
-        val id = Identifier.regular("substring")
+        val id = Identifier.regular("SUBSTRING")
         checkSubStringArgStart(start)
         length?.let { lengthArg ->
             checkSubStringArglength(lengthArg)

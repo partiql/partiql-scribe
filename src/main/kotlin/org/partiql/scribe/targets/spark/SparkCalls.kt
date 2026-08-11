@@ -4,7 +4,6 @@ import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
-import org.partiql.ast.Ast.exprSubstring
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
@@ -255,17 +254,23 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
         }
 
     /**
-     * Spark accepts the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` surface syntax, but its start/length
-     * behavior diverges from PartiQL. In particular, Spark accepts start values less than 1 with semantics that
-     * differ from PartiQL's SQL-standard "start before the beginning" behavior.
+     * Spark accepts both the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` special form and the comma-argument
+     * function form `SUBSTRING(<value>, <start>[, <length>])` (1-based). We emit the function form for consistency
+     * across targets.
+     *
+     * Spark's start/length behavior diverges from PartiQL. In particular, Spark accepts start values less than 1 with
+     * semantics that differ from PartiQL's SQL-standard "start before the beginning" behavior.
      *
      * We reject literal `start < 1` and literal `length < 0` during transpilation. For any non-literal expression, we
      * preserve Spark's native `SUBSTRING` and report the potential semantic mismatch instead of rewriting it.
+     *
+     * https://spark.apache.org/docs/latest/api/sql/index.html#substring
      */
     override fun substring(args: SqlArgs): Expr {
         val value = args[0].expr
         val start = args[1].expr
         val length = args.getOrNull(2)?.expr
+        val id = Identifier.regular("SUBSTRING")
 
         checkSubStringArgStart(start)
         length?.let { lengthArg ->
@@ -278,20 +283,23 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                     ScribeProblem.simpleInfo(
                         code = ScribeProblem.TRANSLATION_INFO,
                         message =
-                            "PartiQL `SUBSTRING(<value> FROM <start>)` was kept as Spark `SUBSTRING`. Scribe rejects " +
+                            "PartiQL `SUBSTRING(<value> FROM <start>)` was replaced by Spark " +
+                                "`SUBSTRING(<value>, <start>)`. Scribe rejects " +
                                 "literal starts less than 1 because Spark supports them with semantics that differ " +
                                 "from PartiQL. Non-literal start expressions are passed through unchanged, so Spark " +
                                 "may still diverge from PartiQL if `<start>` evaluates less than 1 at runtime.",
                     ),
                 )
-                exprSubstring(value, start, null)
+                exprCall(id, listOf(value, start))
             }
             else -> {
+                val lengthArg = checkNotNull(length)
                 listener.report(
                     ScribeProblem.simpleInfo(
                         code = ScribeProblem.TRANSLATION_INFO,
                         message =
-                            "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was kept as Spark `SUBSTRING`. " +
+                            "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was replaced by Spark " +
+                                "`SUBSTRING(<value>, <start>, <length>)`. " +
                                 "Scribe rejects literal starts less than 1 because Spark supports them with semantics " +
                                 "that differ from PartiQL, and it rejects negative literal lengths. " +
                                 "Non-literal start/length " +
@@ -299,7 +307,7 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                                 "`<start>` evaluates less than 1 or `<length>` evaluates negative at runtime.",
                     ),
                 )
-                exprSubstring(value, start, length)
+                exprCall(id, listOf(value, start, lengthArg))
             }
         }
     }

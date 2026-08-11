@@ -20,31 +20,31 @@ SELECT TRIM(LEADING 'xxx' FROM "T"."c") AS "_1" FROM "default"."T" AS "T";
 SELECT TRIM(TRAILING 'xxx' FROM "T"."c") AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-00]
-SELECT SUBSTRING("T"."c" FROM 2) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-01]
-SELECT SUBSTRING("T"."c" FROM 2 FOR 3) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2, 3) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-02]
-SELECT SUBSTRING("T"."c" FROM 2) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-03]
-SELECT SUBSTRING("T"."c" FROM 2 FOR 3) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 2, 3) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-10]
-SELECT SUBSTRING("T"."c" FROM -2) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", -2) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-11]
-SELECT SUBSTRING("T"."c" FROM 0) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 0) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-12]
-SELECT SUBSTRING("T"."c" FROM -2 FOR 6) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", -2, 6) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-13]
-SELECT SUBSTRING('abc' FROM -9 FOR 2) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING('abc', -9, 2) AS "_1" FROM "default"."T" AS "T";
 
 --#[substring-14]
-SELECT SUBSTRING("T"."c" FROM 0 FOR 2) AS "_1" FROM "default"."T" AS "T";
+SELECT SUBSTRING("T"."c", 0, 2) AS "_1" FROM "default"."T" AS "T";
 
 --#[position-00]
 SELECT POSITION('a' IN "T"."c") AS "_1" FROM "default"."T" AS "T";

@@ -20,16 +20,16 @@ SELECT trim(LEADING 'xxx' FROM `T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
 SELECT trim(TRAILING 'xxx' FROM `T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[substring-00]
-SELECT SUBSTRING(`T`.`c` FROM 2) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `SUBSTRING`(`T`.`c`, 2) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[substring-01]
-SELECT SUBSTRING(`T`.`c` FROM 2 FOR 3) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `SUBSTRING`(`T`.`c`, 2, 3) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[substring-02]
-SELECT SUBSTRING(`T`.`c` FROM 2) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `SUBSTRING`(`T`.`c`, 2) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[substring-03]
-SELECT SUBSTRING(`T`.`c` FROM 2 FOR 3) AS `_1` FROM `default`.`T` AS `T`;
+SELECT `SUBSTRING`(`T`.`c`, 2, 3) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[substring-10]
 [ScribeException{code=UNSUPPORTED_OPERATION, message="Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start values less than 1 with different semantics. Non-literal start/length expressions are passed through unchanged."}];
