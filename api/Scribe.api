@@ -539,6 +539,7 @@ public class org/partiql/scribe/targets/spark/SparkCalls : org/partiql/scribe/sq
 	public fun getRules ()Ljava/util/Map;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/spark/SparkFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -643,6 +644,7 @@ public class org/partiql/scribe/targets/trino/TrinoCalls : org/partiql/scribe/sq
 	public fun minusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 

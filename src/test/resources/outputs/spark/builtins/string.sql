@@ -32,19 +32,19 @@ SELECT SUBSTRING(`T`.`c` FROM 2) AS `_1` FROM `default`.`T` AS `T`;
 SELECT SUBSTRING(`T`.`c` FROM 2 FOR 3) AS `_1` FROM `default`.`T` AS `T`;
 
 --#[substring-10]
-[ScribeException{code=UNSUPPORTED_OPERATION, message="Spark substring with a literal start less than 1 is unsupported. Scribe does not rewrite target-specific substring semantics for start < 1."}];
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start values less than 1 with different semantics. Non-literal start/length expressions are passed through unchanged."}];
 
 --#[substring-11]
-[ScribeException{code=UNSUPPORTED_OPERATION, message="Spark substring with a literal start less than 1 is unsupported. Scribe does not rewrite target-specific substring semantics for start < 1."}];
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start values less than 1 with different semantics. Non-literal start/length expressions are passed through unchanged."}];
 
 --#[substring-12]
-[ScribeException{code=UNSUPPORTED_OPERATION, message="Spark substring with a literal start less than 1 is unsupported. Scribe does not rewrite target-specific substring semantics for start < 1."}];
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start values less than 1 with different semantics. Non-literal start/length expressions are passed through unchanged."}];
 
 --#[substring-13]
-[ScribeException{code=UNSUPPORTED_OPERATION, message="Spark substring with a literal start less than 1 is unsupported. Scribe does not rewrite target-specific substring semantics for start < 1."}];
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start values less than 1 with different semantics. Non-literal start/length expressions are passed through unchanged."}];
 
 --#[substring-14]
-[ScribeException{code=UNSUPPORTED_OPERATION, message="Spark substring with a literal start less than 1 is unsupported. Scribe does not rewrite target-specific substring semantics for start < 1."}];
+[ScribeException{code=UNSUPPORTED_OPERATION, message="Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start values less than 1 with different semantics. Non-literal start/length expressions are passed through unchanged."}];
 
 --#[position-00]
 SELECT POSITION('a' IN `T`.`c`) AS `_1` FROM `default`.`T` AS `T`;

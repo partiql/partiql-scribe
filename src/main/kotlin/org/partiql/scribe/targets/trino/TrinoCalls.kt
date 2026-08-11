@@ -42,9 +42,10 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
      * Trino does not support the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` special form. Instead it uses the
      * comma-argument function form `substring(<value>, <start>[, <length>])` (1-based).
      *
-     * Trino diverges from PartiQL on start/length values. We reject literal `start < 1` and literal `length < 0`
-     * during transpilation. For any non-literal expression, we preserve Trino's native `substring` call and report
-     * the potential semantic mismatch instead of rewriting it.
+     * Trino diverges from PartiQL on start/length values. In particular, Trino accepts start values less than 1 with
+     * semantics that differ from PartiQL's SQL-standard "start before the beginning" behavior. We reject literal
+     * `start < 1` and literal `length < 0` during transpilation. For any non-literal expression, we preserve Trino's
+     * native `substring` call and report the potential semantic mismatch instead of rewriting it.
      *
      * https://trino.io/docs/current/functions/string.html#substring
      */
@@ -53,15 +54,9 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         val start = args[1].expr
         val length = args.getOrNull(2)?.expr
         val id = Identifier.regular("substring")
-        rejectLiteralStartLessThanOne(
-            target = "Trino",
-            start = start,
-        )
+        checkSubStringArgStart(start)
         length?.let { lengthArg ->
-            rejectNegativeLiteralLength(
-                target = "Trino",
-                length = lengthArg,
-            )
+            checkSubStringArglength(lengthArg)
         }
         return when (args.size) {
             2 -> {
@@ -71,9 +66,10 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
                         message =
                             "PartiQL `SUBSTRING(<value> FROM <start>)` was replaced by Trino " +
                                 "`substring(<value>, <start>)` because Trino does not support the FROM ... FOR syntax. " +
-                                "Scribe rejects literal starts less than 1, but non-literal start expressions are " +
-                                "passed through unchanged, so Trino may still diverge from PartiQL if `<start>` " +
-                                "evaluates less than 1 at runtime.",
+                                "Scribe rejects literal starts less than 1 because Trino supports them with " +
+                                "semantics that differ from PartiQL. Non-literal start expressions are passed " +
+                                "through unchanged, so Trino may still diverge from PartiQL if `<start>` evaluates " +
+                                "less than 1 at runtime.",
                     ),
                 )
                 exprCall(id, listOf(value, start))
@@ -86,8 +82,9 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
                         message =
                             "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was replaced by Trino " +
                                 "`substring(<value>, <start>, <length>)` because Trino does not support the FROM ... FOR syntax. " +
-                                "Scribe rejects literal starts less than 1 and negative literal lengths, but " +
-                                "non-literal start/length expressions are passed through unchanged, so Trino may " +
+                                "Scribe rejects literal starts less than 1 because Trino supports them with " +
+                                "semantics that differ from PartiQL, and it rejects negative literal lengths. " +
+                                "Non-literal start/length expressions are passed through unchanged, so Trino may " +
                                 "still diverge from PartiQL if `<start>` evaluates less than 1 or `<length>` " +
                                 "evaluates negative at runtime.",
                     ),
@@ -97,30 +94,25 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
         }
     }
 
-    private fun rejectLiteralStartLessThanOne(
-        target: String,
-        start: Expr,
-    ) {
+    private fun checkSubStringArgStart(start: Expr) {
         if (start is ExprLit && start.lit.code() == Literal.INT_NUM && start.lit.bigDecimalValue() < BigDecimal.ONE) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,
-                    "$target substring with a literal start less than 1 is unsupported. " +
-                        "Scribe does not rewrite target-specific substring semantics for start < 1.",
+                    "Scribe rejects Trino substring with a literal start less than 1 because Trino accepts start " +
+                        "values less than 1 with different semantics. Non-literal start/length expressions are " +
+                        "passed through unchanged.",
                 ),
             )
         }
     }
 
-    private fun rejectNegativeLiteralLength(
-        target: String,
-        length: Expr,
-    ) {
+    private fun checkSubStringArglength(length: Expr) {
         if (length is ExprLit && length.lit.code() == Literal.INT_NUM && length.lit.bigDecimalValue() < BigDecimal.ZERO) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,
-                    "$target substring with a negative literal length is unsupported. " +
+                    "Trino substring with a negative literal length is unsupported. " +
                         "Scribe does not rewrite target-specific negative substring semantics.",
                 ),
             )

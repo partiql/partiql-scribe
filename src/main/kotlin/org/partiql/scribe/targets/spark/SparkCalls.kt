@@ -256,7 +256,8 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
 
     /**
      * Spark accepts the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` surface syntax, but its start/length
-     * behavior diverges from PartiQL.
+     * behavior diverges from PartiQL. In particular, Spark accepts start values less than 1 with semantics that
+     * differ from PartiQL's SQL-standard "start before the beginning" behavior.
      *
      * We reject literal `start < 1` and literal `length < 0` during transpilation. For any non-literal expression, we
      * preserve Spark's native `SUBSTRING` and report the potential semantic mismatch instead of rewriting it.
@@ -266,15 +267,9 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
         val start = args[1].expr
         val length = args.getOrNull(2)?.expr
 
-        rejectLiteralStartLessThanOne(
-            target = "Spark",
-            start = start,
-        )
+        checkSubStringArgStart(start)
         length?.let { lengthArg ->
-            rejectNegativeLiteralLength(
-                target = "Spark",
-                length = lengthArg,
-            )
+            checkSubStringArglength(lengthArg)
         }
 
         return when (args.size) {
@@ -284,9 +279,9 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                         code = ScribeProblem.TRANSLATION_INFO,
                         message =
                             "PartiQL `SUBSTRING(<value> FROM <start>)` was kept as Spark `SUBSTRING`. Scribe rejects " +
-                                "literal starts less than 1, but non-literal start expressions are passed through " +
-                                "unchanged, so Spark may still diverge from PartiQL if `<start>` evaluates less than " +
-                                "1 at runtime.",
+                                "literal starts less than 1 because Spark supports them with semantics that differ " +
+                                "from PartiQL. Non-literal start expressions are passed through unchanged, so Spark " +
+                                "may still diverge from PartiQL if `<start>` evaluates less than 1 at runtime.",
                     ),
                 )
                 exprSubstring(value, start, null)
@@ -297,8 +292,9 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                         code = ScribeProblem.TRANSLATION_INFO,
                         message =
                             "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was kept as Spark `SUBSTRING`. " +
-                                "Scribe rejects literal starts less than 1 and negative literal lengths, but " +
-                                "non-literal start/length " +
+                                "Scribe rejects literal starts less than 1 because Spark supports them with semantics " +
+                                "that differ from PartiQL, and it rejects negative literal lengths. " +
+                                "Non-literal start/length " +
                                 "expressions are passed through unchanged, so Spark may still diverge from PartiQL if " +
                                 "`<start>` evaluates less than 1 or `<length>` evaluates negative at runtime.",
                     ),
@@ -308,30 +304,25 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
         }
     }
 
-    private fun rejectLiteralStartLessThanOne(
-        target: String,
-        start: Expr,
-    ) {
+    private fun checkSubStringArgStart(start: Expr) {
         if (start is ExprLit && start.lit.code() == Literal.INT_NUM && start.lit.bigDecimalValue() < BigDecimal.ONE) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,
-                    "$target substring with a literal start less than 1 is unsupported. " +
-                        "Scribe does not rewrite target-specific substring semantics for start < 1.",
+                    "Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start " +
+                        "values less than 1 with different semantics. Non-literal start/length expressions are " +
+                        "passed through unchanged.",
                 ),
             )
         }
     }
 
-    private fun rejectNegativeLiteralLength(
-        target: String,
-        length: Expr,
-    ) {
+    private fun checkSubStringArglength(length: Expr) {
         if (length is ExprLit && length.lit.code() == Literal.INT_NUM && length.lit.bigDecimalValue() < BigDecimal.ZERO) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,
-                    "$target substring with a negative literal length is unsupported. " +
+                    "Spark substring with a negative literal length is unsupported. " +
                         "Scribe does not rewrite target-specific negative substring semantics.",
                 ),
             )
