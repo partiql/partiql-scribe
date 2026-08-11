@@ -27,7 +27,6 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         super.rules.toMutableMap().apply {
             this["utcnow"] = ::utcnow
             // Extensions
-            this["split"] = ::split
             this["OBJECT_TRANSFORM"] = ::objectTransform
             // MAP functions
             this["map_keys"] = ::mapKeys
@@ -57,8 +56,8 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
     /**
      * https://docs.aws.amazon.com/redshift/latest/dg/split_to_array.html
      */
-    private fun split(args: SqlArgs): Expr {
-        val id = Identifier.regular("split_to_array")
+    override fun split(args: SqlArgs): Expr {
+        val id = Identifier.regular("SPLIT_TO_ARRAY")
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,
@@ -70,6 +69,30 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         val arg0 = args[0].expr
         val arg1 = args[1].expr
         return exprCall(id, listOf(arg0, arg1))
+    }
+
+    /**
+     * Redshift accepts both the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` special form and the comma-argument
+     * function form `SUBSTRING(<value>, <start>[, <length>])` (1-based). We emit the function form for consistency
+     * across targets.
+     *
+     * Redshift's start/length semantics match PartiQL's SQL-standard behavior, so no argument rewriting or rejection is
+     * needed: a start less than 1 is clamped to the beginning of the string with the length reduced accordingly, and a
+     * negative length is an error in both engines.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_SUBSTRING.html
+     */
+    override fun substring(args: SqlArgs): Expr {
+        val id = Identifier.regular("SUBSTRING")
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message =
+                    "PartiQL `SUBSTRING(<value> FROM <start> [FOR <length>])` was replaced by Redshift " +
+                        "`SUBSTRING(<value>, <start>[, <length>])`",
+            ),
+        )
+        return exprCall(id, args.map { it.expr })
     }
 
     private fun objectTransform(args: List<SqlArg>): Expr {

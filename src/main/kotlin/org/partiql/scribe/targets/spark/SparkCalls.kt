@@ -9,15 +9,25 @@ import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprLit
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import java.math.BigDecimal
 
 public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
     private val listener = context.getProblemListener()
+
+    private companion object {
+        /**
+         * Java regex metacharacters, which must be escaped for a delimiter to match literally. Spark compiles the
+         * `split` regex with `java.util.regex.Pattern`.
+         */
+        private val REGEX_METACHARACTERS = setOf('\\', '.', '[', ']', '{', '}', '(', ')', '*', '+', '-', '?', '^', '$', '|')
+    }
 
     override val rules: Map<String, SqlCallFn> =
         super.rules.toMutableMap().apply {
@@ -242,6 +252,206 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                     ),
                 )
         }
+
+    /**
+     * Spark accepts both the SQL `SUBSTRING(<value> FROM <start> FOR <length>)` special form and the comma-argument
+     * function form `SUBSTRING(<value>, <start>[, <length>])` (1-based). We emit the function form for consistency
+     * across targets.
+     *
+     * Spark's start/length behavior diverges from PartiQL. In particular, Spark accepts start values less than 1 with
+     * semantics that differ from PartiQL's SQL-standard "start before the beginning" behavior.
+     *
+     * We reject literal `start < 1` and literal `length < 0` during transpilation. For any non-literal expression, we
+     * preserve Spark's native `SUBSTRING` and report the potential semantic mismatch instead of rewriting it.
+     *
+     * https://spark.apache.org/docs/latest/api/sql/index.html#substring
+     */
+    override fun substring(args: SqlArgs): Expr {
+        val value = args[0].expr
+        val start = args[1].expr
+        val length = args.getOrNull(2)?.expr
+        val id = Identifier.regular("SUBSTRING")
+
+        checkSubStringArgStart(start)
+        length?.let { lengthArg ->
+            checkSubStringArglength(lengthArg)
+        }
+
+        return when (args.size) {
+            2 -> {
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "PartiQL `SUBSTRING(<value> FROM <start>)` was replaced by Spark " +
+                                "`SUBSTRING(<value>, <start>)`. Scribe rejects " +
+                                "literal starts less than 1 because Spark supports them with semantics that differ " +
+                                "from PartiQL. Non-literal start expressions are passed through unchanged, so Spark " +
+                                "may still diverge from PartiQL if `<start>` evaluates less than 1 at runtime.",
+                    ),
+                )
+                exprCall(id, listOf(value, start))
+            }
+            else -> {
+                val lengthArg = checkNotNull(length)
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "PartiQL `SUBSTRING(<value> FROM <start> FOR <length>)` was replaced by Spark " +
+                                "`SUBSTRING(<value>, <start>, <length>)`. " +
+                                "Scribe rejects literal starts less than 1 because Spark supports them with semantics " +
+                                "that differ from PartiQL, and it rejects negative literal lengths. " +
+                                "Non-literal start/length " +
+                                "expressions are passed through unchanged, so Spark may still diverge from PartiQL if " +
+                                "`<start>` evaluates less than 1 or `<length>` evaluates negative at runtime.",
+                    ),
+                )
+                exprCall(id, listOf(value, start, lengthArg))
+            }
+        }
+    }
+
+    private fun checkSubStringArgStart(start: Expr) {
+        if (start is ExprLit && start.lit.code() == Literal.INT_NUM && start.lit.bigDecimalValue() < BigDecimal.ONE) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Scribe rejects Spark substring with a literal start less than 1 because Spark accepts start " +
+                        "values less than 1 with different semantics. Non-literal start/length expressions are " +
+                        "passed through unchanged.",
+                ),
+            )
+        }
+    }
+
+    private fun checkSubStringArglength(length: Expr) {
+        if (length is ExprLit && length.lit.code() == Literal.INT_NUM && length.lit.bigDecimalValue() < BigDecimal.ZERO) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "Spark substring with a negative literal length is unsupported. " +
+                        "Scribe does not rewrite target-specific negative substring semantics.",
+                ),
+            )
+        }
+    }
+
+    /**
+     * PartiQL `split(<string>, <delimiter>) -> list<string>` matches the delimiter **literally**, but Spark's
+     * `split(str, regex)` interprets its second argument as a Java regular expression. Passing the delimiter through
+     * unchanged silently mis-splits whenever it holds a regex metacharacter, e.g. PartiQL `split(v, '.')` splits on a
+     * literal dot while Spark `split(v, '.')` splits on *every* character.
+     *
+     * We restore literal semantics by quoting the delimiter:
+     *  - String literals are escaped at transpile time, which keeps the emitted SQL readable, e.g. `split(v, '\\.')`.
+     *  - A known empty string literal is rejected during transpilation, because Spark `split(str, '')` splits between
+     *    characters while PartiQL returns the original string as a single-element list.
+     *  - Any other expression (a column, a call, ...) is unknown until runtime, so we wrap it with Spark `concat` into
+     *    a `\Q...\E` quoted region, mirroring Java's `Pattern.quote`.
+     *  - Spark still diverges on the empty-delimiter edge case: PartiQL `split(<string>, '')` returns the original
+     *    string as a single-element list, while Spark `split(str, '')` splits between characters. For non-literal
+     *    delimiters we only report this mismatch; we do not rewrite it.
+     *
+     * Notes:
+     *  > https://spark.apache.org/docs/latest/api/sql/index.html#split
+     *  > https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#quote-java.lang.String-
+     */
+    override fun split(args: SqlArgs): Expr {
+        val string = args[0].expr
+        val delimiter = args[1].expr
+        val id = Identifier.regular("SPLIT")
+        return when {
+            delimiter is ExprLit && delimiter.lit.code() == Literal.STRING -> {
+                val delimiterValue = delimiter.lit.stringValue()
+                if (delimiterValue.isEmpty()) {
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            ScribeProblem.UNSUPPORTED_OPERATION,
+                            "Spark split with an empty string delimiter is unsupported because Spark splits " +
+                                "between characters while PartiQL returns the original string as a single-element list.",
+                        ),
+                    )
+                }
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "PartiQL `split(<string>, <delimiter>)` matches the delimiter literally whereas Spark " +
+                                "`split(str, regex)` takes a regex; the non-empty delimiter literal was " +
+                                "regex-escaped.",
+                    ),
+                )
+                exprCall(id, listOf(string, exprLit(Literal.string(escapeRegex(delimiterValue)))))
+            }
+            else -> {
+                listener.report(
+                    ScribeProblem.simpleInfo(
+                        code = ScribeProblem.TRANSLATION_INFO,
+                        message =
+                            "PartiQL `split(<string>, <delimiter>)` matches the delimiter literally whereas Spark " +
+                                "`split(str, regex)` takes a regex; the non-literal delimiter was wrapped in a " +
+                                "`\\Q...\\E` quoted region. If the delimiter evaluates to `''` at runtime, PartiQL " +
+                                "returns the original string as a single-element list while Spark splits between " +
+                                "characters.",
+                    ),
+                )
+                exprCall(id, listOf(string, patternQuote(delimiter)))
+            }
+        }
+    }
+
+    /**
+     * Escape the Java regex metacharacters in [delimiter] so that it matches literally.
+     *
+     * There are two layers of unescaping between this string and the regex engine, so escaping happens in two stages:
+     *  1. Regex: prefix each metacharacter with a backslash, so `.` becomes `\.`.
+     *  2. String literal: Spark's parser also processes backslash escapes inside string literals, so every backslash is
+     *     doubled to survive that pass, turning `\.` into `\\.`.
+     *
+     * This yields the standard Spark idiom -- splitting on a literal `.` is written `split(v, '\\.')`. Note a literal
+     * backslash needs all four: regex `\\` written as `'\\\\'`.
+     */
+    private fun escapeRegex(delimiter: String): String {
+        val regexEscaped =
+            delimiter.flatMap { char ->
+                when (char) {
+                    in REGEX_METACHARACTERS -> listOf('\\', char)
+                    else -> listOf(char)
+                }
+            }.joinToString("")
+        // Double every backslash so it survives Spark's string-literal unescaping.
+        return regexEscaped.replace("\\", "\\\\")
+    }
+
+    /**
+     * Wrap [delimiter] in a `\Q...\E` quoted region, equivalent to Java's `Pattern.quote`.
+     *
+     * Any `\E` already inside the delimiter would terminate the region early and expose the remainder to the regex
+     * engine, so occurrences are closed and reopened (`\E\\E\Q`) exactly as `Pattern.quote` does. The
+     * [replace][exprCall] runs in Spark, since the delimiter's value is not known at transpile time.
+     */
+    private fun patternQuote(delimiter: Expr): Expr {
+        val sanitized =
+            exprCall(
+                function = Identifier.regular("REPLACE"),
+                args =
+                    listOf(
+                        delimiter,
+                        exprLit(Literal.string("\\\\E")),
+                        exprLit(Literal.string("\\\\E\\\\\\\\E\\\\Q")),
+                    ),
+            )
+        return exprCall(
+            function = Identifier.regular("CONCAT"),
+            args =
+                listOf(
+                    exprLit(Literal.string("\\\\Q")),
+                    sanitized,
+                    exprLit(Literal.string("\\\\E")),
+                ),
+        )
+    }
 
     /**
      * PartiQL `map_get(map, key)` -> Spark `element_at(map, key)`
