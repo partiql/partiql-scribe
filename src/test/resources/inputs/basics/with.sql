@@ -33,41 +33,54 @@ WITH cte1 AS (
 )
 SELECT * FROM cte1;
 
--- #[with-05]
--- Nested CTE reference - Planning error, https://github.com/partiql/partiql-lang-kotlin/issues/1868
--- WITH cte1 AS (
---     SELECT a, b FROM SIMPLE_T
--- ),
--- cte2 AS (
---     SELECT a FROM cte1
--- ),
--- cte3 AS (
---     SELECT a FROM cte2
--- )
--- SELECT * FROM cte3;
+--#[with-05]
+-- Nested CTE reference - sibling references
+WITH cte1 AS (
+    SELECT a, b FROM SIMPLE_T
+),
+cte2 AS (
+    SELECT a FROM cte1
+),
+cte3 AS (
+    SELECT a FROM cte2
+)
+SELECT * FROM cte3;
 
 --#[with-06]
+-- Sibling CTE references (cte2 refs cte1, cte3 refs cte2) joined together in the body
+WITH cte1 AS (
+    SELECT a, b FROM SIMPLE_T
+),
+cte2 AS (
+    SELECT a FROM cte1
+),
+cte3 AS (
+    SELECT a FROM cte2
+)
+SELECT * FROM cte1 JOIN cte2 ON cte1.a = cte2.a JOIN cte3 ON cte2.a = cte3.a;
+
+--#[with-07]
 -- CTE with subquery
 WITH cte1 AS (
     SELECT a FROM SIMPLE_T WHERE b > (SELECT AVG(b) FROM SIMPLE_T)
 )
 SELECT * FROM cte1;
 
---#[with-07]
+--#[with-08]
 -- CTE used multiple times - not supported, alias is lost with join. https://github.com/partiql/partiql-scribe/issues/138
 WITH cte1 AS (
     SELECT a, b FROM SIMPLE_T
 )
 SELECT * FROM cte1 AS c1 JOIN cte1 AS c2 ON c1.a = c2.a;
 
---#[with-08]
+--#[with-09]
 -- CTE with window function, COUNT(*), and GROUP BY in outer query
 WITH cte1 AS (
     SELECT a, b FROM SIMPLE_T
 )
 SELECT ROW_NUMBER() OVER (ORDER BY a) AS rn, COUNT(*) AS cnt, a FROM cte1 GROUP BY a;
 
---#[with-09]
+--#[with-10]
 -- Nested WITH clauses
 WITH cte1 AS (
   WITH cte2 AS (SELECT a, b FROM SIMPLE_T)
