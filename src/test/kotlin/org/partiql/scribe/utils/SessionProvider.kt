@@ -19,6 +19,7 @@ import kotlin.io.path.toPath
  */
 class SessionProvider(
     val scalarOverloads: Map<String, FnOverload> = emptyMap(),
+    private val fixedSession: Session? = null,
 ) {
     private val catalogs: List<Catalog> by lazy {
         // Make a map from catalog name to tables.
@@ -55,6 +56,7 @@ class SessionProvider(
     }
 
     fun getSession(): Session {
+        fixedSession?.let { return it }
         val session =
             Session.builder()
                 .catalog("default")
