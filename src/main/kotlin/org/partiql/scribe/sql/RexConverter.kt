@@ -228,7 +228,7 @@ public open class RexConverter(
     ): Expr {
         val fn = rex.function
         val args = rex.args.map { SqlArg(visitRex(it, ctx), it.type.pType) }
-        return transform.getFunction(fn.signature.name, args)
+        return transform.getFunction(rex.routineRef, fn.signature.name, args)
     }
 
     override fun visitCase(
@@ -545,7 +545,7 @@ public open class RexConverter(
     ): Expr {
         val fn = rex.functions.first()
         val args = rex.args.map { SqlArg(visitRex(it, ctx), it.type.pType) }
-        return transform.getFunction(fn.signature.name, args)
+        return transform.getFunction(rex.routineRef, fn.signature.name, args)
     }
 
     override fun visitError(

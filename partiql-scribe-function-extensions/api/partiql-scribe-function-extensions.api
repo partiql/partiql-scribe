@@ -1,0 +1,30 @@
+public class org/partiql/scribe/extensions/functions/RedshiftFunctionExtensionCalls : org/partiql/scribe/targets/redshift/RedshiftCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;Ljava/util/Set;)V
+	protected fun getRoutineRules ()Ljava/util/Map;
+}
+
+public final class org/partiql/scribe/extensions/functions/RedshiftFunctionExtensionTarget : org/partiql/scribe/targets/redshift/RedshiftTarget {
+	public fun <init> (Ljava/util/Set;)V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+}
+
+public class org/partiql/scribe/extensions/functions/SparkFunctionExtensionCalls : org/partiql/scribe/targets/spark/SparkCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;Ljava/util/Set;)V
+	protected fun getRoutineRules ()Ljava/util/Map;
+}
+
+public final class org/partiql/scribe/extensions/functions/SparkFunctionExtensionTarget : org/partiql/scribe/targets/spark/SparkTarget {
+	public fun <init> (Ljava/util/Set;)V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+}
+
+public class org/partiql/scribe/extensions/functions/TrinoFunctionExtensionCalls : org/partiql/scribe/targets/trino/TrinoCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;Ljava/util/Set;)V
+	protected fun getRoutineRules ()Ljava/util/Map;
+}
+
+public final class org/partiql/scribe/extensions/functions/TrinoFunctionExtensionTarget : org/partiql/scribe/targets/trino/TrinoTarget {
+	public fun <init> (Ljava/util/Set;)V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+}
+

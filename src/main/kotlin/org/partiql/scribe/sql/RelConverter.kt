@@ -7,7 +7,6 @@ import org.partiql.ast.Ast.excludeStepCollIndex
 import org.partiql.ast.Ast.excludeStepCollWildcard
 import org.partiql.ast.Ast.excludeStepStructField
 import org.partiql.ast.Ast.excludeStepStructWildcard
-import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprWindowFunction
 import org.partiql.ast.Ast.from
 import org.partiql.ast.Ast.fromExpr
@@ -238,15 +237,12 @@ public open class RelConverter(
         }
         val aggregations =
             rel.measures.map { agg ->
-                val args = agg.args.map { rexToSql.apply(it) }
-                exprCall(
-                    function = Identifier.regular(agg.agg.signature.name),
+                val args = agg.args.map { SqlArg(rexToSql.apply(it), it.type.pType) }
+                transform.getAggregate(
+                    routineRef = agg.routineRef,
+                    name = agg.agg.signature.name,
                     args = args,
-                    setq =
-                        when (agg.isDistinct) {
-                            true -> SetQuantifier.DISTINCT()
-                            false -> null
-                        },
+                    distinct = agg.isDistinct,
                 )
             }
         sfw.aggregations = aggregations
