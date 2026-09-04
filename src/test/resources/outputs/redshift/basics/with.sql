@@ -18,22 +18,26 @@ WITH "cte1" AS (SELECT "SIMPLE_T"."a", count(1) AS "cnt" FROM "default"."SIMPLE_
 -- CTE with JOIN
 WITH "cte1" AS (SELECT "t1"."a", "t2"."b" FROM "default"."SIMPLE_T" AS "t1" INNER JOIN "default"."SIMPLE_T" AS "t2" ON "t1"."a" = "t2"."a") SELECT "cte1"."a", "cte1"."b" FROM "cte1" AS "cte1";
 
--- #[with-05]
--- Nested CTE reference - not supported
--- WITH "cte1" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T"), "cte2" AS (SELECT "cte1"."a" FROM "cte1" AS "cte1"), "cte3" AS (SELECT "cte2"."a" FROM "cte2" AS "cte2") SELECT "cte3"."a" FROM "cte3" AS "cte3";
+--#[with-05]
+-- Nested CTE reference - sibling references
+WITH "cte1" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T"), "cte2" AS (SELECT "cte1"."a" FROM "cte1" AS "cte1"), "cte3" AS (SELECT "cte2"."a" FROM "cte2" AS "cte2") SELECT "cte3"."a" FROM "cte3" AS "cte3";
 
 --#[with-06]
+-- Sibling CTE references joined together in the body
+WITH "cte1" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T"), "cte2" AS (SELECT "cte1"."a" FROM "cte1" AS "cte1"), "cte3" AS (SELECT "cte2"."a" FROM "cte2" AS "cte2") SELECT "cte1"."a", "cte1"."b", "cte2"."a", "cte3"."a" FROM "cte1" AS "cte1" INNER JOIN "cte2" AS "cte2" ON "cte1"."a" = "cte2"."a" INNER JOIN "cte3" AS "cte3" ON "cte2"."a" = "cte3"."a";
+
+--#[with-07]
 -- CTE with subquery
 WITH "cte1" AS (SELECT "SIMPLE_T"."a" FROM "default"."SIMPLE_T" AS "SIMPLE_T" WHERE "SIMPLE_T"."b" > (SELECT avg("SIMPLE_T"."b") AS "_1" FROM "default"."SIMPLE_T" AS "SIMPLE_T")) SELECT "cte1"."a" FROM "cte1" AS "cte1";
 
---#[with-07]
+--#[with-08]
 -- CTE used multiple times - not supported, alias is lost with join
 WITH "cte1" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT "c1"."a", "c1"."b", "c2"."a", "c2"."b" FROM "cte1" AS "c1" INNER JOIN "cte1" AS "c2" ON "c1"."a" = "c2"."a";
 
---#[with-08]
+--#[with-09]
 -- CTE with window function, COUNT(*), and GROUP BY in outer query
 WITH "cte1" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT ROW_NUMBER() OVER (ORDER BY "cte1"."a" ASC NULLS LAST) AS "rn", count(1) AS "cnt", "cte1"."a" FROM "cte1" AS "cte1" GROUP BY "cte1"."a";
 
---#[with-09]
+--#[with-10]
 -- Nested WITH clauses
 WITH "cte1" AS (WITH "cte2" AS (SELECT "SIMPLE_T"."a", "SIMPLE_T"."b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") SELECT "cte2"."a", "cte2"."b" FROM "cte2" AS "cte2") SELECT "_0"."a", "_0"."b" FROM (WITH "cte3" AS (SELECT "cte1"."a", "cte1"."b" FROM "cte1" AS "cte1") SELECT "cte3"."a", "cte3"."b" FROM "cte3" AS "cte3") AS "_0";
