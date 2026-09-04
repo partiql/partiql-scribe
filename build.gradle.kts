@@ -24,15 +24,15 @@ object Versions {
 
     // Deps
     const val JUNIT_5 = "5.9.3"
-    const val PARTIQL = "1.6.1"
 }
 
 object Deps {
     const val JUNIT_PARAMS = "org.junit.jupiter:junit-jupiter-params:${Versions.JUNIT_5}"
     const val KOTLIN_TEST = "org.jetbrains.kotlin:kotlin-test:${Versions.KOTLIN}"
     const val KOTLIN_TEST_JUNIT = "org.jetbrains.kotlin:kotlin-test-junit5:${Versions.KOTLIN}"
-    const val PARTIQL = "org.partiql:partiql-lang:${Versions.PARTIQL}"
 }
+
+val partiqlVersion: String by project
 
 repositories {
     mavenCentral()
@@ -40,7 +40,7 @@ repositories {
 }
 
 dependencies {
-    implementation(Deps.PARTIQL)
+    implementation("org.partiql:partiql-lang:$partiqlVersion")
     // Test
     testImplementation(Deps.KOTLIN_TEST)
     testImplementation(Deps.KOTLIN_TEST_JUNIT)

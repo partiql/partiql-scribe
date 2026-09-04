@@ -1,12 +1,16 @@
 package org.partiql.scribe.sql
 
+import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.identifier
 import org.partiql.ast.Ast.identifierSimple
 import org.partiql.ast.Ast.query
 import org.partiql.ast.AstNode
+import org.partiql.ast.Identifier
+import org.partiql.ast.SetQuantifier
 import org.partiql.ast.expr.Expr
 import org.partiql.plan.Action
 import org.partiql.plan.Plan
+import org.partiql.plan.RoutineRef
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.spi.catalog.Session
@@ -53,6 +57,25 @@ public open class PlanToAst(
         name: String,
         args: SqlArgs,
     ): Expr = calls.retarget(name, args)
+
+    internal fun getFunction(
+        routineRef: RoutineRef?,
+        name: String,
+        args: SqlArgs,
+    ): Expr = routineRef?.let { calls.retarget(it, args) } ?: getFunction(name, args)
+
+    internal fun getAggregate(
+        routineRef: RoutineRef?,
+        name: String,
+        args: SqlArgs,
+        distinct: Boolean,
+    ): Expr =
+        routineRef?.let { calls.retargetAggregate(it, args, distinct) }
+            ?: exprCall(
+                function = Identifier.regular(name),
+                args = args.map { it.expr },
+                setq = if (distinct) SetQuantifier.DISTINCT() else null,
+            )
 
     public open fun getGlobal(ref: SpiIdentifier): AstIdentifier? {
         val currentCatalogName = session.getCatalog()

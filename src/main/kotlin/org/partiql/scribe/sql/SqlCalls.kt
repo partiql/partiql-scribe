@@ -32,6 +32,7 @@ import org.partiql.ast.expr.ExprNullPredicate
 import org.partiql.ast.expr.ExprOperator
 import org.partiql.ast.expr.SessionAttribute
 import org.partiql.ast.expr.TrimSpec
+import org.partiql.plan.RoutineRef
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.spi.types.PType
@@ -65,6 +66,27 @@ public abstract class SqlCalls(context: ScribeContext) {
     public companion object {
         public fun standard(context: ScribeContext): SqlCalls = object : SqlCalls(context) {}
     }
+
+    /**
+     * Scalar rewrite rules keyed by exact resolved routine identity.
+     */
+    protected open val routineRules: Map<RoutineRef, SqlCallFn> = emptyMap()
+
+    /**
+     * Aggregate rewrite rules keyed by exact resolved routine identity.
+     */
+    protected open val aggregateRules: Map<RoutineRef, (SqlArgs, Boolean) -> Expr> = emptyMap()
+
+    internal fun retarget(
+        routineRef: RoutineRef,
+        args: SqlArgs,
+    ): Expr? = routineRules[routineRef]?.invoke(args)
+
+    internal fun retargetAggregate(
+        routineRef: RoutineRef,
+        args: SqlArgs,
+        distinct: Boolean,
+    ): Expr? = aggregateRules[routineRef]?.invoke(args, distinct)
 
     /**
      * List of special form rules. See [org.partiql.planner.Header] for the derivations.
