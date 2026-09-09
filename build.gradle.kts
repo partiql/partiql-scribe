@@ -1,14 +1,19 @@
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
+import java.time.Duration
 import java.util.Properties
 
 plugins {
     kotlin("jvm") version "1.9.20"
     application
+    `java-library`
     `maven-publish`
+    signing
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.17.0"
 }
@@ -40,7 +45,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.partiql:partiql-lang:$partiqlVersion")
+    api("org.partiql:partiql-lang:$partiqlVersion")
     // Test
     testImplementation(Deps.KOTLIN_TEST)
     testImplementation(Deps.KOTLIN_TEST_JUNIT)
@@ -122,6 +127,19 @@ kotlin {
     explicitApi = ExplicitApiMode.Strict
 }
 
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+            username.set(providers.gradleProperty("centralPortalUsername"))
+            password.set(providers.gradleProperty("centralPortalPassword"))
+        }
+    }
+    connectTimeout.set(Duration.ofMinutes(3))
+    clientTimeout.set(Duration.ofMinutes(3))
+}
+
 publishing {
     repositories {
         maven {
@@ -137,16 +155,21 @@ publishing {
             pom {
                 name = "PartiQL Scribe"
                 description = "The PartiQL Scribe query transpiler framework."
-                url = "https://partiql.org"
+                url = "https://github.com/partiql/partiql-scribe"
 
                 packaging = "jar"
                 groupId = "org.partiql"
-                version = "0.1"
+
+                scm {
+                    connection.set("scm:git:https://github.com/partiql/partiql-scribe.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/partiql/partiql-scribe.git")
+                    url.set("https://github.com/partiql/partiql-scribe")
+                }
 
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
                 }
                 developers {
@@ -160,4 +183,12 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    setRequired {
+        !version.toString().endsWith("-SNAPSHOT") &&
+            gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
+    }
+    sign(publishing.publications["main"])
 }
