@@ -1,3 +1,4 @@
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
@@ -6,6 +7,7 @@ plugins {
     kotlin("jvm")
     `java-library`
     `maven-publish`
+    signing
     id("org.jlleitschuh.gradle.ktlint")
 }
 
@@ -71,15 +73,20 @@ publishing {
             pom {
                 name = "PartiQL Scribe Function Extensions"
                 description = "Optional Scribe translations for PartiQL function extensions."
-                url = "https://partiql.org"
+                url = "https://github.com/partiql/partiql-scribe"
                 packaging = "jar"
                 groupId = "org.partiql"
-                version = "0.1"
+
+                scm {
+                    connection.set("scm:git:https://github.com/partiql/partiql-scribe.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/partiql/partiql-scribe.git")
+                    url.set("https://github.com/partiql/partiql-scribe")
+                }
 
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
                 }
                 developers {
@@ -93,4 +100,12 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    setRequired {
+        !version.toString().endsWith("-SNAPSHOT") &&
+            gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
+    }
+    sign(publishing.publications["main"])
 }
