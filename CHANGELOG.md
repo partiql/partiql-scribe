@@ -28,6 +28,23 @@ Thank you to all who have contributed!
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Removed
+
+### Security
+
+### Contributors
+Thank you to all who have contributed!
+
+## [2.0.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.0) - 2026-09-09
+
+### Added
+
 - Added the initial Maven Central distribution of the Scribe transpiler framework, including PartiQL, Redshift, Spark, and Trino SQL targets.
 - Added the optional `partiql-scribe-function-extensions` artifact with Redshift, Spark, and Trino translations for PartiQL function extensions.
 
