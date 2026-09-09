@@ -408,12 +408,16 @@ public class org/partiql/scribe/targets/redshift/RedshiftAstToSql : org/partiql/
 
 public class org/partiql/scribe/targets/redshift/RedshiftCalls : org/partiql/scribe/sql/SqlCalls {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public fun charLength (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun getRules ()Ljava/util/Map;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun position (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun replace (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun trim (Ljava/util/List;Lorg/partiql/ast/expr/TrimSpec;)Lorg/partiql/ast/expr/Expr;
 }
 
 public class org/partiql/scribe/targets/redshift/RedshiftFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {

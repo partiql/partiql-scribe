@@ -73,6 +73,12 @@ SELECT POSITION('a' IN c) FROM T;
 --#[char-length-00]
 SELECT CHAR_LENGTH(c) FROM T;
 
+--#[char-length-01]
+SELECT CHAR_LENGTH(d.e) FROM T;
+
+--#[char-length-02]
+SELECT CHAR_LENGTH(col_list_string[1]) FROM T_ALL_TYPES;
+
 --#[replace-00]
 SELECT replace(c, 'a', 'b') FROM T;
 

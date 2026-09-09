@@ -81,6 +81,13 @@
         },
       },
       {
+        name: "col_list_string",
+        type: {
+          type: "list",
+          items: "string",
+        },
+      },
+      {
         name: "col_bag",
         type: {
           type: "bag",
