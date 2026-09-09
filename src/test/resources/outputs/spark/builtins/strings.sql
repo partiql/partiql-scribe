@@ -52,6 +52,12 @@ SELECT POSITION('a' IN `T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
 --#[char-length-00]
 SELECT `CHAR_LENGTH`(`T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
 
+--#[char-length-01]
+SELECT `CHAR_LENGTH`(`T`.`d`.`e`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[char-length-02]
+SELECT `CHAR_LENGTH`(`T_ALL_TYPES`.`col_list_string`[1]) AS `_1` FROM `default`.`T_ALL_TYPES` AS `T_ALL_TYPES`;
+
 --#[replace-00]
 SELECT `REPLACE`(`T`.`c`, 'a', 'b') AS `_1` FROM `default`.`T` AS `T`;
 

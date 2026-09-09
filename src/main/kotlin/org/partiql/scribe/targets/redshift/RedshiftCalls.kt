@@ -1,16 +1,19 @@
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprNullPredicate
 import org.partiql.ast.Ast.exprPath
 import org.partiql.ast.Ast.exprPathStepElement
 import org.partiql.ast.Ast.exprVarRef
+import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprPath
+import org.partiql.ast.expr.TrimSpec
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.SqlArg
@@ -40,6 +43,36 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
         }
 
     /**
+     * Cast each string-typed argument to VARCHAR when it is navigated out of a SUPER value. Redshift's scalar string
+     * builtins have no SUPER overload, so a string read from a SUPER (struct/array) column must be cast before it is
+     * passed as an argument. Operators, comparisons, and aggregates coerce SUPER implicitly and are not routed here.
+     */
+    private fun castSuperStrings(args: SqlArgs): SqlArgs = args.map(::castSuperString)
+
+    /**
+     * A navigation into SUPER is a path expression with more than one step: the first step selects the (struct/array)
+     * column from the binding, and any further step reads into the resulting SUPER value. A single-step path (or
+     * non-path) is a plain column reference of a real VARCHAR and is left untouched, as are non-string arguments.
+     */
+    private fun castSuperString(arg: SqlArg): SqlArg {
+        val expr = arg.expr
+        val isStringType = arg.type.code() == PType.STRING || arg.type.code() == PType.VARCHAR || arg.type.code() == PType.CHAR
+        val isSuperNavigation = expr is ExprPath && expr.steps.size > 1
+        return if (isStringType && isSuperNavigation) SqlArg(exprCast(expr, DataType.VARCHAR()), arg.type) else arg
+    }
+
+    override fun charLength(args: SqlArgs): Expr = super.charLength(castSuperStrings(args))
+
+    override fun position(args: SqlArgs): Expr = super.position(castSuperStrings(args))
+
+    override fun replace(args: SqlArgs): Expr = super.replace(castSuperStrings(args))
+
+    override fun trim(
+        args: SqlArgs,
+        spec: TrimSpec,
+    ): Expr = super.trim(castSuperStrings(args), spec)
+
+    /**
      * https://docs.aws.amazon.com/redshift/latest/dg/r_SYSDATE.html
      */
     private fun utcnow(args: SqlArgs): Expr {
@@ -66,8 +99,9 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
                         "`split_to_array(<string>, <string>) -> SUPER`",
             ),
         )
-        val arg0 = args[0].expr
-        val arg1 = args[1].expr
+        val castArgs = castSuperStrings(args)
+        val arg0 = castArgs[0].expr
+        val arg1 = castArgs[1].expr
         return exprCall(id, listOf(arg0, arg1))
     }
 
@@ -92,7 +126,7 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
                         "`SUBSTRING(<value>, <start>[, <length>])`",
             ),
         )
-        return exprCall(id, args.map { it.expr })
+        return exprCall(id, castSuperStrings(args).map { it.expr })
     }
 
     private fun objectTransform(args: List<SqlArg>): Expr {
