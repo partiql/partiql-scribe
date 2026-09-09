@@ -48,7 +48,7 @@ public open class RedshiftRexConverter(
     ): Expr {
         val fn = rex.function
         val args = rex.args.map { SqlArg(normalizeArgument(it), it.type.pType) }
-        return transform.getFunction(fn.signature.name, args)
+        return transform.getFunction(rex.routineRef, fn.signature.name, args)
     }
 
     override fun visitDispatch(
@@ -57,7 +57,7 @@ public open class RedshiftRexConverter(
     ): Expr {
         val fn = rex.functions.first()
         val args = rex.args.map { SqlArg(normalizeArgument(it), it.type.pType) }
-        return transform.getFunction(fn.signature.name, args)
+        return transform.getFunction(rex.routineRef, fn.signature.name, args)
     }
 
     override fun visitNullIf(
