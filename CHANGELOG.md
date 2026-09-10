@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated the build to Kotlin 2.3.21.
+- Changed `ScribeProblemListener.reportAndThrow` from an abstract method to a JVM default method to retain binary compatibility.
+
 ### Deprecated
 
 ### Fixed
@@ -40,6 +43,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @XuechunHHH
 
 ## [2.0.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.0) - 2026-09-09
 
