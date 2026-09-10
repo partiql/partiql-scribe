@@ -2,6 +2,8 @@ import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     kotlin("jvm")
@@ -24,8 +26,8 @@ dependencies {
     implementation("org.partiql:partiql-function-extensions:$partiqlVersion")
     implementation("org.partiql:partiql-ast:$partiqlVersion")
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.20")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.20")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.21")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.3.21")
 }
 
 java {
@@ -33,18 +35,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
     withJavadocJar()
     withSourcesJar()
-}
-
-tasks.compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.apiVersion = "1.9"
-    kotlinOptions.languageVersion = "1.9"
-}
-
-tasks.compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.apiVersion = "1.9"
-    kotlinOptions.languageVersion = "1.9"
 }
 
 tasks.test {
@@ -57,6 +47,12 @@ tasks.test {
 
 kotlin {
     explicitApi = ExplicitApiMode.Strict
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+        apiVersion.set(KotlinVersion.KOTLIN_2_3)
+        languageVersion.set(KotlinVersion.KOTLIN_2_3)
+        freeCompilerArgs.add("-jvm-default=enable")
+    }
 }
 
 publishing {

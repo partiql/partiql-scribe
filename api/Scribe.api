@@ -77,7 +77,7 @@ public abstract interface class org/partiql/scribe/problems/ScribeProblemListene
 	public static final field Companion Lorg/partiql/scribe/problems/ScribeProblemListener$Companion;
 	public static fun abortOnError ()Lorg/partiql/scribe/problems/ScribeProblemListener;
 	public abstract fun report (Lorg/partiql/scribe/problems/ScribeProblem;)V
-	public abstract fun reportAndThrow (Lorg/partiql/scribe/problems/ScribeProblem;)Ljava/lang/Void;
+	public fun reportAndThrow (Lorg/partiql/scribe/problems/ScribeProblem;)Ljava/lang/Void;
 }
 
 public final class org/partiql/scribe/problems/ScribeProblemListener$Companion {

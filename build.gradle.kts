@@ -2,13 +2,15 @@ import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.time.Duration
 import java.util.Properties
 
 plugins {
-    kotlin("jvm") version "1.9.20"
+    kotlin("jvm") version "2.3.21"
     application
     `java-library`
     `maven-publish`
@@ -22,9 +24,7 @@ val properties = "$buildDir/properties"
 
 object Versions {
     // Language
-    const val KOTLIN = "1.9.20"
-    const val KOTLIN_LANGUAGE = "1.9"
-    const val KOTLIN_API = "1.9"
+    const val KOTLIN = "2.3.21"
     const val JVM_TARGET = "1.8"
 
     // Deps
@@ -61,20 +61,6 @@ java {
     withSourcesJar()
 }
 
-tasks.compileKotlin {
-    kotlinOptions.jvmTarget = Versions.JVM_TARGET
-    kotlinOptions.apiVersion = Versions.KOTLIN_API
-    kotlinOptions.languageVersion = Versions.KOTLIN_LANGUAGE
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
-}
-
-tasks.compileTestKotlin {
-    kotlinOptions.jvmTarget = Versions.JVM_TARGET
-    kotlinOptions.apiVersion = Versions.KOTLIN_API
-    kotlinOptions.languageVersion = Versions.KOTLIN_LANGUAGE
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
-}
-
 tasks.test {
     useJUnitPlatform()
     testLogging {
@@ -85,6 +71,15 @@ tasks.test {
 
 kotlin {
     explicitApi = null
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+        apiVersion.set(KotlinVersion.KOTLIN_2_3)
+        languageVersion.set(KotlinVersion.KOTLIN_2_3)
+        freeCompilerArgs.addAll(
+            "-opt-in=kotlin.RequiresOptIn",
+            "-jvm-default=enable",
+        )
+    }
 }
 
 sourceSets {
