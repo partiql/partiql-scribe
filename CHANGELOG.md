@@ -33,6 +33,7 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
+- Transpile array-membership `<value> IN <array-expr>` to `contains` (Trino) / `array_contains` (Spark, Redshift) instead of the SQL `IN` operator, which those engines reject for a non-list/subquery right side.
 
 ### Removed
 

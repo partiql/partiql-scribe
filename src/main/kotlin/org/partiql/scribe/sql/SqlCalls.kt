@@ -23,6 +23,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprArray
+import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprBetween
 import org.partiql.ast.expr.ExprInCollection
 import org.partiql.ast.expr.ExprIsType
@@ -30,6 +31,7 @@ import org.partiql.ast.expr.ExprLike
 import org.partiql.ast.expr.ExprMissingPredicate
 import org.partiql.ast.expr.ExprNullPredicate
 import org.partiql.ast.expr.ExprOperator
+import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.SessionAttribute
 import org.partiql.ast.expr.TrimSpec
 import org.partiql.plan.RoutineRef
@@ -490,5 +492,28 @@ public abstract class SqlCalls(context: ScribeContext) {
     public open fun split(args: SqlArgs): Expr {
         val call = Identifier.regular("SPLIT")
         return exprCall(call, args.map { it.expr })
+    }
+}
+
+/**
+ * Classifies the `in_collection` arguments `[<value>, <rhs>]` for a target that cannot apply SQL `IN` to an array
+ * value. Returns `(value, collection)` when `<rhs>` is a runtime array value (a column, function result, path, ...)
+ * — i.e. array membership `<value> IN <array>` — and `null` when `<rhs>` is a literal in-list or a subquery, which
+ * every engine expresses with the native `IN` operator.
+ *
+ * SQL targets whose `IN` only accepts a value list or subquery on the right (Trino, Spark, Redshift) call this from
+ * their [SqlCalls.inCollection] override to emit an array-membership function instead. It is `internal` so it stays
+ * out of the public API surface.
+ */
+internal fun inCollectionArrayOperands(args: SqlArgs): Pair<Expr, Expr>? {
+    val rhs = args[1].expr
+    // Literal in-list (the planner normalizes `(...)`, `[...]`, `<< ... >>` to an array/bag) or a subquery: native IN.
+    if (rhs is ExprArray || rhs is ExprBag || rhs is ExprQuerySet) {
+        return null
+    }
+    // Otherwise this is array membership only when the right side is actually a collection type.
+    return when (args[1].type.code()) {
+        PType.ARRAY, PType.BAG -> args[0].expr to rhs
+        else -> null
     }
 }
