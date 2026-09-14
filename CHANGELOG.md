@@ -33,6 +33,23 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
+
+### Removed
+
+### Security
+
+### Contributors
+Thank you to all who have contributed!
+
+## [2.0.2](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.2) - 2026-09-14
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Fixed
 - Transpile array-membership `<value> IN <array-expr>` to `contains` (Trino) / `array_contains` (Spark, Redshift) instead of the SQL `IN` operator, which those engines reject for a non-list/subquery right side.
 
 ### Removed
@@ -41,6 +58,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @xd1313113
 
 ## [2.0.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.1) - 2026-09-10
 
