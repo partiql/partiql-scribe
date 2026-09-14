@@ -16,6 +16,7 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.inCollectionArrayOperands
 import java.math.BigDecimal
 
 public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
@@ -534,4 +535,24 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
             function = Identifier.regular("unix_timestamp"),
             args = listOf(arg),
         )
+
+    /**
+     * PartiQL `<value> IN <array>` (array membership) -> Spark `array_contains(<array>, <value>)`.
+     *
+     * Spark's `IN` only accepts a value list or subquery on the right, so membership against a runtime array value
+     * (e.g. a column) must use the `array_contains` function instead. Literal in-lists and subqueries keep the base
+     * `IN` rendering via [super].
+     *
+     * https://spark.apache.org/docs/latest/api/sql/index.html#array_contains
+     */
+    override fun inCollection(args: SqlArgs): Expr {
+        val (value, collection) = inCollectionArrayOperands(args) ?: return super.inCollection(args)
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `<value> IN <array>` was replaced by Spark `array_contains(<array>, <value>)`",
+            ),
+        )
+        return exprCall(Identifier.regular("array_contains"), listOf(collection, value))
+    }
 }

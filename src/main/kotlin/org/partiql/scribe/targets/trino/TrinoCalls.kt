@@ -17,6 +17,7 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.inCollectionArrayOperands
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
@@ -377,5 +378,25 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
                 "Trino does not support OVERLAPS predicate",
             ),
         )
+    }
+
+    /**
+     * PartiQL `<value> IN <array>` (array membership) -> Trino `contains(<array>, <value>)`.
+     *
+     * Trino's `IN` only accepts a value list or subquery on the right, so membership against a runtime array value
+     * (e.g. a column) must use the `contains` array function instead. Literal in-lists and subqueries keep the base
+     * `IN` rendering via [super].
+     *
+     * https://trino.io/docs/current/functions/array.html#contains
+     */
+    override fun inCollection(args: SqlArgs): Expr {
+        val (value, collection) = inCollectionArrayOperands(args) ?: return super.inCollection(args)
+        listener.report(
+            ScribeProblem.simpleInfo(
+                code = ScribeProblem.TRANSLATION_INFO,
+                message = "PartiQL `<value> IN <array>` was replaced by Trino `contains(<array>, <value>)`",
+            ),
+        )
+        return exprCall(Identifier.regular("contains"), listOf(collection, value))
     }
 }
