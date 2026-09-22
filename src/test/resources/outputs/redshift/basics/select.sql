@@ -94,4 +94,4 @@ SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v
 
 -- preserve aliases for A, "bB", and "C"; not for d or array index
 --#[select-30]
-SELECT "T"."a" AS "A", "T"."b" AS "bB", "T"."c" AS "C", "T"."d", "T"."array"[1] AS "_1" FROM "default"."T" AS "T"
+SELECT "T"."a" AS "A", "T"."b" AS "bB", "T"."c" AS "C", "T"."d", "T"."array"[1] AS "_1" FROM "default"."T" AS "T";
