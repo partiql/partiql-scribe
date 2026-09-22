@@ -15,6 +15,7 @@ import org.partiql.ast.Ast.selectList
 import org.partiql.ast.DataType
 import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
+import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprPath
@@ -82,18 +83,21 @@ public open class RedshiftFunctionExtensionCalls(
                 ),
             )
         }
-        val alias =
-            when (val step = path.steps.lastOrNull()) {
-                is PathStep.Field -> step.field.text
-                is PathStep.Element -> (step.element as? ExprLit)?.lit?.stringValue()
-                else -> null
-            } ?: listener.reportAndThrow(
+        val lastStep = path.steps.lastOrNull()
+        if (lastStep !is PathStep.Field &&
+            (
+                lastStep !is PathStep.Element ||
+                    (lastStep.element as? ExprLit)?.lit?.code() != Literal.STRING
+            )
+        ) {
+            listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,
                     "Redshift `contains` requires an array path ending in a named field",
                 ),
             )
-        val variable = exprVarRef(Identifier.regular(alias), false)
+        }
+        val variable = exprVarRef(Identifier.regular("_partiql_scribe_contains_element"), false)
         val query =
             exprQuerySet(
                 queryBodySFW(

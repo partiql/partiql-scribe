@@ -83,7 +83,7 @@ class FunctionExtensionCallsTest {
                     SqlArg(
                         exprPath(
                             exprVarRef(Identifier.regular("items"), false),
-                            listOf(exprPathStepElement(exprVarRef(Identifier.regular("index"), false))),
+                            listOf(exprPathStepElement(exprLit(Literal.intNum(0)))),
                         ),
                         PType.array(),
                     )
@@ -92,6 +92,32 @@ class FunctionExtensionCallsTest {
         val error = assertFailsWith<ScribeException> { calls.translate("contains", args) }
 
         assertEquals("UNSUPPORTED_OPERATION", error.error.name())
+    }
+
+    @Test
+    fun `redshift contains uses a fixed alias`() {
+        val context = ScribeContext.standard()
+        val calls = TestRedshiftCalls(context, routines)
+        val args =
+            args("contains").toMutableList().apply {
+                this[0] =
+                    SqlArg(
+                        exprPath(
+                            exprVarRef(Identifier.regular("t"), false),
+                            listOf(exprPathStepField(Identifier.Simple.delimited("x); DROP TABLE target--"))),
+                        ),
+                        PType.array(),
+                    )
+            }
+
+        val sql = RedshiftAstToSql(context).transform(calls.translate("contains", args)).sql(SqlLayout.STANDARD)
+
+        assertEquals(
+            "1 <= (SELECT COUNT(_partiql_scribe_contains_element) " +
+                "FROM t.\"x); DROP TABLE target--\" AS _partiql_scribe_contains_element " +
+                "WHERE _partiql_scribe_contains_element IN ('x'))",
+            sql,
+        )
     }
 
     @Test
@@ -143,7 +169,10 @@ class FunctionExtensionCallsTest {
             mapOf(
                 "date_add" to "DATEADD(DAY, 1, ts)",
                 "utcnow" to "sysdate",
-                "contains" to "1 <= (SELECT COUNT(items) FROM t.items AS items WHERE items IN ('x'))",
+                "contains" to
+                    "1 <= (SELECT COUNT(_partiql_scribe_contains_element) " +
+                    "FROM t.items AS _partiql_scribe_contains_element " +
+                    "WHERE _partiql_scribe_contains_element IN ('x'))",
                 "hex_to_bigint" to "STRTOL('00C10300', 16)",
                 "to_unixtime" to "CAST(DATE_PART(EPOCH, ts) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
