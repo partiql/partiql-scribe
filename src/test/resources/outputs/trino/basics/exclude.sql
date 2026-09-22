@@ -42,7 +42,7 @@ SELECT CAST(ROW("t1"."flds"."b", "t1"."flds"."c") AS ROW("b" ROW("field_x" INTEG
 -- EXCLUDE with different types
 -- bool
 --#[exclude-12]
-SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" BOOLEAN)) AS "foo" FROM "default"."datatypes"."T_BOOL" AS "t"
+SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" BOOLEAN)) AS "foo" FROM "default"."datatypes"."T_BOOL" AS "t";
 
 -- int16
 --#[exclude-13]
