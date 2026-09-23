@@ -14,6 +14,7 @@ import org.partiql.scribe.sql.ExprQuerySetFactory
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
 import org.partiql.scribe.sql.RexConverter
+import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.spi.types.PType
 
 public open class RedshiftRelConverter(
@@ -63,7 +64,11 @@ public open class RedshiftRelConverter(
         // Redshift SUPER unnest join only supports ON TRUE — reject non-trivial conditions
         if (rel.right is RelFilter) {
             val predicate = (rel.right as RelFilter).predicate
-            val isLiteralTrue = predicate is RexLit && predicate.datum.boolean
+            val isLiteralTrue =
+                predicate is RexLit &&
+                    predicate.datum.type.code() == PType.BOOL &&
+                    !predicate.datum.isUnknown() &&
+                    predicate.datum.boolean
             if (!isLiteralTrue) {
                 listener.reportAndThrow(
                     ScribeProblem.simpleError(

@@ -12,6 +12,7 @@ import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
+import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.scribe.targets.trino.utils.TRANSFORM_VAR
 import org.partiql.spi.types.PType
@@ -31,7 +32,7 @@ public open class TrinoRexConverter(
     ): Expr {
         return when (rex.type.pType.code()) {
             PType.STRING -> {
-                val stringValue = rex.datum.string
+                val stringValue = if (rex.datum.isUnknown()) null else rex.datum.string
                 if (stringValue == TRANSFORM_VAR) {
                     unquotedStringExpr(stringValue)
                 } else {
@@ -61,7 +62,7 @@ public open class TrinoRexConverter(
         }
         // For non-MAP (ROW/struct/other): convert bracket to dot notation
         val key = rex.key
-        if (key is RexLit && key.type.pType.code() == PType.STRING) {
+        if (key is RexLit && key.type.pType.code() == PType.STRING && !key.datum.isUnknown()) {
             val prev = visitRex(rex.operand, ctx)
             val fieldName = key.datum.string
             val step = exprPathStepField(Identifier.Simple.delimited(fieldName))

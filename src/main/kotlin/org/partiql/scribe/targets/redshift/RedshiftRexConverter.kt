@@ -26,6 +26,7 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
 import org.partiql.scribe.sql.SqlArg
+import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
 import kotlin.math.absoluteValue
@@ -106,7 +107,7 @@ public open class RedshiftRexConverter(
     ): Expr {
         val type = rex.datum.type
         val datum = rex.datum
-        return if (type.code() == PType.INTERVAL_DT) {
+        return if (type.code() == PType.INTERVAL_DT && !datum.isUnknown()) {
             val days = datum.days
             val hours = datum.hours
             val minutes = datum.minutes

@@ -78,3 +78,7 @@ FROM `default`.`T` AS `T`;
 -- #[case-10]
 -- Spark does not support top level expression.
 -- 2;
+
+--#[case-11]
+-- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`
+SELECT CASE WHEN `T`.`a` = true THEN 'a IS TRUE' ELSE NULL END AS `result` FROM `default`.`T` AS `T`;

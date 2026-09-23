@@ -83,3 +83,11 @@ CASE
     WHEN FALSE THEN 1
     ELSE 2
 END;
+
+--#[case-11]
+-- CASE without ELSE branch
+SELECT
+    CASE
+        WHEN a = TRUE THEN 'a IS TRUE'
+    END AS result
+FROM T;
