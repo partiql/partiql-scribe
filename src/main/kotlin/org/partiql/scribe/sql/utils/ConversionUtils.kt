@@ -18,6 +18,10 @@ import org.partiql.plan.rex.RexPathIndex
 import org.partiql.plan.rex.RexPathKey
 import org.partiql.plan.rex.RexPathSymbol
 import org.partiql.spi.types.PType
+import org.partiql.spi.value.Datum
+
+// ////////////////////////////// Datum utils
+internal fun Datum.isUnknown(): Boolean = this.isNull || this.isMissing
 
 // ////////////////////////////// Plan -> Plan utils
 internal fun Rex.isPathRex() = this is RexPathIndex || this is RexPathKey || this is RexPathSymbol
