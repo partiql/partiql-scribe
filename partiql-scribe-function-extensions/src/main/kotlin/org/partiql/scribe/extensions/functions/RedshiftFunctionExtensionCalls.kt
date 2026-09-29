@@ -83,6 +83,7 @@ public open class RedshiftFunctionExtensionCalls(
                 ),
             )
         }
+        // Preserve the existing requirement that the array path ends in a named field.
         val lastStep = path.steps.lastOrNull()
         if (lastStep !is PathStep.Field &&
             (
@@ -97,7 +98,8 @@ public open class RedshiftFunctionExtensionCalls(
                 ),
             )
         }
-        val variable = exprVarRef(Identifier.regular("_partiql_scribe_contains_element"), false)
+        // Never derive this SQL alias from the input-controlled field name.
+        val variable = exprVarRef(Identifier.regular("___coll_wildcard___"), false)
         val query =
             exprQuerySet(
                 queryBodySFW(
