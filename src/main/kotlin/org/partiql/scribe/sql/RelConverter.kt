@@ -84,6 +84,7 @@ import org.partiql.plan.rel.RelWith
 import org.partiql.plan.rex.RexLit
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.sql.utils.toIdentifier
 
 /**
@@ -899,7 +900,7 @@ public open class RelConverter(
             "LAG", "LEAD" -> {
                 val expr = rexConverter.apply(arguments[0])
                 val offset =
-                    if (arguments[1] is RexLit) {
+                    if (arguments[1] is RexLit && !(arguments[1] as RexLit).datum.isUnknown()) {
                         (arguments[1] as RexLit).datum.long
                     } else {
                         listener.reportAndThrow(

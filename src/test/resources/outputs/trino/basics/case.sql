@@ -49,3 +49,7 @@ SELECT
         ELSE 'x IS SOMETHING ELSE'
 END AS "result"
 FROM "default"."T" AS "T";
+
+--#[case-11]
+-- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`
+SELECT CASE WHEN "T"."a" = true THEN 'a IS TRUE' ELSE NULL END AS "result" FROM "default"."T" AS "T";

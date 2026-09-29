@@ -76,3 +76,7 @@ FROM "default"."T" AS "T";
 CASE WHEN false THEN 0 WHEN false THEN 1 ELSE 2 END;
 -- PLK-1.x does not yet prune the unsatisfiable branches
 -- 2;
+
+--#[case-11]
+-- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`
+SELECT CASE WHEN "T"."a" = true THEN 'a IS TRUE' ELSE NULL END AS "result" FROM "default"."T" AS "T";

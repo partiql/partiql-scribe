@@ -13,6 +13,7 @@ import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.utils.isPathRex
+import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.targets.trino.utils.toRexTrino
 import org.partiql.spi.types.PType
 import org.partiql.spi.value.Datum
@@ -155,6 +156,14 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
             )
         }
 
+        if (op.datum.isUnknown()) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "Trino array index must be a non-null integer, e.g. x[1].",
+                ),
+            )
+        }
         val rexIndex =
             when (op.datum.type.code()) {
                 PType.TINYINT -> {

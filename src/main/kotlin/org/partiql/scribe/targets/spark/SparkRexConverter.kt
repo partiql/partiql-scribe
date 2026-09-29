@@ -14,6 +14,7 @@ import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
+import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.scribe.targets.spark.utils.TRANSFORM_VAR
 import org.partiql.spi.types.PType
@@ -33,7 +34,7 @@ public open class SparkRexConverter(
     ): Expr {
         return when (rex.type.pType.code()) {
             PType.STRING -> {
-                val stringValue = rex.datum.string
+                val stringValue = if (rex.datum.isUnknown()) null else rex.datum.string
                 if (stringValue == TRANSFORM_VAR) {
                     unquotedStringExpr(stringValue)
                 } else {
@@ -64,7 +65,7 @@ public open class SparkRexConverter(
             return super.visitPathKey(rex, ctx)
         }
         val key = rex.key
-        if (key is RexLit && key.type.pType.code() == PType.STRING) {
+        if (key is RexLit && key.type.pType.code() == PType.STRING && !key.datum.isUnknown()) {
             val prev = visitRex(rex.operand, ctx)
             val step = exprPathStepField(Identifier.Simple.regular(key.datum.string))
             return if (prev is ExprPath) {
