@@ -113,9 +113,9 @@ class FunctionExtensionCallsTest {
         val sql = RedshiftAstToSql(context).transform(calls.translate("contains", args)).sql(SqlLayout.STANDARD)
 
         assertEquals(
-            "1 <= (SELECT COUNT(___coll_wildcard___) " +
-                "FROM t.\"x); DROP TABLE target--\" AS ___coll_wildcard___ " +
-                "WHERE ___coll_wildcard___ IN ('x'))",
+            "1 <= (SELECT COUNT(___partiql_scribe_contains_element___) " +
+                "FROM t.\"x); DROP TABLE target--\" AS ___partiql_scribe_contains_element___ " +
+                "WHERE ___partiql_scribe_contains_element___ IN ('x'))",
             sql,
         )
     }
@@ -170,9 +170,9 @@ class FunctionExtensionCallsTest {
                 "date_add" to "DATEADD(DAY, 1, ts)",
                 "utcnow" to "sysdate",
                 "contains" to
-                    "1 <= (SELECT COUNT(___coll_wildcard___) " +
-                    "FROM t.items AS ___coll_wildcard___ " +
-                    "WHERE ___coll_wildcard___ IN ('x'))",
+                    "1 <= (SELECT COUNT(___partiql_scribe_contains_element___) " +
+                    "FROM t.items AS ___partiql_scribe_contains_element___ " +
+                    "WHERE ___partiql_scribe_contains_element___ IN ('x'))",
                 "hex_to_bigint" to "STRTOL('00C10300', 16)",
                 "to_unixtime" to "CAST(DATE_PART(EPOCH, ts) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
