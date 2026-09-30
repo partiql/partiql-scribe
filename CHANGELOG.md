@@ -41,7 +41,7 @@ Thank you to all who have contributed!
 ### Contributors
 Thank you to all who have contributed!
 
-## [2.0.2](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.2) - 2026-09-14
+## [2.0.3](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.3) - 2026-09-14
 
 ### Added
 
