@@ -5,7 +5,7 @@ DATEADD(DAY, 1, TIMESTAMP '2017-01-02 03:04:05.006');
 sysdate;
 
 --#[contains]
-SELECT VALUE 1 <= (SELECT COUNT(items) FROM "p"."items" AS items WHERE items IN ('x')) FROM "test"."payload" AS "p";
+SELECT VALUE 1 <= (SELECT COUNT(___partiql_scribe_contains_element___) FROM "p"."items" AS ___partiql_scribe_contains_element___ WHERE ___partiql_scribe_contains_element___ IN ('x')) FROM "test"."payload" AS "p";
 
 --#[hex-to-bigint]
 STRTOL('00C10300', 16);
