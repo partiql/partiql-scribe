@@ -27,6 +27,7 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+- Adds an experimental DuckDB SQL transpilation target.
 
 ### Changed
 
