@@ -113,7 +113,7 @@ For now, we only provide SQL source-to-source compilation (hence "transpile"), b
 
 === Producing SQL
 
-For now, Scribe provides four simple SQL text targets - PartiQL, Redshift, SparkSQL, and Trino.
+For now, Scribe provides five simple SQL text targets - PartiQL, Redshift, SparkSQL, Trino, and DuckDB (experimental).
 Each dialect is _quite_ similar (hence dialect) so much of the base translation from PartiQL's logical plan to an SQL
 AST is captured by xref:https://github.com/partiql/partiql-scribe/blob/849a3192dc4e285a6a128660bf756c9e2f42360b/src/main/kotlin/org/partiql/scribe/sql/PlanToAst.kt[PlanToAst].
 

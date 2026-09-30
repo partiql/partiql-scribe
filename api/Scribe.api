@@ -366,6 +366,54 @@ public abstract class org/partiql/scribe/sql/SqlTarget : org/partiql/scribe/Scri
 	public abstract fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
 }
 
+public class org/partiql/scribe/targets/duckdb/DuckDBAstToSql : org/partiql/scribe/sql/AstToSql {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+}
+
+public final class org/partiql/scribe/targets/duckdb/DuckDBFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
+	public fun <init> ()V
+}
+
+public class org/partiql/scribe/targets/duckdb/DuckDBPlanToAst : org/partiql/scribe/sql/PlanToAst {
+	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
+	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
+	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
+	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
+}
+
+public class org/partiql/scribe/targets/duckdb/DuckDBRewriter : org/partiql/plan/OperatorRewriter {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+}
+
+public class org/partiql/scribe/targets/duckdb/DuckDBRexConverter : org/partiql/scribe/sql/RexConverter {
+	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+}
+
+public class org/partiql/scribe/targets/duckdb/DuckDBTarget : org/partiql/scribe/sql/SqlTarget {
+	public static final field Companion Lorg/partiql/scribe/targets/duckdb/DuckDBTarget$Companion;
+	public fun <init> ()V
+	public fun getAstToSql (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/AstToSql;
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
+	public static final fun getSTANDARD ()Lorg/partiql/scribe/targets/duckdb/DuckDBTarget;
+	public fun getTarget ()Ljava/lang/String;
+	public fun getVersion ()Ljava/lang/String;
+	public fun planToAst (Lorg/partiql/plan/Plan;Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/ast/AstNode;
+	public fun rewrite (Lorg/partiql/plan/Plan;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Plan;
+}
+
+public final class org/partiql/scribe/targets/duckdb/DuckDBTarget$Companion {
+	public final fun getSTANDARD ()Lorg/partiql/scribe/targets/duckdb/DuckDBTarget;
+}
+
 public final class org/partiql/scribe/targets/partiql/PartiQLTarget : org/partiql/scribe/sql/SqlTarget {
 	public static final field INSTANCE Lorg/partiql/scribe/targets/partiql/PartiQLTarget;
 	public fun getFeatures ()Lorg/partiql/scribe/sql/SqlFeatures;
