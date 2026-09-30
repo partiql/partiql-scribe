@@ -400,6 +400,10 @@ public class org/partiql/scribe/targets/duckdb/DuckDBAstToSql : org/partiql/scri
 	public fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitWindowFunctionTypeLag (Lorg/partiql/ast/WindowFunctionType$Lag;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWindowFunctionTypeLag (Lorg/partiql/ast/WindowFunctionType$Lag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitWindowFunctionTypeLead (Lorg/partiql/ast/WindowFunctionType$Lead;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWindowFunctionTypeLead (Lorg/partiql/ast/WindowFunctionType$Lead;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }
 
 public class org/partiql/scribe/targets/duckdb/DuckDBCalls : org/partiql/scribe/sql/SqlCalls {

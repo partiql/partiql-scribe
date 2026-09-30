@@ -225,30 +225,10 @@ private fun PType.toDuckDBString(context: ScribeContext): String {
             }
         }
         PType.DATE -> "DATE"
-        PType.TIME -> {
-            when (type.unspecifiedPrecision()) {
-                true -> "TIME"
-                false -> {
-                    if (precision !in 0..12) {
-                        context.logError("TIME precision not in range [0, 12]: $precision")
-                    } else {
-                        "TIME($precision)"
-                    }
-                }
-            }
-        }
-        PType.TIMEZ -> {
-            when (type.unspecifiedPrecision()) {
-                true -> "TIME WITH TIME ZONE"
-                false -> {
-                    if (precision !in 0..12) {
-                        context.logError("TIME WITH TIME ZONE precision not in range [0, 12]: $precision")
-                    } else {
-                        "TIME($precision) WITH TIME ZONE"
-                    }
-                }
-            }
-        }
+        // DuckDB's TIME / TIME WITH TIME ZONE do not accept a precision parameter (`TIME(6)` is a
+        // binder error), so we always emit the bare type name and drop any precision.
+        PType.TIME -> "TIME"
+        PType.TIMEZ -> "TIME WITH TIME ZONE"
         PType.TIMESTAMP -> {
             when (type.unspecifiedPrecision()) {
                 true -> "TIMESTAMP"
@@ -277,9 +257,9 @@ private fun PType.toDuckDBString(context: ScribeContext): String {
         PType.DOUBLE -> "DOUBLE"
         PType.UNKNOWN -> context.logError("Not able to convert PType $this to DuckDB")
         PType.ARRAY, PType.BAG -> {
-            val head = "ARRAY<"
+            // DuckDB uses the `<elementType>[]` suffix syntax for list types, not `ARRAY<...>`.
             val elementType = type.typeParameter.toDuckDBString(context)
-            "$head$elementType>"
+            "$elementType[]"
         }
         else -> context.logError("Not able to convert PType $this to DuckDB")
     }

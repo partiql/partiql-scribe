@@ -29,7 +29,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     override val rules: Map<String, SqlCallFn> =
         super.rules.toMutableMap().apply {
             this["utcnow"] = ::utcnow
-            this.remove("bitwise_and")
+            // Keep the base `bitwise_and` -> infix `&` rule: DuckDB has no `bitwise_and` function.
             this["cast_row"] = ::castrow
             this["transform"] = ::transform
             this["map_contains_key"] = ::mapContainsKey

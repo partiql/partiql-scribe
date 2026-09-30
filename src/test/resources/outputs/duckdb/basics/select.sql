@@ -34,10 +34,10 @@ SELECT "t1"."a" AS "a", "t1"."b" AS "b", "t1"."c" AS "c", "t1"."d" AS "d", "t1".
 SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c", "T"."d" AS "d", "T"."x" AS "x", "T"."array" AS "array", "T"."z" AS "z", "T"."v" AS "v", "T"."timestamp_1" AS "timestamp_1", "T"."timestamp_2" AS "timestamp_2" FROM "default"."T" AS "T";
 
 --#[select-10]
-SELECT "T"."c" || current_user AS "_1" FROM "default"."T" AS "T";
+SELECT "T"."c" || current_user() AS "_1" FROM "default"."T" AS "T";
 
 --#[select-11]
-SELECT current_user AS "CURRENT_USER" FROM "default"."T" AS "T";
+SELECT current_user() AS "CURRENT_USER" FROM "default"."T" AS "T";
 
 --#[select-12]
 SELECT "t"."a" AS "a" FROM "default"."T" AS "t";

@@ -61,22 +61,22 @@ SELECT EXTRACT(SECOND FROM INTERVAL '45' SECOND) AS "_1" FROM "default"."T" AS "
 
 -- EXTRACT expressions with SELECT FROM T - compound INTERVAL types
 --#[extract-67]
-SELECT EXTRACT(YEAR FROM INTERVAL '2-6' YEAR TO MONTH) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(YEAR FROM INTERVAL '2 years 6 months') AS "_1" FROM "default"."T" AS "T";
 
 --#[extract-68]
-SELECT EXTRACT(MONTH FROM INTERVAL '2-6' YEAR TO MONTH) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(MONTH FROM INTERVAL '2 years 6 months') AS "_1" FROM "default"."T" AS "T";
 
 --#[extract-69]
-SELECT EXTRACT(DAY FROM INTERVAL '5 12' DAY TO HOUR) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(DAY FROM INTERVAL '5 days 12 hours') AS "_1" FROM "default"."T" AS "T";
 
 --#[extract-70]
-SELECT EXTRACT(HOUR FROM INTERVAL '5 12' DAY TO HOUR) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(HOUR FROM INTERVAL '5 days 12 hours') AS "_1" FROM "default"."T" AS "T";
 
 --#[extract-71]
-SELECT EXTRACT(HOUR FROM INTERVAL '14:30' HOUR TO MINUTE) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(HOUR FROM INTERVAL '14 hours 30 minutes') AS "_1" FROM "default"."T" AS "T";
 
 --#[extract-72]
-SELECT EXTRACT(MINUTE FROM INTERVAL '14:30' HOUR TO MINUTE) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(MINUTE FROM INTERVAL '14 hours 30 minutes') AS "_1" FROM "default"."T" AS "T";
 
 -- EXTRACT expressions with SELECT FROM T - negative INTERVAL types
 --#[extract-73]
@@ -89,10 +89,10 @@ SELECT EXTRACT(MONTH FROM INTERVAL '-8' MONTH) AS "_1" FROM "default"."T" AS "T"
 SELECT EXTRACT(DAY FROM INTERVAL '-15' DAY) AS "_1" FROM "default"."T" AS "T";
 
 --#[extract-76]
-SELECT EXTRACT(YEAR FROM INTERVAL '-1-3' YEAR TO MONTH) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(YEAR FROM INTERVAL '-1 years -3 months') AS "_1" FROM "default"."T" AS "T";
 
 --#[extract-77]
-SELECT EXTRACT(MONTH FROM INTERVAL '-1-3' YEAR TO MONTH) AS "_1" FROM "default"."T" AS "T";
+SELECT EXTRACT(MONTH FROM INTERVAL '-1 years -3 months') AS "_1" FROM "default"."T" AS "T";
 
 -- EXTRACT with column references - TIMESTAMP columns
 --#[extract-78]

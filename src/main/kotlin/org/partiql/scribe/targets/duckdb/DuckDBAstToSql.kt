@@ -11,6 +11,9 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
+import org.partiql.ast.WindowFunctionNullTreatment
+import org.partiql.ast.WindowFunctionType
+import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
@@ -82,11 +85,58 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         return h
     }
 
+    /**
+     * DuckDB's LEAD/LAG do not accept the `RESPECT NULLS` clause (it is the default behavior), so we omit it.
+     * `IGNORE NULLS` is preserved since it is meaningful and supported.
+     */
+    @Deprecated("This feature is experimental and is subject to change.")
+    override fun visitWindowFunctionTypeLead(
+        node: WindowFunctionType.Lead,
+        tail: SqlBlock,
+    ): SqlBlock = leadOrLag("LEAD(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
+
+    @Deprecated("This feature is experimental and is subject to change.")
+    override fun visitWindowFunctionTypeLag(
+        node: WindowFunctionType.Lag,
+        tail: SqlBlock,
+    ): SqlBlock = leadOrLag("LAG(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
+
+    private fun leadOrLag(
+        prefix: String,
+        extent: Expr,
+        offset: Long?,
+        defaultValue: Expr?,
+        nullTreatment: WindowFunctionNullTreatment?,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail concat prefix
+        t = visitExpr(extent, t)
+        offset?.let { t = t concat ", $it" }
+        defaultValue?.let {
+            t = t concat ", "
+            t = visitExpr(it, t)
+        }
+        t = t concat ")"
+        // Only emit IGNORE NULLS; RESPECT NULLS is DuckDB's default and is not accepted syntactically.
+        if (nullTreatment?.code() == WindowFunctionNullTreatment.IGNORE_NULLS) {
+            t = t concat " ${nullTreatment.name()}"
+        }
+        return t
+    }
+
     override fun visitExprSessionAttribute(
         node: ExprSessionAttribute,
         tail: SqlBlock,
     ): SqlBlock {
-        return tail concat node.sessionAttribute.name().lowercase()
+        val name = node.sessionAttribute.name()
+        // `current_user` / `current_date` as bare keywords collide with an auto-derived output alias of the
+        // same name ("Column ... cannot be referenced before it is defined"). DuckDB accepts the parenthesized
+        // function forms `current_user()` / `current_date()` which avoid the collision. Note `current_timestamp`
+        // does NOT accept parentheses, so only these two are rewritten.
+        return when (name) {
+            "CURRENT_USER", "CURRENT_DATE" -> tail concat "${name.lowercase()}()"
+            else -> tail concat name.lowercase()
+        }
     }
 
     /**
@@ -116,6 +166,18 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         if (v.code() == Literal.TYPED_STRING) {
             val lit = node.lit
             val dataType = lit.dataType().code()
+            // DuckDB rejects range interval literals of the form `INTERVAL '..' <field> TO <field>`. Rewrite
+            // them to a single verbose interval string, e.g. `INTERVAL '10 years 3 months'`. Single-field
+            // interval literals (e.g. `INTERVAL '3' YEAR`) are accepted as-is and fall through to super.
+            if (dataType == DataType.INTERVAL) {
+                val qualifier = lit.dataType().intervalQualifier
+                if (qualifier is IntervalQualifier.Range) {
+                    val verbose = duckDBRangeIntervalString(lit.stringValue(), qualifier)
+                    if (verbose != null) {
+                        return t concat "INTERVAL '$verbose'"
+                    }
+                }
+            }
             if (dataType == DataType.TIME || dataType == DataType.TIME_WITH_TIME_ZONE) {
                 // DuckDB does not support precision in TIME literal and `WITH TIME ZONE`.
                 t = t concat String.format("TIME '%s'", lit.stringValue())
@@ -133,6 +195,64 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
 
     private fun intValueOutOfRange(value: BigDecimal): Boolean {
         return value < Long.MIN_VALUE.toBigDecimal() || Long.MAX_VALUE.toBigDecimal() < value
+    }
+
+    /**
+     * Ordered datetime fields and their DuckDB verbose-interval unit names.
+     */
+    private val intervalUnits =
+        listOf(
+            DatetimeField.YEAR to "years",
+            DatetimeField.MONTH to "months",
+            DatetimeField.DAY to "days",
+            DatetimeField.HOUR to "hours",
+            DatetimeField.MINUTE to "minutes",
+            DatetimeField.SECOND to "seconds",
+        )
+
+    /**
+     * Converts a range interval literal value + qualifier into a DuckDB verbose interval string.
+     * e.g. ("10-3", YEAR TO MONTH) -> "10 years 3 months"; ("-10 3", DAY TO HOUR) -> "-10 days -3 hours".
+     * A leading '-' applies the sign to every component. Returns null if the value cannot be parsed to the
+     * exact number of fields in the qualifier, so the caller can fall back to the default rendering.
+     */
+    private fun duckDBRangeIntervalString(
+        value: String,
+        qualifier: IntervalQualifier.Range,
+    ): String? {
+        val startCode = qualifier.startField.code()
+        val endCode = qualifier.endField.code()
+        val startIdx = intervalUnits.indexOfFirst { it.first == startCode }
+        val endIdx = intervalUnits.indexOfFirst { it.first == endCode }
+        if (startIdx < 0 || endIdx < 0 || endIdx < startIdx) {
+            return null
+        }
+        val fields = intervalUnits.subList(startIdx, endIdx + 1)
+
+        val negative = value.startsWith("-")
+        val body = if (negative) value.substring(1) else value
+
+        val amounts: List<String> =
+            when (startCode) {
+                DatetimeField.YEAR -> body.split("-")
+                DatetimeField.DAY -> {
+                    // "<days> <hh[:mm[:ss]]>"
+                    val parts = body.trim().split(Regex("\\s+"), limit = 2)
+                    val rest = if (parts.size > 1) parts[1].split(":") else emptyList()
+                    listOf(parts[0]) + rest
+                }
+                // HOUR/MINUTE start: colon-separated time components
+                else -> body.split(":")
+            }
+
+        if (amounts.size != fields.size) {
+            return null
+        }
+        return fields.mapIndexed { i, (_, unit) ->
+            val amt = amounts[i].trim()
+            val signed = if (negative && !amt.startsWith("-")) "-$amt" else amt
+            "$signed $unit"
+        }.joinToString(" ")
     }
 
     override fun visitExprCall(
@@ -154,12 +274,13 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         }
         return when {
             node.function.identifier.text == "transform" -> {
-                // DuckDB's transform function uses `->` to separate between the element variable and the element expr.
+                // DuckDB's list-transform function is `list_transform` (Trino calls it `transform`); it uses
+                // `->` to separate the element variable and the element expr.
                 val arrayExpr = node.args[0].sql(dialect = this)
                 val elementVar = node.args[1].sql(dialect = this)
                 val elementExpr = node.args[2].sql(dialect = this)
                 var h = tail
-                h = visitIdentifier(node.function, h)
+                h = h concat "list_transform"
                 h = h concat "($arrayExpr, $elementVar -> $elementExpr)"
                 h
             }

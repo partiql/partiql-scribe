@@ -23,10 +23,10 @@ SELECT CAST(ROW("t"."flds"."a", "t"."flds"."b", CAST(ROW("t"."flds"."c"."field_x
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 --#[exclude-07]
-SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y") AS ROW("field_y" VARCHAR))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
+SELECT list_transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y") AS ROW("field_y" VARCHAR))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
 --#[exclude-08]
-SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x") AS ROW("field_x" INTEGER))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
+SELECT list_transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x") AS ROW("field_x" INTEGER))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
 --#[exclude-09]
 SELECT "t1"."flds" AS "flds", CAST(ROW("t2"."flds"."a", CAST(ROW("t2"."flds"."c"."field_y") AS ROW("field_y" VARCHAR))) AS ROW("a" ROW("field_x" INTEGER, "field_y" VARCHAR), "c" ROW("field_y" VARCHAR))) AS "flds", "t2"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true WHERE "t1"."foo" = "t2"."foo";
@@ -96,7 +96,7 @@ SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" ROW("keep1" INTEGER, "keep2" VAR
 
 -- list
 --#[exclude-26]
-SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" ARRAY<INTEGER>)) AS "foo" FROM "default"."datatypes"."T_LIST" AS "t";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" INTEGER[])) AS "foo" FROM "default"."datatypes"."T_LIST" AS "t";
 
 -- decimal(5, 2)
 --#[exclude-27]
@@ -112,7 +112,7 @@ SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" CHAR(16))) AS "foo" FROM "defaul
 
 -- time(6)
 --#[exclude-30]
-SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" TIME(6))) AS "foo" FROM "default"."datatypes"."T_TIME_6" AS "t";
+SELECT CAST(ROW("t"."foo"."keep") AS ROW("keep" TIME)) AS "foo" FROM "default"."datatypes"."T_TIME_6" AS "t";
 
 -- timestamp(6)
 --#[exclude-31]
@@ -184,16 +184,16 @@ WHERE "t1"."a" AND "t2"."a";
 SELECT CAST(ROW("t"."flds"."a", CAST(ROW("t"."flds"."c"."field_y") AS ROW("field_y" VARCHAR))) AS ROW("a" ROW("field_x" INTEGER, "field_y" VARCHAR), "c" ROW("field_y" VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-50]
-SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y", ___coll_wildcard___."field_z", ___coll_wildcard___."nested_list") AS ROW("field_y" VARCHAR, "field_z" VARCHAR, "nested_list" ARRAY<INTEGER>))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_y", ___coll_wildcard___."field_z", ___coll_wildcard___."nested_list") AS ROW("field_y" VARCHAR, "field_z" VARCHAR, "nested_list" INTEGER[]))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-51]
-SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_z", ___coll_wildcard___."nested_list") AS ROW("field_x" INTEGER, "field_z" VARCHAR, "nested_list" ARRAY<INTEGER>))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_z", ___coll_wildcard___."nested_list") AS ROW("field_x" INTEGER, "field_z" VARCHAR, "nested_list" INTEGER[]))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-52]
-SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", ___coll_wildcard___."nested_list") AS ROW("field_x" INTEGER, "field_y" VARCHAR, "nested_list" ARRAY<INTEGER>))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", ___coll_wildcard___."nested_list") AS ROW("field_x" INTEGER, "field_y" VARCHAR, "nested_list" INTEGER[]))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-53]
-SELECT transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", ___coll_wildcard___."field_z") AS ROW("field_x" INTEGER, "field_y" VARCHAR, "field_z" VARCHAR))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", ___coll_wildcard___ -> CAST(ROW(___coll_wildcard___."field_x", ___coll_wildcard___."field_y", ___coll_wildcard___."field_z") AS ROW("field_x" INTEGER, "field_y" VARCHAR, "field_z" VARCHAR))) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-54]
 SELECT CAST(ROW(CAST(ROW("t"."flds"."select"."field_y") AS ROW("field_y" VARCHAR)), "t"."flds"."order") AS ROW("select" ROW("field_y" VARCHAR), "order" ROW("field_x" INTEGER, "field_y" VARCHAR))) AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_RESERVED_KEYWORDS" AS "t";
