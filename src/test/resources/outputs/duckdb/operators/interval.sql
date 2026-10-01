@@ -3,10 +3,10 @@
 SELECT "T"."col_date" - "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 --#[dt-minus-dt-01]
-SELECT "T"."col_time" - "T"."col_time" AS "res" FROM "default"."T_INTERVALS" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[dt-minus-dt-02]
-SELECT "T"."col_timez" - "T"."col_timez" AS "res" FROM "default"."T_INTERVALS" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[dt-minus-dt-03]
 SELECT "T"."col_timestamp" - "T"."col_timestamp" AS "res" FROM "default"."T_INTERVALS" AS "T";

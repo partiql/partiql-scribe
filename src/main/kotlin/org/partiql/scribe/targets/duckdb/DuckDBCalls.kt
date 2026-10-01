@@ -274,6 +274,17 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     override fun minusFn(args: SqlArgs): Expr {
         val lhsType = args[0].type
         val rhsType = args[1].type
+        // DuckDB has no `-` operator for the TIME type family (TIME, TIME WITH TIME ZONE); DATE/TIMESTAMP
+        // subtraction is fine. Reject at transpile time instead of emitting SQL that fails at runtime.
+        val timeFamily = setOf(PType.TIME, PType.TIMEZ)
+        if (lhsType.code() in timeFamily && rhsType.code() in timeFamily) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "DuckDB has no `-` (subtraction) operator for TIME / TIME WITH TIME ZONE operands.",
+                ),
+            )
+        }
         if (lhsType.code() == PType.DATE && isIntervalTime(rhsType)) {
             listener.report(
                 ScribeProblem.simpleInfo(
