@@ -86,13 +86,13 @@ SELECT date_diff('day', "T"."col_timestampz", "T"."col_timestampz") AS "_1" FROM
 SELECT date_diff('second', TIME '12:34:56', TIME '13:45:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-55]
-SELECT date_diff('second', CAST(TIME '12:34:56' AS TIME WITH TIME ZONE), TIME '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('second', CAST(TIME '12:34:56' AS TIME WITH TIME ZONE), TIMETZ '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-56]
-SELECT date_diff('second', TIME '12:34:56+08:00', CAST(TIME '13:45:00' AS TIME WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('second', TIMETZ '12:34:56+08:00', CAST(TIME '13:45:00' AS TIME WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-57]
-SELECT date_diff('second', TIME '12:34:56+08:00', TIME '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('second', TIMETZ '12:34:56+08:00', TIMETZ '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-58]
 SELECT date_diff('day', DATE '2023-01-15', DATE '2023-12-25') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
@@ -101,7 +101,7 @@ SELECT date_diff('day', DATE '2023-01-15', DATE '2023-12-25') AS "_1" FROM "defa
 SELECT date_diff('day', CAST(DATE '2023-01-15' AS TIMESTAMP), TIMESTAMP '2023-12-25 10:30:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-60]
-SELECT date_diff('day', CAST(DATE '2023-01-15' AS TIMESTAMP WITH TIME ZONE), TIMESTAMP '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('day', CAST(DATE '2023-01-15' AS TIMESTAMP WITH TIME ZONE), TIMESTAMPTZ '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-61]
 SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00', CAST(DATE '2023-12-25' AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
@@ -110,13 +110,13 @@ SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00', CAST(DATE '2023-12-25' 
 SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00', TIMESTAMP '2023-12-25 10:30:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-63]
-SELECT date_diff('day', CAST(TIMESTAMP '2023-01-15 08:00:00' AS TIMESTAMP WITH TIME ZONE), TIMESTAMP '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('day', CAST(TIMESTAMP '2023-01-15 08:00:00' AS TIMESTAMP WITH TIME ZONE), TIMESTAMPTZ '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-64]
-SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00+08:00', CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('day', TIMESTAMPTZ '2023-01-15 08:00:00+08:00', CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-65]
-SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00+08:00', CAST(TIMESTAMP '2023-12-25 10:30:00' AS TIMESTAMP WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('day', TIMESTAMPTZ '2023-01-15 08:00:00+08:00', CAST(TIMESTAMP '2023-12-25 10:30:00' AS TIMESTAMP WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-66]
-SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00+08:00', TIMESTAMP '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT date_diff('day', TIMESTAMPTZ '2023-01-15 08:00:00+08:00', TIMESTAMPTZ '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";

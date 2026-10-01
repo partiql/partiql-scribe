@@ -178,14 +178,25 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
                     }
                 }
             }
-            if (dataType == DataType.TIME || dataType == DataType.TIME_WITH_TIME_ZONE) {
-                // DuckDB does not support precision in TIME literal and `WITH TIME ZONE`.
+            // A time-with-timezone value must use the `TIMETZ` keyword: DuckDB's `TIME` keyword silently
+            // drops the offset and yields a plain TIME, which then fails to compare against a TIMETZ value.
+            if (dataType == DataType.TIME_WITH_TIME_ZONE) {
+                t = t concat String.format("TIMETZ '%s'", lit.stringValue())
+                return t
+            }
+            if (dataType == DataType.TIME) {
+                // DuckDB does not support precision in TIME literal.
                 t = t concat String.format("TIME '%s'", lit.stringValue())
                 return t
             }
 
-            if (dataType == DataType.TIMESTAMP || dataType == DataType.TIMESTAMP_WITH_TIME_ZONE) {
-                // DuckDB does not support precision in TIMESTAMP literal and `WITH TIME ZONE`
+            // Likewise, a timestamp-with-timezone value must use the `TIMESTAMPTZ` keyword.
+            if (dataType == DataType.TIMESTAMP_WITH_TIME_ZONE) {
+                t = t concat String.format("TIMESTAMPTZ '%s'", lit.stringValue())
+                return t
+            }
+            if (dataType == DataType.TIMESTAMP) {
+                // DuckDB does not support precision in TIMESTAMP literal.
                 t = t concat String.format("TIMESTAMP '%s'", lit.stringValue())
                 return t
             }
