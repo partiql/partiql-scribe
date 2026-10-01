@@ -21,6 +21,7 @@ import org.partiql.ast.expr.ExprCast
 import org.partiql.ast.expr.ExprIsType
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprMap
+import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprSessionAttribute
 import org.partiql.ast.expr.ExprStruct
@@ -427,6 +428,17 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             val newSorts =
                 orderBy.sorts.map { sort ->
                     val newExpr = removePathRoot(sort.expr)
+                    // DuckDB only allows ordering a set operation by an output column (or an expression present
+                    // in every SELECT), not by a nested path into an output column (e.g. `flds.c.field_x`).
+                    if (newExpr is ExprPath) {
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                ScribeProblem.UNSUPPORTED_OPERATION,
+                                "DuckDB does not support ORDER BY a nested path on a set operation (UNION/INTERSECT/" +
+                                    "EXCEPT) result; only output columns may be used.",
+                            ),
+                        )
+                    }
                     sort(newExpr, sort.order, sort.nulls)
                 }
             val newNode =
