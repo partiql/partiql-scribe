@@ -563,17 +563,26 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         return SqlBlock.Text(t)
     }
 
+    // DuckDB's native struct constructor is the struct literal `{'field': value, ...}`. It preserves field names
+    // and types (inferred from the values) and works inside a `list_transform` lambda, so we emit it directly
+    // rather than `CAST(ROW(...) AS ROW(...))`. https://duckdb.io/docs/current/sql/data_types/struct
     override fun visitExprStruct(
         node: ExprStruct,
         tail: SqlBlock,
     ): SqlBlock {
-        listener.report(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.INVALID_PLAN,
-                message = "Error when converting PartiQL struct. `Struct` is rewritten in plan to ROW function and should not reach here.",
-            ),
-        )
-        return tail
+        return tail concat list(this, "{", "}") { node.fields }
+    }
+
+    override fun visitExprStructField(
+        node: ExprStruct.Field,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        // The field name is a string-literal expr, rendered as `'name'`.
+        t = visitExprWrapped(node.name, t)
+        t = t concat ": "
+        t = visitExprWrapped(node.value, t)
+        return t
     }
 
     // DuckDB's MAP constructor: MAP(ARRAY[key1, key2, ...], ARRAY[val1, val2, ...])

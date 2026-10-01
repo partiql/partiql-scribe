@@ -1,7 +1,6 @@
 package org.partiql.scribe.targets.duckdb.utils
 
 import org.partiql.plan.rex.Rex
-import org.partiql.plan.rex.RexArray
 import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexPathKey
@@ -13,16 +12,6 @@ import org.partiql.spi.function.Fn
 import org.partiql.spi.function.Parameter
 import org.partiql.spi.types.PType
 import org.partiql.spi.value.Datum
-
-private const val UNSPECIFIED_LENGTH = "UNSPECIFIED_LENGTH"
-private const val UNSPECIFIED_PRECISION = "UNSPECIFIED_PRECISION"
-private const val UNSPECIFIED_SCALE = "UNSPECIFIED_SCALE"
-
-private fun PType.unspecifiedLength() = metas[UNSPECIFIED_LENGTH] == true
-
-private fun PType.unspecifiedPrecision() = metas[UNSPECIFIED_PRECISION] == true
-
-private fun PType.unspecifiedScale() = metas[UNSPECIFIED_SCALE] == true
 
 internal const val TRANSFORM_VAR = "___coll_wildcard___"
 
@@ -38,73 +27,63 @@ private fun ScribeContext.logError(msg: String): Nothing =
  * Converts this [PType] to a [Rex]. If this [PType] contains the meta "CONTAINS_EXCLUDED_FIELD" meta, additional logic
  * is applied to reconstruct the [PType.ROW] or collection (([PType.ARRAY] or [PType.BAG]) to properly exclude
  * any ROW fields.
+ *
+ * ROW types are reconstructed as a [RexStruct], which [org.partiql.scribe.targets.duckdb.DuckDBAstToSql] renders as a
+ * DuckDB struct literal `{'field': value, ...}` — DuckDB's native struct constructor, which also works inside a
+ * `list_transform` lambda (used for collection wildcards).
  */
 internal fun PType.toRexDuckDB(
     prefixPath: Rex,
     context: ScribeContext,
 ): Rex {
     val type = this
-    if (this.containsExcludedFieldMeta() || prefixPath is RexStruct) {
-        return when (type.code()) {
-            PType.ROW -> {
-                when (type.fields.size) {
-                    0 -> context.logError("Currently DuckDB does not allow empty ROW/struct values.")
-                    else -> type.toRexCastRow(prefixPath, context)
-                }
-            }
-            PType.ARRAY, PType.BAG -> type.toRexCallTransform(prefixPath, context)
-            else -> prefixPath
-        }
+    // A RexStruct already renders as a DuckDB struct literal; nothing to reconstruct.
+    if (prefixPath is RexStruct) {
+        return prefixPath
     }
-
-    return prefixPath
+    if (!this.containsExcludedFieldMeta()) {
+        return prefixPath
+    }
+    return when (type.code()) {
+        PType.ROW -> {
+            when (type.fields.size) {
+                0 -> context.logError("Currently DuckDB does not allow empty ROW/struct values.")
+                else -> type.toRexStruct(prefixPath, context)
+            }
+        }
+        PType.ARRAY, PType.BAG -> type.toRexCallTransform(prefixPath, context)
+        else -> prefixPath
+    }
 }
 
-private val cast_row_fn_sig =
-    Fn.Builder("cast_row")
-        .addParameters(
-            Parameter("cast_value", PType.dynamic()),
-            Parameter("as_type", PType.dynamic()),
-        )
-        .returns(PType.dynamic())
-        .build()
-
 /**
- * Use for reconstructing DuckDB `ROW`s. Simplified `ROW` construction syntax to not specify types using `SELECT`
- * (https://github.com/duckdbdb/duckdb/discussions/7758) does not work for certain nested cases (e.g. within a
- * lambda).
+ * Reconstructs the [PType.ROW] as a [RexStruct] whose field keys are the ROW field names and whose values are the
+ * (recursively reconstructed) field paths off [prefixPath]. Rendered as a DuckDB struct literal `{'f': v, ...}`.
  *
  * Requires [this] [PType] to be a [PType.ROW].
  */
-private fun PType.toRexCastRow(
+private fun PType.toRexStruct(
     prefixPath: Rex,
     context: ScribeContext,
-): RexCall {
-    val rowValues =
-        if (prefixPath is RexStruct) {
-            // For the original Rex is raw RexStruct, we should return fields directly.
-            // Nested structs have already been processed by DuckDBRewriter.visitStruct.
-            prefixPath.fields.map { field -> field.value }
-        } else {
-            this.fields.map { field ->
-                val newPath =
-                    RexPathKey.create(
-                        prefixPath,
-                        RexLit.create(Datum.string(field.name)),
-                    )
-                val newV =
-                    field.type.toRexDuckDB(
-                        prefixPath = newPath,
-                        context = context,
-                    )
-                newV
-            }
+): RexStruct {
+    val fields =
+        this.fields.map { field ->
+            val newPath =
+                RexPathKey.create(
+                    prefixPath,
+                    RexLit.create(Datum.string(field.name)),
+                )
+            val newV =
+                field.type.toRexDuckDB(
+                    prefixPath = newPath,
+                    context = context,
+                )
+            RexStruct.field(
+                RexLit.create(Datum.string(field.name)),
+                newV,
+            )
         }
-    val castType = RexLit.create(Datum.string(this.toDuckDBString(context)))
-    return RexCall.create(
-        cast_row_fn_sig,
-        listOf(RexArray.create(rowValues), castType),
-    )
+    return RexStruct.create(fields)
 }
 
 // https://duckdb.io/docs/current/functions/array.html#transform
@@ -119,7 +98,8 @@ private val transform_fn_sig =
         .build()
 
 /**
- * Converts the [PType.ROW] to a [RexCall] representing the DuckDB `transform` function.
+ * Converts the collection [PType] to a [RexCall] representing the DuckDB `transform` function (rendered as
+ * `list_transform`).
  *
  * Requires [this] [PType] to be a [PType.ARRAY] or [PType.BAG].
  */
@@ -143,124 +123,4 @@ private fun PType.toRexCallTransform(
             ),
         ),
     )
-}
-
-/**
- * Returns the DuckDB string representation of the given [PType].
- *
- * TODO: there is a lot of replicated logic here and in DuckDBAstToSql and AstToSql. We should look at a better way to
- *  share this type conversion logic.
- */
-private fun PType.toDuckDBString(context: ScribeContext): String {
-    val type = this
-    return when (type.code()) {
-        PType.TINYINT -> "TINYINT"
-        PType.SMALLINT -> "SMALLINT"
-        PType.INTEGER -> "INTEGER"
-        PType.BIGINT -> "BIGINT"
-        PType.STRING -> "VARCHAR"
-        PType.VARCHAR -> {
-            when (type.unspecifiedLength()) {
-                true -> "VARCHAR"
-                false -> {
-                    if (length < 0) {
-                        context.logError("VARCHAR length must be non-negative $length")
-                    } else {
-                        "VARCHAR($length)"
-                    }
-                }
-            }
-        }
-        PType.CHAR -> {
-            when (type.unspecifiedLength()) {
-                true -> "CHAR"
-                false -> {
-                    if (length < 0) {
-                        context.logError("CHAR length must be non-negative $length")
-                    } else {
-                        "CHAR($length)"
-                    }
-                }
-            }
-        }
-        PType.ROW -> {
-            val head = "ROW("
-            val fieldsAsString =
-                this.fields.foldIndexed("") { index, acc, field ->
-                    // wrap `field.key` in double-quotes since the field name could be a reserved keyword
-                    val fieldStr = acc + "\"${field.name}\"" + " " + field.type.toDuckDBString(context)
-                    if (index < fields.size - 1) {
-                        "$fieldStr, "
-                    } else {
-                        fieldStr
-                    }
-                }
-            "$head$fieldsAsString)"
-        }
-        PType.BOOL -> "BOOLEAN"
-        PType.DECIMAL, PType.NUMERIC -> {
-            val noPrecision = type.unspecifiedPrecision()
-            val noScale = type.unspecifiedScale()
-            when {
-                noPrecision && noScale -> "DECIMAL"
-                noScale -> {
-                    if (precision !in 1..38) {
-                        context.logError("DECIMAL precision not in range [1, 38]: $precision")
-                    } else {
-                        "DECIMAL($precision)"
-                    }
-                }
-                noPrecision -> context.logError("DECIMAL scale specified without precision")
-                else -> {
-                    val precision = type.precision
-                    val scale = type.scale
-                    if (precision !in 1..38) {
-                        context.logError("DECIMAL precision not in range [1, 38]: $precision")
-                    } else if (scale !in 0..precision) {
-                        context.logError("DECIMAL scale not in range [0, $precision]: $scale")
-                    } else {
-                        "DECIMAL($precision, $scale)"
-                    }
-                }
-            }
-        }
-        PType.DATE -> "DATE"
-        // DuckDB's TIME / TIME WITH TIME ZONE do not accept a precision parameter (`TIME(6)` is a
-        // binder error), so we always emit the bare type name and drop any precision.
-        PType.TIME -> "TIME"
-        PType.TIMEZ -> "TIME WITH TIME ZONE"
-        PType.TIMESTAMP -> {
-            when (type.unspecifiedPrecision()) {
-                true -> "TIMESTAMP"
-                false -> {
-                    if (precision !in 0..12) {
-                        context.logError("TIMESTAMP precision not in range [0, 12]: $precision")
-                    } else {
-                        "TIMESTAMP($precision)"
-                    }
-                }
-            }
-        }
-        PType.TIMESTAMPZ -> {
-            when (type.unspecifiedPrecision()) {
-                true -> "TIMESTAMP WITH TIME ZONE"
-                false -> {
-                    if (precision !in 0..12) {
-                        context.logError("TIMESTAMP WITH TIME ZONE precision not in range [0, 12]: $precision")
-                    } else {
-                        "TIMESTAMP($precision) WITH TIME ZONE"
-                    }
-                }
-            }
-        }
-        PType.REAL -> "REAL"
-        PType.DOUBLE -> "DOUBLE"
-        PType.UNKNOWN -> context.logError("Not able to convert PType $this to DuckDB")
-        PType.ARRAY, PType.BAG -> {
-            // DuckDB uses the `<elementType>[]` suffix syntax for list types, not `ARRAY<...>`.
-            val elementType = type.typeParameter.toDuckDBString(context)
-            "$elementType[]"
-        }
-        else -> context.logError("Not able to convert PType $this to DuckDB")
-    }
 }

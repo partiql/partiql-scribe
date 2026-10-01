@@ -1,15 +1,12 @@
 package org.partiql.scribe.targets.duckdb
 
 import org.partiql.ast.Ast.exprCall
-import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
-import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
-import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprLit
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
@@ -30,7 +27,6 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
         super.rules.toMutableMap().apply {
             this["utcnow"] = ::utcnow
             // Keep the base `bitwise_and` -> infix `&` rule: DuckDB has no `bitwise_and` function.
-            this["cast_row"] = ::castrow
             this["transform"] = ::transform
             this["map_contains_key"] = ::mapContainsKey
             this["map_get"] = ::mapGet
@@ -155,40 +151,52 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     /**
+     * PartiQL's `DATE_ADD(<part>, <amount>, <datetime>)` has no faithful DuckDB equivalent: DuckDB's
+     * `date_add(date, interval)` takes two arguments, and the `<amount>` may be a dynamic expression that
+     * cannot be rendered as an INTERVAL literal. Rather than emit SQL that fails (or behaves differently) at
+     * runtime, reject the call at transpile time.
+     *
      * https://duckdb.io/docs/current/functions/datetime.html#date_add
      */
     override fun dateAdd(
         part: DatetimeField,
         args: SqlArgs,
     ): Expr {
-        val call = Identifier.regular("date_add")
-        listener.report(
-            ScribeProblem.simpleInfo(
-                ScribeProblem.TRANSLATION_INFO,
-                "PartiQL's `date_add` has been modified for translation to DuckDB. Converted first argument " +
-                    "of `date_add` from an unquoted keyword to a string literal (${part.name()} -> " +
-                    "'${part.name().lowercase()}').",
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "DuckDB does not support PartiQL's `DATE_ADD(<part>, <amount>, <datetime>)`. DuckDB's " +
+                    "`date_add` takes a (date, interval) pair, which cannot faithfully represent a dynamic " +
+                    "amount expression.",
             ),
         )
-        val arg0 = exprLit(Literal.string(part.name().lowercase()))
-        val arg1 = args[0].expr
-        val arg2 = args[1].expr
-        return exprCall(call, listOf(arg0, arg1, arg2))
     }
 
     /**
+     * DuckDB's `date_diff('<part>', <start>, <end>)` matches PartiQL's shape for DATE/TIMESTAMP/TIME operands,
+     * but has no overload for TIME WITH TIME ZONE operands. Reject those at transpile time instead of emitting
+     * SQL that fails at runtime. (Plain TIME-TIME is supported and passes through.)
+     *
      * https://duckdb.io/docs/current/functions/datetime.html#date_diff
      */
     override fun dateDiff(
         part: DatetimeField,
         args: SqlArgs,
     ): Expr {
+        if (args[0].type.code() == PType.TIMEZ || args[1].type.code() == PType.TIMEZ) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "DuckDB's `date_diff` has no overload for TIME WITH TIME ZONE operands.",
+                ),
+            )
+        }
         val call = Identifier.regular("date_diff")
         listener.report(
             ScribeProblem.simpleInfo(
                 ScribeProblem.TRANSLATION_INFO,
                 "PartiQL's `date_diff` has been modified for translation to DuckDB. Converted first argument " +
-                    "of `date_add` from an unquoted keyword to a string literal (${part.name()} -> " +
+                    "of `date_diff` from an unquoted keyword to a string literal (${part.name()} -> " +
                     "'${part.name().lowercase()}').",
             ),
         )
@@ -215,22 +223,6 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
         val arg0 = unquotedStringExpr("current_timestamp")
         val arg1 = exprLit(Literal.string("UTC"))
         return exprCall(call, listOf(arg0, arg1))
-    }
-
-    // DuckDB gives names to ROW fields by a call to `CAST`. See docs: https://duckdb.io/docs/current/language/types.html?highlight=row#row.
-    // Here, we model this ROW cast as a custom type cast with the row field names encoded in the custom type string.
-    //
-    // CAST(ROW(<values list>) AS <custom type with ROW field names>)
-    private fun castrow(args: SqlArgs): Expr {
-        val castValue = args.first().expr as ExprArray
-        val rowCall =
-            exprCall(
-                Identifier.regular("ROW"),
-                castValue.values,
-            )
-        val asType = ((args.last().expr as ExprLit).lit).stringValue()
-        val customType = DataType.USER_DEFINED(Identifier.regular(asType))
-        return exprCast(rowCall, customType)
     }
 
     // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>

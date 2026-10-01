@@ -2,22 +2,22 @@
 SELECT current_date() AS "CURRENT_DATE" FROM "default"."T" AS "T";
 
 --#[datetime-09]
-SELECT date_add('second', 5, "T"."timestamp_1") AS "_1" FROM "default"."T" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-10]
-SELECT date_add('minute', 5, "T"."timestamp_1") AS "_1" FROM "default"."T" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-11]
-SELECT date_add('hour', 5, "T"."timestamp_1") AS "_1" FROM "default"."T" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-12]
-SELECT date_add('day', 5, current_date()) AS "_1" FROM "default"."T" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-13]
-SELECT date_add('month', 5, current_date()) AS "_1" FROM "default"."T" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-14]
-SELECT date_add('year', 5, current_date()) AS "_1" FROM "default"."T" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-15]
 SELECT date_diff('year', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
@@ -38,7 +38,7 @@ SELECT date_diff('minute', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "d
 SELECT date_diff('second', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-21]
-SELECT date_add('second', 1, TIMESTAMP '2017-01-02 03:04:05.006') AS "_1" FROM "default"."T" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-22]
 SELECT date_diff('second', TIMESTAMP '2017-01-02 03:04:05.006', TIMESTAMP '2017-01-02 03:04:20.006') AS "_1" FROM "default"."T" AS "T";
@@ -47,13 +47,13 @@ SELECT date_diff('second', TIMESTAMP '2017-01-02 03:04:05.006', TIMESTAMP '2017-
 SELECT date_diff('second', "T"."col_time", "T"."col_time") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-42]
-SELECT date_diff('second', CAST("T"."col_time" AS TIME WITH TIME ZONE), "T"."col_timez") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-43]
-SELECT date_diff('second', "T"."col_timez", CAST("T"."col_time" AS TIME WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-44]
-SELECT date_diff('second', "T"."col_timez", "T"."col_timez") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-45]
 SELECT date_diff('day', "T"."col_date", "T"."col_date") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
@@ -86,13 +86,13 @@ SELECT date_diff('day', "T"."col_timestampz", "T"."col_timestampz") AS "_1" FROM
 SELECT date_diff('second', TIME '12:34:56', TIME '13:45:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[datetime-55]
-SELECT date_diff('second', CAST(TIME '12:34:56' AS TIME WITH TIME ZONE), TIMETZ '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-56]
-SELECT date_diff('second', TIMETZ '12:34:56+08:00', CAST(TIME '13:45:00' AS TIME WITH TIME ZONE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-57]
-SELECT date_diff('second', TIMETZ '12:34:56+08:00', TIMETZ '13:45:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+[ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[datetime-58]
 SELECT date_diff('day', DATE '2023-01-15', DATE '2023-12-25') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";

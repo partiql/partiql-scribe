@@ -64,15 +64,15 @@ SELECT "T"."col_int32" AS "col_int32", "T"."col_struct_simple"."level1_col_int" 
 
 --#[struct-11]
 -- Construct a struct literal in SELECT
-SELECT CAST(ROW("T"."col_int32", "T"."col_string") AS ROW("a" INTEGER, "b" VARCHAR)) AS "constructed" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'a': "T"."col_int32", 'b': "T"."col_string"} AS "constructed" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[struct-12]
 -- Construct a struct from struct fields
-SELECT CAST(ROW("T"."col_struct_simple"."level1_col_int", "T"."col_struct_simple"."level1_col_string") AS ROW("x" INTEGER, "y" VARCHAR)) AS "constructed" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'x': "T"."col_struct_simple"."level1_col_int", 'y': "T"."col_struct_simple"."level1_col_string"} AS "constructed" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[struct-13]
 -- Construct a nested struct literal
-SELECT CAST(ROW(CAST(ROW("T"."col_struct_nested"."level1_col_struct"."level2_col_int") AS ROW("inner_val" INTEGER))) AS ROW("outer" ROW("inner_val" INTEGER))) AS "constructed" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'outer': {'inner_val': "T"."col_struct_nested"."level1_col_struct"."level2_col_int"}} AS "constructed" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
 --  Filtering on struct fields
@@ -148,19 +148,19 @@ SELECT "T"."col_struct_nested"."level1_col_struct"."level2_col_int" AS "level2_c
 
 --#[struct-26]
 -- Construct struct with mixed literal types
-SELECT CAST(ROW(42, 3.14, 'hello', false) AS ROW("count" INTEGER, "rate" DECIMAL(3, 2), "message" VARCHAR, "enabled" BOOLEAN)) AS "config" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'count': 42, 'rate': 3.14, 'message': 'hello', 'enabled': false} AS "config" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[struct-27]
 -- Construct nested struct with literal values
-SELECT CAST(ROW(CAST(ROW(100, 'test@example.com') AS ROW("id" INTEGER, "email" VARCHAR)), '2023-01-01T00:00:00Z') AS ROW("user" ROW("id" INTEGER, "email" VARCHAR), "timestamp" VARCHAR)) AS "record" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'user': {'id': 100, 'email': 'test@example.com'}, 'timestamp': '2023-01-01T00:00:00Z'} AS "record" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- --#[struct-28]
 -- -- Construct struct with null values, Unknown type NULL cannot be converted to a duckdb data type.
--- SELECT CAST(ROW(123, NULL, 'test') AS ROW("value" INTEGER, "optional_field" NULL, "description" VARCHAR)) AS "data" FROM "default"."T_ALL_TYPES" AS "T";
+-- SELECT {'value': 123, 'optional_field': NULL, 'description': 'test'} AS "data" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[struct-29]
 -- Construct struct with arithmetic expressions
-SELECT CAST(ROW(10 + 5, 3 * 7, 100.0 / CAST(4 AS DECIMAL(10,0))) AS ROW("sum" INTEGER, "product" INTEGER, "ratio" DECIMAL(15, 12))) AS "calculations" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'sum': 10 + 5, 'product': 3 * 7, 'ratio': 100.0 / CAST(4 AS DECIMAL(10,0))} AS "calculations" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
 --  Access field in constructed struct
@@ -168,12 +168,12 @@ SELECT CAST(ROW(10 + 5, 3 * 7, 100.0 / CAST(4 AS DECIMAL(10,0))) AS ROW("sum" IN
 
 --#[struct-30]
 -- Access field from a constructed struct
-SELECT CAST(ROW("T"."col_int32", "T"."col_string") AS ROW("a" INTEGER, "b" VARCHAR))."a" AS "a_val" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'a': "T"."col_int32", 'b': "T"."col_string"}."a" AS "a_val" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[struct-31]
 -- Access field from a struct constructed from struct fields
-SELECT CAST(ROW("T"."col_struct_simple"."level1_col_int", "T"."col_struct_simple"."level1_col_string") AS ROW("x" INTEGER, "y" VARCHAR))."y" AS "y_val" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'x': "T"."col_struct_simple"."level1_col_int", 'y': "T"."col_struct_simple"."level1_col_string"}."y" AS "y_val" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[struct-32]
 -- Access nested field from a constructed nested struct
-SELECT CAST(ROW(CAST(ROW("T"."col_struct_nested"."level1_col_struct"."level2_col_int") AS ROW("inner_val" INTEGER))) AS ROW("outer" ROW("inner_val" INTEGER)))."outer"."inner_val" AS "inner_val" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT {'outer': {'inner_val': "T"."col_struct_nested"."level1_col_struct"."level2_col_int"}}."outer"."inner_val" AS "inner_val" FROM "default"."T_ALL_TYPES" AS "T";
