@@ -17,8 +17,9 @@ SELECT {'a': "t"."flds"."a", 'c': {'field_y': "t"."flds"."c"."field_y"}} AS "fld
 SELECT {'a': "t"."flds"."a", 'b': "t"."flds"."b", 'c': {'field_x': "t"."flds"."c"."field_x"}} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 -- --#[exclude-06]
--- Exclude all the fields of `t.flds.c`; unsure if DuckDB supports ROWs with no fields. Asked a question in discussion to see if feasible https://github.com/duckdbdb/duckdb/discussions/20558
--- Can just `EXCLUDE t.flds.c` rather than excluding all the fields individually
+-- Excludes all the fields of `t.flds.c`, which would produce an empty struct. DuckDB does not support empty
+-- structs (`{}`, `ROW()`, and `struct_pack()` all error), so Scribe rejects this with UNSUPPORTED_PLAN_TO_AST_CONVERSION.
+-- Exclude the containing field instead, e.g. `EXCLUDE t.flds.c`.
 -- SELECT * EXCLUDE t.flds.c.field_x, t.flds.c.field_y FROM EXCLUDE_T AS t;
 
 -- START OF EXCLUDE with COLLECTION WILDCARD

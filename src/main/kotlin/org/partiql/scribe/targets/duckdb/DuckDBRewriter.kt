@@ -86,7 +86,7 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
             error("DuckDB path expression must be a string literal.")
         }
         val visited = super.visitPathKey(rex, ctx) as RexPathKey
-        // Wrap RexStruct operand in CAST(ROW(...) AS ROW(...))
+        // Reconstruct the RexStruct operand so it renders as a DuckDB struct literal (`{'k': v}`).
         val operand = visited.operand
         if (operand is RexStruct) {
             val wrapped = operand.type.pType.toRexDuckDB(prefixPath = operand, context = context)
@@ -105,7 +105,7 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
             error("DuckDB path expression must be on a ROW or MAP type, found ${rex.operand.type}")
         }
         val visited = super.visitPathSymbol(rex, ctx) as RexPathSymbol
-        // Wrap RexStruct operand in CAST(ROW(...) AS ROW(...))
+        // Reconstruct the RexStruct operand so it renders as a DuckDB struct literal (`{'k': v}`).
         val operand = visited.operand
         if (operand is RexStruct) {
             val wrapped = operand.type.pType.toRexDuckDB(prefixPath = operand, context = context)

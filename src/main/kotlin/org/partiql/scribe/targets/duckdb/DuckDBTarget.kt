@@ -17,12 +17,11 @@ import org.partiql.spi.catalog.Session
  *
  * DuckDB's dialect is close to standard SQL, so most of the translation is shared with the other SQL targets. This
  * target was built by porting the Trino target (DuckDB and Trino agree on 1-based array indexing, `ARRAY[...]`
- * literals, `ROW(...)` construction, and most scalar functions) and then adapting the cases where DuckDB genuinely
- * diverges (e.g. `split` -> `string_split`).
+ * literals, and most scalar functions) and then adapting the cases where DuckDB genuinely diverges (e.g.
+ * `split` -> `string_split`, structs emitted as `{'k': v}` literals, `IS <type>` -> `typeof(...)`).
  *
- * Known follow-ups that are not yet DuckDB-specialized (they currently inherit the ported Trino behavior): the
- * EXCLUDE collection-wildcard helpers (`cardinality`/`element_at`/`transform`), `IS MISSING` handling, and
- * `CLOB` -> `VARCHAR`. These are not exercised by the current test suite.
+ * Known follow-ups that are not yet DuckDB-specialized: `IS MISSING` handling and `CLOB` -> `VARCHAR`. These are
+ * not exercised by the current test suite.
  */
 public open class DuckDBTarget : SqlTarget() {
     override val target: String = "DuckDB"

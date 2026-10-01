@@ -16,7 +16,6 @@ import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.inCollectionArrayOperands
 import org.partiql.scribe.sql.utils.unquotedStringExpr
-import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
 import java.math.BigDecimal
 
@@ -44,7 +43,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * `start < 1` and literal `length < 0` during transpilation. For any non-literal expression, we preserve DuckDB's
      * native `substring` call and report the potential semantic mismatch instead of rewriting it.
      *
-     * https://duckdb.io/docs/current/functions/string.html#substring
+     * https://duckdb.org/docs/current/functions/string.html#substring
      */
     override fun substring(args: SqlArgs): Expr {
         val value = args[0].expr
@@ -119,7 +118,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     /**
      * DuckDB does not have `char_length`; use `length` instead.
      *
-     * https://duckdb.io/docs/current/functions/string.html#length
+     * https://duckdb.org/docs/current/functions/string.html#length
      */
     override fun charLength(args: SqlArgs): Expr {
         val id = Identifier.regular("length")
@@ -156,7 +155,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * cannot be rendered as an INTERVAL literal. Rather than emit SQL that fails (or behaves differently) at
      * runtime, reject the call at transpile time.
      *
-     * https://duckdb.io/docs/current/functions/datetime.html#date_add
+     * https://duckdb.org/docs/current/functions/datetime.html#date_add
      */
     override fun dateAdd(
         part: DatetimeField,
@@ -177,7 +176,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * but has no overload for TIME WITH TIME ZONE operands. Reject those at transpile time instead of emitting
      * SQL that fails at runtime. (Plain TIME-TIME is supported and passes through.)
      *
-     * https://duckdb.io/docs/current/functions/datetime.html#date_diff
+     * https://duckdb.org/docs/current/functions/datetime.html#date_diff
      */
     override fun dateDiff(
         part: DatetimeField,
@@ -207,8 +206,8 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     /**
-     * https://duckdb.io/docs/current/functions/datetime.html#current_timestamp
-     * https://duckdb.io/docs/current/functions/datetime.html#at_timezone
+     * https://duckdb.org/docs/current/functions/datetime.html#current_timestamp
+     * https://duckdb.org/docs/current/functions/datetime.html#at_timezone
      *
      * at_timezone(current_timestamp, 'UTC')
      */
@@ -226,49 +225,18 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     // transform(<array>, <func>) where func transforms each array element w/ syntax elem -> <result value>
-    // docs: https://duckdb.io/docs/current/functions/array.html#transform
+    // docs: https://duckdb.org/docs/current/functions/array.html#transform
     // This function is used for transpilation of `EXCLUDE` collection wildcards. It is similar to a functional map but
     // uses some special syntax (same as Spark's `transform` function).
-    // e.g. SELECT transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
+    // e.g. SELECT list_transform(array(1, 2, 3), x -> x + 1) outputs [2, 3, 4]
     // encode as `transform(<arrayExpr>, <elementVar>, <elementExpr>)`
-    // which gets translated to `transform(<arrayExpr>, <elementVar> -> <elementExpr>)` in RexConverter
+    // which DuckDBAstToSql.visitExprCall renders as `list_transform(<arrayExpr>, <elementVar> -> <elementExpr>)`
     private fun transform(sqlArgs: List<SqlArg>): Expr {
         val fnName = Identifier.regular("transform")
         val arrayExpr = sqlArgs[0].expr
         val elementVar = sqlArgs[1].expr
         val elementExpr = sqlArgs[2].expr
         return exprCall(fnName, listOf(arrayExpr, elementVar, elementExpr))
-    }
-
-    /**
-     * Returns true if and only if [type] is a day-time interval that contains any time fields.
-     */
-    private fun isIntervalTime(type: PType): Boolean {
-        if (type.code() != PType.INTERVAL_DT) {
-            return false
-        }
-        return type.intervalCode != IntervalCode.DAY
-    }
-
-    override fun plusFn(args: SqlArgs): Expr {
-        val lhsType = args[0].type
-        val rhsType = args[1].type
-        if (lhsType.code() == PType.DATE && isIntervalTime(rhsType)) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    ScribeProblem.UNSUPPORTED_OPERATION,
-                    "DuckDB does not support arithmetic between dates and intervals with time fields.",
-                ),
-            )
-        } else if (isIntervalTime(lhsType) && rhsType.code() == PType.DATE) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    ScribeProblem.UNSUPPORTED_OPERATION,
-                    "DuckDB does not support arithmetic between dates and intervals with time fields.",
-                ),
-            )
-        }
-        return super.plusFn(args)
     }
 
     override fun minusFn(args: SqlArgs): Expr {
@@ -285,21 +253,8 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
                 ),
             )
         }
-        if (lhsType.code() == PType.DATE && isIntervalTime(rhsType)) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    ScribeProblem.UNSUPPORTED_OPERATION,
-                    "DuckDB does not support arithmetic between dates and intervals with time fields.",
-                ),
-            )
-        } else if (isIntervalTime(lhsType) && rhsType.code() == PType.DATE) {
-            listener.report(
-                ScribeProblem.simpleInfo(
-                    ScribeProblem.UNSUPPORTED_OPERATION,
-                    "DuckDB does not support arithmetic between dates and intervals with time fields.",
-                ),
-            )
-        }
+        // Note: DuckDB supports `DATE - <interval>` (including intervals with time fields); it promotes the
+        // result to TIMESTAMP, so no special handling is needed here.
         return super.minusFn(args)
     }
 
@@ -388,7 +343,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * (e.g. a column) must use the `contains` array function instead. Literal in-lists and subqueries keep the base
      * `IN` rendering via [super].
      *
-     * https://duckdb.io/docs/current/functions/array.html#contains
+     * https://duckdb.org/docs/current/functions/array.html#contains
      */
     override fun inCollection(args: SqlArgs): Expr {
         val (value, collection) = inCollectionArrayOperands(args) ?: return super.inCollection(args)

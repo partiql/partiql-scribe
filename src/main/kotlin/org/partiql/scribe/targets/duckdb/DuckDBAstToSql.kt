@@ -88,8 +88,10 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
     }
 
     /**
-     * DuckDB's LEAD/LAG do not accept the `RESPECT NULLS` clause (it is the default behavior), so we omit it.
-     * `IGNORE NULLS` is preserved since it is meaningful and supported.
+     * DuckDB's LEAD/LAG do not accept a trailing null-treatment clause. `RESPECT NULLS` is the default, so we
+     * simply omit it. `IGNORE NULLS` cannot currently be reached here (the PartiQL planner does not plan
+     * `IGNORE NULLS`), and DuckDB has no valid LEAD/LAG rendering for it anyway, so the branch below is dead;
+     * it is kept only so the emitted text is obvious if planner support is ever added.
      */
     @Deprecated("This feature is experimental and is subject to change.")
     override fun visitWindowFunctionTypeLead(
@@ -119,7 +121,7 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             t = visitExpr(it, t)
         }
         t = t concat ")"
-        // Only emit IGNORE NULLS; RESPECT NULLS is DuckDB's default and is not accepted syntactically.
+        // RESPECT NULLS (the default) is dropped; the IGNORE NULLS branch is currently unreachable (see KDoc).
         if (nullTreatment?.code() == WindowFunctionNullTreatment.IGNORE_NULLS) {
             t = t concat " ${nullTreatment.name()}"
         }
@@ -323,10 +325,10 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
     ): SqlBlock {
         var t = tail
         val f = node.function
-        // Special case -- DATE_ADD('<datetime_field>', <lhs>, <rhs>) -> DATE_ADD(<datetime_field>, <lhs>, <rhs>)
-        // Special case -- DATE_DIFF('<datetime_field>', <lhs>, <rhs>) -> DATE_DIFF(<datetime_field>, <lhs>, <rhs>)
+        // Render DATE_DIFF('<part>', <lhs>, <rhs>) without quoting the datetime-field part identifier.
+        // (DATE_ADD is rejected upstream in DuckDBCalls.dateAdd, so it never reaches here.)
         if (!f.hasQualifier() &&
-            (f.identifier.text.uppercase() == "DATE_ADD" || f.identifier.text.uppercase() == "DATE_DIFF") &&
+            f.identifier.text.uppercase() == "DATE_DIFF" &&
             node.args.size == 3
         ) {
             val start = "("
@@ -372,7 +374,7 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.STRING -> tail concat "VARCHAR"
             DataType.TIME -> tail concat "TIME"
 
-            // According to https://duckdb.io/docs/current/language/types.html#timestamp-p-with-time-zone,
+            // According to https://duckdb.org/docs/current/language/types.html#timestamp-p-with-time-zone,
             // DuckDB does not support precision and `WITH TIME ZONE` in TIME/TIMESTAMP in time literal,
             // but support them in the scenarios like cast or table creation.
             // e.g. SELECT cast(TIMESTAMP '2020-06-10 15:55:23.383345' as TIMESTAMP(12));
@@ -382,6 +384,11 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME WITH TIME ZONE"
             DataType.TIMESTAMP -> tail concat "TIMESTAMP"
             DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP WITH TIME ZONE"
+            // DuckDB has a single unified INTERVAL type and ignores the qualifier in a type position (e.g. a
+            // CAST target), so we drop it: `CAST(x AS INTERVAL YEAR)` -> `CAST(x AS INTERVAL)`. Interval
+            // *literals* keep their qualifier (they render via visitIntervalQualifier, not here) since DuckDB
+            // needs the unit there.
+            DataType.INTERVAL -> tail concat "INTERVAL"
             DataType.MAP -> {
                 var t = tail concat "MAP("
                 t = visitDataType(node.keyType, t)
@@ -565,29 +572,10 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         node: ExprCast,
         tail: SqlBlock,
     ): SqlBlock {
-        val asType = node.asType
-        if (asType.code() == DataType.INTERVAL) {
-            val intervalQualifier = asType.intervalQualifier!!
-            val isSingle = intervalQualifier is IntervalQualifier.Single
-            val isYearMonth =
-                intervalQualifier is IntervalQualifier.Range &&
-                    intervalQualifier.startField.code() == DatetimeField.YEAR &&
-                    intervalQualifier.endField.code() == DatetimeField.MONTH
-            val isDaySecond =
-                intervalQualifier is IntervalQualifier.Range &&
-                    intervalQualifier.startField.code() == DatetimeField.DAY &&
-                    intervalQualifier.endField.code() == DatetimeField.SECOND
-            if (isSingle || !(isYearMonth || isDaySecond)) {
-                listener.report(
-                    ScribeProblem.simpleError(
-                        code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                        message =
-                            "DuckDB only supports casting to INTERVAL YEAR TO MONTH and INTERVAL DAY TO SECOND. " +
-                                "Receieved: $intervalQualifier",
-                    ),
-                )
-            }
-        }
+        // Note: a CAST to INTERVAL renders the target type as a bare `INTERVAL` (the qualifier is dropped in
+        // visitDataType) because DuckDB has one unified INTERVAL type and ignores the qualifier. This means a
+        // narrowing cast such as `CAST(x AS INTERVAL YEAR)` does NOT truncate on DuckDB (it keeps the full
+        // value), which differs from PartiQL's SQL-standard truncation semantics.
         var t = tail
         t = t concat "CAST("
         t = visitExprWrapped(node.value, t)
@@ -604,30 +592,9 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         return tail concat list(this, "ARRAY[", "]") { node.values }
     }
 
-    private fun type(
-        symbol: String,
-        vararg args: Int?,
-        gap: Boolean = false,
-    ): SqlBlock {
-        val p = args.filterNotNull()
-        val t =
-            when {
-                p.isEmpty() -> symbol
-                else -> {
-                    val a = p.joinToString(",")
-                    when (gap) {
-                        true -> "$symbol ($a)"
-                        else -> "$symbol($a)"
-                    }
-                }
-            }
-        // types are modeled as text; as we don't want to reflow
-        return SqlBlock.Text(t)
-    }
-
     // DuckDB's native struct constructor is the struct literal `{'field': value, ...}`. It preserves field names
     // and types (inferred from the values) and works inside a `list_transform` lambda, so we emit it directly
-    // rather than `CAST(ROW(...) AS ROW(...))`. https://duckdb.io/docs/current/sql/data_types/struct
+    // rather than `CAST(ROW(...) AS ROW(...))`. https://duckdb.org/docs/current/sql/data_types/struct
     override fun visitExprStruct(
         node: ExprStruct,
         tail: SqlBlock,
@@ -648,7 +615,7 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
     }
 
     // DuckDB's MAP constructor: MAP(ARRAY[key1, key2, ...], ARRAY[val1, val2, ...])
-    // https://duckdb.io/docs/current/functions/map.html
+    // https://duckdb.org/docs/current/functions/map.html
     @Suppress("DEPRECATION")
     override fun visitExprMap(
         node: ExprMap,

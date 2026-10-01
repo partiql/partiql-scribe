@@ -2,7 +2,7 @@ This document goes over one of the more complicated rewrites for PartiQL's `EXCL
 
 ### DuckDB Background
 #### DuckDB ROW
-DuckDB has a [ROW type](https://duckdb.io/docs/current/language/types.html#row) that is most similar to PartiQL's 
+DuckDB has a [ROW type](https://duckdb.org/docs/current/language/types.html#row) that is most similar to PartiQL's 
 struct/row data type. There are a couple ways to create a ROW value in DuckDB:
 1. Using `CAST(ROW(...) AS ROW(...))` syntax
 
@@ -30,7 +30,7 @@ Based on the above limitations, the `EXCLUDE` transpilation will use the `CAST(R
 excluded attributes.
 
 #### DuckDB Array
-DuckDB supports an array type similar to PartiQL's array/list data type. The `transform` [function](https://duckdb.io/docs/current/functions/array.html#transform)
+DuckDB supports an array type similar to PartiQL's array/list data type. The `transform` [function](https://duckdb.org/docs/current/functions/array.html#transform)
 is the same as SparkSQL's transform function. It allows us to reconstruct arrays that contain ROWs with excluded
 attributes:
 

@@ -25,35 +25,26 @@ SELECT "T"."col_date" + "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T"
 SELECT "T"."col_date" + "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-02]
 SELECT "T"."col_date" + "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-03]
--- SELECT "T"."col_date" + "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-04]
--- SELECT "T"."col_date" + "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-05]
--- SELECT "T"."col_date" + "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-03]
+SELECT "T"."col_date" + "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-04]
+SELECT "T"."col_date" + "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-05]
+SELECT "T"."col_date" + "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-plus-interval-06]
 SELECT "T"."col_date" + "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-07]
--- SELECT "T"."col_date" + "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-08]
--- SELECT "T"."col_date" + "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-09]
--- SELECT "T"."col_date" + "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-10]
--- SELECT "T"."col_date" + "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-11]
--- SELECT "T"."col_date" + "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-plus-interval-12]
--- SELECT "T"."col_date" + "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-07]
+SELECT "T"."col_date" + "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-08]
+SELECT "T"."col_date" + "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-09]
+SELECT "T"."col_date" + "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-10]
+SELECT "T"."col_date" + "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-11]
+SELECT "T"."col_date" + "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-plus-interval-12]
+SELECT "T"."col_date" + "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- By SQL2023: 6.42, error
 -- --#[dt-plus-interval-13]
@@ -176,35 +167,26 @@ SELECT "T"."col_date" - "T"."col_y" AS "res" FROM "default"."T_INTERVALS" AS "T"
 SELECT "T"."col_date" - "T"."col_mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-02]
 SELECT "T"."col_date" - "T"."col_d" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-03]
--- SELECT "T"."col_date" - "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-04]
--- SELECT "T"."col_date" - "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-05]
--- SELECT "T"."col_date" - "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-03]
+SELECT "T"."col_date" - "T"."col_h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-04]
+SELECT "T"."col_date" - "T"."col_min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-05]
+SELECT "T"."col_date" - "T"."col_s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[dt-minus-interval-06]
 SELECT "T"."col_date" - "T"."col_y2mon" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-07]
--- SELECT "T"."col_date" - "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-08]
--- SELECT "T"."col_date" - "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-09]
--- SELECT "T"."col_date" - "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-10]
--- SELECT "T"."col_date" - "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-11]
--- SELECT "T"."col_date" - "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[dt-minus-interval-12]
--- SELECT "T"."col_date" - "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-07]
+SELECT "T"."col_date" - "T"."col_d2h" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-08]
+SELECT "T"."col_date" - "T"."col_d2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-09]
+SELECT "T"."col_date" - "T"."col_d2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-10]
+SELECT "T"."col_date" - "T"."col_h2min" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-11]
+SELECT "T"."col_date" - "T"."col_h2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[dt-minus-interval-12]
+SELECT "T"."col_date" - "T"."col_m2s" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- By SQL2023: 6.42, error
 -- --#[dt-minus-interval-13]
@@ -328,35 +310,26 @@ SELECT "T"."col_y" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T"
 SELECT "T"."col_mon" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-02]
 SELECT "T"."col_d" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-03]
--- SELECT "T"."col_h" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-04]
--- SELECT "T"."col_min" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-05]
--- SELECT "T"."col_s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-03]
+SELECT "T"."col_h" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-04]
+SELECT "T"."col_min" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-05]
+SELECT "T"."col_s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
 --#[interval-plus-06]
 SELECT "T"."col_y2mon" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-07]
--- SELECT "T"."col_d2h" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-08]
--- SELECT "T"."col_d2min" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-09]
--- SELECT "T"."col_d2s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-10]
--- SELECT "T"."col_h2min" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-11]
--- SELECT "T"."col_h2s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
--- Arithmetic between date and time fields is unsupported in DuckDB
--- --#[interval-plus-12]
--- SELECT "T"."col_m2s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-07]
+SELECT "T"."col_d2h" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-08]
+SELECT "T"."col_d2min" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-09]
+SELECT "T"."col_d2s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-10]
+SELECT "T"."col_h2min" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-11]
+SELECT "T"."col_h2s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[interval-plus-12]
+SELECT "T"."col_m2s" + "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- By SQL2023: 6.42, error
 -- --#[interval-plus-13]

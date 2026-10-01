@@ -86,7 +86,7 @@ private fun PType.toRexStruct(
     return RexStruct.create(fields)
 }
 
-// https://duckdb.io/docs/current/functions/array.html#transform
+// https://duckdb.org/docs/current/functions/array.html#transform
 private val transform_fn_sig =
     Fn.Builder("transform")
         .addParameters(
