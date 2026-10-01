@@ -43,15 +43,14 @@ FROM "default"."T" AS "T";
 --         END AS "result"
 -- FROM "default"."T" AS "T";
 
--- #[case-09]
--- SKIP! PartiQL `IS <type>` (IS INT / IS STRUCT) is emitted untranslated and DuckDB has no such predicate.
--- SELECT
---     CASE
---         WHEN "T"."x" IS INT THEN 'x IS INT'
---         WHEN "T"."x" IS STRUCT THEN 'x IS STRUCT'
---         ELSE 'x IS SOMETHING ELSE'
--- END AS "result"
--- FROM "default"."T" AS "T";
+--#[case-09]
+SELECT
+    CASE
+        WHEN typeof("T"."x") = 'INTEGER' THEN 'x IS INT'
+        WHEN starts_with(typeof("T"."x"), 'STRUCT') THEN 'x IS STRUCT'
+        ELSE 'x IS SOMETHING ELSE'
+END AS "result"
+FROM "default"."T" AS "T";
 
 --#[case-11]
 -- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`

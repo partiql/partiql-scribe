@@ -18,6 +18,7 @@ import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprCast
+import org.partiql.ast.expr.ExprIsType
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprMap
 import org.partiql.ast.expr.ExprQuerySet
@@ -138,6 +139,55 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             else -> tail concat name.lowercase()
         }
     }
+
+    /**
+     * DuckDB has no `IS <type>` predicate. Rewrite it to a `typeof(<value>)` comparison, e.g.
+     * `x IS INT` -> `typeof(x) = 'INTEGER'`. For STRUCT, DuckDB's `typeof` reports a parameterized name
+     * (e.g. `STRUCT(a INTEGER)`), so match by prefix with `starts_with(typeof(x), 'STRUCT')`. Types we cannot
+     * map fall back to the base `IS <type>` rendering.
+     */
+    override fun visitExprIsType(
+        node: ExprIsType,
+        tail: SqlBlock,
+    ): SqlBlock {
+        val typeName = duckDBTypeofName(node.type) ?: return super.visitExprIsType(node, tail)
+        var t = tail
+        // STRUCT: typeof yields a parameterized name, so compare by prefix.
+        if (node.type.code() == DataType.STRUCT) {
+            if (node.isNot) t = t concat "NOT "
+            t = t concat "starts_with(typeof("
+            t = visitExprWrapped(node.value, t)
+            t = t concat "), 'STRUCT')"
+            return t
+        }
+        t = t concat "typeof("
+        t = visitExprWrapped(node.value, t)
+        t = t concat if (node.isNot) ") <> '$typeName'" else ") = '$typeName'"
+        return t
+    }
+
+    /**
+     * Maps a PartiQL [DataType] to the string DuckDB's `typeof` returns for that type, or null if we have no
+     * faithful mapping.
+     */
+    private fun duckDBTypeofName(type: DataType): String? =
+        when (type.code()) {
+            DataType.INT, DataType.INTEGER, DataType.INT4, DataType.INTEGER4 -> "INTEGER"
+            DataType.BIGINT, DataType.INT8, DataType.INTEGER8 -> "BIGINT"
+            DataType.SMALLINT, DataType.INT2, DataType.INTEGER2 -> "SMALLINT"
+            DataType.TINYINT -> "TINYINT"
+            DataType.REAL -> "FLOAT"
+            DataType.DOUBLE_PRECISION -> "DOUBLE"
+            DataType.BOOL, DataType.BOOLEAN -> "BOOLEAN"
+            DataType.CHAR, DataType.CHARACTER, DataType.VARCHAR,
+            DataType.CHARACTER_VARYING, DataType.CHAR_VARYING, DataType.STRING,
+            -> "VARCHAR"
+            DataType.DATE -> "DATE"
+            DataType.TIME -> "TIME"
+            DataType.TIMESTAMP -> "TIMESTAMP"
+            DataType.STRUCT -> "STRUCT"
+            else -> null
+        }
 
     /**
      * Bracket notation is kept as-is for MAP subscript access.

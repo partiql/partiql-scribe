@@ -378,6 +378,8 @@ public class org/partiql/scribe/targets/duckdb/DuckDBAstToSql : org/partiql/scri
 	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprCast (Lorg/partiql/ast/expr/ExprCast;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprCast (Lorg/partiql/ast/expr/ExprCast;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprIsType (Lorg/partiql/ast/expr/ExprIsType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprIsType (Lorg/partiql/ast/expr/ExprIsType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprMap (Lorg/partiql/ast/expr/ExprMap;Ljava/lang/Object;)Ljava/lang/Object;
