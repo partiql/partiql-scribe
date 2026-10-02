@@ -1,0 +1,57 @@
+-- https://duckdb.io/docs/current/functions/conditional.html
+
+--#[case-04]
+SELECT
+    CASE
+        WHEN "T"."a" = true THEN 'a IS TRUE'
+        ELSE 'a MUST BE FALSE'
+        END AS "result"
+FROM "default"."T" AS "T";
+
+--#[case-05]
+SELECT
+    CASE
+        WHEN "T"."a" = true THEN 'a IS TRUE'
+        ELSE 'a MUST BE FALSE'
+        END AS "result"
+FROM "default"."T" AS "T";
+
+--#[case-06]
+SELECT
+    CASE
+        WHEN "T"."b" = 10 THEN 'b IS 10'
+        ELSE 'b IS NOT 10'
+        END AS "result"
+FROM "default"."T" AS "T";
+
+--#[case-07]
+SELECT
+    CASE
+        WHEN "T"."d"."e" = 'WATER' THEN 'd.e IS WATER'
+        ELSE 'd.e IS NOT WATER'
+        END AS "result"
+FROM "default"."T" AS "T";
+
+-- #[case-08]
+-- SKIP! `T.x` is PartiQL `any`; comparing it to both a string and an integer has no single DuckDB typing
+-- (DuckDB rejects comparing a concrete column to mismatched literal types).
+-- SELECT
+--     CASE
+--         WHEN "T"."x" = 'WATER' THEN 'x IS WATER'
+--         WHEN "T"."x" = 5 THEN 'x IS 5'
+--         ELSE 'x IS SOMETHING ELSE'
+--         END AS "result"
+-- FROM "default"."T" AS "T";
+
+--#[case-09]
+SELECT
+    CASE
+        WHEN typeof("T"."x") = 'INTEGER' THEN 'x IS INT'
+        WHEN starts_with(typeof("T"."x"), 'STRUCT') THEN 'x IS STRUCT'
+        ELSE 'x IS SOMETHING ELSE'
+END AS "result"
+FROM "default"."T" AS "T";
+
+--#[case-11]
+-- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`
+SELECT CASE WHEN "T"."a" = true THEN 'a IS TRUE' ELSE NULL END AS "result" FROM "default"."T" AS "T";
