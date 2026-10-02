@@ -48,15 +48,15 @@ SELECT "T"."col_map_float_key" AS "col_map_float_key" FROM "default"."T_ALL_TYPE
 
 --#[map-09]
 -- Lookup map with bracket notation (string key)
-SELECT "T"."col_map_str_key"['a'] AS "a" FROM "default"."T_ALL_TYPES" AS "T" WHERE contains(map_keys("T"."col_map_str_key"), 'a');
+SELECT "T"."col_map_str_key"['a'] AS "a" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_str_key", 'a');
 
 --#[map-10]
 -- Lookup map with bracket notation (float key)
-SELECT "T"."col_map_float_key"[CAST(1.0 AS DOUBLE)] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE contains(map_keys("T"."col_map_float_key"), CAST(1.0 AS DOUBLE));
+SELECT "T"."col_map_float_key"[CAST(1.0 AS DOUBLE)] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_float_key", CAST(1.0 AS DOUBLE));
 
 --#[map-11]
 -- Lookup map with bracket notation using column as key
-SELECT "T"."col_map_str_key"["T"."col_string"] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE contains(map_keys("T"."col_map_str_key"), "T"."col_string");
+SELECT "T"."col_map_str_key"["T"."col_string"] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_str_key", "T"."col_string");
 
 -- ----------------------------------------
 --  Map functions — map_keys, map_values, map_entries
@@ -112,15 +112,15 @@ SELECT cardinality("T"."col_map_str_key") > 0 AS "_1" FROM "default"."T_ALL_TYPE
 
 --#[map-22]
 -- map_contains_key with string key that exists
-SELECT contains(map_keys("T"."col_map_str_key"), 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_contains("T"."col_map_str_key", 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[map-23]
 -- map_contains_key with column reference as key
-SELECT contains(map_keys("T"."col_map_str_key"), "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_contains("T"."col_map_str_key", "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[map-24]
 -- map_contains_key with float key
-SELECT contains(map_keys("T"."col_map_float_key"), "T"."col_float64") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_contains("T"."col_map_float_key", "T"."col_float64") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
 --  Map functions — map_get
@@ -148,7 +148,7 @@ SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE 
 
 --#[map-32]
 -- Filter with map_contains_key
-SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE contains(map_keys("T"."col_map_str_key"), 'a');
+SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_str_key", 'a');
 
 --#[map-33]
 -- Filter with map size

@@ -182,11 +182,26 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
         part: DatetimeField,
         args: SqlArgs,
     ): Expr {
-        if (args[0].type.code() == PType.TIMEZ || args[1].type.code() == PType.TIMEZ) {
+        val lhsCode = args[0].type.code()
+        val rhsCode = args[1].type.code()
+        // DuckDB's `date_diff` has no overload for TIME WITH TIME ZONE operands.
+        if (lhsCode == PType.TIMEZ || rhsCode == PType.TIMEZ) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.UNSUPPORTED_OPERATION,
                     "DuckDB's `date_diff` has no overload for TIME WITH TIME ZONE operands.",
+                ),
+            )
+        }
+        // For plain TIME, DuckDB's `date_diff` only supports time-granularity parts (HOUR/MINUTE/SECOND);
+        // date parts such as DAY/MONTH/YEAR error with `"time" units "<part>" not recognized`.
+        val timeParts = setOf(DatetimeField.HOUR, DatetimeField.MINUTE, DatetimeField.SECOND)
+        if ((lhsCode == PType.TIME || rhsCode == PType.TIME) && part.code() !in timeParts) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_OPERATION,
+                    "DuckDB's `date_diff` on TIME supports only HOUR, MINUTE, and SECOND parts; " +
+                        "${part.name()} is not supported.",
                 ),
             )
         }
@@ -262,18 +277,16 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `map_contains_key(map, key)` -> DuckDB `contains(map_keys(map), key)`
      */
     private fun mapContainsKey(args: SqlArgs): Expr {
-        val containsId = Identifier.regular("contains")
-        val mapKeysId = Identifier.regular("map_keys")
+        val mapContainsId = Identifier.regular("map_contains")
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `map_contains_key` was replaced by DuckDB `contains(map_keys(...), ...)`",
+                message = "PartiQL `map_contains_key` was replaced by DuckDB `map_contains(map, key)`.",
             ),
         )
         val mapExpr = args[0].expr
         val keyExpr = args[1].expr
-        val mapKeysCall = exprCall(mapKeysId, listOf(mapExpr))
-        return exprCall(containsId, listOf(mapKeysCall, keyExpr))
+        return exprCall(mapContainsId, listOf(mapExpr, keyExpr))
     }
 
     /**

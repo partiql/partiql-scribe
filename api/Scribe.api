@@ -419,7 +419,6 @@ public class org/partiql/scribe/targets/duckdb/DuckDBCalls : org/partiql/scribe/
 	public fun inCollection (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun minusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
-	public fun plusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
