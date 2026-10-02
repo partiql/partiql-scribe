@@ -1,55 +1,54 @@
 This document goes over one of the more complicated rewrites for PartiQL's `EXCLUDE` to DuckDB.
 
 ### DuckDB Background
-#### DuckDB ROW
-DuckDB has a [ROW type](https://duckdb.org/docs/current/language/types.html#row) that is most similar to PartiQL's 
-struct/row data type. There are a couple ways to create a ROW value in DuckDB:
-1. Using `CAST(ROW(...) AS ROW(...))` syntax
+#### DuckDB STRUCT
+DuckDB has a [STRUCT type](https://duckdb.org/docs/current/sql/data_types/struct) that is most similar to PartiQL's
+struct/row data type. There are a few ways to create a struct value in DuckDB:
+
+1. Struct literal syntax `{'name': value, ...}`
+
+E.g.
+```sql
+{'x': 1, 'y': 2e0}
+-- struct(x integer, y double)
+```
+
+This preserves field names directly and infers each field's type from its value. It is the form the `EXCLUDE`
+transpilation uses.
+
+2. `ROW(...)` constructor (optionally with a `CAST` to name/type the fields)
 
 E.g.
 ```sql
 CAST(ROW(1, 2e0) AS ROW(x BIGINT, y DOUBLE))
 ```
 
-Somewhat annoyingly, to provide column names, we must provide the types with each of the ROW fields.
+`ROW(...)` is a synonym for `STRUCT` in DuckDB and also works, but it is more verbose (names and types must be
+restated in the `CAST`), so we prefer the struct-literal form.
 
-2. Using a SELECT projection
+3. A `SELECT` projection
 
-E.g.
-```sql
-SELECT 1 AS x, 2e0 AS y
-```
+E.g. `SELECT 1 AS x, 2e0 AS y` — equivalent but has edge cases (a single field collapses to a scalar; it is awkward
+inside a lambda), so it is not used.
 
-Above is equivalent to the `CAST(ROW(...)` construction syntax and is significantly less verbose. However, there are a
-couple issues we've noticed with how the `SELECT` projection differs
-- If there is a single `ROW` field, the output value will be a single value rather than a `ROW` containing that single 
-value. E.g. `(SELECT 1 AS x)` will return back just the value `1`
-- The `SELECT` syntax will give an error when used within a `transform` function
+The struct literal `{'name': value}` is verified to preserve names/types and to work inside a `list_transform`
+lambda on DuckDB v1.5.6, which is why the rewrite uses it.
 
-Based on the above limitations, the `EXCLUDE` transpilation will use the `CAST(ROW)` syntax to recreate ROWs with
-excluded attributes.
-
-#### DuckDB Array
-DuckDB supports an array type similar to PartiQL's array/list data type. The `transform` [function](https://duckdb.org/docs/current/functions/array.html#transform)
-is the same as SparkSQL's transform function. It allows us to reconstruct arrays that contain ROWs with excluded
-attributes:
+#### DuckDB LIST
+DuckDB supports a list type similar to PartiQL's array/list data type. The
+[`list_transform`](https://duckdb.org/docs/current/sql/functions/lambda#list_transformlist-lambda) function (DuckDB's
+name for the higher-order map; SparkSQL calls it `transform`) lets us reconstruct lists whose elements are structs with
+excluded fields:
 
 ```sql
-SELECT transform(ARRAY[], x -> x + 1);
+SELECT list_transform([], x -> x + 1);
 -- []
 
-SELECT transform(ARRAY[5, 6], x -> x + 1);
+SELECT list_transform([5, 6], x -> x + 1);
 -- [6, 7]
 
-SELECT transform(ARRAY[5, NULL, 6], x -> coalesce(x, 0) + 1);
--- [6, 1, 7]
-
-SELECT transform(ARRAY['x', 'abc', 'z'], x -> x || '0');
--- ['x0', 'abc0', 'z0']
-
-SELECT transform(ARRAY[ARRAY[1, NULL, 2], ARRAY[3, NULL]],
-                 a -> filter(a, x -> x IS NOT NULL));
--- [[1, 2], [3]]
+SELECT list_transform([{'a': 1, 'b': 2}], x -> {'a': x.a});
+-- [{'a': 1}]
 ```
 
 ### PartiQL Rewrite
@@ -57,17 +56,16 @@ DuckDB's rewrite of `EXCLUDE` follows the same approach as SparkSQL in how it
 1. Depends on [partiql-lang-kotlin#1764](https://github.com/partiql/partiql-lang-kotlin/pull/1764) which denotes any
 ROWs and collections that have an excluded field
 2. If the input to `RelExclude` is `RelProject`, remove the `RelExclude`
-3. Recreates `PType` ROWs containing excluded fields with the equivalent way to create ROWs in DuckDB
-4. Reconstructs `PType` collections containing nested excluded fields using the `transform` function.
+3. Reconstructs `PType` ROWs containing excluded fields as a `RexStruct` (rendered as a `{'name': value}` struct
+literal by `DuckDBAstToSql.visitExprStruct`)
+4. Reconstructs `PType` collections containing nested excluded fields using the `list_transform` function.
 
-See `SparkExcludeTranspilation`'s section on `PartiQL Plan Rewrite`.
-
-Where DuckDB differs is for creating the ROWs with the excluded fields omitted. Within `DuckDBExcludeUtils`, we hard-code
-the type to the `CAST` (i.e. everything after the `AS` in the CAST) as a hard-coded string that we reconstruct based 
-on the `PType.ROW`'s fields.
+See `SparkExcludeTranspilation`'s section on `PartiQL Plan Rewrite` — `DuckDBExcludeUtils.toRexDuckDB` mirrors
+`SparkExcludeUtils.toRexSpark`, building a `RexStruct` for ROW types and a `list_transform` call for collections.
 
 ### Other Limitations
 Similar to SparkSQL, there are a couple limitations
-- We only currently support `EXCLUDE` transpilation of excluding struct field and struct fields within collections
-- DuckDB does not allow for creating empty `ROW`s, so we throw an error whenever a `PType.ROW` used in the exclude
-rewrite has only one field.
+- We only currently support `EXCLUDE` transpilation of excluding struct fields and struct fields within collections.
+- DuckDB cannot represent an empty struct (`{}`, `ROW()`, and `struct_pack()` all error), so we throw an error
+whenever a `PType.ROW` used in the exclude rewrite would have zero fields (i.e. all of its fields were excluded).
+Exclude the containing field instead.
