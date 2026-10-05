@@ -368,8 +368,59 @@ public abstract class org/partiql/scribe/sql/SqlTarget : org/partiql/scribe/Scri
 
 public class org/partiql/scribe/targets/duckdb/DuckDBAstToSql : org/partiql/scribe/sql/AstToSql {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitDataType (Lorg/partiql/ast/DataType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitDataType (Lorg/partiql/ast/DataType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprArray (Lorg/partiql/ast/expr/ExprArray;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprArray (Lorg/partiql/ast/expr/ExprArray;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprBag (Lorg/partiql/ast/expr/ExprBag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprCast (Lorg/partiql/ast/expr/ExprCast;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprCast (Lorg/partiql/ast/expr/ExprCast;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprIsType (Lorg/partiql/ast/expr/ExprIsType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprIsType (Lorg/partiql/ast/expr/ExprIsType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprMap (Lorg/partiql/ast/expr/ExprMap;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprMap (Lorg/partiql/ast/expr/ExprMap;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprQuerySet (Lorg/partiql/ast/expr/ExprQuerySet;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitFrom (Lorg/partiql/ast/From;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitFrom (Lorg/partiql/ast/From;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitFromExpr (Lorg/partiql/ast/FromExpr;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitFromExpr (Lorg/partiql/ast/FromExpr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifier (Lorg/partiql/ast/IntervalQualifier;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifier (Lorg/partiql/ast/IntervalQualifier;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitWindowFunctionTypeLag (Lorg/partiql/ast/WindowFunctionType$Lag;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWindowFunctionTypeLag (Lorg/partiql/ast/WindowFunctionType$Lag;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitWindowFunctionTypeLead (Lorg/partiql/ast/WindowFunctionType$Lead;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWindowFunctionTypeLead (Lorg/partiql/ast/WindowFunctionType$Lead;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+}
+
+public class org/partiql/scribe/targets/duckdb/DuckDBCalls : org/partiql/scribe/sql/SqlCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public fun charLength (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun dateAdd (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun dateDiff (Lorg/partiql/ast/DatetimeField;Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun getRules ()Ljava/util/Map;
+	public fun inCollection (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun minusFn (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun overlaps (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun split (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
+	public fun substring (Ljava/util/List;)Lorg/partiql/ast/expr/Expr;
 }
 
 public final class org/partiql/scribe/targets/duckdb/DuckDBFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -380,19 +431,41 @@ public class org/partiql/scribe/targets/duckdb/DuckDBPlanToAst : org/partiql/scr
 	public fun <init> (Lorg/partiql/spi/catalog/Session;Lorg/partiql/scribe/sql/SqlCalls;Lorg/partiql/scribe/ScribeContext;)V
 	public final fun getCalls ()Lorg/partiql/scribe/sql/SqlCalls;
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	public fun getRelConverter (Ljava/util/List;)Lorg/partiql/scribe/sql/RelConverter;
 	public fun getRexConverter (Lorg/partiql/scribe/sql/Locals;)Lorg/partiql/scribe/sql/RexConverter;
 	public final fun getSession ()Lorg/partiql/spi/catalog/Session;
 }
 
+public class org/partiql/scribe/targets/duckdb/DuckDBRelConverter : org/partiql/scribe/sql/RelConverter {
+	public fun <init> (Lorg/partiql/scribe/targets/duckdb/DuckDBPlanToAst;Lorg/partiql/scribe/ScribeContext;Ljava/util/List;)V
+	public synthetic fun <init> (Lorg/partiql/scribe/targets/duckdb/DuckDBPlanToAst;Lorg/partiql/scribe/ScribeContext;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+}
+
 public class org/partiql/scribe/targets/duckdb/DuckDBRewriter : org/partiql/plan/OperatorRewriter {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathIndex (Lorg/partiql/plan/rex/RexPathIndex;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitPathSymbol (Lorg/partiql/plan/rex/RexPathSymbol;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
 	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
 }
 
 public class org/partiql/scribe/targets/duckdb/DuckDBRexConverter : org/partiql/scribe/sql/RexConverter {
 	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitLit (Lorg/partiql/plan/rex/RexLit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitLit (Lorg/partiql/plan/rex/RexLit;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 }

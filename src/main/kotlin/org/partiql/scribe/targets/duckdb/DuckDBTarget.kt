@@ -15,10 +15,13 @@ import org.partiql.spi.catalog.Session
 /**
  * Experimental DuckDB SQL transpilation target.
  *
- * DuckDB is an in-process analytical SQL engine whose dialect is close to standard SQL. Most PartiQL
- * constructs (SELECT/WHERE/ORDER BY/LIMIT, joins, aggregation, window functions, CTEs, set operations)
- * transpile without special handling. DuckDB-specific rewrites (1-based array indexing, BAG -> ARRAY,
- * CLOB -> VARCHAR, IS MISSING -> IS NULL, etc.) are added incrementally.
+ * DuckDB's dialect is close to standard SQL, so most of the translation is shared with the other SQL targets. This
+ * target was built by porting the Trino target (DuckDB and Trino agree on 1-based array indexing, `ARRAY[...]`
+ * literals, and most scalar functions) and then adapting the cases where DuckDB genuinely diverges (e.g.
+ * `split` -> `string_split`, structs emitted as `{'k': v}` literals, `IS <type>` -> `typeof(...)`).
+ *
+ * Known follow-ups that are not yet DuckDB-specialized: `IS MISSING` handling and `CLOB` -> `VARCHAR`. These are
+ * not exercised by the current test suite.
  */
 public open class DuckDBTarget : SqlTarget() {
     override val target: String = "DuckDB"
@@ -34,7 +37,7 @@ public open class DuckDBTarget : SqlTarget() {
 
     override fun getAstToSql(context: ScribeContext): AstToSql = DuckDBAstToSql(context)
 
-    override fun getCalls(context: ScribeContext): SqlCalls = SqlCalls.standard(context)
+    override fun getCalls(context: ScribeContext): SqlCalls = DuckDBCalls(context)
 
     override fun rewrite(
         plan: Plan,
