@@ -412,7 +412,10 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         node: ExprBag,
         tail: SqlBlock,
     ): SqlBlock {
-        return tail concat list(this, "(", ")") { node.values }
+        // DuckDB has no bag/unordered type; render a PartiQL bag as a DuckDB list literal `[a, b, c]`.
+        // ExprBag is also reused for SQL `IN (...)` value lists, and DuckDB accepts
+        // `x IN [a, b, c]` list-membership, so the list form is valid there too.
+        return tail concat list(this, "[", "]") { node.values }
     }
 
     /**
