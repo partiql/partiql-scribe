@@ -380,6 +380,10 @@ public class org/partiql/scribe/targets/duckdb/DuckDBAstToSql : org/partiql/scri
 	public fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }
 
 public final class org/partiql/scribe/targets/duckdb/DuckDBFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {

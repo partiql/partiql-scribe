@@ -14,6 +14,7 @@ import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.sql.SqlBlock
 import org.partiql.ast.sql.sql
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
 import org.partiql.scribe.sql.utils.list
@@ -23,6 +24,8 @@ import java.math.BigDecimal
  * AST -> SQL text rendering for the DuckDB dialect.
  */
 public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
+    private val listener = context.getProblemListener()
+
     override fun visitExprSessionAttribute(
         node: ExprSessionAttribute,
         tail: SqlBlock,
@@ -193,6 +196,71 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             val signed = if (negative && !amt.startsWith("-")) "-$amt" else amt
             "$signed $unit"
         }.joinToString(" ")
+    }
+
+    /**
+     * DuckDB does not support precision and fractional precision components in the output SQL.
+     */
+    override fun visitIntervalQualifierSingle(
+        node: IntervalQualifier.Single,
+        tail: SqlBlock,
+    ): SqlBlock {
+        if (node.precision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "DuckDB does not support a datetime field INTERVAL precision. " +
+                            "Precision has been omitted in the output.",
+                ),
+            )
+        }
+        if (node.fractionalPrecision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "DuckDB does not support a fractional second INTERVAL precision. " +
+                            "Fractional second precision has been omitted in the output.",
+                ),
+            )
+        }
+        return tail concat node.field.name()
+    }
+
+    /**
+     * DuckDB does not support precision and fractional precision components in the output SQL.
+     */
+    override fun visitIntervalQualifierRange(
+        node: IntervalQualifier.Range,
+        tail: SqlBlock,
+    ): SqlBlock {
+        val startField = node.startField
+        val endField = node.endField
+        var datetimeField = startField.name()
+        if (node.startFieldPrecision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "DuckDB does not support a datetime field INTERVAL precision. " +
+                            "Precision has been omitted in the output.",
+                ),
+            )
+        }
+        datetimeField += " TO ${endField.name()}"
+        if (node.endFieldFractionalPrecision != null) {
+            listener.report(
+                ScribeProblem.simpleInfo(
+                    code = ScribeProblem.TRANSLATION_INFO,
+                    message =
+                        "DuckDB does not support a fractional second INTERVAL precision. " +
+                            "Fractional second precision has been omitted in the output. " +
+                            "DuckDB has a default fractional precision `3` for INTERVAL second.",
+                ),
+            )
+        }
+        return tail concat datetimeField
     }
 
     override fun visitExprCall(
