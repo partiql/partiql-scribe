@@ -4,16 +4,16 @@ SELECT "t"."flds" AS "flds" FROM "default"."EXCLUDE_T" AS "t";
 --#[exclude-01]
 SELECT "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
--- --#[exclude-02] TODO(duckdb)
+--#[exclude-02]
 SELECT {'a': "t"."flds"."a", 'c': "t"."flds"."c"} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
--- --#[exclude-03] TODO(duckdb)
+--#[exclude-03]
 SELECT {'a': "t"."flds"."a", 'b': "t"."flds"."b", 'c': {'field_y': "t"."flds"."c"."field_y"}} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
--- --#[exclude-04] TODO(duckdb)
+--#[exclude-04]
 SELECT {'a': "t"."flds"."a", 'c': {'field_y': "t"."flds"."c"."field_y"}} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
--- --#[exclude-05] TODO(duckdb)
+--#[exclude-05]
 SELECT {'a': "t"."flds"."a", 'b': "t"."flds"."b", 'c': {'field_x': "t"."flds"."c"."field_x"}} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 -- --#[exclude-06]
@@ -23,38 +23,38 @@ SELECT {'a': "t"."flds"."a", 'b': "t"."flds"."b", 'c': {'field_x': "t"."flds"."c
 -- SELECT * EXCLUDE t.flds.c.field_x, t.flds.c.field_y FROM EXCLUDE_T AS t;
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
--- --#[exclude-07] TODO(duckdb)
+--#[exclude-07]
 SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_y': ___coll_wildcard___."field_y"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
--- --#[exclude-08] TODO(duckdb)
+--#[exclude-08]
 SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
--- --#[exclude-09] TODO(duckdb)
+--#[exclude-09]
 SELECT "t1"."flds" AS "flds", {'a': "t2"."flds"."a", 'c': {'field_y': "t2"."flds"."c"."field_y"}} AS "flds", "t2"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true WHERE "t1"."foo" = "t2"."foo";
 
--- --#[exclude-10] TODO(duckdb)
+--#[exclude-10]
 -- EXCLUDE with multiple JOIN and WHERE clause
 SELECT {'b': "t1"."flds"."b", 'c': "t1"."flds"."c"} AS "flds", "t1"."foo" AS "foo", {'a': "t2"."flds"."a", 'c': "t2"."flds"."c"} AS "flds", "t2"."foo" AS "foo", {'a': "t3"."flds"."a", 'b': "t3"."flds"."b"} AS "flds", "t3"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo");
 
--- --#[exclude-11] TODO(duckdb)
+--#[exclude-11]
 -- EXCLUDE with select projection list and multiple JOINs
 SELECT {'b': "t1"."flds"."b", 'c': "t1"."flds"."c"} AS "flds", {'a': "t2"."flds"."a", 'c': "t2"."flds"."c"} AS "flds", {'a': "t3"."flds"."a", 'b': "t3"."flds"."b"} AS "flds" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true INNER JOIN "default"."EXCLUDE_T" AS "t3" ON true WHERE ("t1"."foo" = "t2"."foo") AND ("t2"."foo" = "t3"."foo");
 
 -- EXCLUDE with different types
 -- bool
--- --#[exclude-12] TODO(duckdb)
+--#[exclude-12]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_BOOL" AS "t";
 
 -- int16
--- --#[exclude-13] TODO(duckdb)
+--#[exclude-13]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_INT16" AS "t";
 
 -- int32
--- --#[exclude-14] TODO(duckdb)
+--#[exclude-14]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_INT32" AS "t";
 
 -- int64
--- --#[exclude-15] TODO(duckdb)
+--#[exclude-15]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_INT64" AS "t";
 
 -- int (unconstrained)
@@ -68,55 +68,55 @@ SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_INT64" 
 -- SELECT * EXCLUDE t.foo.bar FROM datatypes.T_DECIMAL AS t;
 
 -- float32
--- --#[exclude-18] TODO(duckdb)
+--#[exclude-18]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_FLOAT32" AS "t";
 
 -- float64
--- --#[exclude-19] TODO(duckdb)
+--#[exclude-19]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_FLOAT64" AS "t";
 
 -- string
--- --#[exclude-20] TODO(duckdb)
+--#[exclude-20]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_STRING" AS "t";
 
 -- date
--- --#[exclude-21] TODO(duckdb)
+--#[exclude-21]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_DATE" AS "t";
 
 -- time
--- --#[exclude-22] TODO(duckdb)
+--#[exclude-22]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_TIME" AS "t";
 
 -- timestamp
--- --#[exclude-23] TODO(duckdb)
+--#[exclude-23]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_TIMESTAMP" AS "t";
 
 -- struct
--- --#[exclude-25] TODO(duckdb)
+--#[exclude-25]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_STRUCT" AS "t";
 
 -- list
--- --#[exclude-26] TODO(duckdb)
+--#[exclude-26]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_LIST" AS "t";
 
 -- decimal(5, 2)
--- --#[exclude-27] TODO(duckdb)
+--#[exclude-27]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_DECIMAL_5_2" AS "t";
 
 -- varchar(16)
--- --#[exclude-28] TODO(duckdb)
+--#[exclude-28]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_STRING_16" AS "t";
 
 -- char(16)
--- --#[exclude-29] TODO(duckdb)
+--#[exclude-29]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_CHAR_16" AS "t";
 
 -- time(6)
--- --#[exclude-30] TODO(duckdb)
+--#[exclude-30]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_TIME_6" AS "t";
 
 -- timestamp(6)
--- --#[exclude-31] TODO(duckdb)
+--#[exclude-31]
 SELECT {'keep': "t"."foo"."keep"} AS "foo" FROM "default"."datatypes"."T_TIMESTAMP_6" AS "t";
 
 -- Tests for EXCLUDE on top-level columns only --
@@ -180,21 +180,21 @@ FROM
         "default"."T_EXCLUDE_TOP_LEVEL" AS "t7" ON true
 WHERE "t1"."a" AND "t2"."a";
 
--- --#[exclude-49] TODO(duckdb)
+--#[exclude-49]
 -- Exclude two nested fields; same transpiled query (other than table name) as #[exclude-04]
 SELECT {'a': "t"."flds"."a", 'c': {'field_y': "t"."flds"."c"."field_y"}} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
--- --#[exclude-50] TODO(duckdb)
+--#[exclude-50]
 SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_y': ___coll_wildcard___."field_y", 'field_z': ___coll_wildcard___."field_z", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
--- --#[exclude-51] TODO(duckdb)
+--#[exclude-51]
 SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x", 'field_z': ___coll_wildcard___."field_z", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
--- --#[exclude-52] TODO(duckdb)
+--#[exclude-52]
 SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x", 'field_y': ___coll_wildcard___."field_y", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
--- --#[exclude-53] TODO(duckdb)
+--#[exclude-53]
 SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x", 'field_y': ___coll_wildcard___."field_y", 'field_z': ___coll_wildcard___."field_z"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
--- --#[exclude-54] TODO(duckdb)
+--#[exclude-54]
 SELECT {'select': {'field_y': "t"."flds"."select"."field_y"}, 'order': "t"."flds"."order"} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_RESERVED_KEYWORDS" AS "t";

@@ -43,7 +43,7 @@ FROM "default"."T" AS "T";
 --         END AS "result"
 -- FROM "default"."T" AS "T";
 
--- --#[case-09] TODO(duckdb)
+--#[case-09]
 SELECT
     CASE
         WHEN typeof("T"."x") = 'INTEGER' THEN 'x IS INT'
