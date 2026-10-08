@@ -34,53 +34,20 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
     }
 
     /**
-     * DuckDB has no `IS <type>` predicate. Rewrite it to a `typeof(<value>)` comparison, e.g.
-     * `x IS INT` -> `typeof(x) = 'INTEGER'`. For STRUCT, DuckDB's `typeof` reports a parameterized name
-     * (e.g. `STRUCT(a INTEGER)`), so match by prefix with `starts_with(typeof(x), 'STRUCT')`. Types we cannot
-     * map fall back to the base `IS <type>` rendering.
+     * DuckDB has no `IS <type>` predicate, and `typeof`-based rewrites cannot faithfully match PartiQL type semantics
+     * (e.g. parameterized and nested types), so `IS <type>` is rejected.
      */
     override fun visitExprIsType(
         node: ExprIsType,
         tail: SqlBlock,
     ): SqlBlock {
-        val typeName = duckDBTypeofName(node.type) ?: return super.visitExprIsType(node, tail)
-        var t = tail
-        // STRUCT: typeof yields a parameterized name, so compare by prefix.
-        if (node.type.code() == DataType.STRUCT) {
-            if (node.isNot) t = t concat "NOT "
-            t = t concat "starts_with(typeof("
-            t = visitExprWrapped(node.value, t)
-            t = t concat "), 'STRUCT')"
-            return t
-        }
-        t = t concat "typeof("
-        t = visitExprWrapped(node.value, t)
-        t = t concat if (node.isNot) ") <> '$typeName'" else ") = '$typeName'"
-        return t
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                "DuckDB does not support `IS ${node.type.name()}`.",
+            ),
+        )
     }
-
-    /**
-     * Maps a PartiQL [DataType] to the string DuckDB's `typeof` returns for that type, or null if we have no
-     * faithful mapping.
-     */
-    private fun duckDBTypeofName(type: DataType): String? =
-        when (type.code()) {
-            DataType.INT, DataType.INTEGER, DataType.INT4, DataType.INTEGER4 -> "INTEGER"
-            DataType.BIGINT, DataType.INT8, DataType.INTEGER8 -> "BIGINT"
-            DataType.SMALLINT, DataType.INT2, DataType.INTEGER2 -> "SMALLINT"
-            DataType.TINYINT -> "TINYINT"
-            DataType.REAL, DataType.FLOAT -> "FLOAT"
-            DataType.DOUBLE_PRECISION -> "DOUBLE"
-            DataType.BOOL, DataType.BOOLEAN -> "BOOLEAN"
-            DataType.CHAR, DataType.CHARACTER, DataType.VARCHAR,
-            DataType.CHARACTER_VARYING, DataType.CHAR_VARYING, DataType.STRING,
-            -> "VARCHAR"
-            DataType.DATE -> "DATE"
-            DataType.TIME -> "TIME"
-            DataType.TIMESTAMP -> "TIMESTAMP"
-            DataType.STRUCT -> "STRUCT"
-            else -> null
-        }
 
     override fun visitExprLit(
         node: ExprLit,
@@ -106,6 +73,7 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
                 if (qualifier is IntervalQualifier.Range) {
                     val verbose = duckDBRangeIntervalString(lit.stringValue(), qualifier)
                     if (verbose != null) {
+                        reportOmittedRangePrecision(qualifier)
                         return t concat "INTERVAL '$verbose'"
                     }
                 }
@@ -235,9 +203,15 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         node: IntervalQualifier.Range,
         tail: SqlBlock,
     ): SqlBlock {
-        val startField = node.startField
-        val endField = node.endField
-        var datetimeField = startField.name()
+        reportOmittedRangePrecision(node)
+        return tail concat "${node.startField.name()} TO ${node.endField.name()}"
+    }
+
+    /**
+     * Reports a [ScribeProblem.TRANSLATION_INFO] for each range INTERVAL qualifier precision that is omitted from the
+     * DuckDB output.
+     */
+    private fun reportOmittedRangePrecision(node: IntervalQualifier.Range) {
         if (node.startFieldPrecision != null) {
             listener.report(
                 ScribeProblem.simpleInfo(
@@ -248,7 +222,6 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
                 ),
             )
         }
-        datetimeField += " TO ${endField.name()}"
         if (node.endFieldFractionalPrecision != null) {
             listener.report(
                 ScribeProblem.simpleInfo(
@@ -260,7 +233,6 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
                 ),
             )
         }
-        return tail concat datetimeField
     }
 
     override fun visitExprCall(
@@ -303,6 +275,15 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         node: ExprStruct,
         tail: SqlBlock,
     ): SqlBlock {
+        // DuckDB cannot represent an empty struct: `{}`, `ROW()`, and `struct_pack()` all error.
+        if (node.fields.isEmpty()) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
+                    "DuckDB does not support empty struct values.",
+                ),
+            )
+        }
         return tail concat list(this, "{", "}") { node.fields }
     }
 
