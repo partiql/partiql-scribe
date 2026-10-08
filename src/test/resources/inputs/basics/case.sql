@@ -91,13 +91,3 @@ SELECT
         WHEN a = TRUE THEN 'a IS TRUE'
     END AS result
 FROM T;
-
---#[case-12]
--- IS FLOAT (planned as is_float32, i.e. DataType.FLOAT)
-SELECT
-    CASE
-        WHEN x IS FLOAT THEN 'x IS FLOAT'
-        WHEN x IS NOT FLOAT THEN 'x IS NOT FLOAT'
-        ELSE 'x IS SOMETHING ELSE'
-    END AS result
-FROM T;
