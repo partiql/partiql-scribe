@@ -43,14 +43,9 @@ FROM "default"."T" AS "T";
 --         END AS "result"
 -- FROM "default"."T" AS "T";
 
--- --#[case-09] TODO(duckdb)
-SELECT
-    CASE
-        WHEN typeof("T"."x") = 'INTEGER' THEN 'x IS INT'
-        WHEN starts_with(typeof("T"."x"), 'STRUCT') THEN 'x IS STRUCT'
-        ELSE 'x IS SOMETHING ELSE'
-END AS "result"
-FROM "default"."T" AS "T";
+-- DuckDB has no `IS <type>` predicate; Scribe rejects it.
+--#[case-09]
+[ScribeException{code=UNSUPPORTED_AST_TO_TEXT_CONVERSION}];
 
 --#[case-11]
 -- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`

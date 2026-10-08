@@ -5,10 +5,10 @@ SELECT INTERVAL '10' YEAR AS "i" FROM "default"."T" AS "T";
 --#[interval-01]
 SELECT INTERVAL '-10' YEAR AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-02] TODO(duckdb)
+--#[interval-02]
 SELECT INTERVAL '10' YEAR AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-03] TODO(duckdb)
+--#[interval-03]
 SELECT INTERVAL '-10' YEAR AS "i" FROM "default"."T" AS "T";
 
 --#[interval-04]
@@ -17,10 +17,10 @@ SELECT INTERVAL '10' MONTH AS "i" FROM "default"."T" AS "T";
 --#[interval-05]
 SELECT INTERVAL '-10' MONTH AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-06] TODO(duckdb)
+--#[interval-06]
 SELECT INTERVAL '10' MONTH AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-07] TODO(duckdb)
+--#[interval-07]
 SELECT INTERVAL '-10' MONTH AS "i" FROM "default"."T" AS "T";
 
 --#[interval-08]
@@ -29,10 +29,10 @@ SELECT INTERVAL '10' DAY AS "i" FROM "default"."T" AS "T";
 --#[interval-09]
 SELECT INTERVAL '-10' DAY AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-10] TODO(duckdb)
+--#[interval-10]
 SELECT INTERVAL '10' DAY AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-11] TODO(duckdb)
+--#[interval-11]
 SELECT INTERVAL '-10' DAY AS "i" FROM "default"."T" AS "T";
 
 --#[interval-12]
@@ -41,10 +41,10 @@ SELECT INTERVAL '10' HOUR AS "i" FROM "default"."T" AS "T";
 --#[interval-13]
 SELECT INTERVAL '-10' HOUR AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-14] TODO(duckdb)
+--#[interval-14]
 SELECT INTERVAL '10' HOUR AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-15] TODO(duckdb)
+--#[interval-15]
 SELECT INTERVAL '-10' HOUR AS "i" FROM "default"."T" AS "T";
 
 --#[interval-16]
@@ -53,10 +53,10 @@ SELECT INTERVAL '10' MINUTE AS "i" FROM "default"."T" AS "T";
 --#[interval-17]
 SELECT INTERVAL '-10' MINUTE AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-18] TODO(duckdb)
+--#[interval-18]
 SELECT INTERVAL '10' MINUTE AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-19] TODO(duckdb)
+--#[interval-19]
 SELECT INTERVAL '-10' MINUTE AS "i" FROM "default"."T" AS "T";
 
 --#[interval-20]
@@ -65,172 +65,172 @@ SELECT INTERVAL '10' SECOND AS "i" FROM "default"."T" AS "T";
 --#[interval-21]
 SELECT INTERVAL '-10' SECOND AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-22] TODO(duckdb)
+--#[interval-22]
 SELECT INTERVAL '10' SECOND AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-23] TODO(duckdb)
+--#[interval-23]
 SELECT INTERVAL '-10' SECOND AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-24] TODO(duckdb)
+--#[interval-24]
 SELECT INTERVAL '10.234' SECOND AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-25] TODO(duckdb)
+--#[interval-25]
 SELECT INTERVAL '-10.234' SECOND AS "i" FROM "default"."T" AS "T";
 
 -- <start field> TO <end field>
--- --#[interval-26] TODO(duckdb)
+--#[interval-26]
 SELECT INTERVAL '10 years 3 months' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-27] TODO(duckdb)
+--#[interval-27]
 SELECT INTERVAL '-10 years -3 months' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-28] TODO(duckdb)
+--#[interval-28]
 SELECT INTERVAL '10 years 3 months' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-29] TODO(duckdb)
+--#[interval-29]
 SELECT INTERVAL '-10 years -3 months' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-30] TODO(duckdb)
+--#[interval-30]
 SELECT INTERVAL '10 days 3 hours' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-31] TODO(duckdb)
+--#[interval-31]
 SELECT INTERVAL '-10 days -3 hours' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-32] TODO(duckdb)
+--#[interval-32]
 SELECT INTERVAL '10 days 3 hours' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-33] TODO(duckdb)
+--#[interval-33]
 SELECT INTERVAL '-10 days -3 hours' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-34] TODO(duckdb)
+--#[interval-34]
 SELECT INTERVAL '10 days 3 hours 4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-35] TODO(duckdb)
+--#[interval-35]
 SELECT INTERVAL '-10 days -3 hours -4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-36] TODO(duckdb)
+--#[interval-36]
 SELECT INTERVAL '10 days 3 hours 4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-37] TODO(duckdb)
+--#[interval-37]
 SELECT INTERVAL '-10 days -3 hours -4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-38] TODO(duckdb)
+--#[interval-38]
 SELECT INTERVAL '10 days 3 hours 4 minutes 5 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-39] TODO(duckdb)
+--#[interval-39]
 SELECT INTERVAL '-10 days -3 hours -4 minutes -5 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-40] TODO(duckdb)
+--#[interval-40]
 SELECT INTERVAL '10 days 3 hours 4 minutes 5 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-41] TODO(duckdb)
+--#[interval-41]
 SELECT INTERVAL '-10 days -3 hours -4 minutes -5 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-42] TODO(duckdb)
+--#[interval-42]
 SELECT INTERVAL '10 days 3 hours 4 minutes 5.678 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-43] TODO(duckdb)
+--#[interval-43]
 SELECT INTERVAL '-10 days -3 hours -4 minutes -5.678 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-44] TODO(duckdb)
+--#[interval-44]
 SELECT INTERVAL '10 days 3 hours 4 minutes 5.678 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-45] TODO(duckdb)
+--#[interval-45]
 SELECT INTERVAL '-10 days -3 hours -4 minutes -5.678 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-46] TODO(duckdb)
+--#[interval-46]
 SELECT INTERVAL '3 hours 4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-47] TODO(duckdb)
+--#[interval-47]
 SELECT INTERVAL '-3 hours -4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-48] TODO(duckdb)
+--#[interval-48]
 SELECT INTERVAL '3 hours 4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-49] TODO(duckdb)
+--#[interval-49]
 SELECT INTERVAL '-3 hours -4 minutes' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-50] TODO(duckdb)
+--#[interval-50]
 SELECT INTERVAL '2 hours 3 minutes 4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-51] TODO(duckdb)
+--#[interval-51]
 SELECT INTERVAL '-2 hours -3 minutes -4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-52] TODO(duckdb)
+--#[interval-52]
 SELECT INTERVAL '2 hours 3 minutes 4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-53] TODO(duckdb)
+--#[interval-53]
 SELECT INTERVAL '-2 hours -3 minutes -4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-54] TODO(duckdb)
+--#[interval-54]
 SELECT INTERVAL '2 hours 3 minutes 4.567 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-55] TODO(duckdb)
+--#[interval-55]
 SELECT INTERVAL '-2 hours -3 minutes -4.567 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-56] TODO(duckdb)
+--#[interval-56]
 SELECT INTERVAL '2 hours 3 minutes 4.567 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-57] TODO(duckdb)
+--#[interval-57]
 SELECT INTERVAL '-2 hours -3 minutes -4.567 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-58] TODO(duckdb)
+--#[interval-58]
 SELECT INTERVAL '3 minutes 4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-59] TODO(duckdb)
+--#[interval-59]
 SELECT INTERVAL '-3 minutes -4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-60] TODO(duckdb)
+--#[interval-60]
 SELECT INTERVAL '3 minutes 4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-61] TODO(duckdb)
+--#[interval-61]
 SELECT INTERVAL '-3 minutes -4 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-62] TODO(duckdb)
+--#[interval-62]
 SELECT INTERVAL '3 minutes 4.567 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-63] TODO(duckdb)
+--#[interval-63]
 SELECT INTERVAL '-3 minutes -4.567 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-64] TODO(duckdb)
+--#[interval-64]
 SELECT INTERVAL '3 minutes 4.567 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-65] TODO(duckdb)
+--#[interval-65]
 SELECT INTERVAL '-3 minutes -4.567 seconds' AS "i" FROM "default"."T" AS "T";
 -- Additional DAY TO SECOND precision tests
--- --#[interval-66] TODO(duckdb)
+--#[interval-66]
 SELECT INTERVAL '2 days 3 hours 4 minutes 5.000006 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-67] TODO(duckdb)
+--#[interval-67]
 SELECT INTERVAL '-2 days -3 hours -4 minutes -5.000006 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-68] TODO(duckdb)
+--#[interval-68]
 SELECT INTERVAL '2 days 3 hours 4 minutes 5.000006000 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-69] TODO(duckdb)
+--#[interval-69]
 SELECT INTERVAL '-2 days -3 hours -4 minutes -5.000006000 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-70] TODO(duckdb)
+--#[interval-70]
 SELECT INTERVAL '2 days 3 hours 4 minutes 5.000 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-71] TODO(duckdb)
+--#[interval-71]
 SELECT INTERVAL '-2 days -3 hours -4 minutes -5.000 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-72] TODO(duckdb)
+--#[interval-72]
 SELECT INTERVAL '2 days 3 hours 4 minutes 5.000000 seconds' AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-73] TODO(duckdb)
+--#[interval-73]
 SELECT INTERVAL '-2 days -3 hours -4 minutes -5.000000 seconds' AS "i" FROM "default"."T" AS "T";
 
 -- Additional large value test cases
 --#[interval-74]
 SELECT INTERVAL '30' MONTH AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-75] TODO(duckdb)
+--#[interval-75]
 SELECT INTERVAL '100' HOUR AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-76] TODO(duckdb)
+--#[interval-76]
 SELECT INTERVAL '2000' MINUTE AS "i" FROM "default"."T" AS "T";
 
--- --#[interval-77] TODO(duckdb)
+--#[interval-77]
 SELECT INTERVAL '100000' SECOND AS "i" FROM "default"."T" AS "T";

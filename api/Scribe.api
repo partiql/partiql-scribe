@@ -368,8 +368,22 @@ public abstract class org/partiql/scribe/sql/SqlTarget : org/partiql/scribe/Scri
 
 public class org/partiql/scribe/targets/duckdb/DuckDBAstToSql : org/partiql/scribe/sql/AstToSql {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprIsType (Lorg/partiql/ast/expr/ExprIsType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprIsType (Lorg/partiql/ast/expr/ExprIsType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprLit (Lorg/partiql/ast/expr/ExprLit;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprSessionAttribute (Lorg/partiql/ast/expr/ExprSessionAttribute;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprStruct (Lorg/partiql/ast/expr/ExprStruct;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprStructField (Lorg/partiql/ast/expr/ExprStruct$Field;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }
 
 public final class org/partiql/scribe/targets/duckdb/DuckDBFeatures : org/partiql/scribe/sql/SqlFeatures$Permissive {
@@ -389,10 +403,15 @@ public class org/partiql/scribe/targets/duckdb/DuckDBRewriter : org/partiql/plan
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
 	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
+	public synthetic fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Ljava/lang/Object;)Lorg/partiql/plan/Operator;
+	public fun visitStruct (Lorg/partiql/plan/rex/RexStruct;Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/plan/Operator;
 }
 
 public class org/partiql/scribe/targets/duckdb/DuckDBRexConverter : org/partiql/scribe/sql/RexConverter {
 	public fun <init> (Lorg/partiql/scribe/sql/PlanToAst;Lorg/partiql/scribe/sql/Locals;Lorg/partiql/scribe/ScribeContext;)V
+	public synthetic fun visitLit (Lorg/partiql/plan/rex/RexLit;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitLit (Lorg/partiql/plan/rex/RexLit;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitPathKey (Lorg/partiql/plan/rex/RexPathKey;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 }
