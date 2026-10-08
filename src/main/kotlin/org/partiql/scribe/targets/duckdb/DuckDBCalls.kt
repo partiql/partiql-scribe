@@ -25,7 +25,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
         }
 
     /**
-     * PartiQL `map_contains_key(map, key)` -> DuckDB `contains(map_keys(map), key)`
+     * PartiQL `map_contains_key(map, key)` -> DuckDB `map_contains(map, key)`
      */
     private fun mapContainsKey(args: SqlArgs): Expr {
         val mapContainsId = Identifier.regular("map_contains")

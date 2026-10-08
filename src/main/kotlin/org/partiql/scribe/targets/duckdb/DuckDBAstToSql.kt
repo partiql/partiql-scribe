@@ -40,16 +40,18 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         var t = tail
+        // Mixing comma joins with an explicit `CROSS JOIN UNNEST` changes binding (the explicit join binds tighter, so
+        // the UNNEST could no longer see earlier comma-joined tables). If any table ref is an UNNEST, join every ref
+        // with an explicit `CROSS JOIN`.
+        val hasUnnest =
+            node.tableRefs.any { ref ->
+                ref is org.partiql.ast.FromExpr && ref.expr is ExprCall &&
+                    (ref.expr as ExprCall).function.identifier.getText() == DuckDBRelConverter.MARKER_UNNEST
+            }
+        val separator = if (hasUnnest) " CROSS JOIN " else ", "
         node.tableRefs.forEachIndexed { i, ref ->
             if (i > 0) {
-                val isUnnest =
-                    ref is org.partiql.ast.FromExpr && ref.expr is ExprCall &&
-                        (ref.expr as ExprCall).function.identifier.getText() == DuckDBRelConverter.MARKER_UNNEST
-                if (isUnnest) {
-                    t = t concat " CROSS JOIN "
-                } else {
-                    t = t concat ", "
-                }
+                t = t concat separator
             }
             t = ref.accept(this, t)
         }
@@ -404,52 +406,9 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
                     offset = node.offset,
                     orderBy = orderBy(newSorts),
                 )
-            return visitExprQuerySetLimitOffsetTReorder(newNode, tail)
+            return super.visitExprQuerySet(newNode, tail)
         }
-        return visitExprQuerySetLimitOffsetTReorder(node, tail)
-    }
-
-    private fun visitExprQuerySetLimitOffsetTReorder(
-        node: ExprQuerySet,
-        tail: SqlBlock,
-    ): SqlBlock {
-        var t = super.visitExprQuerySet(node, tail)
-
-        if (node.limit != null && node.offset != null) {
-            var current = tail
-            var limitBlock: SqlBlock? = null
-            var offsetBlock: SqlBlock? = null
-
-            // locate last occurence of LIMIT and OFFSET node
-            while (current.next != null) {
-                val next = current.next!!
-                if (next is SqlBlock.Text) {
-                    if (next.text.trim() == "LIMIT") {
-                        limitBlock = current
-                    } else if (next.text.trim() == "OFFSET") {
-                        offsetBlock = current
-                    }
-                }
-                current = next
-            }
-
-            if (limitBlock != null && offsetBlock != null) {
-                // swap the order of LIMIT and OFFSET clauses
-                val limit = limitBlock.next!!
-                val offset = offsetBlock.next!!
-                val end = offset.next!!.next
-                limitBlock.next = offset
-                offset.next!!.next = limit
-                limit.next!!.next = end
-
-                // update the tail to point to the new end if needed
-                if (end == null) {
-                    t = limit.next!!
-                }
-            }
-        }
-
-        return t
+        return super.visitExprQuerySet(node, tail)
     }
 
     /**

@@ -141,6 +141,16 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
                         ),
                     )
             }
+        // PartiQL indexes are 0-based, so after shifting a valid index is >= 1. A negative index has no DuckDB
+        // equivalent (DuckDB counts negative indexes from the end), and Long.MAX_VALUE overflows when shifted.
+        if (rexIndex < 1) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "DuckDB array index must be a non-negative integer less than ${Long.MAX_VALUE}, e.g. x[1].",
+                ),
+            )
+        }
         // rewrite to be 1-indexed
         val pathIndex = RexPathIndex.create(node.operand, RexLit.create(Datum.bigint(rexIndex)))
         pathIndex.type = node.type

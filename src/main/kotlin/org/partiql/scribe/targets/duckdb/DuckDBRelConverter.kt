@@ -197,7 +197,7 @@ public open class DuckDBRelConverter(transform: DuckDBPlanToAst, context: Scribe
             val predicate = filter.predicate
             val isTrivialTrue =
                 predicate is org.partiql.plan.rex.RexLit &&
-                    predicate.datum.type.code() == PType.BOOL && predicate.datum.boolean
+                    predicate.datum.type.code() == PType.BOOL && !predicate.datum.isUnknown() && predicate.datum.boolean
             if (!isTrivialTrue) {
                 val filterRexConverter = transform.getRexConverter(rhsLocals)
                 lhs.where = filterRexConverter.apply(predicate)
