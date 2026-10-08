@@ -69,7 +69,7 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             DataType.BIGINT, DataType.INT8, DataType.INTEGER8 -> "BIGINT"
             DataType.SMALLINT, DataType.INT2, DataType.INTEGER2 -> "SMALLINT"
             DataType.TINYINT -> "TINYINT"
-            DataType.REAL -> "FLOAT"
+            DataType.REAL, DataType.FLOAT -> "FLOAT"
             DataType.DOUBLE_PRECISION -> "DOUBLE"
             DataType.BOOL, DataType.BOOLEAN -> "BOOLEAN"
             DataType.CHAR, DataType.CHARACTER, DataType.VARCHAR,
