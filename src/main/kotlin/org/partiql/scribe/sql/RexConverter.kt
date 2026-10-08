@@ -119,8 +119,14 @@ public class Locals(
         }
 
         if (targetLocals.ctes.isNotEmpty()) {
+            // A scope with CTEs resolves offsets exclusively against its CTE list, mirroring the
+            // aggregation branch above: both return from this branch, so env is never consulted
+            // once CTEs are present. getOrNull (not a direct index) honors this method's nullable
+            // contract, returning null on an out-of-range offset instead of throwing
+            // IndexOutOfBoundsException.
+            val cte = targetLocals.ctes.getOrNull(offset) ?: return null
             return exprVarRef(
-                identifier = binder(targetLocals.ctes[offset]),
+                identifier = binder(cte),
                 isQualified = false,
             )
         }

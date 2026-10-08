@@ -169,8 +169,13 @@ internal fun removePathRoot(expr: Expr): Expr {
     return when (expr) {
         is ExprPath -> {
             val steps = expr.steps
-            val first = expr.steps.first()
-            if (first is PathStep.Element && first.element is ExprLit) { // e.g. T['a'] — bracket notation with literal key
+            // An ExprPath can carry an empty steps list; guard before accessing the first step
+            // so a root-only path is returned unchanged rather than throwing NoSuchElementException.
+            if (steps.isEmpty()) return expr
+            val first = steps.first()
+            if (first is PathStep.Element && first.element is ExprLit &&
+                (first.element as ExprLit).lit.code() == Literal.STRING
+            ) { // e.g. T['a'] — bracket notation with a string literal key
                 val newFirst = exprVarRef(Identifier.delimited((first.element as ExprLit).lit.stringValue()), isQualified = false)
                 if (steps.size == 1) { // T['a'] -> "a"
                     newFirst
