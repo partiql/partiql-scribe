@@ -43,7 +43,7 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
     ): SqlBlock {
         listener.reportAndThrow(
             ScribeProblem.simpleError(
-                ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                ScribeProblem.UNSUPPORTED_AST_TO_TEXT_CONVERSION,
                 "DuckDB does not support `IS ${node.type.name()}`.",
             ),
         )
@@ -241,8 +241,8 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
     ): SqlBlock {
         var t = tail
         val f = node.function
-        // Render DATE_DIFF('<part>', <lhs>, <rhs>) without quoting the datetime-field part identifier.
-        // (DATE_ADD is rejected upstream in DuckDBCalls.dateAdd, so it never reaches here.)
+        // Keep the DATE_DIFF datetime part as a quoted string (`date_diff('year', a, b)`); the base renderer would
+        // unquote it. DATE_ADD is handled with the builtins/datetime cases in a later PR.
         if (!f.hasQualifier() &&
             f.identifier.text.uppercase() == "DATE_DIFF" &&
             node.args.size == 3

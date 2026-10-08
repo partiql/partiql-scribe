@@ -45,7 +45,7 @@ FROM "default"."T" AS "T";
 
 -- DuckDB has no `IS <type>` predicate; Scribe rejects it.
 --#[case-09]
-[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+[ScribeException{code=UNSUPPORTED_AST_TO_TEXT_CONVERSION}];
 
 --#[case-11]
 -- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`

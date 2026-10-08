@@ -16,11 +16,11 @@ SELECT {'a': "t"."flds"."a", 'c': {'field_y': "t"."flds"."c"."field_y"}} AS "fld
 --#[exclude-05]
 SELECT {'a': "t"."flds"."a", 'b': "t"."flds"."b", 'c': {'field_x': "t"."flds"."c"."field_x"}} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
--- --#[exclude-06]
 -- Excludes all the fields of `t.flds.c`, which would produce an empty struct. DuckDB does not support empty
 -- structs (`{}`, `ROW()`, and `struct_pack()` all error), so Scribe rejects this with UNSUPPORTED_PLAN_TO_AST_CONVERSION.
 -- Exclude the containing field instead, e.g. `EXCLUDE t.flds.c`.
--- SELECT * EXCLUDE t.flds.c.field_x, t.flds.c.field_y FROM EXCLUDE_T AS t;
+--#[exclude-06]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 --#[exclude-07]
