@@ -2,13 +2,21 @@ package org.partiql.scribe.targets.duckdb
 
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.Ast.exprQuerySet
+import org.partiql.ast.Ast.orderBy
+import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
+import org.partiql.ast.Identifier
 import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
+import org.partiql.ast.QueryBody
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprIsType
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprMap
+import org.partiql.ast.expr.ExprPath
+import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprSessionAttribute
 import org.partiql.ast.expr.ExprStruct
 import org.partiql.ast.sql.SqlBlock
@@ -18,6 +26,7 @@ import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
 import org.partiql.scribe.sql.utils.list
+import org.partiql.scribe.sql.utils.removePathRoot
 import java.math.BigDecimal
 
 /**
@@ -26,11 +35,67 @@ import java.math.BigDecimal
 public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
 
+    override fun visitFrom(
+        node: org.partiql.ast.From,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail
+        node.tableRefs.forEachIndexed { i, ref ->
+            if (i > 0) {
+                val isUnnest =
+                    ref is org.partiql.ast.FromExpr && ref.expr is ExprCall &&
+                        (ref.expr as ExprCall).function.identifier.getText() == DuckDBRelConverter.MARKER_UNNEST
+                if (isUnnest) {
+                    t = t concat " CROSS JOIN "
+                } else {
+                    t = t concat ", "
+                }
+            }
+            t = ref.accept(this, t)
+        }
+        return t
+    }
+
+    override fun visitFromExpr(
+        node: org.partiql.ast.FromExpr,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var h = tail
+        val expr = node.expr
+        // UNNEST: render as UNNEST(expr) AS _alias(item)
+        if (expr is ExprCall && expr.function.identifier.getText() == DuckDBRelConverter.MARKER_UNNEST) {
+            h = visitExprWrapped(expr, h)
+            val tableAlias = node.asAlias!!.sql()
+            val itemAlias = Identifier.Simple.delimited(node.asAlias!!.getText().removePrefix("_")).sql()
+            h = h concat " AS $tableAlias($itemAlias)"
+            return h
+        }
+        // LATERAL: render as LATERAL (subquery) AS alias
+        if (expr is ExprCall && expr.function.identifier.getText() == DuckDBRelConverter.MARKER_LATERAL) {
+            h = h concat "LATERAL "
+            h = visitExprWrapped(expr.args[0], h)
+            h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
+            return h
+        }
+        // Default rendering
+        h = visitExprWrapped(node.expr, h)
+        h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
+        return h
+    }
+
     override fun visitExprSessionAttribute(
         node: ExprSessionAttribute,
         tail: SqlBlock,
     ): SqlBlock {
-        return tail concat node.sessionAttribute.name().lowercase()
+        val name = node.sessionAttribute.name()
+        // `current_user` / `current_date` as bare keywords collide with an auto-derived output alias of the
+        // same name ("Column ... cannot be referenced before it is defined"). DuckDB accepts the parenthesized
+        // function forms `current_user()` / `current_date()` which avoid the collision. Note `current_timestamp`
+        // does NOT accept parentheses, so only these two are rewritten.
+        return when (name) {
+            "CURRENT_USER", "CURRENT_DATE" -> tail concat "${name.lowercase()}()"
+            else -> tail concat name.lowercase()
+        }
     }
 
     /**
@@ -296,6 +361,168 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         t = visitExprWrapped(node.name, t)
         t = t concat ": "
         t = visitExprWrapped(node.value, t)
+        return t
+    }
+
+    /**
+     * The PartiQL plan and thus AST will fully-qualify ORDER BY variable references and paths with an implicit
+     * binding tuple name for set operations. For DuckDB, there is no implicit binding tuple name for the set ops. So
+     * we must remove the prefix binding tuple name from paths.
+     *
+     * For example, the query
+     *   (SELECT a FROM ...) UNION (SELECT a FROM ...) ORDER BY a
+     * will have an extra qualification
+     *   (SELECT a FROM ...) UNION (SELECT a FROM ...) ORDER BY "_1".a
+     * The additional qualification is invalid DuckDB, hence why we remove it.
+     */
+    override fun visitExprQuerySet(
+        node: ExprQuerySet,
+        tail: SqlBlock,
+    ): SqlBlock {
+        if (node.body is QueryBody.SetOp && node.orderBy != null) {
+            val orderBy = node.orderBy!!
+            val newSorts =
+                orderBy.sorts.map { sort ->
+                    val newExpr = removePathRoot(sort.expr)
+                    // DuckDB only allows ordering a set operation by an output column (or an expression present
+                    // in every SELECT), not by a nested path into an output column (e.g. `flds.c.field_x`).
+                    if (newExpr is ExprPath) {
+                        listener.reportAndThrow(
+                            ScribeProblem.simpleError(
+                                ScribeProblem.UNSUPPORTED_OPERATION,
+                                "DuckDB does not support ORDER BY a nested path on a set operation (UNION/INTERSECT/" +
+                                    "EXCEPT) result; only output columns may be used.",
+                            ),
+                        )
+                    }
+                    sort(newExpr, sort.order, sort.nulls)
+                }
+            val newNode =
+                exprQuerySet(
+                    body = node.body,
+                    limit = node.limit,
+                    offset = node.offset,
+                    orderBy = orderBy(newSorts),
+                )
+            return visitExprQuerySetLimitOffsetTReorder(newNode, tail)
+        }
+        return visitExprQuerySetLimitOffsetTReorder(node, tail)
+    }
+
+    private fun visitExprQuerySetLimitOffsetTReorder(
+        node: ExprQuerySet,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = super.visitExprQuerySet(node, tail)
+
+        if (node.limit != null && node.offset != null) {
+            var current = tail
+            var limitBlock: SqlBlock? = null
+            var offsetBlock: SqlBlock? = null
+
+            // locate last occurence of LIMIT and OFFSET node
+            while (current.next != null) {
+                val next = current.next!!
+                if (next is SqlBlock.Text) {
+                    if (next.text.trim() == "LIMIT") {
+                        limitBlock = current
+                    } else if (next.text.trim() == "OFFSET") {
+                        offsetBlock = current
+                    }
+                }
+                current = next
+            }
+
+            if (limitBlock != null && offsetBlock != null) {
+                // swap the order of LIMIT and OFFSET clauses
+                val limit = limitBlock.next!!
+                val offset = offsetBlock.next!!
+                val end = offset.next!!.next
+                limitBlock.next = offset
+                offset.next!!.next = limit
+                limit.next!!.next = end
+
+                // update the tail to point to the new end if needed
+                if (end == null) {
+                    t = limit.next!!
+                }
+            }
+        }
+
+        return t
+    }
+
+    /**
+     * DuckDB-specific type conversions
+     * BOOL -> BOOLEAN
+     * INT2 -> SMALLINT
+     * INT4 -> INT
+     * INT8 -> BIGINT
+     * DOUBLE PRECISION -> DOUBLE
+     * STRING -> VARCHAR
+     */
+    override fun visitDataType(
+        node: DataType,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return when (node.code()) {
+            DataType.BOOL -> tail concat "BOOLEAN"
+            DataType.INT2 -> tail concat "SMALLINT"
+            DataType.INT4 -> tail concat "INT"
+            DataType.INT8 -> tail concat "BIGINT"
+            DataType.DOUBLE_PRECISION -> tail concat "DOUBLE"
+            DataType.STRING -> tail concat "VARCHAR"
+            DataType.TIME -> tail concat "TIME"
+
+            // According to https://duckdb.org/docs/current/language/types.html#timestamp-p-with-time-zone,
+            // DuckDB does not support precision and `WITH TIME ZONE` in TIME/TIMESTAMP in time literal,
+            // but support them in the scenarios like cast or table creation.
+            // e.g. SELECT cast(TIMESTAMP '2020-06-10 15:55:23.383345' as TIMESTAMP(12));
+            // However, due to limit of Datum limitation, unspecified precision information is not preserved. So we ignore
+            // the precision information here.
+            // TODO precision https://github.com/partiql/partiql-scribe/issues/145
+            DataType.TIME_WITH_TIME_ZONE -> tail concat "TIME WITH TIME ZONE"
+            DataType.TIMESTAMP -> tail concat "TIMESTAMP"
+            DataType.TIMESTAMP_WITH_TIME_ZONE -> tail concat "TIMESTAMP WITH TIME ZONE"
+            // DuckDB has a single unified INTERVAL type and ignores the qualifier in a type position (e.g. a
+            // CAST target), so we drop it: `CAST(x AS INTERVAL YEAR)` -> `CAST(x AS INTERVAL)`. Interval
+            // *literals* keep their qualifier (they render via visitIntervalQualifier, not here) since DuckDB
+            // needs the unit there.
+            DataType.INTERVAL -> tail concat "INTERVAL"
+            DataType.MAP -> {
+                var t = tail concat "MAP("
+                t = visitDataType(node.keyType, t)
+                t = t concat ", "
+                t = visitDataType(node.elementType, t)
+                t = t concat ")"
+                t
+            }
+            else -> super.visitDataType(node, tail)
+        }
+    }
+
+    // DuckDB's MAP constructor: MAP(ARRAY[key1, key2, ...], ARRAY[val1, val2, ...])
+    // https://duckdb.org/docs/current/functions/map.html
+    @Suppress("DEPRECATION")
+    override fun visitExprMap(
+        node: ExprMap,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail concat "MAP(ARRAY["
+        node.entries.forEachIndexed { index, entry ->
+            t = visitExprWrapped(entry.key, t)
+            if (index < node.entries.size - 1) {
+                t = t concat ", "
+            }
+        }
+        t = t concat "], ARRAY["
+        node.entries.forEachIndexed { index, entry ->
+            t = visitExprWrapped(entry.value, t)
+            if (index < node.entries.size - 1) {
+                t = t concat ", "
+            }
+        }
+        t = t concat "])"
         return t
     }
 }

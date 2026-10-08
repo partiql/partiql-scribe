@@ -22,13 +22,13 @@ SELECT "T"."a" AS "a" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST,
 --#[order-by-07]
 (SELECT "T"."a" AS "a" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST) UNION DISTINCT (SELECT "T"."a" AS "a" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST);
 
--- --#[order-by-08] TODO(duckdb)
+--#[order-by-08]
 (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST) UNION DISTINCT (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST) ORDER BY "a" ASC NULLS LAST;
 
--- --#[order-by-09] TODO(duckdb)
+--#[order-by-09]
 (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST OFFSET 2 LIMIT 1) UNION DISTINCT (SELECT "T"."a" AS "a", "T"."b" AS "b" FROM "default"."T" AS "T" ORDER BY "T"."a" ASC NULLS LAST, "T"."b" ASC NULLS LAST OFFSET 4 LIMIT 3) ORDER BY "a" ASC NULLS LAST OFFSET 6 LIMIT 5;
 
--- --#[order-by-10] TODO(duckdb)
+--#[order-by-10]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[order-by-11]

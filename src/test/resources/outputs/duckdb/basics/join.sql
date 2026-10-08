@@ -131,43 +131,43 @@ SELECT "T1"."c" AS "c", "T2"."a" AS "a", "T1"."v" AS "v" FROM "default"."T" AS "
 SELECT "T2"."c" AS "c", count(1) AS "_1" FROM "default"."T" AS "T1" INNER JOIN "default"."T" AS "T2" ON "T1"."b" = "T2"."b" GROUP BY "T2"."c" HAVING count(1) > CAST(5 AS BIGINT);
 
 -- Join with Path navigation (scalar)
--- --#[join-34] TODO(duckdb)
+--#[join-34]
 [ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
--- --#[join-35] TODO(duckdb)
+--#[join-35]
 SELECT "E"."a" AS "a" FROM "default"."T" AS "E" CROSS JOIN UNNEST("E"."array") AS "_item"("item");
 
 -- Correlated: explicit INNER JOIN path ON TRUE
--- --#[join-36] TODO(duckdb)
+--#[join-36]
 SELECT "item" AS "item" FROM "default"."T" AS "E" CROSS JOIN UNNEST("E"."array") AS "_item"("item");
 
 -- Correlated: implicit path (unqualified)
--- --#[join-37] TODO(duckdb)
+--#[join-37]
 SELECT "item" AS "item" FROM "default"."T" AS "E" CROSS JOIN UNNEST("E"."array") AS "_item"("item");
 
 -- Correlated: path lateral with ON condition
--- --#[join-38] TODO(duckdb)
+--#[join-38]
 SELECT "item" AS "item" FROM "default"."T" AS "E" CROSS JOIN UNNEST("E"."array") AS "_item"("item") WHERE "item" > 1;
 
 -- Correlated: subquery referencing LHS
--- --#[join-39] TODO(duckdb)
+--#[join-39]
 SELECT "T2"."b" AS "b" FROM "default"."T" AS "T1" INNER JOIN LATERAL (SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" <= "T1"."b") AS "T2" ON true;
 
 -- Correlated: LEFT JOIN path lateral
--- --#[join-40] TODO(duckdb)
+--#[join-40]
 SELECT "E"."a" AS "a", "item" AS "item" FROM "default"."T" AS "E" LEFT JOIN UNNEST("E"."array") AS "_item"("item") ON true;
 
 -- Correlated: ON condition with LHS reference
--- --#[join-41] TODO(duckdb)
+--#[join-41]
 SELECT "item" AS "item" FROM "default"."T" AS "E" CROSS JOIN UNNEST("E"."array") AS "_item"("item") WHERE "item" = "E"."b";
 
 -- Correlated: chained correlated joins
 -- TODO: produces invalid SQL for UNNEST of array-of-structs (https://github.com/partiql/partiql-scribe/issues/154)
--- --#[join-42] TODO(duckdb)
+--#[join-42]
 SELECT "item" AS "item" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "E" CROSS JOIN UNNEST("E"."a") AS "_nested"("nested") CROSS JOIN UNNEST("nested"."nested_list") AS "_item"("item");
 
 -- Correlated: mixed correlated and non-correlated
--- --#[join-43] TODO(duckdb)
+--#[join-43]
 SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON true CROSS JOIN UNNEST("E"."array") AS "_item"("item");
 
 -- Non-correlated: subquery references outer not LHS
