@@ -40,18 +40,16 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         var t = tail
-        // Mixing comma joins with an explicit `CROSS JOIN UNNEST` changes binding (the explicit join binds tighter, so
-        // the UNNEST could no longer see earlier comma-joined tables). If any table ref is an UNNEST, join every ref
-        // with an explicit `CROSS JOIN`.
-        val hasUnnest =
-            node.tableRefs.any { ref ->
-                ref is org.partiql.ast.FromExpr && ref.expr is ExprCall &&
-                    (ref.expr as ExprCall).function.identifier.getText() == DuckDBRelConverter.MARKER_UNNEST
-            }
-        val separator = if (hasUnnest) " CROSS JOIN " else ", "
         node.tableRefs.forEachIndexed { i, ref ->
             if (i > 0) {
-                t = t concat separator
+                val isUnnest =
+                    ref is org.partiql.ast.FromExpr && ref.expr is ExprCall &&
+                        (ref.expr as ExprCall).function.identifier.getText() == DuckDBRelConverter.MARKER_UNNEST
+                if (isUnnest) {
+                    t = t concat " CROSS JOIN "
+                } else {
+                    t = t concat ", "
+                }
             }
             t = ref.accept(this, t)
         }
