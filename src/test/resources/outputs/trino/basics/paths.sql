@@ -35,3 +35,15 @@ SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
 SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
 -- -- previous test used unqualified field names based
 -- SELECT "t"."flds"."a".field_x AS "v" FROM "default"."EXCLUDE_T" AS "t";
+
+--#[paths-sfw-24]
+[ScribeException{code=INVALID_PLAN}];
+
+--#[paths-sfw-25]
+[ScribeException{code=INVALID_PLAN}];
+
+-- --#[paths-sfw-26] TODO(trino)
+[ScribeException{code=INVALID_PLAN}];
+
+-- --#[paths-sfw-27] TODO(trino)
+[ScribeException{code=INVALID_PLAN}];
