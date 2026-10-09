@@ -133,3 +133,15 @@ SELECT "t"['x'][0 + 1] AS "v" FROM "default"."T" AS "t";
 
 -- #[paths-sfw-16] TODO: ABS not yet implemented in the header.
 -- SELECT "t".x[ABS(1)] AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-24]
+SELECT "t"['array']["t"['b']] AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-25]
+SELECT "t"['array']["t"['b'] + 1] AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-26]
+SELECT "t"['array'][-1] AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-27]
+SELECT "t"['array'][9223372036854775807] AS "v" FROM "default"."T" AS "t";
