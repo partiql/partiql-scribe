@@ -41,14 +41,17 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     /**
-     * PartiQL `map_get(map, key)` -> DuckDB `element_at(map, key)`
+     * PartiQL `map_get(map, key)` -> DuckDB `map_extract_value(map, key)`
+     *
+     * DuckDB's `element_at` / `map_extract` return a LIST (`[value]`, or `[]` for a missing key); `map_extract_value`
+     * returns the value itself (NULL for a missing key), matching PartiQL `map_get`.
      */
     private fun mapGet(args: SqlArgs): Expr {
-        val id = Identifier.regular("element_at")
+        val id = Identifier.regular("map_extract_value")
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `map_get` was replaced by DuckDB `element_at`",
+                message = "PartiQL `map_get` was replaced by DuckDB `map_extract_value`",
             ),
         )
         return exprCall(id, listOf(args[0].expr, args[1].expr))

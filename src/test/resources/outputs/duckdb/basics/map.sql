@@ -128,15 +128,15 @@ SELECT map_contains("T"."col_map_float_key", "T"."col_float64") AS "_1" FROM "de
 
 --#[map-25]
 -- map_get with string key
-SELECT element_at("T"."col_map_str_key", 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_extract_value("T"."col_map_str_key", 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[map-26]
 -- map_get with column reference as key
-SELECT element_at("T"."col_map_str_key", "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_extract_value("T"."col_map_str_key", "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[map-27]
 -- map_get with float key
-SELECT element_at("T"."col_map_float_key", CAST(1.0 AS DOUBLE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_extract_value("T"."col_map_float_key", CAST(1.0 AS DOUBLE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
 --  Filtering
