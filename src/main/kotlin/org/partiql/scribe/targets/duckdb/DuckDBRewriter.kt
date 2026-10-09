@@ -118,7 +118,8 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.INVALID_PLAN,
-                    "DuckDB array index must be a non-null integer (PartiQL indexes are 0-based; Scribe rewrites PartiQL `x[0]` to DuckDB `x[1]`).",
+                    "DuckDB array index must be a non-null integer " +
+                        "(PartiQL indexes are 0-based; Scribe rewrites PartiQL `x[0]` to DuckDB `x[1]`).",
                 ),
             )
         }
@@ -140,7 +141,8 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
                     listener.reportAndThrow(
                         ScribeProblem.simpleError(
                             ScribeProblem.INVALID_PLAN,
-                            "DuckDB array index must be a non-null integer (PartiQL indexes are 0-based; Scribe rewrites PartiQL `x[0]` to DuckDB `x[1]`).",
+                            "DuckDB array index must be a non-null integer " +
+                                "(PartiQL indexes are 0-based; Scribe rewrites PartiQL `x[0]` to DuckDB `x[1]`).",
                         ),
                     )
             }
@@ -150,7 +152,8 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
                     ScribeProblem.INVALID_PLAN,
-                    "PartiQL array index must be a non-negative integer less than ${Long.MAX_VALUE} (PartiQL indexes are 0-based; Scribe rewrites PartiQL `x[0]` to DuckDB `x[1]`).",
+                    "PartiQL array index must be a non-negative integer less than ${Long.MAX_VALUE} " +
+                        "(PartiQL indexes are 0-based; Scribe rewrites PartiQL `x[0]` to DuckDB `x[1]`).",
                 ),
             )
         }
