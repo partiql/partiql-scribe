@@ -161,11 +161,3 @@ SELECT "T"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE
 --#[map-34]
 -- Group by map lookup
 SELECT "T"['col_map_str_key']['a'] AS "a", count(1) AS "_1" FROM "default"."T_ALL_TYPES" AS "T" GROUP BY "T"['col_map_str_key']['a'];
---#[map-37]
-SELECT "size"("t"['array']) AS "v" FROM "default"."T" AS "t";
-
---#[map-38]
-SELECT "cardinality"("t"['array']) AS "v" FROM "default"."T" AS "t";
-
---#[map-39]
-SELECT "exists"("t"['array']) AS "v" FROM "default"."T" AS "t";

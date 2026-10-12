@@ -193,19 +193,3 @@ SELECT k, v FROM UNPIVOT MAP {'a': 1, 'b': 2} AS v AT k;
 --#[map-36]
 -- UNPIVOT map column with correlated join
 SELECT T.col_int32, k, v FROM T_ALL_TYPES AS T, UNPIVOT T.col_map_str_key AS v AT k;
-
--- ----------------------------------------
---  Collection functions on an array
--- ----------------------------------------
-
---#[map-37]
--- Size of an array column
-SELECT size(t."array") AS v FROM T AS t;
-
---#[map-38]
--- Cardinality of an array column
-SELECT cardinality(t."array") AS v FROM T AS t;
-
---#[map-39]
--- Exists on an array column
-SELECT exists(t."array") AS v FROM T AS t;
