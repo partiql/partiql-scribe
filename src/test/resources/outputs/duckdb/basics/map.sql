@@ -2,31 +2,31 @@
 --  Map construction — literal
 -- ----------------------------------------
 
--- --#[map-00] TODO(duckdb)
+--#[map-00]
 -- Construct a map literal with string keys
 SELECT MAP(ARRAY['a', 'b', 'c'], ARRAY[1, 2, 3]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-01] TODO(duckdb)
+--#[map-01]
 -- Construct a map literal with decimal keys
 SELECT MAP(ARRAY[1.1, 2.2, 3.3], ARRAY['x', 'y', 'z']) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-02] TODO(duckdb)
+--#[map-02]
 -- Construct a map literal referencing columns for values
 SELECT MAP(ARRAY['x', 'y'], ARRAY[CAST("T"."col_int32" AS DOUBLE), "T"."col_float64"]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-03] TODO(duckdb)
+--#[map-03]
 -- Construct a map literal referencing columns for keys
 SELECT MAP(ARRAY["T"."col_string"], ARRAY["T"."col_int32"]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-04] TODO(duckdb)
+--#[map-04]
 -- Construct an empty map literal
 SELECT MAP(ARRAY[], ARRAY[]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-05] TODO(duckdb)
+--#[map-05]
 -- Construct a map literal with integer keys
 SELECT MAP(ARRAY[1, 2, 3], ARRAY['a', 'b', 'c']) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-06] TODO(duckdb)
+--#[map-06]
 -- Construct a map literal with expression as key
 SELECT MAP(ARRAY["T"."col_int32" + 1], ARRAY["T"."col_string"]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
@@ -46,15 +46,15 @@ SELECT "T"."col_map_float_key" AS "col_map_float_key" FROM "default"."T_ALL_TYPE
 --  Bracket notation lookup
 -- ----------------------------------------
 
--- --#[map-09] TODO(duckdb)
+--#[map-09]
 -- Lookup map with bracket notation (string key)
 SELECT "T"."col_map_str_key"['a'] AS "a" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_str_key", 'a');
 
--- --#[map-10] TODO(duckdb)
+--#[map-10]
 -- Lookup map with bracket notation (float key)
 SELECT "T"."col_map_float_key"[CAST(1.0 AS DOUBLE)] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_float_key", CAST(1.0 AS DOUBLE));
 
--- --#[map-11] TODO(duckdb)
+--#[map-11]
 -- Lookup map with bracket notation using column as key
 SELECT "T"."col_map_str_key"["T"."col_string"] AS "_1" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_str_key", "T"."col_string");
 
@@ -90,19 +90,19 @@ SELECT "map_entries"("T"."col_map_float_key") AS "_1" FROM "default"."T_ALL_TYPE
 --  Map functions — size, cardinality, exists
 -- ----------------------------------------
 
--- --#[map-18] TODO(duckdb)
+--#[map-18]
 -- Size of a map column
 SELECT cardinality("T"."col_map_str_key") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-19] TODO(duckdb)
+--#[map-19]
 -- Size of a map literal
 SELECT cardinality(MAP(ARRAY['a', 'b', 'c'], ARRAY[1, 2, 3])) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-20] TODO(duckdb)
+--#[map-20]
 -- Cardinality of a map column
 SELECT cardinality("T"."col_map_str_key") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-21] TODO(duckdb)
+--#[map-21]
 -- Exists on a map column
 SELECT cardinality("T"."col_map_str_key") > 0 AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
@@ -110,15 +110,15 @@ SELECT cardinality("T"."col_map_str_key") > 0 AS "_1" FROM "default"."T_ALL_TYPE
 --  Map functions — map_contains_key
 -- ----------------------------------------
 
--- --#[map-22] TODO(duckdb)
+--#[map-22]
 -- map_contains_key with string key that exists
 SELECT map_contains("T"."col_map_str_key", 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-23] TODO(duckdb)
+--#[map-23]
 -- map_contains_key with column reference as key
 SELECT map_contains("T"."col_map_str_key", "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-24] TODO(duckdb)
+--#[map-24]
 -- map_contains_key with float key
 SELECT map_contains("T"."col_map_float_key", "T"."col_float64") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
@@ -126,17 +126,17 @@ SELECT map_contains("T"."col_map_float_key", "T"."col_float64") AS "_1" FROM "de
 --  Map functions — map_get
 -- ----------------------------------------
 
--- --#[map-25] TODO(duckdb)
+--#[map-25]
 -- map_get with string key
-SELECT element_at("T"."col_map_str_key", 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_extract_value("T"."col_map_str_key", 'a') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-26] TODO(duckdb)
+--#[map-26]
 -- map_get with column reference as key
-SELECT element_at("T"."col_map_str_key", "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_extract_value("T"."col_map_str_key", "T"."col_string") AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[map-27] TODO(duckdb)
+--#[map-27]
 -- map_get with float key
-SELECT element_at("T"."col_map_float_key", CAST(1.0 AS DOUBLE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+SELECT map_extract_value("T"."col_map_float_key", CAST(1.0 AS DOUBLE)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- ----------------------------------------
 --  Filtering
@@ -146,11 +146,11 @@ SELECT element_at("T"."col_map_float_key", CAST(1.0 AS DOUBLE)) AS "_1" FROM "de
 -- Filter with map lookup comparison
 SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE "T"."col_map_str_key"['a'] > 10;
 
--- --#[map-32] TODO(duckdb)
+--#[map-32]
 -- Filter with map_contains_key
 SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE map_contains("T"."col_map_str_key", 'a');
 
--- --#[map-33] TODO(duckdb)
+--#[map-33]
 -- Filter with map size
 SELECT "T"."col_int32" AS "col_int32" FROM "default"."T_ALL_TYPES" AS "T" WHERE cardinality("T"."col_map_str_key") > 0;
 

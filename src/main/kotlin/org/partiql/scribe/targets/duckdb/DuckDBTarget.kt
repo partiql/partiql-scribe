@@ -34,7 +34,7 @@ public open class DuckDBTarget : SqlTarget() {
 
     override fun getAstToSql(context: ScribeContext): AstToSql = DuckDBAstToSql(context)
 
-    override fun getCalls(context: ScribeContext): SqlCalls = SqlCalls.standard(context)
+    override fun getCalls(context: ScribeContext): SqlCalls = DuckDBCalls(context)
 
     override fun rewrite(
         plan: Plan,
