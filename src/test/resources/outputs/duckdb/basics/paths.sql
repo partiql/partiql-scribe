@@ -37,10 +37,10 @@ SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
 -- SELECT "t"."flds"."a".field_x AS "v" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[paths-sfw-24]
-SELECT "t"."array"["t"."b" + 1] AS "v" FROM "default"."T" AS "t";
+[ScribeException{code=INVALID_PLAN}];
 
 --#[paths-sfw-25]
-SELECT "t"."array"[("t"."b" + 1) + 1] AS "v" FROM "default"."T" AS "t";
+[ScribeException{code=INVALID_PLAN}];
 
 --#[paths-sfw-26]
 [ScribeException{code=INVALID_PLAN}];

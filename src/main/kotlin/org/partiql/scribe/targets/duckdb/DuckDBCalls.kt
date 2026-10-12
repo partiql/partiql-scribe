@@ -6,11 +6,14 @@ import org.partiql.ast.Ast.exprOperator
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprCall
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.spi.types.PType
 
 public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     private val listener = context.getProblemListener()
@@ -58,39 +61,48 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     /**
-     * PartiQL `size(collection)` -> DuckDB `cardinality(collection)`
+     * PartiQL `size(collection)` -> DuckDB `len(list)` / `cardinality(map)`
      */
     private fun sizeFn(args: SqlArgs): Expr {
-        val id = Identifier.regular("cardinality")
+        val call = collectionSize(args[0])
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `size` was replaced by DuckDB `cardinality`",
+                message = "PartiQL `size` was replaced by DuckDB `${call.function.identifier.text}`",
             ),
         )
-        return exprCall(id, listOf(args[0].expr))
+        return call
     }
 
     /**
-     * PartiQL `cardinality(collection)` -> DuckDB `cardinality(collection)` (native)
+     * PartiQL `cardinality(collection)` -> DuckDB `len(list)` / `cardinality(map)`
      */
-    private fun cardinalityFn(args: SqlArgs): Expr {
-        val id = Identifier.regular("cardinality")
-        return exprCall(id, listOf(args[0].expr))
-    }
+    private fun cardinalityFn(args: SqlArgs): Expr = collectionSize(args[0])
 
     /**
-     * PartiQL `exists(collection)` -> DuckDB `cardinality(collection) > 0`
+     * PartiQL `exists(collection)` -> DuckDB `len(list) > 0` / `cardinality(map) > 0`
      */
     private fun existsFn(args: SqlArgs): Expr {
-        val cardId = Identifier.regular("cardinality")
+        val call = collectionSize(args[0])
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `exists` was replaced by DuckDB `cardinality(...) > 0`",
+                message = "PartiQL `exists` was replaced by DuckDB `${call.function.identifier.text}(...) > 0`",
             ),
         )
-        val cardCall = exprCall(cardId, listOf(args[0].expr))
-        return exprOperator(">", cardCall, exprLit(Literal.intNum(0)))
+        return exprOperator(">", call, exprLit(Literal.intNum(0)))
+    }
+
+    /**
+     * DuckDB's `cardinality` only accepts a MAP ("Cardinality can only operate on MAPs"), so a list (PartiQL
+     * array/bag) uses `len` instead.
+     */
+    private fun collectionSize(arg: SqlArg): ExprCall {
+        val name =
+            when (arg.type.code()) {
+                PType.ARRAY, PType.BAG -> "len"
+                else -> "cardinality"
+            }
+        return exprCall(Identifier.regular(name), listOf(arg.expr)) as ExprCall
     }
 }
