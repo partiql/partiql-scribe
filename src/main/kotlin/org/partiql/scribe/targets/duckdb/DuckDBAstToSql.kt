@@ -11,7 +11,13 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
+import org.partiql.ast.WindowFunctionNullTreatment
+import org.partiql.ast.WindowFunctionType
+import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprArray
+import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
+import org.partiql.ast.expr.ExprCast
 import org.partiql.ast.expr.ExprIsType
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprMap
@@ -300,6 +306,40 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         }
     }
 
+    /**
+     * DuckDB has a single INTERVAL type, so a cast target's qualifier is dropped (see [visitDataType]). That is only
+     * faithful for the full ranges `INTERVAL YEAR TO MONTH` and `INTERVAL DAY TO SECOND`. Any other qualifier would
+     * silently skip the truncation PartiQL performs (e.g. `CAST(y2m AS INTERVAL YEAR)` drops the months), so it is
+     * rejected, as in the Trino target.
+     */
+    override fun visitExprCast(
+        node: ExprCast,
+        tail: SqlBlock,
+    ): SqlBlock {
+        val asType = node.asType
+        if (asType.code() == DataType.INTERVAL) {
+            val qualifier = asType.intervalQualifier
+            val isYearMonth =
+                qualifier is IntervalQualifier.Range &&
+                    qualifier.startField.code() == DatetimeField.YEAR &&
+                    qualifier.endField.code() == DatetimeField.MONTH
+            val isDaySecond =
+                qualifier is IntervalQualifier.Range &&
+                    qualifier.startField.code() == DatetimeField.DAY &&
+                    qualifier.endField.code() == DatetimeField.SECOND
+            if (!(isYearMonth || isDaySecond)) {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.INVALID_PLAN,
+                        "DuckDB only supports casting to INTERVAL YEAR TO MONTH and INTERVAL DAY TO SECOND. " +
+                            "Received: $qualifier",
+                    ),
+                )
+            }
+        }
+        return super.visitExprCast(node, tail)
+    }
+
     override fun visitExprCall(
         node: ExprCall,
         tail: SqlBlock,
@@ -481,5 +521,62 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         }
         t = t concat "])"
         return t
+    }
+
+    /**
+     * DuckDB's LEAD/LAG do not accept a trailing null-treatment clause. `RESPECT NULLS` is the default, so we
+     * simply omit it. `IGNORE NULLS` goes inside the call, which is DuckDB's form: `LAG(x, 1 IGNORE NULLS) OVER (...)`.
+     * (The PartiQL planner does not currently plan `IGNORE NULLS`, so that branch isn't reachable yet.)
+     */
+    @Deprecated("This feature is experimental and is subject to change.")
+    override fun visitWindowFunctionTypeLead(
+        node: WindowFunctionType.Lead,
+        tail: SqlBlock,
+    ): SqlBlock = leadOrLag("LEAD(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
+
+    @Deprecated("This feature is experimental and is subject to change.")
+    override fun visitWindowFunctionTypeLag(
+        node: WindowFunctionType.Lag,
+        tail: SqlBlock,
+    ): SqlBlock = leadOrLag("LAG(", node.extent, node.offset, node.defaultValue, node.nullTreatment, tail)
+
+    private fun leadOrLag(
+        prefix: String,
+        extent: Expr,
+        offset: Long?,
+        defaultValue: Expr?,
+        nullTreatment: WindowFunctionNullTreatment?,
+        tail: SqlBlock,
+    ): SqlBlock {
+        var t = tail concat prefix
+        t = visitExpr(extent, t)
+        offset?.let { t = t concat ", $it" }
+        defaultValue?.let {
+            t = t concat ", "
+            t = visitExpr(it, t)
+        }
+        // RESPECT NULLS (the default) is dropped. DuckDB takes IGNORE NULLS inside the call, e.g. `LAG(x, 1 IGNORE NULLS)`.
+        if (nullTreatment?.code() == WindowFunctionNullTreatment.IGNORE_NULLS) {
+            t = t concat " IGNORE NULLS"
+        }
+        t = t concat ")"
+        return t
+    }
+
+    override fun visitExprArray(
+        node: ExprArray,
+        tail: SqlBlock,
+    ): SqlBlock {
+        return tail concat list(this, "ARRAY[", "]") { node.values }
+    }
+
+    override fun visitExprBag(
+        node: ExprBag,
+        tail: SqlBlock,
+    ): SqlBlock {
+        // DuckDB has no bag/unordered type; render a PartiQL bag as a DuckDB list literal `[a, b, c]`.
+        // ExprBag is also reused for SQL `IN (...)` value lists, and DuckDB accepts
+        // `x IN [a, b, c]` list-membership, so the list form is valid there too.
+        return tail concat list(this, "[", "]") { node.values }
     }
 }

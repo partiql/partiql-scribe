@@ -4,8 +4,11 @@ import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.rel.RelExclude
 import org.partiql.plan.rel.RelProject
+import org.partiql.plan.rex.Rex
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexPathIndex
+import org.partiql.plan.rex.RexPathKey
+import org.partiql.plan.rex.RexPathSymbol
 import org.partiql.plan.rex.RexStruct
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
@@ -70,6 +73,59 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
         val newStruct = RexStruct.create(newStructFields)
         newStruct.type = struct.type
         return newStruct
+    }
+
+    override fun visitPathKey(
+        rex: RexPathKey,
+        ctx: ScribeContext,
+    ): Operator {
+        checkPathOperand(rex.operand)
+        if (rex.key !is RexLit) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "DuckDB path keys must be literals, found ${rex.key}",
+                ),
+            )
+        }
+        if (rex.key.type.pType.code() != PType.STRING) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "DuckDB path key must be a string literal, found ${rex.key.type}",
+                ),
+            )
+        }
+        return super.visitPathKey(rex, ctx)
+    }
+
+    override fun visitPathSymbol(
+        rex: RexPathSymbol,
+        ctx: ScribeContext,
+    ): Operator {
+        checkPathOperand(rex.operand)
+        return super.visitPathSymbol(rex, ctx)
+    }
+
+    /**
+     * A key/symbol path must be on a ROW or MAP. A DYNAMIC (untyped) operand, or one whose type isn't available, is
+     * passed through: its shape is only known at runtime (see [DuckDBRexConverter.visitPathKey]).
+     */
+    private fun checkPathOperand(operand: Rex) {
+        val code =
+            try {
+                operand.type.pType.code()
+            } catch (_: UnsupportedOperationException) {
+                return
+            }
+        if (code != PType.ROW && code != PType.MAP && code != PType.DYNAMIC) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "DuckDB path expression must be on a ROW or MAP type, found ${operand.type}",
+                ),
+            )
+        }
     }
 
     /**

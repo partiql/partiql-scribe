@@ -120,3 +120,6 @@ SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00+08:00', CAST(TIMESTAMP '2
 
 --#[datetime-66]
 SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00+08:00', TIMESTAMP '2023-12-25 10:30:00+08:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
+
+--#[datetime-67]
+SELECT at_timezone(current_timestamp, 'UTC') AS "u" FROM "default"."T" AS "T";

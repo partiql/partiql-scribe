@@ -47,3 +47,15 @@ SELECT "t"."flds"."a"."field_x" AS "v" FROM "default"."EXCLUDE_T" AS "t";
 
 -- --#[paths-sfw-27] TODO(trino)
 [ScribeException{code=INVALID_PLAN}];
+
+--#[paths-sfw-28]
+SELECT CAST(ROW(1, "t"."b") AS ROW("a" INTEGER, "b" INTEGER))."a" AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-29]
+SELECT CAST(ROW(1, "t"."b") AS ROW("a" INTEGER, "b" INTEGER))."b" AS "v" FROM "default"."T" AS "t";
+
+-- --#[paths-sfw-30] TODO(trino)
+SELECT "t"."x".y AS "v" FROM "default"."T" AS "t";
+
+-- --#[paths-sfw-31] TODO(trino)
+SELECT "t"."x"."y" AS "v" FROM "default"."T" AS "t";

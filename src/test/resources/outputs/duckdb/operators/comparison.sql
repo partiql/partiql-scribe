@@ -292,40 +292,40 @@ SELECT TIME '12:30:45' >= TIME '12:30:45' AS "_1" FROM "default"."T_ALL_TYPES" A
 --#[comparison-datetime-55]
 SELECT TIME '12:30:45' <= TIME '12:30:45' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-56] TODO(duckdb)
+--#[comparison-datetime-56]
 SELECT CAST(TIME '12:30:45' AS TIME WITH TIME ZONE) > TIMETZ '10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-57] TODO(duckdb)
+--#[comparison-datetime-57]
 SELECT CAST(TIME '12:30:45' AS TIME WITH TIME ZONE) < TIMETZ '14:45:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-58] TODO(duckdb)
+--#[comparison-datetime-58]
 SELECT CAST(TIME '12:30:45' AS TIME WITH TIME ZONE) >= TIMETZ '12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-59] TODO(duckdb)
+--#[comparison-datetime-59]
 SELECT CAST(TIME '12:30:45' AS TIME WITH TIME ZONE) <= TIMETZ '12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-60] TODO(duckdb)
+--#[comparison-datetime-60]
 SELECT TIMETZ '12:30:45+08:00' > CAST(TIME '10:15:30' AS TIME WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-61] TODO(duckdb)
+--#[comparison-datetime-61]
 SELECT TIMETZ '12:30:45+08:00' < CAST(TIME '14:45:00' AS TIME WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-62] TODO(duckdb)
+--#[comparison-datetime-62]
 SELECT TIMETZ '12:30:45+08:00' >= CAST(TIME '12:30:45' AS TIME WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-63] TODO(duckdb)
+--#[comparison-datetime-63]
 SELECT TIMETZ '12:30:45+08:00' <= CAST(TIME '12:30:45' AS TIME WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-64] TODO(duckdb)
+--#[comparison-datetime-64]
 SELECT TIMETZ '12:30:45+08:00' > TIMETZ '10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-65] TODO(duckdb)
+--#[comparison-datetime-65]
 SELECT TIMETZ '12:30:45+08:00' < TIMETZ '14:45:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-66] TODO(duckdb)
+--#[comparison-datetime-66]
 SELECT TIMETZ '12:30:45+08:00' >= TIMETZ '12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-67] TODO(duckdb)
+--#[comparison-datetime-67]
 SELECT TIMETZ '12:30:45+08:00' <= TIMETZ '12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- Date literal comparisons
@@ -341,41 +341,41 @@ SELECT DATE '2023-12-25' >= DATE '2023-12-25' AS "_1" FROM "default"."T_ALL_TYPE
 --#[comparison-datetime-71]
 SELECT DATE '2023-12-25' <= DATE '2023-12-25' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-72] TODO(duckdb)
+--#[comparison-datetime-72]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP) > TIMESTAMP '2023-06-15 08:00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-73] TODO(duckdb)
+--#[comparison-datetime-73]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP) < TIMESTAMP '2024-01-01 00:00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-74] TODO(duckdb)
+--#[comparison-datetime-74]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP) >= TIMESTAMP '2023-12-25 00:00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-75] TODO(duckdb)
+--#[comparison-datetime-75]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP) <= TIMESTAMP '2023-12-25 23:59:59' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-76] TODO(duckdb)
+--#[comparison-datetime-76]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-06-15 08:00:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-77] TODO(duckdb)
+--#[comparison-datetime-77]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE) < TIMESTAMPTZ '2024-01-01 00:00:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-78] TODO(duckdb)
+--#[comparison-datetime-78]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE) >= TIMESTAMPTZ '2023-12-25 00:00:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-79] TODO(duckdb)
+--#[comparison-datetime-79]
 SELECT CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE) <= TIMESTAMPTZ '2023-12-25 23:59:59+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- Timestamp literal comparisons
--- --#[comparison-datetime-80] TODO(duckdb)
+--#[comparison-datetime-80]
 SELECT TIMESTAMP '2023-12-25 12:30:45' > CAST(DATE '2023-06-15' AS TIMESTAMP) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-81] TODO(duckdb)
+--#[comparison-datetime-81]
 SELECT TIMESTAMP '2023-12-25 12:30:45' < CAST(DATE '2024-01-01' AS TIMESTAMP) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-82] TODO(duckdb)
+--#[comparison-datetime-82]
 SELECT TIMESTAMP '2023-12-25 12:30:45' >= CAST(DATE '2023-12-25' AS TIMESTAMP) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-83] TODO(duckdb)
+--#[comparison-datetime-83]
 SELECT TIMESTAMP '2023-12-25 12:30:45' <= CAST(DATE '2023-12-25' AS TIMESTAMP) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 --#[comparison-datetime-84]
@@ -390,82 +390,82 @@ SELECT TIMESTAMP '2023-12-25 12:30:45' >= TIMESTAMP '2023-12-25 12:30:45' AS "_1
 --#[comparison-datetime-87]
 SELECT TIMESTAMP '2023-12-25 12:30:45' <= TIMESTAMP '2023-12-25 12:30:45' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-88] TODO(duckdb)
+--#[comparison-datetime-88]
 SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-06-15 08:00:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-89] TODO(duckdb)
+--#[comparison-datetime-89]
 SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP WITH TIME ZONE) < TIMESTAMPTZ '2024-01-01 00:00:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-90] TODO(duckdb)
+--#[comparison-datetime-90]
 SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP WITH TIME ZONE) >= TIMESTAMPTZ '2023-12-25 12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-91] TODO(duckdb)
+--#[comparison-datetime-91]
 SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP WITH TIME ZONE) <= TIMESTAMPTZ '2023-12-25 12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- Timestampz literal comparisons
--- --#[comparison-datetime-92] TODO(duckdb)
+--#[comparison-datetime-92]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' > CAST(DATE '2023-06-15' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-93] TODO(duckdb)
+--#[comparison-datetime-93]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' < CAST(DATE '2024-01-01' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-94] TODO(duckdb)
+--#[comparison-datetime-94]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' >= CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-95] TODO(duckdb)
+--#[comparison-datetime-95]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' <= CAST(DATE '2023-12-25' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-96] TODO(duckdb)
+--#[comparison-datetime-96]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' > CAST(TIMESTAMP '2023-06-15 08:00:00' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-97] TODO(duckdb)
+--#[comparison-datetime-97]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' < CAST(TIMESTAMP '2024-01-01 00:00:00' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-98] TODO(duckdb)
+--#[comparison-datetime-98]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' >= CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-99] TODO(duckdb)
+--#[comparison-datetime-99]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' <= CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-100] TODO(duckdb)
+--#[comparison-datetime-100]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' > TIMESTAMPTZ '2023-06-15 08:00:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-101] TODO(duckdb)
+--#[comparison-datetime-101]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' < TIMESTAMPTZ '2024-01-01 00:00:00+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-102] TODO(duckdb)
+--#[comparison-datetime-102]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' >= TIMESTAMPTZ '2023-12-25 12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[comparison-datetime-103] TODO(duckdb)
+--#[comparison-datetime-103]
 SELECT TIMESTAMPTZ '2023-12-25 12:30:45+08:00' <= TIMESTAMPTZ '2023-12-25 12:30:45+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
 -- Array equality comparisons
--- --#[comparison-array-01] TODO(duckdb)
+--#[comparison-array-01]
 SELECT ARRAY[1, 2, 3] = ARRAY[1, 2, 3] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-02] TODO(duckdb)
+--#[comparison-array-02]
 SELECT ARRAY[1, 2, 3] = ARRAY[1, 2, 4] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-03] TODO(duckdb)
+--#[comparison-array-03]
 SELECT ARRAY[1, 2, 3] <> ARRAY[1, 2, 4] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-04] TODO(duckdb)
+--#[comparison-array-04]
 SELECT ARRAY[1, 2] = ARRAY[1, 2, 3] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-05] TODO(duckdb)
+--#[comparison-array-05]
 SELECT ARRAY[] = ARRAY[] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-06] TODO(duckdb)
+--#[comparison-array-06]
 SELECT ARRAY['a', 'b', 'c'] = ARRAY['a', 'b', 'c'] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-07] TODO(duckdb)
+--#[comparison-array-07]
 SELECT ARRAY[DATE '2023-01-01', DATE '2023-12-31'] = ARRAY[DATE '2023-01-01', DATE '2023-12-31'] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-08] TODO(duckdb)
+--#[comparison-array-08]
 SELECT ARRAY[ARRAY[1, 2], ARRAY[3, 4]] = ARRAY[ARRAY[1, 2], ARRAY[3, 4]] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-09] TODO(duckdb)
+--#[comparison-array-09]
 SELECT ARRAY[ARRAY[1, 2], ARRAY[3, 4]] = ARRAY[ARRAY[1, 2], ARRAY[3, 5]] AS "_1" FROM "default"."T" AS "T";
 
--- --#[comparison-array-10] TODO(duckdb)
+--#[comparison-array-10]
 SELECT ARRAY[NULL, 1, 2] = ARRAY[NULL, 1, 2] AS "_1" FROM "default"."T" AS "T";
