@@ -53,3 +53,9 @@ SELECT CAST(ROW(1, "t"."b") AS ROW("a" INTEGER, "b" INTEGER))."a" AS "v" FROM "d
 
 --#[paths-sfw-29]
 SELECT CAST(ROW(1, "t"."b") AS ROW("a" INTEGER, "b" INTEGER))."b" AS "v" FROM "default"."T" AS "t";
+
+-- --#[paths-sfw-30] TODO(trino)
+SELECT "t"."x".y AS "v" FROM "default"."T" AS "t";
+
+-- --#[paths-sfw-31] TODO(trino)
+SELECT "t"."x"."y" AS "v" FROM "default"."T" AS "t";

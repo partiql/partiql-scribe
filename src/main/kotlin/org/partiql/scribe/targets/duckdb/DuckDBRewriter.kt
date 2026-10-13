@@ -4,6 +4,7 @@ import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.rel.RelExclude
 import org.partiql.plan.rel.RelProject
+import org.partiql.plan.rex.Rex
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexPathIndex
 import org.partiql.plan.rex.RexPathKey
@@ -78,44 +79,53 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
         rex: RexPathKey,
         ctx: ScribeContext,
     ): Operator {
-        if (rex.operand.type.pType.code() != PType.ROW && rex.operand.type.pType.code() != PType.MAP) {
-            error("DuckDB path expression must be on a ROW or MAP type, found ${rex.operand.type}")
-        }
+        checkPathOperand(rex.operand)
         if (rex.key !is RexLit) {
-            error("DuckDB does not support path non-literal path expressions, found ${rex.key}")
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "DuckDB path keys must be literals, found ${rex.key}",
+                ),
+            )
         }
         if (rex.key.type.pType.code() != PType.STRING) {
-            error("DuckDB path expression must be a string literal.")
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "DuckDB path key must be a string literal, found ${rex.key.type}",
+                ),
+            )
         }
-        val visited = super.visitPathKey(rex, ctx) as RexPathKey
-        // Reconstruct the RexStruct operand so it renders as a DuckDB struct literal (`{'k': v}`).
-        val operand = visited.operand
-        if (operand is RexStruct) {
-            val wrapped = operand.type.pType.toRexDuckDB(prefixPath = operand, context = context)
-            val newPath = RexPathKey.create(wrapped, visited.key)
-            newPath.type = visited.type
-            return newPath
-        }
-        return visited
+        return super.visitPathKey(rex, ctx)
     }
 
     override fun visitPathSymbol(
         rex: RexPathSymbol,
         ctx: ScribeContext,
     ): Operator {
-        if (rex.operand.type.pType.code() != PType.ROW && rex.operand.type.pType.code() != PType.MAP) {
-            error("DuckDB path expression must be on a ROW or MAP type, found ${rex.operand.type}")
+        checkPathOperand(rex.operand)
+        return super.visitPathSymbol(rex, ctx)
+    }
+
+    /**
+     * A key/symbol path must be on a ROW or MAP. A DYNAMIC (untyped) operand, or one whose type isn't available, is
+     * passed through: its shape is only known at runtime (see [DuckDBRexConverter.visitPathKey]).
+     */
+    private fun checkPathOperand(operand: Rex) {
+        val code =
+            try {
+                operand.type.pType.code()
+            } catch (_: UnsupportedOperationException) {
+                return
+            }
+        if (code != PType.ROW && code != PType.MAP && code != PType.DYNAMIC) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    ScribeProblem.INVALID_PLAN,
+                    "DuckDB path expression must be on a ROW or MAP type, found ${operand.type}",
+                ),
+            )
         }
-        val visited = super.visitPathSymbol(rex, ctx) as RexPathSymbol
-        // Reconstruct the RexStruct operand so it renders as a DuckDB struct literal (`{'k': v}`).
-        val operand = visited.operand
-        if (operand is RexStruct) {
-            val wrapped = operand.type.pType.toRexDuckDB(prefixPath = operand, context = context)
-            val newPath = RexPathSymbol.create(wrapped, visited.symbol)
-            newPath.type = visited.type
-            return newPath
-        }
-        return visited
     }
 
     /**

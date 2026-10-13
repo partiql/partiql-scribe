@@ -525,9 +525,8 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
 
     /**
      * DuckDB's LEAD/LAG do not accept a trailing null-treatment clause. `RESPECT NULLS` is the default, so we
-     * simply omit it. `IGNORE NULLS` cannot currently be reached here (the PartiQL planner does not plan
-     * `IGNORE NULLS`), and DuckDB has no valid LEAD/LAG rendering for it anyway, so the branch below is dead;
-     * it is kept only so the emitted text is obvious if planner support is ever added.
+     * simply omit it. `IGNORE NULLS` goes inside the call, which is DuckDB's form: `LAG(x, 1 IGNORE NULLS) OVER (...)`.
+     * (The PartiQL planner does not currently plan `IGNORE NULLS`, so that branch isn't reachable yet.)
      */
     @Deprecated("This feature is experimental and is subject to change.")
     override fun visitWindowFunctionTypeLead(
@@ -556,11 +555,11 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
             t = t concat ", "
             t = visitExpr(it, t)
         }
-        t = t concat ")"
-        // RESPECT NULLS (the default) is dropped; the IGNORE NULLS branch is currently unreachable (see KDoc).
+        // RESPECT NULLS (the default) is dropped. DuckDB takes IGNORE NULLS inside the call, e.g. `LAG(x, 1 IGNORE NULLS)`.
         if (nullTreatment?.code() == WindowFunctionNullTreatment.IGNORE_NULLS) {
-            t = t concat " ${nullTreatment.name()}"
+            t = t concat " IGNORE NULLS"
         }
+        t = t concat ")"
         return t
     }
 

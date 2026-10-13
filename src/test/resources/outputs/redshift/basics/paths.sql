@@ -34,3 +34,9 @@ SELECT "t"."array"[9223372036854775807] AS "v" FROM "default"."T" AS "t";
 
 --#[paths-sfw-29]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[paths-sfw-30]
+SELECT "t"."x".y AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-31]
+SELECT "t"."x"."y" AS "v" FROM "default"."T" AS "t";

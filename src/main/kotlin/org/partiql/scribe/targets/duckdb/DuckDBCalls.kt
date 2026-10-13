@@ -128,9 +128,9 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
         val start = args[1].expr
         val length = args.getOrNull(2)?.expr
         val id = Identifier.regular("SUBSTRING")
-        checkSubStringArgStart(start)
+        checkSubstringArgStart(start)
         length?.let { lengthArg ->
-            checkSubStringArglength(lengthArg)
+            checkSubstringArgLength(lengthArg)
         }
         return when (args.size) {
             2 -> {
@@ -168,7 +168,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
         }
     }
 
-    private fun checkSubStringArgStart(start: Expr) {
+    private fun checkSubstringArgStart(start: Expr) {
         if (start is ExprLit && start.lit.code() == Literal.INT_NUM && start.lit.bigDecimalValue() < BigDecimal.ONE) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
@@ -181,7 +181,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
         }
     }
 
-    private fun checkSubStringArglength(length: Expr) {
+    private fun checkSubstringArgLength(length: Expr) {
         if (length is ExprLit && length.lit.code() == Literal.INT_NUM && length.lit.bigDecimalValue() < BigDecimal.ZERO) {
             listener.reportAndThrow(
                 ScribeProblem.simpleError(
@@ -191,40 +191,6 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
                 ),
             )
         }
-    }
-
-    /**
-     * DuckDB does not have `char_length`; use `length` instead.
-     *
-     * https://duckdb.org/docs/current/functions/string.html#length
-     */
-    override fun charLength(args: SqlArgs): Expr {
-        val id = Identifier.regular("length")
-        listener.report(
-            ScribeProblem.simpleInfo(
-                code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `char_length` was replaced by DuckDB `length`",
-            ),
-        )
-        return exprCall(id, listOf(args[0].expr))
-    }
-
-    /**
-     * DuckDB does not have a `split` function; the equivalent is `string_split(string, separator)`, which splits on a
-     * literal (non-regex) separator.
-     *
-     * https://duckdb.org/docs/stable/sql/functions/text.html#string_splitstring-separator
-     */
-    override fun split(args: SqlArgs): Expr {
-        val string = args[0].expr
-        val delimiter = args[1].expr
-        listener.report(
-            ScribeProblem.simpleInfo(
-                code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `split(<string>, <delimiter>)` was replaced by DuckDB `string_split(string, delimiter)`.",
-            ),
-        )
-        return exprCall(Identifier.regular("string_split"), listOf(string, delimiter))
     }
 
     /**
@@ -322,9 +288,9 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     /**
      * PartiQL `<value> IN <array>` (array membership) -> DuckDB `contains(<array>, <value>)`.
      *
-     * DuckDB's `IN` only accepts a value list or subquery on the right, so membership against a runtime array value
-     * (e.g. a column) must use the `contains` array function instead. Literal in-lists and subqueries keep the base
-     * `IN` rendering via [super].
+     * Membership against a runtime array value (e.g. a column) uses the `contains` array function. Literal in-lists and
+     * subqueries keep the base `IN` rendering via [super]. Note: like DuckDB's `x IN <list>`, `contains` returns false
+     * rather than NULL when there's no match and the array contains a NULL (#197).
      *
      * https://duckdb.org/docs/current/functions/array.html#contains
      */

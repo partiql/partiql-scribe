@@ -53,3 +53,9 @@ SELECT {'a': 1, 'b': "t"."b"}."a" AS "v" FROM "default"."T" AS "t";
 
 --#[paths-sfw-29]
 SELECT {'a': 1, 'b': "t"."b"}."b" AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-30]
+SELECT "t"."x".y AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-31]
+SELECT "t"."x"."y" AS "v" FROM "default"."T" AS "t";

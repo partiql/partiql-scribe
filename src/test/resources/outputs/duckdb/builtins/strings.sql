@@ -50,41 +50,41 @@ SELECT SUBSTRING("T"."c", 2, 3) AS "_1" FROM "default"."T" AS "T";
 SELECT POSITION('a' IN "T"."c") AS "_1" FROM "default"."T" AS "T";
 
 --#[char-length-00]
-SELECT length("T"."c") AS "_1" FROM "default"."T" AS "T";
+SELECT CHAR_LENGTH("T"."c") AS "_1" FROM "default"."T" AS "T";
 
 --#[char-length-01]
-SELECT length("T"."d"."e") AS "_1" FROM "default"."T" AS "T";
+SELECT CHAR_LENGTH("T"."d"."e") AS "_1" FROM "default"."T" AS "T";
 
 --#[char-length-02]
-SELECT length("T_ALL_TYPES"."col_list_string"[2]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES";
+SELECT CHAR_LENGTH("T_ALL_TYPES"."col_list_string"[2]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES";
 
 --#[replace-00]
 SELECT REPLACE("T"."c", 'a', 'b') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-00]
-SELECT string_split("T"."c", ',') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", ',') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-01]
-SELECT string_split("T"."c", '.') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", '.') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-02]
-SELECT string_split("T"."c", '|') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", '|') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-03]
-SELECT string_split("T"."c", '\') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", '\') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-04]
-SELECT string_split("T"."c", '::') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", '::') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-05]
-SELECT string_split("T"."c", "T"."z") AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", "T"."z") AS "_1" FROM "default"."T" AS "T";
 
 --#[split-06]
-SELECT string_split("T"."c", '[a-z]+') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", '[a-z]+') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-07]
-SELECT string_split("T"."z", "T"."c") AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."z", "T"."c") AS "_1" FROM "default"."T" AS "T";
 
 -- This will be runtime exception
 --#[split-08]
-SELECT string_split("T"."c", '') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT("T"."c", '') AS "_1" FROM "default"."T" AS "T";
