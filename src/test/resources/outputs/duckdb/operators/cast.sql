@@ -19,7 +19,7 @@ SELECT CAST('abc' AS VARCHAR) AS "res" FROM "default"."T" AS "T";
 --#[cast-05]
 SELECT CAST('abc' AS VARCHAR(5)) AS "res" FROM "default"."T" AS "T";
 
--- --#[cast-06] TODO(duckdb)
+--#[cast-06]
 SELECT CAST('abc' AS VARCHAR) AS "res" FROM "default"."T" AS "T";
 
 -- <numeric type> - <exact numeric type>
@@ -90,14 +90,14 @@ SELECT CAST(1 AS REAL) AS "res" FROM "default"."T" AS "T";
 --#[cast-28]
 SELECT CAST(1 AS REAL) AS "res" FROM "default"."T" AS "T";
 
--- --#[cast-29] TODO(duckdb)
+--#[cast-29]
 SELECT CAST(1 AS DOUBLE) AS "res" FROM "default"."T" AS "T";
 
 -- <boolean type>
--- --#[cast-30] TODO(duckdb)
+--#[cast-30]
 SELECT CAST(true AS BOOLEAN) AS "res" FROM "default"."T" AS "T";
 
--- --#[cast-31] TODO(duckdb)
+--#[cast-31]
 SELECT CAST(true AS BOOLEAN) AS "res" FROM "default"."T" AS "T";
 
 -- <datetime type>
@@ -107,154 +107,154 @@ SELECT CAST("T"."timestamp_1" AS DATE) AS "res" FROM "default"."T" AS "T";
 --#[cast-33]
 SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
--- --#[cast-34] TODO(duckdb)
+--#[cast-34]
 SELECT CAST("T"."timestamp_1" AS TIME) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-35]
 SELECT CAST("T"."timestamp_1" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
 
--- --#[cast-36] TODO(duckdb)
+--#[cast-36]
 SELECT CAST("T"."timestamp_1" AS TIME WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-37]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
--- --#[cast-38] TODO(duckdb)
+--#[cast-38]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP) AS "res" FROM "default"."T" AS "T";
 
 --#[cast-39]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
 
--- --#[cast-40] TODO(duckdb)
+--#[cast-40]
 SELECT CAST("T"."timestamp_1" AS TIMESTAMP WITH TIME ZONE) AS "res" FROM "default"."T" AS "T";
 
 -- INTERVAL YEAR-MONTH
--- --#[cast-41] TODO(duckdb)
-SELECT CAST("T"."col_y2mon" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-41]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-42] TODO(duckdb)
-SELECT CAST("T"."col_y2mon" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-42]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-43] TODO(duckdb)
-SELECT CAST("T"."col_y2mon" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-43]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-44] TODO(duckdb)
-SELECT CAST("T"."col_y2mon" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-44]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-45] TODO(duckdb)
+--#[cast-45]
 SELECT CAST("T"."col_y2mon" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- DuckDB does not support precision on datetime fields
--- --#[cast-46] TODO(duckdb)
+--#[cast-46]
 SELECT CAST("T"."col_y2mon" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- INTERVAL DAY-TIME
--- --#[cast-47] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-47]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-48] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-48]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-49] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-49]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-50] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-50]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-51] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-51]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-52] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-52]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-53] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-53]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-54] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-54]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-55] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-55]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-56] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-56]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-57] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-57]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-58] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-58]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-59] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-59]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-60] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
-
--- DuckDB does not support precision on datetime fields
--- --#[cast-61] TODO(duckdb)
+--#[cast-60]
 SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- DuckDB does not support precision on datetime fields
--- --#[cast-62] TODO(duckdb)
+--#[cast-61]
 SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
 -- DuckDB does not support precision on datetime fields
--- --#[cast-63] TODO(duckdb)
+--#[cast-62]
 SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
--- --#[cast-64] TODO(duckdb)
+-- DuckDB does not support precision on datetime fields
+--#[cast-63]
 SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
 
--- --#[cast-65] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-64]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-66] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-65]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-67] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-66]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-68] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-67]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-69] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-68]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-70] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-69]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-71] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-70]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-72] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-71]
+[ScribeException{code=INVALID_PLAN}];
 
--- --#[cast-73] TODO(duckdb)
-SELECT CAST("T"."col_d2s" AS INTERVAL) AS "res" FROM "default"."T_INTERVALS" AS "T";
+--#[cast-72]
+[ScribeException{code=INVALID_PLAN}];
+
+--#[cast-73]
+[ScribeException{code=INVALID_PLAN}];
 
 -- Test precision during cast, transcribed result should preserve previous precision if possible
 
--- --#[cast-74] TODO(duckdb)
+--#[cast-74]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[cast-75] TODO(duckdb)
+--#[cast-75]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[cast-76] TODO(duckdb)
+--#[cast-76]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[cast-77] TODO(duckdb)
+--#[cast-77]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[cast-78] TODO(duckdb)
+--#[cast-78]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[cast-79] TODO(duckdb)
+--#[cast-79]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[cast-80] TODO(duckdb)
+--#[cast-80]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";
 
--- --#[cast-81] TODO(duckdb)
+--#[cast-81]
 SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP WITH TIME ZONE) > TIMESTAMPTZ '2023-01-15 10:15:30+08:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T";

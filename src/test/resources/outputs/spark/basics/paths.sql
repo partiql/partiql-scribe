@@ -80,3 +80,9 @@ SELECT `t`.`array`[-1] AS `v` FROM `default`.`T` AS `t`;
 
 --#[paths-sfw-27]
 SELECT `t`.`array`[9223372036854775807] AS `v` FROM `default`.`T` AS `t`;
+
+--#[paths-sfw-28]
+SELECT NAMED_STRUCT('a', 1, 'b', `t`.`b`).`a` AS `v` FROM `default`.`T` AS `t`;
+
+--#[paths-sfw-29]
+SELECT NAMED_STRUCT('a', 1, 'b', `t`.`b`).`b` AS `v` FROM `default`.`T` AS `t`;

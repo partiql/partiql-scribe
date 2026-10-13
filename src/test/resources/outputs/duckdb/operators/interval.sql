@@ -2,10 +2,10 @@
 --#[dt-minus-dt-00]
 SELECT "T"."col_date" - "T"."col_date" AS "res" FROM "default"."T_INTERVALS" AS "T";
 
--- --#[dt-minus-dt-01] TODO(duckdb)
+--#[dt-minus-dt-01]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
 
--- --#[dt-minus-dt-02] TODO(duckdb)
+--#[dt-minus-dt-02]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
 
 --#[dt-minus-dt-03]

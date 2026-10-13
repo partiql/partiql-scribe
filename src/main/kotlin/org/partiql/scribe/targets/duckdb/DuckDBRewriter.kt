@@ -6,6 +6,8 @@ import org.partiql.plan.rel.RelExclude
 import org.partiql.plan.rel.RelProject
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexPathIndex
+import org.partiql.plan.rex.RexPathKey
+import org.partiql.plan.rex.RexPathSymbol
 import org.partiql.plan.rex.RexStruct
 import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
@@ -70,6 +72,50 @@ public open class DuckDBRewriter(internal val context: ScribeContext) : Operator
         val newStruct = RexStruct.create(newStructFields)
         newStruct.type = struct.type
         return newStruct
+    }
+
+    override fun visitPathKey(
+        rex: RexPathKey,
+        ctx: ScribeContext,
+    ): Operator {
+        if (rex.operand.type.pType.code() != PType.ROW && rex.operand.type.pType.code() != PType.MAP) {
+            error("DuckDB path expression must be on a ROW or MAP type, found ${rex.operand.type}")
+        }
+        if (rex.key !is RexLit) {
+            error("DuckDB does not support path non-literal path expressions, found ${rex.key}")
+        }
+        if (rex.key.type.pType.code() != PType.STRING) {
+            error("DuckDB path expression must be a string literal.")
+        }
+        val visited = super.visitPathKey(rex, ctx) as RexPathKey
+        // Reconstruct the RexStruct operand so it renders as a DuckDB struct literal (`{'k': v}`).
+        val operand = visited.operand
+        if (operand is RexStruct) {
+            val wrapped = operand.type.pType.toRexDuckDB(prefixPath = operand, context = context)
+            val newPath = RexPathKey.create(wrapped, visited.key)
+            newPath.type = visited.type
+            return newPath
+        }
+        return visited
+    }
+
+    override fun visitPathSymbol(
+        rex: RexPathSymbol,
+        ctx: ScribeContext,
+    ): Operator {
+        if (rex.operand.type.pType.code() != PType.ROW && rex.operand.type.pType.code() != PType.MAP) {
+            error("DuckDB path expression must be on a ROW or MAP type, found ${rex.operand.type}")
+        }
+        val visited = super.visitPathSymbol(rex, ctx) as RexPathSymbol
+        // Reconstruct the RexStruct operand so it renders as a DuckDB struct literal (`{'k': v}`).
+        val operand = visited.operand
+        if (operand is RexStruct) {
+            val wrapped = operand.type.pType.toRexDuckDB(prefixPath = operand, context = context)
+            val newPath = RexPathSymbol.create(wrapped, visited.symbol)
+            newPath.type = visited.type
+            return newPath
+        }
+        return visited
     }
 
     /**

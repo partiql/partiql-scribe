@@ -28,3 +28,9 @@ SELECT "t"."array"[-1] AS "v" FROM "default"."T" AS "t";
 
 --#[paths-sfw-27]
 SELECT "t"."array"[9223372036854775807] AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-28]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[paths-sfw-29]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
