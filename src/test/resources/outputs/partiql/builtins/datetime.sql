@@ -147,3 +147,9 @@ SELECT DATE_DIFF(DAY, TIMESTAMP WITH TIME ZONE '2023-01-15 08:00:00+08:00', TIME
 
 --#[datetime-67]
 SELECT "utcnow"() AS "u" FROM "default"."T" AS "T";
+
+--#[datetime-68]
+SELECT "T"['b'] AS "b" FROM "default"."T" AS "T" WHERE "T"['timestamp_1'] > DATE_ADD(DAY, -30, CAST("utcnow"() AS TIMESTAMP (6)));
+
+--#[datetime-69]
+SELECT DATE_ADD(DAY, "T"['b'], "T"['timestamp_1']) AS "d" FROM "default"."T" AS "T";

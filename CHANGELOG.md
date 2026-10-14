@@ -30,6 +30,7 @@ Thank you to all who have contributed!
 - Adds an experimental DuckDB SQL transpilation target, with the same PartiQL feature coverage as the Redshift, Spark, and Trino targets.
 
 ### Changed
+- DuckDB target: `DATE_ADD(<part>, <amount>, <datetime>)` is now translated to `date_add(<datetime>, to_<part>s(<amount>))` instead of being rejected.
 
 ### Deprecated
 

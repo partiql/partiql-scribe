@@ -189,3 +189,9 @@ SELECT DATEDIFF(DAY, TIMESTAMP '2023-01-15 08:00:00', TIMESTAMP '2023-12-25 10:3
 
 --#[datetime-67]
 SELECT sysdate AS "u" FROM "default"."T" AS "T";
+
+--#[datetime-68]
+SELECT "T"."b" FROM "default"."T" AS "T" WHERE CAST("T"."timestamp_1" AS TIMESTAMP) > DATEADD(DAY, -30, CAST(sysdate AS TIMESTAMP));
+
+--#[datetime-69]
+SELECT DATEADD(DAY, "T"."b", CAST("T"."timestamp_1" AS TIMESTAMP)) AS "d" FROM "default"."T" AS "T";

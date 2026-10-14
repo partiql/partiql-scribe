@@ -210,3 +210,11 @@ SELECT DATE_DIFF(DAY, TIMESTAMP WITH TIME ZONE '2023-01-15 08:00:00+08:00', TIME
 
 --#[datetime-67]
 SELECT utcnow() AS u FROM T;
+
+--#[datetime-68]
+-- DATE_ADD with a negative amount on UTCNOW() in a predicate (rows from the last 30 days)
+SELECT T.b FROM T WHERE T.timestamp_1 > DATE_ADD(DAY, -30, UTCNOW());
+
+--#[datetime-69]
+-- DATE_ADD with a column expression as the amount
+SELECT DATE_ADD(DAY, T.b, T.timestamp_1) AS d FROM T;
