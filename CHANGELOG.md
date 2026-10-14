@@ -28,6 +28,7 @@ Thank you to all who have contributed!
 
 ### Added
 - Adds an experimental DuckDB SQL transpilation target, with the same PartiQL feature coverage as the Redshift, Spark, and Trino targets.
+- Adds DuckDB translations to `partiql-scribe-function-extensions` (`DuckDBFunctionExtensionTarget` / `DuckDBFunctionExtensionCalls`): `contains`, `to_unixtime`, `hex_to_bigint`, `pow`, `utcnow`, and `date_add`.
 
 ### Changed
 

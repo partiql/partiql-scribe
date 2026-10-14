@@ -17,6 +17,7 @@ import org.partiql.scribe.problems.ScribeException
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
+import org.partiql.scribe.targets.duckdb.DuckDBAstToSql
 import org.partiql.scribe.targets.redshift.RedshiftAstToSql
 import org.partiql.scribe.targets.spark.SparkAstToSql
 import org.partiql.scribe.targets.trino.TrinoAstToSql
@@ -180,6 +181,25 @@ class FunctionExtensionCallsTest {
         )
     }
 
+    @Test
+    fun `duckdb extension translations`() {
+        val context = ScribeContext.standard()
+        val calls = TestDuckDBCalls(context, routines)
+
+        // `date_add` delegates to the DuckDB target's built-in DATE_ADD translation, so it isn't covered here.
+        assertTranslations(
+            DuckDBAstToSql(context),
+            calls::translate,
+            mapOf(
+                "utcnow" to "timezone('UTC', current_timestamp)",
+                "contains" to "contains(t.items, 'x')",
+                "hex_to_bigint" to "CAST('0x' || '00C10300' AS BIGINT)",
+                "to_unixtime" to "CAST(epoch(ts) AS BIGINT)",
+                "pow" to "\"pow\"(2, 3)",
+            ),
+        )
+    }
+
     private fun assertTranslations(
         dialect: AstToSql,
         translate: (String, SqlArgs) -> Expr,
@@ -250,6 +270,16 @@ class FunctionExtensionCallsTest {
         context: ScribeContext,
         routines: Set<RoutineRef>,
     ) : RedshiftFunctionExtensionCalls(context, routines) {
+        fun translate(
+            name: String,
+            args: SqlArgs,
+        ): Expr = routineRules.getValue(ref(name))(args)
+    }
+
+    private class TestDuckDBCalls(
+        context: ScribeContext,
+        routines: Set<RoutineRef>,
+    ) : DuckDBFunctionExtensionCalls(context, routines) {
         fun translate(
             name: String,
             args: SqlArgs,
