@@ -2,22 +2,22 @@
 SELECT current_date() AS "CURRENT_DATE" FROM "default"."T" AS "T";
 
 --#[datetime-09]
-[ScribeException{code=UNSUPPORTED_OPERATION}];
+SELECT date_add("T"."timestamp_1", to_seconds(5)) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-10]
-[ScribeException{code=UNSUPPORTED_OPERATION}];
+SELECT date_add("T"."timestamp_1", to_minutes(5)) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-11]
-[ScribeException{code=UNSUPPORTED_OPERATION}];
+SELECT date_add("T"."timestamp_1", to_hours(5)) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-12]
-[ScribeException{code=UNSUPPORTED_OPERATION}];
+SELECT CAST(date_add(current_date(), to_days(5)) AS DATE) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-13]
-[ScribeException{code=UNSUPPORTED_OPERATION}];
+SELECT CAST(date_add(current_date(), to_months(5)) AS DATE) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-14]
-[ScribeException{code=UNSUPPORTED_OPERATION}];
+SELECT CAST(date_add(current_date(), to_years(5)) AS DATE) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-15]
 SELECT date_sub('year', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
@@ -38,7 +38,7 @@ SELECT date_sub('minute', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "de
 SELECT date_sub('second', "T"."timestamp_1", "T"."timestamp_2") AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-21]
-[ScribeException{code=UNSUPPORTED_OPERATION}];
+SELECT date_add(TIMESTAMP '2017-01-02 03:04:05.006', to_seconds(1)) AS "_1" FROM "default"."T" AS "T";
 
 --#[datetime-22]
 SELECT date_sub('second', TIMESTAMP '2017-01-02 03:04:05.006', TIMESTAMP '2017-01-02 03:04:20.006') AS "_1" FROM "default"."T" AS "T";
@@ -123,3 +123,9 @@ SELECT date_sub('day', TIMESTAMPTZ '2023-01-15 08:00:00+08:00', TIMESTAMPTZ '202
 
 --#[datetime-67]
 SELECT timezone('UTC', current_timestamp) AS "u" FROM "default"."T" AS "T";
+
+--#[datetime-68]
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."timestamp_1" > date_add(CAST(timezone('UTC', current_timestamp) AS TIMESTAMP), to_days(-30));
+
+--#[datetime-69]
+SELECT date_add("T"."timestamp_1", to_days("T"."b")) AS "d" FROM "default"."T" AS "T";

@@ -68,3 +68,9 @@ SELECT `date_diff`(TIMESTAMP '2023-12-25 10:30:00+08:00', TIMESTAMP '2023-01-15 
 
 --#[datetime-67]
 SELECT `convert_timezone`('UTC', `current_timestamp`()) AS `u` FROM `default`.`T` AS `T`;
+
+--#[datetime-68]
+SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T` WHERE `T`.`timestamp_1` > (CAST(`convert_timezone`('UTC', `current_timestamp`()) AS TIMESTAMP_NTZ) + `make_interval`(0, 0, 0, -30, 0, 0, 0));
+
+--#[datetime-69]
+SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, `T`.`b`, 0, 0, 0) AS `d` FROM `default`.`T` AS `T`;
