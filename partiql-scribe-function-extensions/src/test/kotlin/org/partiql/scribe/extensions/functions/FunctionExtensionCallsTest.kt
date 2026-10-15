@@ -186,11 +186,11 @@ class FunctionExtensionCallsTest {
         val context = ScribeContext.standard()
         val calls = TestDuckDBCalls(context, routines)
 
-        // `date_add` delegates to the DuckDB target's built-in DATE_ADD translation, so it isn't covered here.
         assertTranslations(
             DuckDBAstToSql(context),
             calls::translate,
             mapOf(
+                "date_add" to "date_add(ts, to_days(1))",
                 "utcnow" to "timezone('UTC', current_timestamp)",
                 "contains" to "contains(t.items, 'x')",
                 "hex_to_bigint" to "CAST('0x' || '00C10300' AS BIGINT)",
