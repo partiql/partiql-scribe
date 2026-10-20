@@ -7,7 +7,6 @@ import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprCoalesce
 import org.partiql.ast.Ast.exprLit
-import org.partiql.ast.Ast.exprNullIf
 import org.partiql.ast.Ast.exprTrim
 import org.partiql.ast.AstNode
 import org.partiql.ast.AstRewriter
@@ -40,7 +39,8 @@ internal class Operand(
  *
  * A function that is not in [rules] is unsupported. The translator does not pass unknown functions through by name,
  * because a function with the same name can have different semantics in the two languages. The rules of each function
- * category are in their own class: [RedshiftAggregateFunctions] and [RedshiftDatetimeFunctions].
+ * category are in their own class: [RedshiftConditionalFunctions], [RedshiftAggregateFunctions], and
+ * [RedshiftDatetimeFunctions].
  */
 internal class RedshiftFunctions(
     private val notes: MutableList<RedshiftProblem>,
@@ -55,6 +55,7 @@ internal class RedshiftFunctions(
     }
 
     internal val datetime = RedshiftDatetimeFunctions(this)
+    internal val conditional = RedshiftConditionalFunctions(this)
     internal val aggregates = RedshiftAggregateFunctions(this)
 
     private val rules: Map<String, Rule> =
@@ -66,15 +67,6 @@ internal class RedshiftFunctions(
             "char_length" to Rule { name, args, setq -> length(name, args, setq) },
             "character_length" to Rule { name, args, setq -> length(name, args, setq) },
             "octet_length" to same("octet_length", 1),
-            // Special forms in the PartiQL AST.
-            "coalesce" to Rule { name, args, _ -> coalesce(name, args.map { it.expr }) },
-            "nullif" to Rule { name, args, _ -> nullif(name, args.map { it.expr }) },
-            // https://docs.aws.amazon.com/redshift/latest/dg/r_NVL_function.html
-            "nvl" to
-                Rule { name, args, _ ->
-                    note(name, "Redshift `NVL` was replaced by PartiQL `COALESCE`")
-                    coalesce(name, args.map { it.expr })
-                },
             // https://docs.aws.amazon.com/redshift/latest/dg/r_LEN.html
             "len" to
                 Rule { name, args, setq ->
@@ -86,7 +78,15 @@ internal class RedshiftFunctions(
                     note(name, "Redshift `LENGTH` was replaced by PartiQL `CHAR_LENGTH`")
                     length(name, args, setq)
                 },
-        ) + datetime.rules + aggregates.rules + systemFunctions()
+        ) + datetime.rules + conditional.rules + aggregates.rules + systemFunctions()
+
+    /**
+     * The calls of conditional functions (NVL, COALESCE, DECODE, ...) whose translation removed the padding of CHAR(n)
+     * values, because the values are unified with other character strings; see [RedshiftConditionalFunctions]. Redshift
+     * does not document whether the result keeps the padding, so the functions that count it (OCTET_LENGTH) or that
+     * may count it (POSITION) report such an argument as unsupported.
+     */
+    internal val charBranches: MutableSet<ParserRuleContext> = HashSet()
 
     /**
      * `POSITION(sub IN str)`.
@@ -242,22 +242,6 @@ internal class RedshiftFunctions(
                 }
             exprCall(Identifier.regular("char_length"), listOf(arg), null)
         }
-    }
-
-    private fun coalesce(
-        name: Token,
-        args: List<Expr>,
-    ): Expr {
-        if (args.isEmpty()) throw UnsupportedConstructException.at(name, "`${name.text}` with no arguments")
-        return exprCoalesce(args)
-    }
-
-    private fun nullif(
-        name: Token,
-        args: List<Expr>,
-    ): Expr {
-        arity(name, args, 2)
-        return exprNullIf(args[0], args[1])
     }
 
     /*
@@ -468,10 +452,31 @@ internal object FunctionTypes {
 
     fun isDecimal(type: PType): Boolean = type.code() == PType.DECIMAL || type.code() == PType.NUMERIC
 
+    fun isExactNumeric(type: PType): Boolean = isInteger(type) || isDecimal(type)
+
+    fun isApproximateNumeric(type: PType): Boolean = type.code() == PType.REAL || type.code() == PType.DOUBLE
+
+    fun isNumeric(type: PType): Boolean = isExactNumeric(type) || isApproximateNumeric(type)
+
+    fun isText(type: PType): Boolean = type.code() in TEXT
+
     fun isDynamic(type: PType): Boolean = type.code() == PType.DYNAMIC || type.code() == PType.VARIANT
 
     /** The type of the NULL literal, and of an operand that the planner could not resolve. */
     fun isUnknown(type: PType): Boolean = type.code() == PType.UNKNOWN
+
+    /**
+     * The number of digits before the decimal point of an exact numeric type, or null for other types.
+     */
+    fun integerDigits(type: PType): Int? =
+        when (type.code()) {
+            PType.TINYINT -> 3
+            PType.SMALLINT -> 5
+            PType.INTEGER -> 10
+            PType.BIGINT -> 19
+            PType.DECIMAL, PType.NUMERIC -> type.precision - type.scale
+            else -> null
+        }
 
     /**
      * The dynamic type of an operand that the planner could not type in the probe passes, for example because an
@@ -513,4 +518,5 @@ internal object FunctionTypes {
         }
 
     private val INTEGERS = setOf(PType.TINYINT, PType.SMALLINT, PType.INTEGER, PType.BIGINT)
+    private val TEXT = setOf(PType.CHAR, PType.VARCHAR, PType.STRING, PType.CLOB)
 }
