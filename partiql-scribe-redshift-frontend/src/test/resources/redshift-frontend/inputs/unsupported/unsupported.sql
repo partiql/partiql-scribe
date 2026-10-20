@@ -1,8 +1,9 @@
 --#[qualify]
 SELECT b FROM T QUALIFY b > 1;
 
+-- ILIKE is case-insensitive for ASCII letters only.
 --#[ilike]
-SELECT a FROM T WHERE c ILIKE 'a%';
+SELECT a FROM T WHERE c ILIKE '%é%';
 
 --#[unknown-function]
 SELECT MD5(c) AS v FROM T;

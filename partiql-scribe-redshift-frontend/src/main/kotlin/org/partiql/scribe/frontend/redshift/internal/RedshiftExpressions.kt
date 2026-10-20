@@ -1,36 +1,32 @@
 package org.partiql.scribe.frontend.redshift.internal
 
+import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 import org.partiql.ast.Ast.exprAnd
-import org.partiql.ast.Ast.exprArray
-import org.partiql.ast.Ast.exprBetween
 import org.partiql.ast.Ast.exprCall
-import org.partiql.ast.Ast.exprCase
-import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
-import org.partiql.ast.Ast.exprInCollection
-import org.partiql.ast.Ast.exprLike
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprNot
 import org.partiql.ast.Ast.exprNullPredicate
-import org.partiql.ast.Ast.exprOperator
 import org.partiql.ast.Ast.exprOr
 import org.partiql.ast.Ast.exprPath
 import org.partiql.ast.Ast.exprPathStepElement
 import org.partiql.ast.Ast.exprPathStepField
-import org.partiql.ast.Ast.exprQuerySet
 import org.partiql.ast.Ast.exprVarRef
-import org.partiql.ast.Ast.query
 import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.PathStep
+import org.partiql.spi.types.PType
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 
 /**
  * Builds PartiQL expressions, literals, and data types from a Redshift parse tree; see [RedshiftAstBuilder].
+ *
+ * The rules for comparisons and the other conditions are in [RedshiftConditions], pattern matching is in
+ * [RedshiftPatterns], the operators are in [RedshiftOperators], and casts and data types are in [RedshiftCasts].
  */
 internal class RedshiftExpressions(
     private val builder: RedshiftAstBuilder,
@@ -38,51 +34,92 @@ internal class RedshiftExpressions(
     private val types: OperandTypes,
 ) {
     private val datetime = RedshiftDatetime(builder, this, types)
+    private val conditions = RedshiftConditions(builder, this, datetime, types)
+    private val patterns = RedshiftPatterns(builder, this, types)
+    private val operators = RedshiftOperators(builder, this, datetime, types)
+    private val casts = RedshiftCasts(builder, this, datetime, types)
 
     /*
      * Boolean expressions and predicates
      */
 
-    internal fun expr(ctx: P.ExprContext): Expr = exprOr(ctx.exprOr())
+    /**
+     * An expression. The condition of WHERE, HAVING, QUALIFY, and a join is translated as a [condition].
+     */
+    internal fun expr(ctx: P.ExprContext): Expr {
+        val parent = ctx.parent
+        val isCondition =
+            parent is P.WhereClauseContext ||
+                parent is P.HavingClauseContext ||
+                parent is P.QualifyClauseContext ||
+                (parent is P.TableJoinContext && parent.condition === ctx)
+        return if (isCondition) condition(ctx) else exprOr(ctx.exprOr())
+    }
+
+    /**
+     * A condition: the operand of AND, OR, and NOT, the condition of a searched CASE, and the condition of WHERE,
+     * HAVING, and a join. Redshift accepts an integer condition (non-zero is TRUE); PartiQL treats a condition that is
+     * not BOOLEAN as never true, so the translation reports it as unsupported.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_logical_condition.html
+     */
+    internal fun condition(ctx: P.ExprContext): Expr = condition(ctx, exprOr(ctx.exprOr()))
+
+    private fun condition(
+        ctx: ParserRuleContext,
+        expr: Expr,
+    ): Expr {
+        if (isBooleanForm(ctx)) return expr
+        if (expr is ExprLit) {
+            val code = expr.lit.code()
+            if (code != Literal.BOOL && code != Literal.NULL) unsupported(ctx.start, "non-boolean condition")
+            return expr
+        }
+        return types.resolveTyped(listOf(Operand(ctx, expr))) { (x) ->
+            if (x.family !in setOf(TypeFamily.BOOLEAN, TypeFamily.UNKNOWN, TypeFamily.SUPER, TypeFamily.UNTYPED)) {
+                unsupported(ctx.start, "non-boolean condition")
+            }
+            x.expr
+        }
+    }
 
     private fun exprOr(ctx: P.ExprOrContext): Expr =
         when (ctx) {
-            is P.OrContext -> exprOr(exprOr(ctx.lhs), exprAnd(ctx.rhs))
+            is P.OrContext -> exprOr(condition(ctx.lhs, exprOr(ctx.lhs)), condition(ctx.rhs, exprAnd(ctx.rhs)))
             is P.OrBaseContext -> exprAnd(ctx.exprAnd())
             else -> builder.unexpected(ctx)
         }
 
     private fun exprAnd(ctx: P.ExprAndContext): Expr =
         when (ctx) {
-            is P.AndContext -> exprAnd(exprAnd(ctx.lhs), exprNot(ctx.rhs))
+            is P.AndContext -> exprAnd(condition(ctx.lhs, exprAnd(ctx.lhs)), condition(ctx.rhs, exprNot(ctx.rhs)))
             is P.AndBaseContext -> exprNot(ctx.exprNot())
             else -> builder.unexpected(ctx)
         }
 
     private fun exprNot(ctx: P.ExprNotContext): Expr =
         when (ctx) {
-            is P.NotContext -> exprNot(exprNot(ctx.exprNot()))
+            is P.NotContext -> exprNot(condition(ctx.exprNot(), exprNot(ctx.exprNot())))
             is P.NotBaseContext -> predicate(ctx.predicate())
             else -> builder.unexpected(ctx)
         }
 
     private fun predicate(ctx: P.PredicateContext): Expr =
         when (ctx) {
-            is P.PredicateComparisonContext -> {
-                // PartiQL spells inequality as `<>` only.
-                val op = if (ctx.op.NEQ() != null) "<>" else ctx.op.text
-                exprOperator(op, valueExpr(ctx.lhs), valueExpr(ctx.rhs))
-            }
+            is P.PredicateQuantifiedContext -> conditions.quantified(ctx)
+            is P.PredicateComparisonContext -> conditions.comparison(ctx)
             is P.PredicateNullContext -> exprNullPredicate(valueExpr(ctx.lhs), ctx.NOT() != null)
-            is P.PredicateBetweenContext ->
-                exprBetween(valueExpr(ctx.lhs), valueExpr(ctx.lower), valueExpr(ctx.upper), ctx.NOT() != null)
-            is P.PredicateInQueryContext -> exprInCollection(valueExpr(ctx.lhs), builder.exprQuerySet(ctx.query()), ctx.NOT() != null)
-            is P.PredicateInListContext ->
-                exprInCollection(valueExpr(ctx.lhs), exprArray(ctx.expr().map(::expr)), ctx.NOT() != null)
-            is P.PredicateLikeContext -> {
-                if (ctx.op.type == P.ILIKE) throw UnsupportedConstructException.at(ctx.op, "ILIKE")
-                exprLike(valueExpr(ctx.lhs), valueExpr(ctx.rhs), ctx.escape?.let(::valueExpr), ctx.NOT() != null)
-            }
+            is P.PredicateTruthContext -> conditions.truth(ctx)
+            is P.PredicateDistinctContext -> conditions.distinct(ctx)
+            is P.PredicateBetweenContext -> conditions.between(ctx)
+            is P.PredicateInQueryContext -> conditions.inQuery(ctx.IN().symbol, ctx.lhs, ctx.query(), ctx.NOT() != null)
+            is P.PredicateInListContext -> conditions.inList(ctx)
+            is P.PredicateRowInQueryContext -> unsupported(ctx.IN().symbol, "row value IN subquery")
+            is P.PredicateRowInListContext -> conditions.rowInList(ctx)
+            is P.PredicateLikeContext -> patterns.like(ctx)
+            is P.PredicateSimilarToContext -> patterns.similarTo(ctx)
+            is P.PredicateLikeOperatorContext -> patterns.likeOperator(ctx)
+            is P.PredicatePosixContext -> patterns.posix(ctx)
             is P.PredicateBaseContext -> valueExpr(ctx.valueExpr())
             else -> builder.unexpected(ctx)
         }
@@ -94,78 +131,164 @@ internal class RedshiftExpressions(
     internal fun valueExpr(ctx: P.ValueExprContext): Expr =
         when (ctx) {
             is P.ValuePrimaryContext -> primaryExpr(ctx.primaryExpr())
-            is P.ValueCastShorthandContext -> exprCast(valueExpr(ctx.valueExpr()), dataType(ctx.dataType()))
-            is P.ValueSignedContext -> signed(ctx.sign.text, valueExpr(ctx.valueExpr()))
-            is P.ValueMultiplicativeContext -> exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs))
-            is P.ValueAdditiveContext -> additive(ctx)
+            is P.ValueCastShorthandContext ->
+                casts.cast(ctx.DOUBLE_COLON().symbol, ctx, Operand(ctx.valueExpr(), valueExpr(ctx.valueExpr())), ctx.dataType())
+            is P.ValueSignedContext -> operators.signed(ctx)
+            is P.ValueExponentContext -> operators.exponent(ctx)
+            is P.ValueMultiplicativeContext -> operators.multiplicative(ctx)
+            is P.ValueAdditiveContext -> operators.additive(ctx)
+            is P.ValuePrefixOperatorContext -> operators.prefix(ctx)
             is P.ValueAtTimeZoneContext -> datetime.atTimeZone(ctx)
-            is P.ValueConcatContext -> exprOperator("||", valueExpr(ctx.lhs), valueExpr(ctx.rhs))
+            is P.ValueOperatorContext -> operators.operator(ctx)
             else -> builder.unexpected(ctx)
         }
 
     /**
-     * `+` and `-`. When an operand is a datetime or interval value, the Redshift semantics depend on the operand types;
-     * see [RedshiftDatetime.additive].
+     * A primary expression, and a SUPER navigation path. Redshift folds the attribute names of a path to lower case
+     * (ASCII letters only; a quoted name is kept when identifiers are case-sensitive), and then matches them exactly.
+     * A PartiQL regular path step matches without regard to case, so the attribute steps are delimited. The first step
+     * after a name can also be a column of a table: it is a regular step unless the name has the dynamic type, which
+     * is the case for a SUPER column and for an element of an unnested array. The steps of a FROM source, which name a
+     * table, are regular.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/query-super.html
      */
-    private fun additive(ctx: P.ValueAdditiveContext): Expr =
-        types.resolve(listOf(ctx.lhs to valueExpr(ctx.lhs), ctx.rhs to valueExpr(ctx.rhs))) { exprs, operandTypes ->
-            datetime.additive(ctx.op, exprs[0], operandTypes[0], exprs[1], operandTypes[1])
-                ?: exprOperator(ctx.op.text, exprs[0], exprs[1])
-        }
-
-    /**
-     * A sign on a numeric literal becomes part of the literal, the same as in the PartiQL parser.
-     */
-    private fun signed(
-        sign: String,
-        value: Expr,
-    ): Expr {
-        if (value is ExprLit) {
-            val text = value.lit.numberValue()
-            val negated =
-                when (value.lit.code()) {
-                    Literal.INT_NUM -> Literal.intNum("$sign$text")
-                    Literal.EXACT_NUM -> Literal.exactNum("$sign$text")
-                    else -> null
-                }
-            if (negated != null && sign == "-" && !text.startsWith("-")) return exprLit(negated)
-        }
-        return exprOperator(sign, null, value)
-    }
-
     internal fun primaryExpr(ctx: P.PrimaryExprContext): Expr {
         // Collect the steps of a path from the inside out, then build one path expression.
-        val steps = ArrayDeque<PathStep>()
+        val steps = ArrayDeque<P.PrimaryExprContext>()
         var current = ctx
-        while (true) {
+        while (current is P.PathFieldContext || current is P.PathElementContext) {
+            steps.addFirst(current)
             current =
                 when (current) {
-                    is P.PathFieldContext -> {
-                        steps.addFirst(exprPathStepField(builder.simple(current.identifier())))
-                        current.primaryExpr()
-                    }
-                    is P.PathElementContext -> {
-                        steps.addFirst(exprPathStepElement(expr(current.expr())))
-                        current.primaryExpr()
-                    }
-                    is P.PrimaryAtomContext -> break
-                    else -> builder.unexpected(current)
+                    is P.PathFieldContext -> current.primaryExpr()
+                    else -> (current as P.PathElementContext).primaryExpr()
                 }
         }
-        val root = atom((current as P.PrimaryAtomContext).atom())
-        return if (steps.isEmpty()) root else exprPath(root, steps.toList())
+        val atomCtx = (current as? P.PrimaryAtomContext ?: builder.unexpected(current)).atom()
+        val atom = atom(atomCtx)
+        if (steps.isEmpty()) return atom
+        val fromSource = ctx.parent is P.TableNameContext
+        val named = atomCtx is P.AtomVariableContext
+        val columnStep = named && !fromSource && steps.first() is P.PathFieldContext
+        val relation = columnStep && isRelationName(atomCtx)
+        // Otherwise the type of the name decides whether its first step is a column or an attribute. The decision does
+        // not change the type of the path, so the name is probed without a placeholder.
+        val root = if (columnStep && !relation) types.operand(atomCtx, atom) else atom
+        val dynamicRoot = !relation && types.typeOf(atomCtx)?.code() == PType.DYNAMIC
+        val pathSteps =
+            steps.mapIndexed { i, step ->
+                when (step) {
+                    is P.PathFieldContext -> {
+                        val regular = fromSource || (named && i == 0 && !dynamicRoot)
+                        exprPathStepField(if (regular) builder.simple(step.identifier()) else attribute(step.identifier()))
+                    }
+                    else -> element(step as P.PathElementContext)
+                }
+            }
+        return exprPath(root, pathSteps.toList<PathStep>())
+    }
+
+    /**
+     * True if [root] is the name of a table or subquery in the FROM clause of a query block that contains it, so that
+     * the first step after it is a column. A FROM item whose source is rooted at another FROM item (an unnest) binds
+     * an element instead. For other names the translation probes the type.
+     */
+    private fun isRelationName(root: P.AtomVariableContext): Boolean {
+        val name = builder.simple(root.identifier())
+        var ctx: ParserRuleContext? = root
+        while (ctx != null) {
+            val specs =
+                when (ctx) {
+                    is P.QuerySpecificationContext -> listOf(ctx)
+                    is P.QueryContext -> ctx.children.orEmpty().filterIsInstance<P.QuerySpecificationContext>()
+                    else -> emptyList()
+                }
+            for (spec in specs) {
+                val items = spec.children.orEmpty().filterIsInstance<P.FromClauseContext>().flatMap(::fromItems)
+                val bindings = items.map { it to bindingName(it) }
+                val item = bindings.firstOrNull { (_, binding) -> binding != null && matches(binding, name) }?.first ?: continue
+                if (item !is P.TableNameContext) return true
+                val sourceRoot = sourceRootName(item.primaryExpr()) ?: return false
+                return bindings.none { (other, binding) -> other !== item && binding != null && matches(binding, sourceRoot) }
+            }
+            ctx = ctx.parent as? ParserRuleContext
+        }
+        return false
+    }
+
+    /** The table and subquery items of a FROM clause, without the items of nested queries. */
+    private fun fromItems(ctx: ParserRuleContext): List<ParserRuleContext> =
+        when (ctx) {
+            is P.TableNameContext, is P.TableSubqueryContext -> listOf(ctx)
+            is P.ExprContext -> emptyList()
+            else -> ctx.children.orEmpty().filterIsInstance<ParserRuleContext>().flatMap(::fromItems)
+        }
+
+    /** The name that a FROM item binds: its alias, or the last name of a table path. */
+    private fun bindingName(item: ParserRuleContext): Identifier.Simple? =
+        when (item) {
+            is P.TableSubqueryContext -> builder.simple(item.alias)
+            is P.TableNameContext ->
+                item.alias?.let(builder::simple)
+                    ?: when (val source = item.primaryExpr()) {
+                        is P.PathFieldContext -> builder.simple(source.identifier())
+                        is P.PrimaryAtomContext -> (source.atom() as? P.AtomVariableContext)?.let { builder.simple(it.identifier()) }
+                        else -> null
+                    }
+            else -> null
+        }
+
+    /** The first name of a FROM source path, or null if the source is not rooted at a name. */
+    private fun sourceRootName(ctx: P.PrimaryExprContext): Identifier.Simple? =
+        when (ctx) {
+            is P.PathFieldContext -> sourceRootName(ctx.primaryExpr())
+            is P.PathElementContext -> sourceRootName(ctx.primaryExpr())
+            is P.PrimaryAtomContext -> (ctx.atom() as? P.AtomVariableContext)?.let { builder.simple(it.identifier()) }
+            else -> null
+        }
+
+    private fun matches(
+        binding: Identifier.Simple,
+        name: Identifier.Simple,
+    ): Boolean = if (binding.isRegular && name.isRegular) binding.text.equals(name.text, ignoreCase = true) else binding.text == name.text
+
+    /** A SUPER attribute name: delimited, with the ASCII letters folded to lower case unless the name is quoted and identifiers are case-sensitive. */
+    private fun attribute(ctx: P.IdentifierContext): Identifier.Simple {
+        val simple = builder.simple(ctx)
+        val text =
+            when {
+                ctx is P.IdentifierQuotedContext && !simple.isRegular -> simple.text
+                ctx is P.IdentifierQuotedContext -> foldAscii(ctx.text.removePrefix("\"").removeSuffix("\"").replace("\"\"", "\""))
+                else -> foldAscii(ctx.text)
+            }
+        return Identifier.Simple.delimited(text)
+    }
+
+    private fun foldAscii(text: String): String = text.map { if (it in 'A'..'Z') it + ('a' - 'A') else it }.joinToString("")
+
+    /**
+     * An array subscript `x[n]`, 0-based in both languages. Redshift documents `[]` for array indexes only, so a
+     * character string key is unsupported.
+     */
+    private fun element(ctx: P.PathElementContext): PathStep {
+        val index = expr(ctx.expr())
+        if (index is ExprLit && index.lit.code() == Literal.STRING) {
+            unsupported(ctx.BRACKET_LEFT().symbol, "bracket navigation with a string key; Redshift documents [] only for array indexes")
+        }
+        // The planner drops an index of the dynamic type, with the probes in it; in a probe pass, where an index can
+        // be a placeholder, the index is cast to INT. The cast does not change the type of the path.
+        return exprPathStepElement(if (types.probing && index !is ExprLit) exprCast(index, DataType.INT()) else index)
     }
 
     private fun atom(ctx: P.AtomContext): Expr =
         when (ctx) {
             is P.AtomLiteralContext -> literal(ctx.literal())
-            is P.AtomCastContext -> exprCast(expr(ctx.expr()), dataType(ctx.dataType()))
-            is P.AtomCaseContext ->
-                exprCase(
-                    ctx.operand?.let(::expr),
-                    ctx.caseWhen().map { exprCaseBranch(expr(it.condition), expr(it.result)) },
-                    ctx.otherwise?.let(::expr),
-                )
+            is P.AtomCastContext -> casts.cast(ctx.CAST().symbol, ctx, Operand(ctx.expr(), expr(ctx.expr())), ctx.dataType())
+            is P.AtomTryCastContext -> casts.tryCast(ctx)
+            is P.AtomConvertContext -> casts.convert(ctx)
+            is P.AtomCaseContext -> conditions.case(ctx)
+            is P.AtomExistsContext -> exists(ctx)
             is P.AtomDateFunctionContext -> datetime.dateFunction(ctx)
             is P.AtomExtractContext -> datetime.extract(ctx)
             is P.AtomPositionContext ->
@@ -202,17 +325,38 @@ internal class RedshiftExpressions(
                 when {
                     ctx.withinGroup() != null -> throw UnsupportedConstructException.at(ctx.withinGroup(), "WITHIN GROUP")
                     ctx.overClause() != null || ctx.nullTreatment() != null -> builder.window(ctx)
-                    else ->
-                        functions.call(ctx.name.start, ctx.expr().map { Operand(it, expr(it)) }, builder.setQuantifier(ctx.setQuantifier()))
+                    else -> {
+                        // The type of an aggregate call follows from the types of its arguments; see [resolveTyped].
+                        val aggregate = ctx.name.text.lowercase() in AGGREGATE_FUNCTIONS
+                        val args = ctx.expr().map { Operand(it, if (aggregate) types.operand(it, expr(it)) else expr(it)) }
+                        functions.call(ctx.name.start, args, builder.setQuantifier(ctx.setQuantifier()))
+                    }
                 }
             is P.AtomSysdateContext -> datetime.sysdate(ctx.SYSDATE().symbol)
             is P.AtomCurrentDateContext -> datetime.currentDate(ctx.CURRENT_DATE().symbol)
             is P.AtomCurrentDatetimeContext -> datetime.currentDatetime(ctx.name)
+            is P.AtomSessionUserContext -> sessionUser(ctx.name)
             is P.AtomSubqueryContext -> builder.exprQuerySet(ctx.query())
             is P.AtomParenthesizedContext -> expr(ctx.expr())
             is P.AtomVariableContext -> exprVarRef(Identifier.of(builder.simple(ctx.identifier())), false)
             else -> builder.unexpected(ctx)
         }
+
+    /**
+     * `EXISTS (subquery)`, the same in both languages.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_exists_condition.html
+     */
+    private fun exists(ctx: P.AtomExistsContext): Expr =
+        exprCall(Identifier.regular("exists"), listOf(builder.exprQuerySet(ctx.query())), null)
+
+    /**
+     * `CURRENT_USER`, `USER`, `SESSION_USER`, and `CURRENT_USER_ID` return the Redshift user, which a PartiQL session
+     * does not have.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_CURRENT_USER.html
+     */
+    private fun sessionUser(name: Token): Expr = unsupported(name, name.text.uppercase())
 
     private fun literal(ctx: P.LiteralContext): Expr =
         when (ctx) {
@@ -221,6 +365,8 @@ internal class RedshiftExpressions(
             is P.LiteralFalseContext -> exprLit(Literal.bool(false))
             is P.LiteralIntegerContext -> exprLit(Literal.intNum(ctx.text))
             is P.LiteralDecimalContext -> exprLit(Literal.exactNum(ctx.text))
+            // The Redshift type of a literal with an exponent is not documented; PostgreSQL types `1e3` as NUMERIC.
+            is P.LiteralFloatContext -> unsupported(ctx.start, "numeric literal with an exponent")
             is P.LiteralStringContext -> exprLit(Literal.string(stringValue(ctx.STRING_LITERAL().symbol)))
             is P.LiteralDateContext,
             is P.LiteralTimeContext,
@@ -234,67 +380,52 @@ internal class RedshiftExpressions(
 
     /*
      * Data types
-     *
-     * https://docs.aws.amazon.com/redshift/latest/dg/c_Supported_data_types.html
      */
 
-    internal fun dataType(ctx: P.DataTypeContext): DataType =
-        when (ctx) {
-            is P.TypeDoublePrecisionContext -> DataType.DOUBLE_PRECISION()
-            is P.TypeCharacterVaryingContext -> varchar(ctx.length?.text?.toInt())
-            is P.TypeTimeContext -> DataType.TIME(DATETIME_PRECISION)
-            is P.TypeTimeTzContext -> DataType.TIME_WITH_TIME_ZONE(DATETIME_PRECISION)
-            // TIMESTAMP without a precision is TIMESTAMP(6) in PartiQL.
-            is P.TypeTimestampContext -> DataType.TIMESTAMP()
-            is P.TypeTimestampTzContext -> DataType.TIMESTAMP_WITH_TIME_ZONE(DATETIME_PRECISION)
-            is P.TypeDateContext -> DataType.DATE()
-            is P.TypeIntervalContext -> datetime.intervalType(ctx)
-            is P.TypeNamedContext -> namedType(ctx)
-            else -> builder.unexpected(ctx)
-        }
-
-    private fun namedType(ctx: P.TypeNamedContext): DataType {
-        val name = ctx.name.text.lowercase()
-        val arg0 = ctx.arg0?.text?.toInt()
-        val arg1 = ctx.arg1?.text?.toInt()
-        val hasArgs = arg0 != null
-
-        fun noArgs(type: DataType): DataType {
-            if (hasArgs) throw UnsupportedConstructException.at(ctx, "type parameters for `${ctx.name.text}`")
-            return type
-        }
-        return when (name) {
-            "smallint", "int2" -> noArgs(DataType.SMALLINT())
-            "integer", "int", "int4" -> noArgs(DataType.INTEGER())
-            "bigint", "int8" -> noArgs(DataType.BIGINT())
-            "real", "float4" -> noArgs(DataType.REAL())
-            "float8" -> noArgs(DataType.DOUBLE_PRECISION())
-            // FLOAT(p) is REAL for p <= 24 and DOUBLE PRECISION otherwise.
-            "float" -> if (arg0 != null && arg1 == null && arg0 <= 24) DataType.REAL() else noArgs(DataType.DOUBLE_PRECISION())
-            "boolean", "bool" -> noArgs(DataType.BOOLEAN())
-            // DECIMAL without parameters is DECIMAL(18, 0) in Redshift.
-            "decimal", "numeric" -> DataType.DECIMAL(arg0 ?: 18, arg1 ?: 0)
-            // CHAR without a length is CHAR(1).
-            "char", "character", "nchar", "bpchar" -> if (arg1 != null) builder.unexpected(ctx) else DataType.CHAR(arg0 ?: 1)
-            "varchar", "nvarchar" -> if (arg1 != null) builder.unexpected(ctx) else varchar(arg0)
-            "text" -> noArgs(varchar(null))
-            else -> throw UnsupportedConstructException.at(ctx, "data type `${ctx.name.text}`")
-        }
-    }
+    /** The PartiQL type of a Redshift data type; see [RedshiftCasts.target]. */
+    internal fun dataType(ctx: P.DataTypeContext): DataType = casts.dataType(ctx)
 
     /**
-     * VARCHAR without a length (and TEXT) is VARCHAR(256) in Redshift.
+     * The value of a string literal token. Two quotes are a quote. A backslash is an escape character in Redshift string
+     * literals: two backslashes are a backslash, `\'` is a quote, and `\b`, `\f`, `\n`, `\r`, `\t` are the control
+     * characters. Other escapes are not documented, so they are unsupported.
      */
-    private fun varchar(length: Int?): DataType = DataType.VARCHAR(length ?: 256)
-
-    /** The value of a string literal token. */
-    internal fun stringValue(token: Token): String = token.text.removePrefix("'").removeSuffix("'").replace("''", "'")
+    internal fun stringValue(token: Token): String {
+        val text = token.text
+        val value = StringBuilder()
+        var i = 1
+        while (i < text.length - 1) {
+            val c = text[i]
+            when {
+                c == '\'' -> {
+                    value.append('\'')
+                    i += 2
+                }
+                c == '\\' -> {
+                    val escaped = ESCAPES[text[i + 1]] ?: unsupported(token, "backslash escape `\\${text[i + 1]}` in a string literal")
+                    value.append(escaped)
+                    i += 2
+                }
+                else -> {
+                    value.append(c)
+                    i++
+                }
+            }
+        }
+        return value.toString()
+    }
 
     private companion object {
-        /**
-         * Redshift stores TIME, TIMETZ, TIMESTAMP, and TIMESTAMPTZ values with microsecond precision. PartiQL TIME
-         * without a precision is TIME(0), so the translator writes the precision.
-         */
-        const val DATETIME_PRECISION = 6
+        /** https://github.com/partiql/partiql-scribe/issues/158 */
+        val ESCAPES =
+            mapOf(
+                '\\' to '\\',
+                '\'' to '\'',
+                'b' to '\b',
+                'f' to '\u000C',
+                'n' to '\n',
+                'r' to '\r',
+                't' to '\t',
+            )
     }
 }

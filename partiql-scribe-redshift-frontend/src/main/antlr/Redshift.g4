@@ -5,7 +5,8 @@
  * translator can report them as unsupported with a location (for example QUALIFY and ILIKE), instead of a syntax error.
  *
  * Operator precedence follows PostgreSQL, from which Redshift derives: '.' and '[]', then '::', then unary sign,
- * then '* / %', then '+ -', then '||', then the predicates, then NOT, AND, OR.
+ * then '^', then '* / %', then '+ -', then the other operators ('||', '&', '|', '<<', '>>', and the prefix operators
+ * '@', '|/', '||/', '~'), then the predicates, then NOT, AND, OR.
  *
  * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_SELECT_synopsis.html
  */
@@ -122,13 +123,28 @@ exprNot
     | predicate                                 # notBase
     ;
 
+/*
+ * Predicates. Some forms are recognized only so that the translator can report them as unsupported with a location:
+ * the quantified comparisons other than `= ANY`, `= SOME`, and `<> ALL`, `IS [NOT] DISTINCT FROM`, `BETWEEN SYMMETRIC`,
+ * and the case-insensitive POSIX operators.
+ * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_conditions.html
+ */
 predicate
-    : lhs=valueExpr op=comparisonOperator rhs=valueExpr                                 # predicateComparison
+    : lhs=valueExpr op=comparisonOperator quantifier=(ANY | SOME | ALL) PAREN_LEFT query PAREN_RIGHT # predicateQuantified
+    | lhs=valueExpr op=comparisonOperator rhs=valueExpr                                 # predicateComparison
     | lhs=valueExpr IS NOT? NULL                                                        # predicateNull
-    | lhs=valueExpr NOT? BETWEEN lower=valueExpr AND upper=valueExpr                    # predicateBetween
+    | lhs=valueExpr IS NOT? truth=(TRUE | FALSE | UNKNOWN)                              # predicateTruth
+    | lhs=valueExpr IS NOT? DISTINCT FROM rhs=valueExpr                                 # predicateDistinct
+    | lhs=valueExpr NOT? BETWEEN symmetry=(SYMMETRIC | ASYMMETRIC)? lower=valueExpr AND upper=valueExpr # predicateBetween
     | lhs=valueExpr NOT? IN PAREN_LEFT query PAREN_RIGHT                                # predicateInQuery
     | lhs=valueExpr NOT? IN PAREN_LEFT expr (COMMA expr)* PAREN_RIGHT                   # predicateInList
+    | row=rowValue NOT? IN PAREN_LEFT query PAREN_RIGHT                                 # predicateRowInQuery
+    | row=rowValue NOT? IN PAREN_LEFT rowValue (COMMA rowValue)* PAREN_RIGHT            # predicateRowInList
     | lhs=valueExpr NOT? op=(LIKE | ILIKE) rhs=valueExpr (ESCAPE escape=valueExpr)?     # predicateLike
+    | lhs=valueExpr NOT? SIMILAR TO rhs=valueExpr (ESCAPE escape=valueExpr)?           # predicateSimilarTo
+    | lhs=valueExpr op=(TILDE_TILDE | NOT_TILDE_TILDE | TILDE_TILDE_ASTERISK | NOT_TILDE_TILDE_ASTERISK)
+      rhs=valueExpr                                                                     # predicateLikeOperator
+    | lhs=valueExpr op=(TILDE | NOT_TILDE | TILDE_ASTERISK | NOT_TILDE_ASTERISK) rhs=valueExpr # predicatePosix
     | valueExpr                                                                         # predicateBase
     ;
 
@@ -136,14 +152,28 @@ comparisonOperator
     : EQ | NEQ | LT | LT_EQ | GT | GT_EQ
     ;
 
+/*
+ * A row value of two or more expressions, the left side of a row-value IN predicate.
+ */
+rowValue
+    : PAREN_LEFT expr (COMMA expr)+ PAREN_RIGHT
+    ;
+
+/*
+ * The operators without a keyword (`||`, `&`, `|`, `<<`, `>>`) and the prefix operators (`@`, `|/`, `||/`, `~`) have one
+ * precedence level, below `+` and `-`, as in PostgreSQL.
+ * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_OPERATOR_SYMBOLS.html
+ */
 valueExpr
     : primaryExpr                                               # valuePrimary
     | valueExpr DOUBLE_COLON dataType                           # valueCastShorthand
     | sign=(PLUS | MINUS) valueExpr                             # valueSigned
     | valueExpr AT TIME ZONE zone=primaryExpr                   # valueAtTimeZone
+    | lhs=valueExpr op=CARET rhs=valueExpr                      # valueExponent
     | lhs=valueExpr op=(ASTERISK | SLASH | PERCENT) rhs=valueExpr # valueMultiplicative
     | lhs=valueExpr op=(PLUS | MINUS) rhs=valueExpr             # valueAdditive
-    | lhs=valueExpr CONCAT rhs=valueExpr                        # valueConcat
+    | op=(AT_SIGN | SQUARE_ROOT | CUBE_ROOT | TILDE) valueExpr  # valuePrefixOperator
+    | lhs=valueExpr op=(CONCAT | AMPERSAND | PIPE | SHIFT_LEFT | SHIFT_RIGHT) rhs=valueExpr # valueOperator
     ;
 
 primaryExpr
@@ -155,7 +185,10 @@ primaryExpr
 atom
     : literal                                                                       # atomLiteral
     | CAST PAREN_LEFT expr AS dataType PAREN_RIGHT                                  # atomCast
+    | TRY_CAST PAREN_LEFT expr AS dataType PAREN_RIGHT                              # atomTryCast
+    | CONVERT PAREN_LEFT dataType COMMA expr PAREN_RIGHT                            # atomConvert
     | CASE operand=expr? caseWhen+ (ELSE otherwise=expr)? END                       # atomCase
+    | EXISTS PAREN_LEFT query PAREN_RIGHT                                           # atomExists
     | name=(DATEADD | DATEDIFF) PAREN_LEFT part=identifier COMMA expr COMMA expr PAREN_RIGHT # atomDateFunction
     | EXTRACT PAREN_LEFT part=datePart FROM expr PAREN_RIGHT                        # atomExtract
     | POSITION PAREN_LEFT sub=valueExpr IN str=valueExpr PAREN_RIGHT                # atomPosition
@@ -169,6 +202,7 @@ atom
     | SYSDATE                                                                       # atomSysdate
     | CURRENT_DATE                                                                  # atomCurrentDate
     | name=(CURRENT_TIMESTAMP | CURRENT_TIME | LOCALTIMESTAMP | LOCALTIME)          # atomCurrentDatetime
+    | name=(CURRENT_USER | CURRENT_USER_ID | SESSION_USER | USER)                   # atomSessionUser
     | PAREN_LEFT query PAREN_RIGHT                                                  # atomSubquery
     | PAREN_LEFT expr PAREN_RIGHT                                                   # atomParenthesized
     | identifier                                                                    # atomVariable
@@ -225,6 +259,7 @@ literal
     | FALSE                                     # literalFalse
     | INTEGER_LITERAL                           # literalInteger
     | DECIMAL_LITERAL                           # literalDecimal
+    | FLOAT_LITERAL                             # literalFloat
     | STRING_LITERAL                            # literalString
     | DATE STRING_LITERAL                       # literalDate
     | TIME (WITHOUT TIME ZONE)? STRING_LITERAL                          # literalTime
@@ -248,18 +283,34 @@ intervalField
 
 /*
  * A data type is a name with optional parameters. The translator maps the name to a PartiQL type. The multi-word
- * names are listed explicitly.
+ * names are listed explicitly; they come first, so that `CHAR VARYING` is one type and not the type CHAR followed by
+ * the alias `varying`.
+ * Reference: https://docs.aws.amazon.com/redshift/latest/dg/c_Supported_data_types.html
  */
 dataType
     : DOUBLE PRECISION                                                      # typeDoublePrecision
-    | CHARACTER VARYING (PAREN_LEFT length=INTEGER_LITERAL PAREN_RIGHT)?    # typeCharacterVarying
+    | (CHARACTER | CHAR | NCHAR | NATIONAL (CHARACTER | CHAR)) VARYING length=typeParameters? # typeCharacterVarying
+    | NATIONAL (CHARACTER | CHAR) length=typeParameters?                    # typeNationalCharacter
+    | BINARY VARYING? typeParameters?                                       # typeBinary
     | TIME (WITHOUT TIME ZONE)?                                             # typeTime
     | (TIME WITH TIME ZONE | TIMETZ)                                        # typeTimeTz
     | TIMESTAMP (WITHOUT TIME ZONE)?                                        # typeTimestamp
     | (TIMESTAMP WITH TIME ZONE | TIMESTAMPTZ)                              # typeTimestampTz
     | DATE                                                                  # typeDate
     | INTERVAL intervalQualifier?                                           # typeInterval
-    | name=identifier (PAREN_LEFT arg0=INTEGER_LITERAL (COMMA arg1=INTEGER_LITERAL)? PAREN_RIGHT)? # typeNamed
+    | name=identifier typeParameters?                                       # typeNamed
+    ;
+
+/*
+ * The parameters of a data type: a length, a precision and a scale, or MAX.
+ */
+typeParameters
+    : PAREN_LEFT arg0=typeParameter (COMMA arg1=typeParameter)? PAREN_RIGHT
+    ;
+
+typeParameter
+    : INTEGER_LITERAL
+    | MAX
     ;
 
 identifier
@@ -273,10 +324,11 @@ identifier
  * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_pg_keywords.html
  */
 nonReserved
-    : APPROXIMATE | AT | CHARACTER | COUNT | CURRENT | DATE | DATEADD | DATEDIFF | DAY | DOUBLE | ESCAPE | EXTRACT
-    | FIRST | FOLLOWING | HOUR | LAST | MINUTE | MONTH | NULLS | OVER | POSITION | PRECEDING | PRECISION | RANGE
-    | ROW | ROWS | SECOND | SUBSTRING | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ | TRIM | UNBOUNDED | VARYING | WITHIN
-    | WITHOUT | YEAR | ZONE
+    : APPROXIMATE | ASYMMETRIC | AT | CHAR | CHARACTER | CONVERT | COUNT | CURRENT | DATE | DATEADD | DATEDIFF | DAY
+    | DOUBLE | ESCAPE | EXISTS | EXTRACT | FIRST | FOLLOWING | HOUR | LAST | MAX | MINUTE | MONTH | NATIONAL | NCHAR
+    | NULLS | OVER | POSITION | PRECEDING | PRECISION | RANGE | ROW | ROWS | SECOND | SUBSTRING | SYMMETRIC | TIME
+    | TIMESTAMP | TIMESTAMPTZ | TIMETZ | TRIM | TRY_CAST | UNBOUNDED | UNKNOWN | VARYING | WITHIN | WITHOUT | YEAR
+    | ZONE
     ;
 
 /*
@@ -285,22 +337,29 @@ nonReserved
 
 ALL: 'ALL';
 AND: 'AND';
+ANY: 'ANY';
 APPROXIMATE: 'APPROXIMATE';
 AS: 'AS';
 ASC: 'ASC';
+ASYMMETRIC: 'ASYMMETRIC';
 AT: 'AT';
 BETWEEN: 'BETWEEN';
+BINARY: 'BINARY';
 BOTH: 'BOTH';
 BY: 'BY';
 CASE: 'CASE';
 CAST: 'CAST';
+CHAR: 'CHAR';
 CHARACTER: 'CHARACTER';
+CONVERT: 'CONVERT';
 COUNT: 'COUNT';
 CROSS: 'CROSS';
 CURRENT: 'CURRENT';
 CURRENT_DATE: 'CURRENT_DATE';
 CURRENT_TIME: 'CURRENT_TIME';
 CURRENT_TIMESTAMP: 'CURRENT_TIMESTAMP';
+CURRENT_USER: 'CURRENT_USER';
+CURRENT_USER_ID: 'CURRENT_USER_ID';
 DATE: 'DATE';
 DATEADD: 'DATEADD';
 DATEDIFF: 'DATEDIFF';
@@ -311,6 +370,7 @@ DOUBLE: 'DOUBLE';
 ELSE: 'ELSE';
 END: 'END';
 ESCAPE: 'ESCAPE';
+EXISTS: 'EXISTS';
 EXTRACT: 'EXTRACT';
 FALSE: 'FALSE';
 FIRST: 'FIRST';
@@ -335,8 +395,11 @@ LIKE: 'LIKE';
 LIMIT: 'LIMIT';
 LOCALTIME: 'LOCALTIME';
 LOCALTIMESTAMP: 'LOCALTIMESTAMP';
+MAX: 'MAX';
 MINUTE: 'MINUTE';
 MONTH: 'MONTH';
+NATIONAL: 'NATIONAL';
+NCHAR: 'NCHAR';
 NOT: 'NOT';
 NULL: 'NULL';
 NULLS: 'NULLS';
@@ -358,7 +421,11 @@ ROW: 'ROW';
 ROWS: 'ROWS';
 SECOND: 'SECOND';
 SELECT: 'SELECT';
+SESSION_USER: 'SESSION_USER';
+SIMILAR: 'SIMILAR';
+SOME: 'SOME';
 SUBSTRING: 'SUBSTRING';
+SYMMETRIC: 'SYMMETRIC';
 SYSDATE: 'SYSDATE';
 THEN: 'THEN';
 TIME: 'TIME';
@@ -370,7 +437,10 @@ TOP: 'TOP';
 TRAILING: 'TRAILING';
 TRIM: 'TRIM';
 TRUE: 'TRUE';
+TRY_CAST: 'TRY_CAST';
 UNBOUNDED: 'UNBOUNDED';
+UNKNOWN: 'UNKNOWN';
+USER: 'USER';
 VARYING: 'VARYING';
 WHEN: 'WHEN';
 WHERE: 'WHERE';
@@ -385,13 +455,30 @@ ZONE: 'ZONE';
  */
 
 DOUBLE_COLON: '::';
+// The root operators must not take the slash of a comment start: `a ||/* c */ b` is a concatenation.
+CUBE_ROOT: '||/' {_input.LA(1) != '*'}?;
+SQUARE_ROOT: '|/' {_input.LA(1) != '*'}?;
 CONCAT: '||';
+PIPE: '|';
 EQ: '=';
 NEQ: '<>' | '!=';
 LT_EQ: '<=';
 GT_EQ: '>=';
+SHIFT_LEFT: '<<';
+SHIFT_RIGHT: '>>';
 LT: '<';
 GT: '>';
+TILDE_TILDE_ASTERISK: '~~*';
+TILDE_TILDE: '~~';
+TILDE_ASTERISK: '~*';
+TILDE: '~';
+NOT_TILDE_TILDE_ASTERISK: '!~~*';
+NOT_TILDE_TILDE: '!~~';
+NOT_TILDE_ASTERISK: '!~*';
+NOT_TILDE: '!~';
+AMPERSAND: '&';
+CARET: '^';
+AT_SIGN: '@';
 PLUS: '+';
 MINUS: '-';
 ASTERISK: '*';
@@ -411,7 +498,10 @@ BRACKET_RIGHT: ']';
 
 INTEGER_LITERAL: DIGIT+;
 DECIMAL_LITERAL: DIGIT+ '.' DIGIT* | '.' DIGIT+;
-STRING_LITERAL: '\'' ( ~'\'' | '\'\'' )* '\'';
+// A numeric literal with an exponent is one token, so that `1e3` is not read as `1` with the alias `e3`.
+FLOAT_LITERAL: (DIGIT+ ('.' DIGIT*)? | '.' DIGIT+) 'E' [+-]? DIGIT+;
+// A backslash escapes the next character, including a quote; see RedshiftExpressions.stringValue.
+STRING_LITERAL: '\'' ( ~['\\] | '\'\'' | '\\' . )* '\'';
 IDENTIFIER: [A-Z_] [A-Z_0-9$]*;
 IDENTIFIER_QUOTED: '"' ( ~'"' | '""' )* '"';
 

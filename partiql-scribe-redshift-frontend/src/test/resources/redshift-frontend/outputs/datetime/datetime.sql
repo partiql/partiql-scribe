@@ -1,8 +1,8 @@
 --#[time-cast-00]
-SELECT CAST("t"['c'] AS TIME (6)) AS "v1", CAST("t"['c'] AS TIME (6) WITH TIME ZONE) AS "v2", CAST("t"['c'] AS TIME (6) WITH TIME ZONE) AS "v3" FROM "default"."T" AS "t";
+[UNSUPPORTED{message="CAST of a character string to TIME"}];
 
 --#[timestamp-cast-00]
-SELECT CAST("t"['c'] AS TIMESTAMP (6) WITH TIME ZONE) AS "v1", CAST("t"['c'] AS TIMESTAMP (6) WITH TIME ZONE) AS "v2", CAST("t"['c'] AS TIMESTAMP) AS "v3" FROM "default"."T" AS "t";
+[UNSUPPORTED{message="CAST of a character string to TIMESTAMPTZ"}];
 
 --#[time-literal-00]
 SELECT TIME '12:30:45' AS "v1", TIME '12:30:45.123456' AS "v2", TIME WITH TIME ZONE '12:30:45+08:00' AS "v3" FROM "default"."T" AS "t";
