@@ -207,7 +207,11 @@ Date and time
   unsupported. A `TIMESTAMP` literal ignores its time zone, as in Redshift.
 - An interval literal without a qualifier is rewritten with a qualifier, with the leading field precision 9. Redshift
   keeps a time of 24 hours or more (`'36 hours'`) unnormalized, so such a literal is supported only as an operand of
-  datetime `+` and `-`.
+  datetime `+` and `-`. `DATE` plus such a literal returns `TIMESTAMP`, so the literal is unsupported inside interval
+  arithmetic (`INTERVAL '1 month' * 2`).
+- An interval can be multiplied by an integer. Redshift carries fractions of months into days when it multiplies or
+  divides an interval by another number, and PartiQL does not: such operations are unsupported.
+- A `TIMETZ` literal whose offset is not UTC is unsupported in comparisons, including simple `CASE` and `NULLIF`.
 - `TIME`, `TIMETZ`, and `TIMESTAMPTZ` types get precision 6, which is the Redshift precision. PartiQL `TIME` without a
   precision is `TIME(0)`.
 - Week and quarter boundaries in `DATEDIFF`, quarters, decades, centuries, and millennia in `DATEADD`, `TIMESTAMPTZ`
@@ -282,7 +286,9 @@ construct as unsupported:
 - The planner does not find an aggregate call in the arguments of a scalar function call: `ABS(SUM(x))` fails with
   `FUNCTION_NOT_FOUND`, and such a call is unsupported. Operators, `CAST`, `CASE`, `COALESCE`, `TRIM`, and `POSITION`
   are not function calls. The probe calls of the operand types are function calls too, so the probe passes probe a
-  copy of an operand in which each aggregate is a NULL of its type.
+  copy of an operand in which each aggregate is a NULL of its type. Date arithmetic translates to `DATE_ADD` and
+  `DATE_DIFF` calls, so `MIN(d) + 1` is unsupported too, and so is a subquery as an operand of date arithmetic or an
+  argument of `DATEADD`, `DATEDIFF`, or `EXTRACT`.
 - `EXCEPT` returns duplicate rows of the left query. The translation adds DISTINCT to a left query that is a simple
   query block, which has the same result.
 - A set operation over SUPER values (the dynamic type) does not plan (`SET_OP_SCHEMA_INCOMPATIBLE`); the translation
@@ -295,6 +301,9 @@ construct as unsupported:
 - The Scribe PartiQL target prints `x IS DECIMAL(p, s)` and `x IS INTEGER` as `x IS DECIMAL` and `x IS INT`, so
   `IS_SMALLINT`, `IS_INTEGER`, and `IS_BIGINT` of a SUPER value are unsupported. It drops the sign of a negative
   interval shorter than one second, so such interval literals are unsupported.
+- There are no sign operators for intervals: the translation of `-i` is `i * -1`. `CURRENT_DATE` is not implemented:
+  the translation is `CAST(UTCNOW() AS DATE)`.
+- The plan rewriter does not visit the expressions of ORDER BY; the probe passes visit them separately.
 - A path index of the dynamic type gives the planner warning `PATH_INDEX_NEVER_SUCCEEDS`, and the types of the
   expressions in the index are lost; while it resolves operand types, the translator casts such an index to `INT`.
 

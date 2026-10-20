@@ -139,17 +139,28 @@ internal class RedshiftFunctions(
         setq: SetQuantifier?,
     ): Expr {
         val rule = rules[name.text.lowercase()] ?: throw UnsupportedConstructException.at(name, "function `${name.text}`")
-        val expr = rule.apply(name, args, setq)
+        return checked(name, name.text, rule.apply(name, args, setq))
+    }
+
+    /**
+     * Returns [expr], the translation of [construct] at [name], or reports it as unsupported when PartiQL cannot plan or
+     * print it: an aggregate call in a function argument, or a subquery as a function argument.
+     */
+    internal fun checked(
+        name: Token,
+        construct: String,
+        expr: Expr,
+    ): Expr {
         if (!types.probing && aggregateInCall(expr, inCall = false)) {
             throw UnsupportedConstructException.at(
                 name,
-                "`${name.text}` of an aggregate function (the PartiQL planner does not accept an aggregate in a function argument)",
+                "`$construct` of an aggregate function (the PartiQL planner does not accept an aggregate in a function argument)",
             )
         }
         if (!types.probing && subqueryArgument(expr)) {
             throw UnsupportedConstructException.at(
                 name,
-                "subquery as an argument of `${name.text}` (the Scribe PartiQL target prints it without parentheses)",
+                "subquery as an argument of `$construct` (the Scribe PartiQL target prints it without parentheses)",
             )
         }
         return expr

@@ -51,7 +51,7 @@ internal class RedshiftOperators(
     ): Expr =
         types.resolveTyped(listOf(lhs, rhs)) { (a, b) ->
             val additive = if (op.type == P.PLUS || op.type == P.MINUS) datetime.additive(op, a.expr, a.type, b.expr, b.type) else null
-            additive ?: numeric(op, a, b)
+            additive?.let { builder.functions.checked(op, "datetime ${op.text}", it) } ?: numeric(op, a, b)
         }
 
     private fun numeric(
@@ -62,6 +62,16 @@ internal class RedshiftOperators(
         val fa = a.family
         val fb = b.family
         if (fa == TypeFamily.SUPER || fb == TypeFamily.SUPER) unsupported(op, "arithmetic with a SUPER operand")
+        // Redshift multiplies and divides an interval by a number with the PostgreSQL interval rules (fractions of months
+        // carry into days), which PartiQL does not; only an integer multiplier gives the same interval.
+        val multiplicative = op.type == P.ASTERISK || op.type == P.SLASH || op.type == P.PERCENT
+        if (multiplicative && (fa == TypeFamily.INTERVAL || fb == TypeFamily.INTERVAL)) {
+            val other = if (fa == TypeFamily.INTERVAL) fb else fa
+            if (op.type != P.ASTERISK || other != TypeFamily.INTEGER) {
+                unsupported(op, "interval `${op.text}` with ${other.name.lowercase()} operand")
+            }
+            return exprOperator(op.text, a.expr, b.expr)
+        }
         if (a.untyped || b.untyped) {
             // The type of an operand with an aggregate call is not known; see [resolveTyped]. The scale of a quotient
             // depends on it.
@@ -157,6 +167,12 @@ internal class RedshiftOperators(
                     return exprLit(if (lit.code() == Literal.INT_NUM) Literal.intNum(negated) else Literal.exactNum(negated))
                 }
                 Literal.STRING -> unsupported(sign, "sign on a character string literal")
+                Literal.TYPED_STRING ->
+                    if (lit.dataType().code() == org.partiql.ast.DataType.INTERVAL) {
+                        return negateInterval(sign, value)
+                    } else {
+                        return exprOperator(sign.text, null, value)
+                    }
                 else -> return exprOperator(sign.text, null, value)
             }
         }
@@ -164,9 +180,20 @@ internal class RedshiftOperators(
             when (x.family) {
                 TypeFamily.SUPER -> unsupported(sign, "arithmetic with a SUPER operand")
                 TypeFamily.DECIMAL -> if (sign.type == P.PLUS) x.expr else castTo(exprOperator("-", null, x.expr), x.type)
+                TypeFamily.INTERVAL -> negateInterval(sign, x.expr)
                 else -> exprOperator(sign.text, null, x.expr)
             }
         }
+    }
+
+    /** PartiQL has no sign operators for intervals: `-i` is `i * -1`. */
+    private fun negateInterval(
+        sign: Token,
+        interval: Expr,
+    ): Expr {
+        if (sign.type == P.PLUS) return interval
+        builder.note(sign, "Redshift `-interval` was replaced by `interval * -1`")
+        return exprOperator("*", interval, exprLit(Literal.intNum(-1)))
     }
 
     /**

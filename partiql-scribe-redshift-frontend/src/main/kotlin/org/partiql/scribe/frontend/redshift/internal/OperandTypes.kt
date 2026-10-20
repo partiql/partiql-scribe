@@ -12,6 +12,7 @@ import org.partiql.ast.expr.ExprCall
 import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.Plan
+import org.partiql.plan.rel.RelSort
 import org.partiql.plan.rel.RelWindow
 import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexLit
@@ -194,6 +195,16 @@ internal class OperandTypes {
                 if (id != null && !id.isNull && !id.isMissing) found[id.int] = rex.args[1].type.pType
             }
             return super.visitCall(rex, ctx)
+        }
+
+        // The rewriter does not visit the expressions of ORDER BY.
+        override fun visitSort(
+            rel: RelSort,
+            ctx: Unit,
+        ): Operator {
+            visitRel(rel.input, ctx)
+            rel.collations.forEach { visitRex(it.column, ctx) }
+            return rel
         }
 
         // The rewriter does not visit window operators.

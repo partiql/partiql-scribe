@@ -56,11 +56,16 @@ internal class RedshiftDatetime(
     fun dateFunction(ctx: P.AtomDateFunctionContext): Expr {
         val partName = datePartName(ctx.part)
         val args = ctx.expr().map { Operand(it, exprs.expr(it)) }
-        return if (ctx.name.type == P.DATEADD) {
-            dateAdd(ctx.name, ctx.part.start, partName, args[0], args[1])
-        } else {
-            dateDiff(ctx.name, ctx.part.start, partName, args[0], args[1])
-        }
+        val name = ctx.name.text.uppercase()
+        return builder.functions.checked(
+            ctx.name,
+            name,
+            if (ctx.name.type == P.DATEADD) {
+                dateAdd(ctx.name, ctx.part.start, partName, args[0], args[1])
+            } else {
+                dateDiff(ctx.name, ctx.part.start, partName, args[0], args[1])
+            },
+        )
     }
 
     private fun datePartName(ctx: P.DatePartContext): String =
@@ -274,7 +279,15 @@ internal class RedshiftDatetime(
      */
     fun extract(ctx: P.AtomExtractContext): Expr {
         val partName = datePartName(ctx.part)
-        return functions.datePart(ctx.EXTRACT().symbol, "EXTRACT", ctx.part.start, partName, Operand(ctx.expr(), exprs.expr(ctx.expr())))
+        val expr =
+            functions.datePart(
+                ctx.EXTRACT().symbol,
+                "EXTRACT",
+                ctx.part.start,
+                partName,
+                Operand(ctx.expr(), exprs.expr(ctx.expr())),
+            )
+        return builder.functions.checked(ctx.EXTRACT().symbol, "EXTRACT", expr)
     }
 
     /**
@@ -578,6 +591,10 @@ internal class RedshiftDatetime(
             } else {
                 val unqualified =
                     IntervalText.unqualified(text) ?: throw UnsupportedConstructException.at(ctx, "INTERVAL literal '$text'")
+                // DATE +- an unqualified interval returns TIMESTAMP; the rule sees the interval only as a direct operand.
+                if (inIntervalArithmetic(ctx)) {
+                    throw UnsupportedConstructException.at(ctx, "INTERVAL literal '$text' without a qualifier in interval arithmetic")
+                }
                 builder.note(ctx.start, "The Redshift interval literal was rewritten with an SQL interval qualifier")
                 val operator = additiveOperator(ctx)
                 if (operator != null) unqualifiedIntervalOperators.add(operator)
@@ -609,10 +626,29 @@ internal class RedshiftDatetime(
         return if (parent is P.ValueAdditiveContext && (parent.lhs === child || parent.rhs === child)) parent.op else null
     }
 
+    /**
+     * True if the interval literal [ctx] is an operand of `*` or `/`, or of `+` or `-` with another interval literal.
+     */
+    private fun inIntervalArithmetic(ctx: P.LiteralIntervalContext): Boolean {
+        val (child, parent) = operandOf(ctx)
+        return when (parent) {
+            is P.ValueMultiplicativeContext -> true
+            is P.ValueAdditiveContext -> {
+                val other = if (parent.lhs === child) parent.rhs else parent.lhs
+                (atomOf(other) as? P.AtomLiteralContext)?.literal() is P.LiteralIntervalContext
+            }
+            else -> false
+        }
+    }
+
     /** True if the literal [ctx] is an operand of a comparison, `BETWEEN`, or `IN` predicate, possibly in parentheses. */
     private fun isComparisonOperand(ctx: P.LiteralContext): Boolean =
-        when (operandOf(ctx).second) {
+        when (val parent = operandOf(ctx).second) {
             is P.PredicateComparisonContext, is P.PredicateBetweenContext, is P.PredicateInListContext -> true
+            // The operand of a simple CASE and its WHEN values are compared, as are the arguments of NULLIF.
+            is P.AtomCaseContext -> parent.operand != null
+            is P.CaseWhenContext -> (parent.parent as? P.AtomCaseContext)?.operand != null
+            is P.AtomFunctionCallContext -> parent.name.text.lowercase() == "nullif"
             else -> false
         }
 
