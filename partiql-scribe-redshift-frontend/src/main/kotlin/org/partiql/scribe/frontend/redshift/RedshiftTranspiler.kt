@@ -74,7 +74,7 @@ public class RedshiftTranspiler(
         val scribeListener = CollectingScribeListener()
         val partiql =
             try {
-                Scribe(scribeContext = ScribeContextOf(scribeListener)).compile(plan, session, PartiQLOutputTarget(problems)).output.value
+                Scribe(scribeContext = ScribeContextOf(scribeListener)).compile(plan, session, PartiQLOutputTarget()).output.value
             } catch (ex: ScribeException) {
                 null
             }
