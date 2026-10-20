@@ -29,12 +29,14 @@ Thank you to all who have contributed!
 ### Added
 - Adds an experimental DuckDB SQL transpilation target, with the same PartiQL feature coverage as the Redshift, Spark, and Trino targets.
 - DuckDB target: translates `DATE_ADD(<part>, <amount>, <datetime>)` to `date_add(<datetime>, to_<part>s(<amount>))`.
+- Adds experimental DuckDB translations to `partiql-scribe-function-extensions` (`DuckDBFunctionExtensionTarget` / `DuckDBFunctionExtensionCalls`): `contains`, `to_unixtime`, `hex_to_bigint`, `pow`, `utcnow`, and `date_add`.
 
 ### Changed
 
 ### Deprecated
 
 ### Fixed
+- Function extension `to_unixtime` now truncates toward negative infinity like PartiQL on Trino, Spark and Redshift (previously rounded fractional seconds and lost a second far from 1970; Trino also read the timestamp in the session time zone).
 - Integer division truncates toward zero like PartiQL on Spark (`DIV`) and DuckDB (`//`) instead of returning a fraction.
 - Correlated join `ON` predicates are combined with an existing `WHERE` instead of overwriting it (Trino, Spark, DuckDB).
 - Nested array indexes (`a[0].b[0]`) are all shifted to 1-based on Trino and DuckDB, not just the outermost one.
