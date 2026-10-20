@@ -73,6 +73,9 @@ SELECT "t"['c'] AS "c" FROM "default"."T" AS "t" GROUP BY "t"['c'] HAVING sum("t
 --#[agg-nested-03]
 [UNSUPPORTED{message="SUM of an argument of unknown type"}];
 
+--#[agg-nested-04]
+[UNSUPPORTED{message="MAX of an argument of unknown type"}];
+
 --#[agg-unsupported-00]
 [UNSUPPORTED{message="function `LISTAGG`; PartiQL has no string aggregation"}];
 

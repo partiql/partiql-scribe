@@ -83,6 +83,9 @@ SELECT ABS(SUM(b)) AS v FROM T;
 --#[agg-nested-03]
 SELECT c, SUM(b) + 1 AS v1, AVG(b) - 1 AS v2 FROM T GROUP BY c;
 
+--#[agg-nested-04]
+SELECT MAX(b) - MIN(b) AS v FROM T;
+
 --#[agg-unsupported-00]
 SELECT LISTAGG(c, ',') AS l FROM T;
 
