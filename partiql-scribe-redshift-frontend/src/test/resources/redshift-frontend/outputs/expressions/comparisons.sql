@@ -55,10 +55,10 @@ SELECT "t"['foo']['bar'] AS "bar" FROM "default"."datatypes"."T_DECIMAL_5_2" AS 
 --#[string-literal-float-00]
 [UNSUPPORTED{message="comparison of DOUBLE PRECISION with the character string '1.5'"}];
 
---#[number-string-00]
+--#[comparison-number-string-00]
 [UNSUPPORTED{message="comparison of a number with a character string"}];
 
---#[number-string-01]
+--#[comparison-number-string-01]
 [UNSUPPORTED{message="comparison of a number with a character string"}];
 
 --#[cross-family-00]
@@ -67,13 +67,13 @@ SELECT "t"['foo']['bar'] AS "bar" FROM "default"."datatypes"."T_DECIMAL_5_2" AS 
 --#[cross-family-01]
 [UNSUPPORTED{message="comparison of BOOLEAN with INTEGER"}];
 
---#[char-00]
+--#[comparison-char-00]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE TRIM(TRAILING FROM "t_all_types"['col_char']) = 'abc';
 
---#[char-01]
+--#[comparison-char-01]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE TRIM(TRAILING FROM "t_all_types"['col_char']) = "t_all_types"['col_string'];
 
---#[varchar-00]
+--#[comparison-varchar-00]
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE ("t"['c'] = 'abc  ') AND ("t"['c'] <> "t"['z']);
 
 --#[literals-00]
@@ -94,7 +94,7 @@ SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS
 --#[float-decimal-04]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE (("t_all_types"['col_float64'] < 100.0) AND ("t_all_types"['col_float32'] >= 0.5)) AND (CAST("t_all_types"['col_float32'] AS DOUBLE PRECISION) < CAST(0.1 AS DOUBLE PRECISION));
 
---#[datetime-00]
+--#[comparison-datetime-00]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE (CAST("t_all_types"['col_date'] AS TIMESTAMP WITH TIME ZONE) < "t_all_types"['col_timestampz']) AND ("t_all_types"['col_timestamp'] >= CAST("t_all_types"['col_date'] AS TIMESTAMP));
 
 --#[interval-00]
@@ -106,5 +106,5 @@ SELECT "t"['col_date'] AS "col_date" FROM "default"."T_INTERVALS" AS "t" WHERE (
 --#[interval-02]
 [UNSUPPORTED{message="comparison of year-month and day-time INTERVAL values"}];
 
---#[super-00]
+--#[comparison-super-00]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE ("t"['x']['k'] = 5) AND ("t"['x']['s'] <> 'a');

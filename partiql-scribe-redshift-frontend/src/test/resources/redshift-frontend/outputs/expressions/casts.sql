@@ -16,10 +16,10 @@ SELECT CAST(162.00 AS INT) AS "v1", CAST(1.200 AS DECIMAL(3,1)) AS "v2" FROM "de
 --#[decimal-constant-02]
 [UNSUPPORTED{message="CAST of a DECIMAL constant that needs rounding"}];
 
---#[float-00]
+--#[cast-float-00]
 SELECT CAST("t"['col_float32'] AS DOUBLE PRECISION) AS "v1", CAST("t"['col_decimal'] AS REAL) AS "v2" FROM "default"."T_ALL_TYPES" AS "t";
 
---#[float-01]
+--#[cast-float-01]
 [UNSUPPORTED{message="CAST of DOUBLE PRECISION to an integer type"}];
 
 --#[float-02]
@@ -30,8 +30,10 @@ SELECT CAST("t"['col_float32'] AS DOUBLE PRECISION) AS "v1", CAST("t"['col_decim
 
 --#[string-number-00]
 SELECT CAST(TRIM(BOTH ' 	
-' FROM "t"['col_string']) AS INT) AS "v1", CAST(TRIM(BOTH ' 	
-' FROM CAST(TRIM(TRAILING FROM "t"['col_char']) AS STRING)) AS BIGINT) AS "v2" FROM "default"."T_ALL_TYPES" AS "t";
+
+' FROM "t"['col_string']) AS INT) AS "v1", CAST(TRIM(BOTH ' 	
+
+' FROM CAST(TRIM(TRAILING FROM "t"['col_char']) AS STRING)) AS BIGINT) AS "v2" FROM "default"."T_ALL_TYPES" AS "t";
 
 --#[string-number-01]
 SELECT CAST(12 AS INT) AS "v1", CAST(7 AS SMALLINT) AS "v2", CAST(12.50 AS DECIMAL(10,2)) AS "v3", CAST(0.5 AS DOUBLE PRECISION) AS "v4" FROM "default"."T" AS "t";
@@ -66,16 +68,16 @@ SELECT DATE '2008-02-18' AS "v" FROM "default"."T" AS "t";
 --#[string-datetime-03]
 [UNSUPPORTED{message="CAST of a character string to TIMESTAMP (PartiQL cannot convert a string value to TIMESTAMP)"}];
 
---#[varchar-00]
+--#[cast-varchar-00]
 SELECT CAST("t"['b'] AS STRING) AS "v1", CAST("t"['b'] AS VARCHAR(30)) AS "v2", CAST("t"['b'] AS STRING) AS "v3", CAST("t"['b'] AS STRING) AS "v4" FROM "default"."T" AS "t";
 
---#[varchar-01]
+--#[cast-varchar-01]
 SELECT CAST(CAST("t"['foo']['keep'] AS STRING) AS VARCHAR(20)) AS "v1", CAST("t"['foo']['keep'] AS STRING) AS "v2" FROM "default"."datatypes"."T_STRING_16" AS "t";
 
---#[varchar-02]
+--#[cast-varchar-02]
 [UNSUPPORTED{message="CAST to VARCHAR(10) that can truncate a character string"}];
 
---#[varchar-03]
+--#[cast-varchar-03]
 [UNSUPPORTED{message="CAST to VARCHAR(10) that can truncate a character string"}];
 
 --#[varchar-04]
@@ -111,13 +113,13 @@ SELECT CAST(CAST("t"['col_date'] AS STRING) AS VARCHAR(10)) AS "v1", CAST("t"['c
 --#[boolean-string-00]
 [UNSUPPORTED{message="CAST of BOOLEAN to VARCHAR"}];
 
---#[char-00]
+--#[cast-char-00]
 SELECT CAST("t"['b'] AS CHAR(5)) AS "v1", CAST('abc' AS CHAR(5)) AS "v2" FROM "default"."T" AS "t";
 
---#[char-01]
+--#[cast-char-01]
 [UNSUPPORTED{message="CAST to CHAR(n) outside the SELECT list"}];
 
---#[datetime-00]
+--#[cast-datetime-00]
 SELECT CAST("t"['col_date'] AS TIMESTAMP) AS "v1", CAST("t"['col_timestamp'] AS DATE) AS "v2", CAST("t"['col_timestamp'] AS TIME (6)) AS "v3", CAST("t"['col_timestampz'] AS DATE) AS "v4" FROM "default"."T_ALL_TYPES" AS "t";
 
 --#[datetime-01]

@@ -18,10 +18,10 @@ SELECT CAST(2.5 AS INT) AS v FROM T;
 --#[decimal-constant-02]
 SELECT 1.249::decimal(3,1) AS v FROM T;
 
---#[float-00]
+--#[cast-float-00]
 SELECT CAST(t.col_float32 AS DOUBLE PRECISION) AS v1, CAST(t.col_decimal AS REAL) AS v2 FROM T_ALL_TYPES t;
 
---#[float-01]
+--#[cast-float-01]
 SELECT CAST(t.col_float64 AS INT) AS v FROM T_ALL_TYPES t;
 
 --#[float-02]
@@ -70,17 +70,17 @@ SELECT CAST(c AS DATE) AS v FROM T;
 --#[string-datetime-03]
 SELECT c::timestamp AS v FROM T;
 
---#[varchar-00]
+--#[cast-varchar-00]
 SELECT CAST(b AS VARCHAR) AS v1, b::varchar(30) AS v2, b::text AS v3, b::varchar(max) AS v4 FROM T;
 
 -- Redshift VARCHAR(n) holds n bytes; PartiQL VARCHAR(n) n characters.
---#[varchar-01]
+--#[cast-varchar-01]
 SELECT CAST(t.foo.keep AS VARCHAR(20)) AS v1, CAST(t.foo.keep AS VARCHAR) AS v2 FROM datatypes.T_STRING_16 t;
 
---#[varchar-02]
+--#[cast-varchar-02]
 SELECT CAST(t.foo.keep AS VARCHAR(10)) AS v FROM datatypes.T_STRING_16 t;
 
---#[varchar-03]
+--#[cast-varchar-03]
 SELECT c::varchar(10) AS v FROM T;
 
 -- Whether Redshift truncates a longer value in CAST(x AS VARCHAR) is not documented.
@@ -119,13 +119,13 @@ SELECT t.col_timestamp::varchar AS v FROM T_ALL_TYPES t;
 SELECT t.col_bool::varchar AS v FROM T_ALL_TYPES t;
 
 -- CHAR(n) values take part in comparisons and functions, where Redshift ignores their padding.
---#[char-00]
+--#[cast-char-00]
 SELECT CAST(b AS CHAR(5)) AS v1, CAST('abc' AS CHAR(5)) AS v2 FROM T;
 
---#[char-01]
+--#[cast-char-01]
 SELECT a FROM T WHERE CAST(b AS CHAR(5)) = '1';
 
---#[datetime-00]
+--#[cast-datetime-00]
 SELECT CAST(t.col_date AS TIMESTAMP) AS v1, CAST(t.col_timestamp AS DATE) AS v2, CAST(t.col_timestamp AS TIME) AS v3, CAST(t.col_timestampz AS DATE) AS v4 FROM T_ALL_TYPES t;
 
 -- TIMESTAMPTZ values are UTC instants.

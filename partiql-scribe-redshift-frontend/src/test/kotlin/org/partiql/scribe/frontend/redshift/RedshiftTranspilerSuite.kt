@@ -3,6 +3,7 @@ package org.partiql.scribe.frontend.redshift
 import org.junit.jupiter.api.DynamicContainer.dynamicContainer
 import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.partiql.scribe.utils.ScribeTestProvider
 import org.partiql.scribe.utils.SessionProvider
@@ -42,6 +43,22 @@ class RedshiftTranspilerSuite {
                 )
             }
 
+    /** The test provider keeps one test for each group and name, so a repeated name would hide a test. */
+    @Test
+    fun testNamesAreUniqueInEachGroup() {
+        for (dir in listOf("inputs", "outputs")) {
+            val root = this::class.java.getResource("/redshift-frontend/$dir")!!.toURI().toPath().toFile()
+            for (group in root.listFiles { f -> f.isDirectory }!!) {
+                val names =
+                    group.listFiles { f -> f.extension == "sql" }!!.flatMap { file ->
+                        file.readLines().mapNotNull { NAME.matchEntire(it)?.groupValues?.get(1) }
+                    }
+                val repeated = names.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+                assertTrue(repeated.isEmpty(), "Repeated test names in $dir/${group.name}: $repeated")
+            }
+        }
+    }
+
     private fun check(
         input: String,
         expectedText: String,
@@ -71,5 +88,6 @@ class RedshiftTranspilerSuite {
 
     private companion object {
         val FAILURE = Regex("""\[(\w+)(?:\{message="(.*)"})?];""")
+        val NAME = Regex("""--#\[(.+)]""")
     }
 }

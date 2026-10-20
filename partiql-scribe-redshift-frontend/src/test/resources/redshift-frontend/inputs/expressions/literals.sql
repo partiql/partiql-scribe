@@ -51,10 +51,10 @@ SELECT -NULL AS v FROM T;
 --#[sign-02]
 SELECT -'5' AS v FROM T;
 
---#[decimal-00]
+--#[literal-decimal-00]
 SELECT .5 AS v1, 5. AS v2, 1.50 AS v3, -37. AS v4 FROM T;
 
---#[integer-00]
+--#[literal-integer-00]
 SELECT 2147483648 AS v1, 9223372036854775808 AS v2, -2147483648 AS v3 FROM T;
 
 --#[boolean-null-00]

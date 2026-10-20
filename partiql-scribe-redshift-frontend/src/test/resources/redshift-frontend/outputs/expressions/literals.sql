@@ -44,10 +44,10 @@ SELECT -NULL AS "v" FROM "default"."T" AS "t";
 --#[sign-02]
 [UNSUPPORTED{message="sign on a character string literal"}];
 
---#[decimal-00]
+--#[literal-decimal-00]
 SELECT 0.5 AS "v1", 5. AS "v2", 1.50 AS "v3", -37. AS "v4" FROM "default"."T" AS "t";
 
---#[integer-00]
+--#[literal-integer-00]
 SELECT 2147483648 AS "v1", 9223372036854775808 AS "v2", -2147483648 AS "v3" FROM "default"."T" AS "t";
 
 --#[boolean-null-00]

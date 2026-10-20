@@ -63,10 +63,10 @@ SELECT t.foo.bar FROM datatypes.T_DECIMAL_5_2 t WHERE t.foo.keep = '1.505';
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_float64 = '1.5';
 
 -- A non-literal number and a character string: unsupported.
---#[number-string-00]
+--#[comparison-number-string-00]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_string = col_int32;
 
---#[number-string-01]
+--#[comparison-number-string-01]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_string = 1;
 
 --#[cross-family-00]
@@ -76,14 +76,14 @@ SELECT col_int32 FROM T_ALL_TYPES WHERE col_date = col_string;
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_bool = col_int32;
 
 -- Redshift ignores the padding of a CHAR(n) value in a comparison.
---#[char-00]
+--#[comparison-char-00]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_char = 'abc  ';
 
---#[char-01]
+--#[comparison-char-01]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_char = col_string;
 
 -- VARCHAR values are compared as they are; see the README.
---#[varchar-00]
+--#[comparison-varchar-00]
 SELECT a FROM T WHERE c = 'abc  ' AND c <> z;
 
 -- Two literals compare exactly.
@@ -107,7 +107,7 @@ SELECT col_int32 FROM T_ALL_TYPES WHERE col_float64 > col_int64 AND col_float32 
 --#[float-decimal-04]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_float64 < 100.0 AND col_float32 >= 0.5 AND col_float32 < 0.1;
 
---#[datetime-00]
+--#[comparison-datetime-00]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_date < col_timestampz AND col_timestamp >= col_date;
 
 --#[interval-00]
@@ -120,5 +120,5 @@ SELECT t.col_date FROM T_INTERVALS t WHERE t.col_d2s > t.col_d2s;
 SELECT t.col_date FROM T_INTERVALS t WHERE t.col_y2mon = t.col_d2s;
 
 -- SUPER values are compared as they are.
---#[super-00]
+--#[comparison-super-00]
 SELECT b FROM T t WHERE t.x.k = 5 AND t.x.s <> 'a';
