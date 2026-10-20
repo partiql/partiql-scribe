@@ -1093,8 +1093,12 @@ internal object DatetimeText {
 
     private fun readZone(text: String): Zone? {
         OFFSET.find(text)?.let { m ->
-            val minutes = m.groupValues[2].toInt() * 60 + m.groupValues[3].ifEmpty { "0" }.toInt()
-            return Zone(if (m.groupValues[1] == "-") -minutes else minutes)
+            val hours = m.groupValues[2].toInt()
+            val minutes = m.groupValues[3].ifEmpty { "0" }.toInt()
+            // Redshift, as PostgreSQL, accepts offsets of less than 16 hours.
+            if (hours > 15 || minutes > 59) return null
+            val offset = hours * 60 + minutes
+            return Zone(if (m.groupValues[1] == "-") -offset else offset)
         }
         if (UTC.matches(text)) return Zone.UTC
         if (text.trim().uppercase() in ZONE_NAMES) return Zone(null)

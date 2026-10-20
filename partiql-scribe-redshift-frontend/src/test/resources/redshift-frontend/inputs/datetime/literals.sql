@@ -18,6 +18,13 @@ SELECT TIMESTAMPTZ 'epoch' AS v FROM T;
 --#[timestamptz-literal-05]
 SELECT TIMESTAMPTZ 'Jun 1,2008 09:59:59 EST' AS v FROM T;
 
+-- Offsets are less than 16 hours.
+--#[timestamptz-literal-06]
+SELECT TIMESTAMPTZ '2026-10-19 12:30:45+16:00' AS v FROM T;
+
+--#[timestamptz-literal-07]
+SELECT TIMESTAMPTZ '0001-01-01 00:00:00+08:00' AS v1, TIMESTAMPTZ '2026-12-31 23:30:00-01:00' AS v2 FROM T;
+
 -- Date formats whose meaning does not depend on the DateStyle setting.
 --#[date-literal-00]
 SELECT DATE '20080215' AS v1, DATE '2026-1-9' AS v2 FROM T;

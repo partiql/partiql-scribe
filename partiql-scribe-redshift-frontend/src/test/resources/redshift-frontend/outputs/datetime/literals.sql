@@ -16,6 +16,12 @@ SELECT TIMESTAMP WITH TIME ZONE '1970-01-01 00:00:00+00:00' AS "v" FROM "default
 --#[timestamptz-literal-05]
 [UNSUPPORTED{message="TIMESTAMPTZ literal format 'Jun 1,2008 09:59:59 EST'"}];
 
+--#[timestamptz-literal-06]
+[UNSUPPORTED{message="TIMESTAMPTZ literal format '2026-10-19 12:30:45+16:00'"}];
+
+--#[timestamptz-literal-07]
+SELECT TIMESTAMP WITH TIME ZONE '0000-12-31 16:00:00+00:00' AS "v1", TIMESTAMP WITH TIME ZONE '2027-01-01 00:30:00+00:00' AS "v2" FROM "default"."T" AS "t";
+
 --#[date-literal-00]
 SELECT DATE '2008-02-15' AS "v1", DATE '2026-01-09' AS "v2" FROM "default"."T" AS "t";
 
