@@ -200,11 +200,10 @@ internal class RedshiftAggregateFunctions(
     ): Expr =
         when {
             isDecimal(type) -> exprCast(agg(fn, x, setq), DataType.DECIMAL(type.precision, type.scale))
-            isDynamic(type) || type.code() in COLLECTIONS ->
-                unsupported(
-                    name,
-                    "${name.text.uppercase()} of ${FunctionTypes.describe(type, "argument")} (the order of SUPER values is not documented)",
-                )
+            isDynamic(type) || type.code() in COLLECTIONS -> {
+                val reason = if (type === FunctionTypes.UNRESOLVED) "" else " (the order of SUPER values is not documented)"
+                unsupported(name, "${name.text.uppercase()} of ${FunctionTypes.describe(type, "argument")}$reason")
+            }
             type.code() == PType.INTERVAL_YM || type.code() == PType.INTERVAL_DT ->
                 unsupported(name, "${name.text.uppercase()} of an INTERVAL argument")
             else -> agg(fn, x, setq)
