@@ -160,7 +160,9 @@ internal class RedshiftDatetimeFunctions(
      *
      * The fields of a TIMESTAMPTZ value are its fields in UTC, the session time zone. `microsecond`, `timezone`, the
      * `epoch` of a timestamp, and the DOUBLE PRECISION `second` of `DATE_PART` are not translated: the Redshift
-     * documentation does not specify their values.
+     * documentation does not specify their values. A character string literal argument of `DATE_PART` is a TIMESTAMP
+     * value; `EXTRACT` from a character string is not translated, because its result type depends on how Redshift
+     * reads the string.
      *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_EXTRACT_function.html
      * https://docs.aws.amazon.com/redshift/latest/dg/r_DATE_PART_function.html
@@ -184,6 +186,10 @@ internal class RedshiftDatetimeFunctions(
         }
         return types.resolve(listOf(source.ctx to source.expr)) { e, t ->
             if (waiting(t)) return@resolve types.pending(e)
+            if (isExtract && Kind.of(t[0]) == Kind.STRING) {
+                // Redshift can read the string as a TIMESTAMPTZ value, for which EXTRACT returns DOUBLE PRECISION.
+                throw UnsupportedConstructException.at(source.ctx, "EXTRACT from a character string")
+            }
             val (x, kind) = datetimeArgument(function, source, e[0], Kind.of(t[0]), PType.TIMESTAMP)
             when (kind) {
                 Kind.DATE, Kind.TIMESTAMP, Kind.TIMESTAMPTZ -> {

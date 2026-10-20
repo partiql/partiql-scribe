@@ -53,6 +53,7 @@ SELECT EXTRACT(month FROM t.col_y2mon) AS m, EXTRACT(hour FROM t.col_d2s) AS h, 
 --#[extract-interval-02]
 SELECT EXTRACT(year FROM t.col_d2s) AS y FROM T_INTERVALS AS t;
 
+-- Redshift can read a character string as a TIMESTAMPTZ value, for which EXTRACT returns DOUBLE PRECISION.
 --#[extract-string-00]
 SELECT EXTRACT(year FROM '2008-01-01 10:00:00') AS y FROM T;
 

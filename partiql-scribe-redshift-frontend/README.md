@@ -65,9 +65,9 @@ function with the same name can have different semantics in the two languages.
   supported.
 - `DATEADD` returns `TIMESTAMP` for a `DATE` value, and moves February 29 to March 1 when it adds years. `EXTRACT`
   returns whole seconds, and `DOUBLE PRECISION` for a `TIMESTAMPTZ` value; `DATE_PART` returns `DOUBLE PRECISION`.
-- A character string literal argument of a datetime function becomes a datetime literal, as Redshift converts it.
-  Formats that depend on the DateStyle setting, special values (`'today'`), and `24:00:00` are unsupported. A
-  `TIMESTAMP` literal ignores its time zone, as in Redshift.
+- A character string literal argument of a datetime function (not `EXTRACT`) becomes a datetime literal, as Redshift
+  converts it. Formats that depend on the DateStyle setting, special values (`'today'`), and `24:00:00` are
+  unsupported. A `TIMESTAMP` literal ignores its time zone, as in Redshift.
 - An interval literal without a qualifier is rewritten with a qualifier, with the leading field precision 9. Redshift
   keeps a time of 24 hours or more (`'36 hours'`) unnormalized, so such a literal is supported only as an operand of
   datetime `+` and `-`.

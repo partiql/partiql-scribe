@@ -47,7 +47,7 @@ SELECT EXTRACT(MONTH FROM "t"['col_y2mon']) AS "m", EXTRACT(HOUR FROM "t"['col_d
 [UNSUPPORTED{message="EXTRACT datepart `year` of an INTERVAL DAY TO SECOND value"}];
 
 --#[extract-string-00]
-SELECT EXTRACT(YEAR FROM TIMESTAMP '2008-01-01 10:00:00') AS "y" FROM "default"."T" AS "t";
+[UNSUPPORTED{message="EXTRACT from a character string"}];
 
 --#[extract-microsecond-00]
 [UNSUPPORTED{message="EXTRACT datepart `microsecond`"}];
