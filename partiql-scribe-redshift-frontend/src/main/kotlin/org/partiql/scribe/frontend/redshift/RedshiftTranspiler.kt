@@ -73,12 +73,15 @@ public class RedshiftTranspiler(
         val scribeListener = CollectingScribeListener()
         val partiql =
             try {
-                Scribe(scribeContext = ScribeContextOf(scribeListener)).compile(plan, session, PartiQLOutputTarget()).output.value
+                Scribe(scribeContext = ScribeContextOf(scribeListener)).compile(plan, session, PartiQLOutputTarget(problems)).output.value
             } catch (ex: ScribeException) {
                 null
             }
         if (partiql == null || scribeListener.errors.isNotEmpty()) {
-            val scribeProblems = scribeListener.errors.map { RedshiftProblem(RedshiftProblem.Code.UNSUPPORTED, it.toString()) }
+            val scribeProblems =
+                scribeListener.errors.map {
+                    RedshiftProblem(RedshiftProblem.Code.UNSUPPORTED, it.getOrNull("MESSAGE", String::class.java) ?: it.toString())
+                }
             return result(RedshiftTranspileResult.Status.UNSUPPORTED, problems + scribeProblems)
         }
 
