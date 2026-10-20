@@ -68,7 +68,7 @@ SELECT "t"['c'] AS "c", some("t"['b'] > 5) AS "big" FROM "default"."T" AS "t" GR
 SELECT "t"['c'] AS "c" FROM "default"."T" AS "t" GROUP BY "t"['c'] HAVING sum("t"['b']) > CAST(10 AS BIGINT);
 
 --#[agg-nested-02]
-[UNSUPPORTED{message="SUM of an argument of unknown type"}];
+[UNSUPPORTED{message="`ABS` of an aggregate function (the PartiQL planner does not accept an aggregate in a function argument)"}];
 
 --#[agg-nested-03]
 [UNSUPPORTED{message="SUM of an argument of unknown type"}];

@@ -40,7 +40,7 @@ internal class Operand(
  *
  * A function that is not in [rules] is unsupported. The translator does not pass unknown functions through by name,
  * because a function with the same name can have different semantics in the two languages. The rules of each function
- * category are in their own class: [RedshiftStringFunctions], [RedshiftConditionalFunctions],
+ * category are in their own class: [RedshiftStringFunctions], [RedshiftConditionalFunctions], [RedshiftMathFunctions],
  * [RedshiftAggregateFunctions], and [RedshiftDatetimeFunctions].
  */
 internal class RedshiftFunctions(
@@ -58,13 +58,11 @@ internal class RedshiftFunctions(
     internal val datetime = RedshiftDatetimeFunctions(this)
     internal val strings = RedshiftStringFunctions(this)
     internal val conditional = RedshiftConditionalFunctions(this)
+    internal val math = RedshiftMathFunctions(this)
     internal val aggregates = RedshiftAggregateFunctions(this)
 
     private val rules: Map<String, Rule> =
-        mapOf(
-            // Functions with the same name and semantics in both languages.
-            "abs" to same("abs", 1),
-        ) + datetime.rules + strings.rules + conditional.rules + aggregates.rules + systemFunctions()
+        datetime.rules + strings.rules + conditional.rules + math.rules + aggregates.rules + systemFunctions()
 
     /**
      * The calls of conditional functions (NVL, COALESCE, DECODE, ...) whose translation removed the padding of CHAR(n)
