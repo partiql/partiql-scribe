@@ -1,6 +1,5 @@
-# Builds and tests on the CodeBuild-hosted GitHub Actions runner for this repository
-# (project `partiql-scribe` in the PartiQL AWS account, managed by PartiQLCodeBuildCDK).
-# The build runner has no release secrets; releases use the separate `-release` runner.
+# Builds and tests on the CodeBuild-hosted GitHub Actions runner for this repository.
+# The build runner has no release secrets; releases use a separate runner.
 #
 # The runs-on label has no image suffix, so the job uses the image configured on the
 # CodeBuild project. See
@@ -20,8 +19,12 @@ permissions:
 
 jobs:
   build:
+    # Fork PRs would run untrusted code on the CodeBuild runner, so they are skipped here.
+    # The GitHub-hosted `gradle.yml` workflow still builds them.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: codebuild-partiql-scribe-${{ github.run_id }}-${{ github.run_attempt }}
-    # Fail visibly instead of waiting if the runner cannot start or the build hangs.
+    # Fails a hung build. It starts once a runner picks up the job, so it does not cover a
+    # runner that never starts; that job stays queued until GitHub's queue limit.
     timeout-minutes: 60
 
     steps:
