@@ -12,9 +12,12 @@ import org.partiql.scribe.Scribe
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftLexer
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser
+import org.partiql.scribe.frontend.redshift.internal.InvalidQueryException
+import org.partiql.scribe.frontend.redshift.internal.NameAnalysis
 import org.partiql.scribe.frontend.redshift.internal.OperandTypes
 import org.partiql.scribe.frontend.redshift.internal.PartiQLOutputTarget
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
+import org.partiql.scribe.frontend.redshift.internal.RedshiftCatalog
 import org.partiql.scribe.frontend.redshift.internal.RedshiftSyntaxException
 import org.partiql.scribe.frontend.redshift.internal.UnsupportedConstructException
 import org.partiql.scribe.problems.ScribeException
@@ -58,15 +61,24 @@ public class RedshiftTranspiler(
                 toPartiQLAst(sql, problems, session)
             } catch (ex: RedshiftSyntaxException) {
                 return result(RedshiftTranspileResult.Status.INVALID_INPUT, problems + ex.toProblem())
+            } catch (ex: InvalidQueryException) {
+                val problem = RedshiftProblem(RedshiftProblem.Code.SEMANTIC_ERROR, ex.message, ex.line, ex.column)
+                return result(RedshiftTranspileResult.Status.INVALID_INPUT, problems + problem)
             } catch (ex: UnsupportedConstructException) {
                 return result(RedshiftTranspileResult.Status.UNSUPPORTED, problems + ex.toProblem())
             }
 
         // 3: PartiQL AST to plan.
-        val plannerErrors = CollectingPErrorListener()
-        val plan = planner.plan(statement, session, Context.of(plannerErrors)).plan
-        if (plannerErrors.errors.isNotEmpty()) {
-            val semanticProblems = plannerErrors.errors.map { RedshiftProblem(RedshiftProblem.Code.SEMANTIC_ERROR, it.toString()) }
+        val inputProblems = CollectingPErrorListener()
+        val plan = planner.plan(statement, session, Context.of(inputProblems)).plan
+        if (inputProblems.errors.any { it.code() == PError.SET_OP_SCHEMA_INCOMPATIBLE }) {
+            // PLK 1.6.1 rejects a set operation over columns of the dynamic type (SUPER values), which Redshift allows.
+            val problem =
+                RedshiftProblem(RedshiftProblem.Code.UNSUPPORTED, "set operation over SUPER values or over columns of incompatible types")
+            return result(RedshiftTranspileResult.Status.UNSUPPORTED, problems + problem)
+        }
+        if (inputProblems.errors.isNotEmpty()) {
+            val semanticProblems = inputProblems.errors.map { RedshiftProblem(RedshiftProblem.Code.SEMANTIC_ERROR, it.toString()) }
             return result(RedshiftTranspileResult.Status.INVALID_INPUT, problems + semanticProblems)
         }
 
@@ -86,18 +98,38 @@ public class RedshiftTranspiler(
             return result(RedshiftTranspileResult.Status.UNSUPPORTED, problems + scribeProblems)
         }
 
-        // Verify that the output is valid PartiQL: it parses, and it plans against the same session.
-        val outputErrors = CollectingPErrorListener()
-        val outputContext = Context.of(outputErrors)
+        // Verify that the output is valid PartiQL: it parses, and it plans against the same session without a problem
+        // that the plan of the input does not have.
+        val outputProblems = CollectingPErrorListener()
+        val outputContext = Context.of(outputProblems)
         partiqlParser.parse(partiql, outputContext).statements.singleOrNull()?.let { planner.plan(it, session, outputContext) }
-        if (outputErrors.errors.isNotEmpty()) {
-            val internal =
-                outputErrors.errors.map {
-                    RedshiftProblem(RedshiftProblem.Code.INTERNAL_ERROR, "Output is not valid PartiQL: $it; output: $partiql")
+        val invalid =
+            outputProblems.errors.map {
+                RedshiftProblem(RedshiftProblem.Code.INTERNAL_ERROR, "Output is not valid PartiQL: $it; output: $partiql")
+            } +
+                newWarnings(inputProblems.warnings, outputProblems.warnings).map {
+                    RedshiftProblem(RedshiftProblem.Code.INTERNAL_ERROR, "Output plans with a new problem: $it; output: $partiql")
                 }
-            return result(RedshiftTranspileResult.Status.INTERNAL_ERROR, problems + internal)
-        }
+        if (invalid.isNotEmpty()) return result(RedshiftTranspileResult.Status.INTERNAL_ERROR, problems + invalid)
         return RedshiftTranspileResult(RedshiftTranspileResult.Status.VALID, partiql, problems)
+    }
+
+    /**
+     * Returns the warnings of the output plan that the input plan does not have, compared by code and count.
+     *
+     * A printer defect can make the output refer to different variables than the input, which the planner reports as a
+     * warning, not an error: a path that never succeeds (`PATH_KEY_NEVER_SUCCEEDS`), an expression that is always
+     * MISSING (`ALWAYS_MISSING`), or a variable that it does not find. A warning that the input plan also has (for
+     * example a SUPER path that never succeeds) is not a defect, so the check compares the number of warnings of each
+     * code. It does not compare `EXPERIMENTAL` warnings: the PartiQL parser reports window functions in the output,
+     * and the input does not go through the parser.
+     */
+    private fun newWarnings(
+        input: List<PError>,
+        output: List<PError>,
+    ): List<PError> {
+        val inputCounts = input.groupingBy { it.code() }.eachCount()
+        return output.groupBy { it.code() }.flatMap { (code, warnings) -> warnings.drop(inputCounts[code] ?: 0) }
     }
 
     /**
@@ -106,8 +138,11 @@ public class RedshiftTranspiler(
      * The rules whose translation depends on the static types of their operands get the types from probe passes,
      * which plan the AST against [session]; see [OperandTypes].
      *
+     * The first pass also finds the FROM aliases that the later passes rename; see [NameAnalysis].
+     *
      * @throws RedshiftSyntaxException at the first syntax error.
      * @throws UnsupportedConstructException at the first construct that has no translation.
+     * @throws InvalidQueryException at a query that Redshift rejects.
      */
     internal fun toPartiQLAst(
         sql: String,
@@ -115,17 +150,23 @@ public class RedshiftTranspiler(
         session: Session,
     ): Statement {
         val lexer = RedshiftLexer(CharStreams.fromString(sql))
-        val parser = RedshiftParser(CommonTokenStream(lexer))
+        val tokens = CommonTokenStream(lexer)
+        val parser = RedshiftParser(tokens)
         lexer.removeErrorListeners()
         lexer.addErrorListener(ThrowingErrorListener)
         parser.removeErrorListeners()
         parser.addErrorListener(ThrowingErrorListener)
         val tree = parser.root()
+        checkComments(tokens)
+        val catalog = RedshiftCatalog(session)
+        val analysis = NameAnalysis(tokens.tokens.mapTo(HashSet()) { it.text.removeSurrounding("\"").lowercase() })
         val types = OperandTypes()
         val probeSession = types.probeSession(session)
         for (pass in 1..OperandTypes.MAX_PASSES) {
             types.startProbe()
-            val probe = RedshiftAstBuilder(caseSensitiveIdentifiers, mutableListOf(), types).root(tree)
+            val probe = RedshiftAstBuilder(caseSensitiveIdentifiers, mutableListOf(), types, catalog, analysis).root(tree)
+            // A pass that renames FROM aliases makes a different AST in the next pass.
+            if (analysis.finishPass()) continue
             if (!types.probed) break
             // A probe pass only reads types: the final plan reports the problems of the query.
             val plan =
@@ -137,7 +178,22 @@ public class RedshiftTranspiler(
             if (!types.collect(plan)) break
         }
         types.startFinal()
-        return RedshiftAstBuilder(caseSensitiveIdentifiers, notes, types).root(tree)
+        return RedshiftAstBuilder(caseSensitiveIdentifiers, notes, types, catalog, analysis).root(tree)
+    }
+
+    /**
+     * Redshift does not document whether block comments nest in SQL statements (PostgreSQL nests them, and PL/pgSQL
+     * does not), and the two readings give different queries, so a block comment that contains the start of another
+     * block comment is unsupported.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/c_PLpgSQL-structure.html
+     */
+    private fun checkComments(tokens: CommonTokenStream) {
+        for (token in tokens.tokens) {
+            if (token.type == RedshiftLexer.COMMENT_BLOCK && token.text.indexOf("/*", startIndex = 2) >= 0) {
+                throw UnsupportedConstructException.at(token, "nested block comment")
+            }
+        }
     }
 
     private fun result(
@@ -164,14 +220,19 @@ public class RedshiftTranspiler(
 
     /**
      * Collects planner and parser errors. The planner reports some problems as warnings that make the plan unusable
-     * (for example an unknown table or function); these count as errors, because Redshift rejects such a query.
+     * (for example an unknown table or function); these count as errors, because Redshift rejects such a query. The
+     * other warnings, except `EXPERIMENTAL`, are in [warnings].
      */
     private class CollectingPErrorListener : PErrorListener {
         val errors = mutableListOf<PError>()
+        val warnings = mutableListOf<PError>()
 
         override fun report(error: PError) {
             val isError = error.severity.code() == PSeverity.ERROR || error.code() in WARNINGS_AS_ERRORS
-            if (isError) errors.add(error)
+            when {
+                isError -> errors.add(error)
+                error.code() != PError.EXPERIMENTAL -> warnings.add(error)
+            }
         }
 
         private companion object {

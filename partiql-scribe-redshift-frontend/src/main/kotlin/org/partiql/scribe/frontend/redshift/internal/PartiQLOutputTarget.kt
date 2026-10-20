@@ -38,6 +38,8 @@ import java.math.BigDecimal
  *  - Exact numeric literals: the PartiQL target prints the DECIMAL value `5.` as `5`, which PartiQL reads as an INTEGER,
  *    and `0.0000001` as `1E-7`, which PartiQL reads as a DOUBLE PRECISION. This target prints the plain digits, with a
  *    trailing point for a scale of 0 in the BIGINT range.
+ *  - References to GROUP BY keys, lateral FROM sources, WITH clauses, and identifiers with a double quote: see
+ *    [PartiQLOutputRewrites].
  */
 internal class PartiQLOutputTarget : SqlTarget() {
     override val target: String = "PartiQL"
@@ -62,7 +64,7 @@ internal class PartiQLOutputTarget : SqlTarget() {
             object : PlanToAst(session, getCalls(context), context) {
                 override fun getRexConverter(locals: Locals): RexConverter = Rex(this, locals, context)
             }
-        return transform.apply(newPlan)
+        return PartiQLOutputRewrites.apply(transform.apply(newPlan), context.getProblemListener())
     }
 
     private class Calls(context: ScribeContext) : SqlCalls(context) {

@@ -1,8 +1,9 @@
 /*
  * Amazon Redshift query grammar for the Redshift-to-PartiQL frontend.
  *
- * Scope: the SELECT-FROM-WHERE subset that the frontend translates. Some constructs are recognized only so that the
- * translator can report them as unsupported with a location (for example QUALIFY and ILIKE), instead of a syntax error.
+ * Scope: the queries that the frontend translates: SELECT with joins, grouping, QUALIFY, and window functions, WITH, and
+ * set operations. Some constructs are recognized only so that the translator can report them as unsupported with a
+ * location (for example PIVOT and CONNECT BY), instead of a syntax error.
  *
  * Operator precedence follows PostgreSQL, from which Redshift derives: '.' and '[]', then '::', then unary sign,
  * then '* / %', then '+ -', then '||', then the predicates, then NOT, AND, OR.
@@ -13,18 +14,50 @@ grammar Redshift;
 
 options { caseInsensitive = true; }
 
+/*
+ * A statement, with any number of trailing semicolons. A second statement is recognized only to report it.
+ */
 root
-    : query SEMICOLON? EOF
+    : query (SEMICOLON+ query)* SEMICOLON* EOF
     ;
 
+/*
+ * Queries
+ *
+ * Set operations: INTERSECT binds more tightly than UNION and EXCEPT (MINUS); operators of the same precedence are
+ * left-associative. ORDER BY, LIMIT, and OFFSET at the end of a query apply to the result of the set operation.
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_UNION.html
+ */
 query
-    : querySpecification orderByClause? limitClause?
+    : withClause? queryTerm orderByClause? limitClause?
+    ;
+
+withClause
+    : WITH RECURSIVE? commonTableExpression (COMMA commonTableExpression)*
+    ;
+
+commonTableExpression
+    : name=identifier columnAliases? AS PAREN_LEFT query PAREN_RIGHT
+    ;
+
+queryTerm
+    : queryPrimary                                                                      # queryTermPrimary
+    | lhs=queryTerm op=INTERSECT setQuantifier? rhs=queryTerm                           # queryTermSetOp
+    | lhs=queryTerm op=(UNION | EXCEPT | MINUS_KEYWORD) setQuantifier? rhs=queryTerm    # queryTermSetOp
+    ;
+
+queryPrimary
+    : querySpecification                        # queryPrimarySpecification
+    | PAREN_LEFT query PAREN_RIGHT              # queryPrimaryParenthesized
     ;
 
 querySpecification
     : SELECT top=topClause? setQuantifier? selectList
+      excludeClause?
+      intoClause?
       fromClause?
       whereClause?
+      connectByClause?
       groupByClause?
       havingClause?
       qualifyClause?
@@ -40,13 +73,27 @@ setQuantifier
     ;
 
 selectList
-    : ASTERISK                                  # selectAll
-    | selectItem (COMMA selectItem)*            # selectItems
+    : selectItem (COMMA selectItem)*
     ;
 
 selectItem
-    : expr (AS? alias=identifier)?              # selectItemExpr
+    : ASTERISK                                  # selectItemAll
     | primaryExpr DOT ASTERISK                  # selectItemStar
+    | expr (AS? alias=identifier)?              # selectItemExpr
+    ;
+
+/*
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_EXCLUDE_list.html
+ */
+excludeClause
+    : EXCLUDE (identifier (COMMA identifier)* | PAREN_LEFT identifier (COMMA identifier)* PAREN_RIGHT)
+    ;
+
+/*
+ * Recognized only to report it: https://docs.aws.amazon.com/redshift/latest/dg/r_SELECT_INTO.html
+ */
+intoClause
+    : INTO (identifier | TEMP_TABLE_NAME)*
     ;
 
 fromClause
@@ -54,9 +101,12 @@ fromClause
     ;
 
 tableReference
-    : lhs=tableReference joinType? JOIN rhs=tablePrimary ON condition=expr   # tableJoin
-    | lhs=tableReference CROSS JOIN rhs=tablePrimary                       # tableCrossJoin
-    | tablePrimary                                                         # tableBase
+    : lhs=tableReference NATURAL joinType? JOIN rhs=tablePrimary                        # tableNaturalJoin
+    | lhs=tableReference CROSS JOIN rhs=tablePrimary                                  # tableCrossJoin
+    | lhs=tableReference joinType? JOIN rhs=tablePrimary joinSpecification?           # tableJoin
+    | lhs=tableReference PIVOT balanced tableAlias?                                     # tablePivot
+    | lhs=tableReference UNPIVOT ((INCLUDE | EXCLUDE) NULLS)? balanced tableAlias?    # tableUnpivot
+    | tablePrimary                                                                    # tableBase
     ;
 
 joinType
@@ -66,17 +116,58 @@ joinType
     | FULL OUTER?
     ;
 
+joinSpecification
+    : ON condition=expr                                                         # joinOn
+    | USING PAREN_LEFT identifier (COMMA identifier)* PAREN_RIGHT                # joinUsing
+    ;
+
+/*
+ * A subquery, a parenthesized join, UNNEST, or a table, view, common table expression, or SUPER expression
+ * (`t.items AS i`). A parenthesized subquery or name is also a primary expression, so the alternatives that ANTLR
+ * prefers for them come first. https://docs.aws.amazon.com/redshift/latest/dg/r_FROM_clause30.html
+ */
 tablePrimary
-    : primaryExpr (AS? alias=identifier)?                        # tableName
-    | PAREN_LEFT query PAREN_RIGHT AS? alias=identifier          # tableSubquery
+    : PAREN_LEFT query PAREN_RIGHT tableAlias?                                      # tableSubquery
+    | PAREN_LEFT tableReference PAREN_RIGHT tableAlias? (AT index=identifier)?      # tableParenthesized
+    | UNNEST PAREN_LEFT expr PAREN_RIGHT (WITH OFFSET)? tableAlias?                 # tableUnnest
+    | UNPIVOT expr AS value=identifier (AT attribute=identifier)?                   # tableObjectUnpivot
+    | TEMP_TABLE_NAME tableAlias?                                                   # tableTemporary
+    | primaryExpr ASTERISK? tableAlias? (AT index=identifier)?                      # tableName
+    ;
+
+tableAlias
+    : AS? alias=identifier columnAliases?
+    ;
+
+columnAliases
+    : PAREN_LEFT identifier (COMMA identifier)* PAREN_RIGHT
     ;
 
 whereClause
     : WHERE expr
     ;
 
+/*
+ * Recognized only to report it: https://docs.aws.amazon.com/redshift/latest/dg/r_CONNECT_BY_clause.html
+ */
+connectByClause
+    : (START WITH opaque)? CONNECT BY opaque
+    ;
+
 groupByClause
-    : GROUP BY expr (COMMA expr)*
+    : GROUP BY ALL                                                  # groupByAll
+    | GROUP BY groupingElement (COMMA groupingElement)*             # groupByList
+    ;
+
+/*
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_GROUP_BY_aggregation-extensions.html
+ */
+groupingElement
+    : ROLLUP balanced                                               # groupingRollup
+    | CUBE balanced                                                 # groupingCube
+    | GROUPING SETS balanced                                        # groupingSets
+    | PAREN_LEFT PAREN_RIGHT                                        # groupingEmpty
+    | expr                                                          # groupingExpr
     ;
 
 havingClause
@@ -95,8 +186,31 @@ sortItem
     : expr dir=(ASC | DESC)? (NULLS nulls=(FIRST | LAST))?
     ;
 
+/*
+ * LIMIT { count | ALL } and OFFSET start, in either order.
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_ORDER_BY_clause.html
+ */
 limitClause
-    : LIMIT limit=valueExpr (OFFSET offset=valueExpr)?
+    : LIMIT limit=limitValue (OFFSET offset=valueExpr)?
+    | OFFSET offset=valueExpr (LIMIT limit=limitValue)?
+    ;
+
+limitValue
+    : ALL
+    | valueExpr
+    ;
+
+/*
+ * Token sequences of constructs that are recognized only to report them: parentheses with any balanced content, and
+ * a run of tokens up to the next clause keyword.
+ */
+balanced
+    : PAREN_LEFT (~(PAREN_LEFT | PAREN_RIGHT) | balanced)* PAREN_RIGHT
+    ;
+
+opaque
+    : (~(PAREN_LEFT | PAREN_RIGHT | CONNECT | GROUP | HAVING | QUALIFY | ORDER | LIMIT | OFFSET | UNION | INTERSECT
+        | EXCEPT | MINUS_KEYWORD | SEMICOLON) | balanced)+
     ;
 
 /*
@@ -262,10 +376,15 @@ dataType
     | name=identifier (PAREN_LEFT arg0=INTEGER_LITERAL (COMMA arg1=INTEGER_LITERAL)? PAREN_RIGHT)? # typeNamed
     ;
 
+/*
+ * An identifier. The reserved niladic functions (USER, ...) are listed so that the translator can report them where
+ * Redshift reads them as a function, instead of a syntax error; they are not names.
+ */
 identifier
     : IDENTIFIER                                # identifierUnquoted
     | IDENTIFIER_QUOTED                         # identifierQuoted
     | nonReserved                               # identifierNonReserved
+    | name=(USER | CURRENT_USER | CURRENT_USER_ID | SESSION_USER) # identifierNiladic
     ;
 
 /*
@@ -273,10 +392,10 @@ identifier
  * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_pg_keywords.html
  */
 nonReserved
-    : APPROXIMATE | AT | CHARACTER | COUNT | CURRENT | DATE | DATEADD | DATEDIFF | DAY | DOUBLE | ESCAPE | EXTRACT
-    | FIRST | FOLLOWING | HOUR | LAST | MINUTE | MONTH | NULLS | OVER | POSITION | PRECEDING | PRECISION | RANGE
-    | ROW | ROWS | SECOND | SUBSTRING | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ | TRIM | UNBOUNDED | VARYING | WITHIN
-    | WITHOUT | YEAR | ZONE
+    : APPROXIMATE | AT | CHARACTER | CONNECT | COUNT | CUBE | CURRENT | DATE | DATEADD | DATEDIFF | DAY | DOUBLE
+    | ESCAPE | EXCLUDE | EXTRACT | FIRST | FOLLOWING | GROUPING | HOUR | INCLUDE | LAST | MINUTE | MONTH | OVER
+    | POSITION | PRECEDING | PRECISION | QUALIFY | RANGE | RECURSIVE | ROLLUP | ROW | ROWS | SECOND | SETS | START
+    | SUBSTRING | TIME | TIMESTAMPTZ | TIMETZ | TRIM | UNBOUNDED | VARYING | WITHIN | YEAR | ZONE
     ;
 
 /*
@@ -381,6 +500,34 @@ YEAR: 'YEAR';
 ZONE: 'ZONE';
 
 /*
+ * Keywords of the query clauses (set operations, WITH, FROM, GROUP BY) and the reserved niladic functions.
+ */
+
+CONNECT: 'CONNECT';
+CUBE: 'CUBE';
+CURRENT_USER: 'CURRENT_USER';
+CURRENT_USER_ID: 'CURRENT_USER_ID';
+EXCEPT: 'EXCEPT';
+EXCLUDE: 'EXCLUDE';
+GROUPING: 'GROUPING';
+INCLUDE: 'INCLUDE';
+INTERSECT: 'INTERSECT';
+INTO: 'INTO';
+MINUS_KEYWORD: 'MINUS';
+NATURAL: 'NATURAL';
+PIVOT: 'PIVOT';
+RECURSIVE: 'RECURSIVE';
+ROLLUP: 'ROLLUP';
+SESSION_USER: 'SESSION_USER';
+SETS: 'SETS';
+START: 'START';
+UNION: 'UNION';
+UNNEST: 'UNNEST';
+UNPIVOT: 'UNPIVOT';
+USER: 'USER';
+USING: 'USING';
+
+/*
  * Operators and punctuation
  */
 
@@ -412,10 +559,18 @@ BRACKET_RIGHT: ']';
 INTEGER_LITERAL: DIGIT+;
 DECIMAL_LITERAL: DIGIT+ '.' DIGIT* | '.' DIGIT+;
 STRING_LITERAL: '\'' ( ~'\'' | '\'\'' )* '\'';
-IDENTIFIER: [A-Z_] [A-Z_0-9$]*;
+/*
+ * A standard identifier begins with an ASCII letter, an underscore, or a UTF-8 multibyte character, and also contains
+ * digits and dollar signs. A temporary table name begins with `#`.
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_names.html
+ */
+IDENTIFIER: IDENTIFIER_START IDENTIFIER_PART*;
 IDENTIFIER_QUOTED: '"' ( ~'"' | '""' )* '"';
+TEMP_TABLE_NAME: '#' IDENTIFIER_PART+;
 
 fragment DIGIT: [0-9];
+fragment IDENTIFIER_START: [A-Z_] | ~[\u0000-\u007F];
+fragment IDENTIFIER_PART: [A-Z_0-9$] | ~[\u0000-\u007F];
 
 /*
  * Whitespace and comments

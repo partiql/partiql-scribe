@@ -19,7 +19,6 @@ import org.partiql.ast.Ast.exprPath
 import org.partiql.ast.Ast.exprPathStepElement
 import org.partiql.ast.Ast.exprPathStepField
 import org.partiql.ast.Ast.exprQuerySet
-import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.Ast.query
 import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
@@ -210,7 +209,7 @@ internal class RedshiftExpressions(
             is P.AtomCurrentDatetimeContext -> datetime.currentDatetime(ctx.name)
             is P.AtomSubqueryContext -> builder.exprQuerySet(ctx.query())
             is P.AtomParenthesizedContext -> expr(ctx.expr())
-            is P.AtomVariableContext -> exprVarRef(Identifier.of(builder.simple(ctx.identifier())), false)
+            is P.AtomVariableContext -> builder.variable(ctx)
             else -> builder.unexpected(ctx)
         }
 

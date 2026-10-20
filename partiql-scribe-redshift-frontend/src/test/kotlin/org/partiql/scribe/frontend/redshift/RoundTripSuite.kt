@@ -135,7 +135,8 @@ class RoundTripSuite {
     private fun reason(problem: RedshiftProblem): String =
         when (problem.code) {
             RedshiftProblem.Code.SYNTAX_ERROR -> "syntax: " + problem.message.substringBefore(" expecting")
-            RedshiftProblem.Code.SEMANTIC_ERROR -> "semantic: " + Regex("code=(\\w+)").find(problem.message)?.groupValues?.get(1)
+            RedshiftProblem.Code.SEMANTIC_ERROR ->
+                "semantic: " + (Regex("code=(\\w+)").find(problem.message)?.groupValues?.get(1) ?: problem.message.take(100))
             else -> problem.message.removePrefix("Unsupported Redshift construct: ").substringBefore(";").take(100)
         }.replace(Regex("\\s+"), " ")
 
