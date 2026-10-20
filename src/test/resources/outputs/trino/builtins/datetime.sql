@@ -123,3 +123,15 @@ SELECT date_diff('day', TIMESTAMP '2023-01-15 08:00:00+08:00', TIMESTAMP '2023-1
 
 --#[datetime-67]
 SELECT at_timezone(current_timestamp, 'UTC') AS "u" FROM "default"."T" AS "T";
+
+--#[datetime-68]
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."timestamp_1" > date_add('day', -30, CAST(at_timezone(current_timestamp, 'UTC') AS TIMESTAMP));
+
+--#[datetime-69]
+SELECT date_add('day', "T"."b", "T"."timestamp_1") AS "d" FROM "default"."T" AS "T";
+
+--#[datetime-70]
+SELECT date_add('hour', 13, TIME '12:34:56') AS "t" FROM "default"."T" AS "T";
+
+--#[datetime-71]
+SELECT date_add('month', 1, DATE '2024-01-31') AS "d" FROM "default"."T" AS "T";
