@@ -97,9 +97,20 @@ internal class RedshiftExpressions(
             is P.ValueCastShorthandContext -> exprCast(valueExpr(ctx.valueExpr()), dataType(ctx.dataType()))
             is P.ValueSignedContext -> signed(ctx.sign.text, valueExpr(ctx.valueExpr()))
             is P.ValueMultiplicativeContext -> exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs))
-            is P.ValueAdditiveContext -> exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs))
+            is P.ValueAdditiveContext -> additive(ctx)
+            is P.ValueAtTimeZoneContext -> datetime.atTimeZone(ctx)
             is P.ValueConcatContext -> exprOperator("||", valueExpr(ctx.lhs), valueExpr(ctx.rhs))
             else -> builder.unexpected(ctx)
+        }
+
+    /**
+     * `+` and `-`. When an operand is a datetime or interval value, the Redshift semantics depend on the operand types;
+     * see [RedshiftDatetime.additive].
+     */
+    private fun additive(ctx: P.ValueAdditiveContext): Expr =
+        types.resolve(listOf(ctx.lhs to valueExpr(ctx.lhs), ctx.rhs to valueExpr(ctx.rhs))) { exprs, operandTypes ->
+            datetime.additive(ctx.op, exprs[0], operandTypes[0], exprs[1], operandTypes[1])
+                ?: exprOperator(ctx.op.text, exprs[0], exprs[1])
         }
 
     /**
@@ -157,11 +168,46 @@ internal class RedshiftExpressions(
                 )
             is P.AtomDateFunctionContext -> datetime.dateFunction(ctx)
             is P.AtomExtractContext -> datetime.extract(ctx)
-            is P.AtomCountStarContext -> exprCall(Identifier.regular("count"), emptyList(), null)
+            is P.AtomPositionContext ->
+                functions.position(ctx.POSITION().symbol, Operand(ctx.sub, valueExpr(ctx.sub)), Operand(ctx.str, valueExpr(ctx.str)))
+            is P.AtomSubstringFromContext ->
+                functions.substring(
+                    ctx.SUBSTRING().symbol,
+                    Operand(ctx.value, expr(ctx.value)),
+                    Operand(ctx.start, expr(ctx.start)),
+                    ctx.length?.let { Operand(it, expr(it)) },
+                )
+            is P.AtomSubstringForContext ->
+                functions.substring(
+                    ctx.SUBSTRING().symbol,
+                    Operand(ctx.value, expr(ctx.value)),
+                    null,
+                    Operand(ctx.length, expr(ctx.length)),
+                )
+            is P.AtomTrimContext ->
+                functions.trim(
+                    ctx.TRIM().symbol,
+                    ctx.spec,
+                    ctx.chars?.let { Operand(it, expr(it)) },
+                    Operand(ctx.value, expr(ctx.value)),
+                )
+            is P.AtomApproximateContext -> throw UnsupportedConstructException.at(ctx, "APPROXIMATE aggregate")
+            is P.AtomCountStarContext ->
+                if (ctx.overClause() != null) {
+                    builder.window(ctx)
+                } else {
+                    exprCall(Identifier.regular("count"), emptyList(), null)
+                }
             is P.AtomFunctionCallContext ->
-                functions.call(ctx.name.start, ctx.expr().map { Operand(it, expr(it)) }, builder.setQuantifier(ctx.setQuantifier()))
+                when {
+                    ctx.withinGroup() != null -> throw UnsupportedConstructException.at(ctx.withinGroup(), "WITHIN GROUP")
+                    ctx.overClause() != null || ctx.nullTreatment() != null -> builder.window(ctx)
+                    else ->
+                        functions.call(ctx.name.start, ctx.expr().map { Operand(it, expr(it)) }, builder.setQuantifier(ctx.setQuantifier()))
+                }
             is P.AtomSysdateContext -> datetime.sysdate(ctx.SYSDATE().symbol)
             is P.AtomCurrentDateContext -> datetime.currentDate(ctx.CURRENT_DATE().symbol)
+            is P.AtomCurrentDatetimeContext -> datetime.currentDatetime(ctx.name)
             is P.AtomSubqueryContext -> builder.exprQuerySet(ctx.query())
             is P.AtomParenthesizedContext -> expr(ctx.expr())
             is P.AtomVariableContext -> exprVarRef(Identifier.of(builder.simple(ctx.identifier())), false)
@@ -182,6 +228,7 @@ internal class RedshiftExpressions(
             is P.LiteralTimestampContext,
             is P.LiteralTimestampTzContext,
             -> datetime.literal(ctx)
+            is P.LiteralIntervalContext -> datetime.intervalLiteral(ctx)
             else -> builder.unexpected(ctx)
         }
 
@@ -201,6 +248,7 @@ internal class RedshiftExpressions(
             is P.TypeTimestampContext -> DataType.TIMESTAMP()
             is P.TypeTimestampTzContext -> DataType.TIMESTAMP_WITH_TIME_ZONE(DATETIME_PRECISION)
             is P.TypeDateContext -> DataType.DATE()
+            is P.TypeIntervalContext -> datetime.intervalType(ctx)
             is P.TypeNamedContext -> namedType(ctx)
             else -> builder.unexpected(ctx)
         }

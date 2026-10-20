@@ -11,6 +11,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.SessionAttribute
+import org.partiql.spi.types.PType
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 
 /**
@@ -119,6 +120,54 @@ internal class RedshiftDatetime(
      * https://docs.aws.amazon.com/redshift/latest/dg/r_SYSDATE.html
      */
     fun sysdate(name: Token): Expr = builder.functions.datetime.utcnow(name, "SYSDATE")
+
+    /**
+     * Returns the PartiQL literal of [type] for the Redshift character string [value], or null if [type] is not a
+     * datetime type or the translator does not convert the format of [value]. Redshift converts a character string to
+     * the datetime type of the value that it is compared or combined with.
+     */
+    fun stringToDatetime(
+        value: String,
+        type: PType,
+    ): Expr? =
+        when (type.code()) {
+            PType.DATE -> if (DATE_PATTERN.matches(value)) exprLit(Literal.typedString(DataType.DATE(), value)) else null
+            PType.TIMESTAMP ->
+                if (TIMESTAMP_PATTERN.matches(value)) exprLit(Literal.typedString(DataType.TIMESTAMP(), value)) else null
+            else -> null
+        }
+
+    /**
+     * Translates `lhs op rhs` for `+` and `-` when the Redshift semantics for the operand types differ from PartiQL
+     * (for example, DATE + INTEGER adds days). Returns null when the PartiQL operator has the Redshift semantics.
+     */
+    fun additive(
+        op: Token,
+        lhs: Expr,
+        lhsType: PType,
+        rhs: Expr,
+        rhsType: PType,
+    ): Expr? = null
+
+    /**
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_AT_TIME_ZONE.html
+     */
+    fun atTimeZone(ctx: P.ValueAtTimeZoneContext): Expr = throw UnsupportedConstructException.at(ctx.AT().symbol, "AT TIME ZONE")
+
+    /**
+     * `CURRENT_TIMESTAMP`, `CURRENT_TIME`, `LOCALTIMESTAMP`, and `LOCALTIME`.
+     */
+    fun currentDatetime(name: Token): Expr = throw UnsupportedConstructException.at(name, name.text.uppercase())
+
+    /**
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_interval_literals.html
+     */
+    fun intervalLiteral(ctx: P.LiteralIntervalContext): Expr = throw UnsupportedConstructException.at(ctx, "INTERVAL literal")
+
+    /**
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_interval_data_types.html
+     */
+    fun intervalType(ctx: P.TypeIntervalContext): DataType = throw UnsupportedConstructException.at(ctx, "INTERVAL data type")
 
     internal companion object {
         /** The prefix of hidden PartiQL built-in function names; see `FunctionUtils` in partiql-spi. */

@@ -29,6 +29,7 @@ import org.partiql.ast.Query
 import org.partiql.ast.Select
 import org.partiql.ast.SelectItem
 import org.partiql.ast.SetQuantifier
+import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.scribe.frontend.redshift.RedshiftProblem
@@ -191,6 +192,13 @@ internal class RedshiftAstBuilder(
             }
             else -> unexpected(ctx)
         }
+
+    /**
+     * Translates a window function: a function call with an OVER clause or a null treatment, or `COUNT(*) OVER`.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/c_Window_functions.html
+     */
+    internal fun window(ctx: P.AtomContext): Expr = throw UnsupportedConstructException.at(ctx, "window function")
 
     internal fun note(
         token: Token,

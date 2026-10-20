@@ -140,6 +140,7 @@ valueExpr
     : primaryExpr                                               # valuePrimary
     | valueExpr DOUBLE_COLON dataType                           # valueCastShorthand
     | sign=(PLUS | MINUS) valueExpr                             # valueSigned
+    | valueExpr AT TIME ZONE zone=primaryExpr                   # valueAtTimeZone
     | lhs=valueExpr op=(ASTERISK | SLASH | PERCENT) rhs=valueExpr # valueMultiplicative
     | lhs=valueExpr op=(PLUS | MINUS) rhs=valueExpr             # valueAdditive
     | lhs=valueExpr CONCAT rhs=valueExpr                        # valueConcat
@@ -157,10 +158,17 @@ atom
     | CASE operand=expr? caseWhen+ (ELSE otherwise=expr)? END                       # atomCase
     | name=(DATEADD | DATEDIFF) PAREN_LEFT part=identifier COMMA expr COMMA expr PAREN_RIGHT # atomDateFunction
     | EXTRACT PAREN_LEFT part=datePart FROM expr PAREN_RIGHT                        # atomExtract
-    | COUNT PAREN_LEFT ASTERISK PAREN_RIGHT                                         # atomCountStar
-    | name=functionName PAREN_LEFT (setQuantifier? expr (COMMA expr)*)? PAREN_RIGHT # atomFunctionCall
+    | POSITION PAREN_LEFT sub=valueExpr IN str=valueExpr PAREN_RIGHT                # atomPosition
+    | SUBSTRING PAREN_LEFT value=expr FROM start=expr (FOR length=expr)? PAREN_RIGHT # atomSubstringFrom
+    | SUBSTRING PAREN_LEFT value=expr FOR length=expr PAREN_RIGHT                   # atomSubstringFor
+    | TRIM PAREN_LEFT spec=(BOTH | LEADING | TRAILING)? (chars=expr? FROM)? value=expr PAREN_RIGHT # atomTrim
+    | APPROXIMATE atom                                                              # atomApproximate
+    | COUNT PAREN_LEFT ASTERISK PAREN_RIGHT overClause?                             # atomCountStar
+    | name=functionName PAREN_LEFT (setQuantifier? expr (COMMA expr)*)? PAREN_RIGHT
+      withinGroup? nullTreatment? overClause?                                       # atomFunctionCall
     | SYSDATE                                                                       # atomSysdate
     | CURRENT_DATE                                                                  # atomCurrentDate
+    | name=(CURRENT_TIMESTAMP | CURRENT_TIME | LOCALTIMESTAMP | LOCALTIME)          # atomCurrentDatetime
     | PAREN_LEFT query PAREN_RIGHT                                                  # atomSubquery
     | PAREN_LEFT expr PAREN_RIGHT                                                   # atomParenthesized
     | identifier                                                                    # atomVariable
@@ -173,6 +181,36 @@ datePart
 
 caseWhen
     : WHEN condition=expr THEN result=expr
+    ;
+
+/*
+ * Window functions, ordered-set aggregates, and approximate aggregates. The query translation decides which of
+ * them have a PartiQL equivalent.
+ */
+nullTreatment
+    : (IGNORE | RESPECT) NULLS
+    ;
+
+withinGroup
+    : WITHIN GROUP PAREN_LEFT ORDER BY sortItem (COMMA sortItem)* PAREN_RIGHT
+    ;
+
+overClause
+    : OVER PAREN_LEFT
+      (PARTITION BY partition+=expr (COMMA partition+=expr)*)?
+      (ORDER BY sortItem (COMMA sortItem)*)?
+      frameClause?
+      PAREN_RIGHT
+    ;
+
+frameClause
+    : unit=(ROWS | RANGE) (frameBound | BETWEEN frameBound AND frameBound)
+    ;
+
+frameBound
+    : UNBOUNDED (PRECEDING | FOLLOWING)
+    | CURRENT ROW
+    | INTEGER_LITERAL (PRECEDING | FOLLOWING)
     ;
 
 functionName
@@ -193,6 +231,19 @@ literal
     | (TIME WITH TIME ZONE | TIMETZ) STRING_LITERAL                     # literalTimeTz
     | TIMESTAMP (WITHOUT TIME ZONE)? STRING_LITERAL                     # literalTimestamp
     | (TIMESTAMP WITH TIME ZONE | TIMESTAMPTZ) STRING_LITERAL           # literalTimestampTz
+    | INTERVAL STRING_LITERAL intervalQualifier?                        # literalInterval
+    ;
+
+/*
+ * An interval qualifier: `YEAR`, `DAY TO SECOND`, `SECOND(3)`, ...
+ */
+intervalQualifier
+    : start=intervalField (PAREN_LEFT precision=INTEGER_LITERAL PAREN_RIGHT)?
+      (TO end=intervalField (PAREN_LEFT fraction=INTEGER_LITERAL PAREN_RIGHT)?)?
+    ;
+
+intervalField
+    : YEAR | MONTH | DAY | HOUR | MINUTE | SECOND
     ;
 
 /*
@@ -207,6 +258,7 @@ dataType
     | TIMESTAMP (WITHOUT TIME ZONE)?                                        # typeTimestamp
     | (TIMESTAMP WITH TIME ZONE | TIMESTAMPTZ)                              # typeTimestampTz
     | DATE                                                                  # typeDate
+    | INTERVAL intervalQualifier?                                           # typeInterval
     | name=identifier (PAREN_LEFT arg0=INTEGER_LITERAL (COMMA arg1=INTEGER_LITERAL)? PAREN_RIGHT)? # typeNamed
     ;
 
@@ -221,8 +273,10 @@ identifier
  * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_pg_keywords.html
  */
 nonReserved
-    : CHARACTER | COUNT | DATE | DATEADD | DATEDIFF | DOUBLE | ESCAPE | EXTRACT | FIRST | LAST | NULLS | PRECISION
-    | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ | VARYING | WITHOUT | ZONE
+    : APPROXIMATE | AT | CHARACTER | COUNT | CURRENT | DATE | DATEADD | DATEDIFF | DAY | DOUBLE | ESCAPE | EXTRACT
+    | FIRST | FOLLOWING | HOUR | LAST | MINUTE | MONTH | NULLS | OVER | POSITION | PRECEDING | PRECISION | RANGE
+    | ROW | ROWS | SECOND | SUBSTRING | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ | TRIM | UNBOUNDED | VARYING | WITHIN
+    | WITHOUT | YEAR | ZONE
     ;
 
 /*
@@ -231,19 +285,26 @@ nonReserved
 
 ALL: 'ALL';
 AND: 'AND';
+APPROXIMATE: 'APPROXIMATE';
 AS: 'AS';
 ASC: 'ASC';
+AT: 'AT';
 BETWEEN: 'BETWEEN';
+BOTH: 'BOTH';
 BY: 'BY';
 CASE: 'CASE';
 CAST: 'CAST';
 CHARACTER: 'CHARACTER';
 COUNT: 'COUNT';
 CROSS: 'CROSS';
+CURRENT: 'CURRENT';
 CURRENT_DATE: 'CURRENT_DATE';
+CURRENT_TIME: 'CURRENT_TIME';
+CURRENT_TIMESTAMP: 'CURRENT_TIMESTAMP';
 DATE: 'DATE';
 DATEADD: 'DATEADD';
 DATEDIFF: 'DATEDIFF';
+DAY: 'DAY';
 DESC: 'DESC';
 DISTINCT: 'DISTINCT';
 DOUBLE: 'DOUBLE';
@@ -253,19 +314,29 @@ ESCAPE: 'ESCAPE';
 EXTRACT: 'EXTRACT';
 FALSE: 'FALSE';
 FIRST: 'FIRST';
+FOLLOWING: 'FOLLOWING';
+FOR: 'FOR';
 FROM: 'FROM';
 FULL: 'FULL';
 GROUP: 'GROUP';
 HAVING: 'HAVING';
+HOUR: 'HOUR';
+IGNORE: 'IGNORE';
 ILIKE: 'ILIKE';
 IN: 'IN';
 INNER: 'INNER';
+INTERVAL: 'INTERVAL';
 IS: 'IS';
 JOIN: 'JOIN';
 LAST: 'LAST';
+LEADING: 'LEADING';
 LEFT: 'LEFT';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT';
+LOCALTIME: 'LOCALTIME';
+LOCALTIMESTAMP: 'LOCALTIMESTAMP';
+MINUTE: 'MINUTE';
+MONTH: 'MONTH';
 NOT: 'NOT';
 NULL: 'NULL';
 NULLS: 'NULLS';
@@ -274,23 +345,39 @@ ON: 'ON';
 OR: 'OR';
 ORDER: 'ORDER';
 OUTER: 'OUTER';
+OVER: 'OVER';
+PARTITION: 'PARTITION';
+POSITION: 'POSITION';
+PRECEDING: 'PRECEDING';
 PRECISION: 'PRECISION';
 QUALIFY: 'QUALIFY';
+RANGE: 'RANGE';
+RESPECT: 'RESPECT';
 RIGHT: 'RIGHT';
+ROW: 'ROW';
+ROWS: 'ROWS';
+SECOND: 'SECOND';
 SELECT: 'SELECT';
+SUBSTRING: 'SUBSTRING';
 SYSDATE: 'SYSDATE';
 THEN: 'THEN';
 TIME: 'TIME';
 TIMESTAMP: 'TIMESTAMP';
 TIMESTAMPTZ: 'TIMESTAMPTZ';
 TIMETZ: 'TIMETZ';
+TO: 'TO';
 TOP: 'TOP';
+TRAILING: 'TRAILING';
+TRIM: 'TRIM';
 TRUE: 'TRUE';
+UNBOUNDED: 'UNBOUNDED';
 VARYING: 'VARYING';
 WHEN: 'WHEN';
 WHERE: 'WHERE';
 WITH: 'WITH';
+WITHIN: 'WITHIN';
 WITHOUT: 'WITHOUT';
+YEAR: 'YEAR';
 ZONE: 'ZONE';
 
 /*

@@ -16,84 +16,84 @@ basics__exclude-06	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_
 basics__exclude-09	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t2"."flds" KEEP'
 basics__exclude-10	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t1"."flds" KEEP'
 basics__exclude-11	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t1"."flds" KEEP'
-basics__interval-00	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-01	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-02	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-03	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-04	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-05	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-06	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-07	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-08	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-09	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-10	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-11	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-12	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-13	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-14	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-15	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-16	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-17	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-18	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-19	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-20	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-21	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-22	INVALID_INPUT	syntax: mismatched input ''10''
-basics__interval-23	INVALID_INPUT	syntax: mismatched input ''-10''
-basics__interval-24	INVALID_INPUT	syntax: mismatched input ''10.234''
-basics__interval-25	INVALID_INPUT	syntax: mismatched input ''-10.234''
-basics__interval-26	INVALID_INPUT	syntax: mismatched input ''10-3''
-basics__interval-27	INVALID_INPUT	syntax: mismatched input ''-10-3''
-basics__interval-28	INVALID_INPUT	syntax: mismatched input ''10-3''
-basics__interval-29	INVALID_INPUT	syntax: mismatched input ''-10-3''
-basics__interval-30	INVALID_INPUT	syntax: mismatched input ''10 3''
-basics__interval-31	INVALID_INPUT	syntax: mismatched input ''-10 -3''
-basics__interval-32	INVALID_INPUT	syntax: mismatched input ''10 3''
-basics__interval-33	INVALID_INPUT	syntax: mismatched input ''-10 -3''
-basics__interval-34	INVALID_INPUT	syntax: mismatched input ''10 3:4''
-basics__interval-35	INVALID_INPUT	syntax: mismatched input ''-10 -3:4''
-basics__interval-36	INVALID_INPUT	syntax: mismatched input ''10 3:4''
-basics__interval-37	INVALID_INPUT	syntax: mismatched input ''-10 -3:4''
-basics__interval-38	INVALID_INPUT	syntax: mismatched input ''10 3:4:5''
-basics__interval-39	INVALID_INPUT	syntax: mismatched input ''-10 -3:4:5''
-basics__interval-40	INVALID_INPUT	syntax: mismatched input ''10 3:4:5''
-basics__interval-41	INVALID_INPUT	syntax: mismatched input ''-10 -3:4:5''
-basics__interval-42	INVALID_INPUT	syntax: mismatched input ''10 3:4:5.678''
-basics__interval-43	INVALID_INPUT	syntax: mismatched input ''-10 -3:4:5.678''
-basics__interval-44	INVALID_INPUT	syntax: mismatched input ''10 3:4:5.678''
-basics__interval-45	INVALID_INPUT	syntax: mismatched input ''-10 -3:4:5.678''
-basics__interval-46	INVALID_INPUT	syntax: mismatched input ''3:4''
-basics__interval-47	INVALID_INPUT	syntax: mismatched input ''-3:4''
-basics__interval-48	INVALID_INPUT	syntax: mismatched input ''3:4''
-basics__interval-49	INVALID_INPUT	syntax: mismatched input ''-3:4''
-basics__interval-50	INVALID_INPUT	syntax: mismatched input ''2:3:4''
-basics__interval-51	INVALID_INPUT	syntax: mismatched input ''-2:3:4''
-basics__interval-52	INVALID_INPUT	syntax: mismatched input ''2:3:4''
-basics__interval-53	INVALID_INPUT	syntax: mismatched input ''-2:3:4''
-basics__interval-54	INVALID_INPUT	syntax: mismatched input ''2:3:4.567''
-basics__interval-55	INVALID_INPUT	syntax: mismatched input ''-2:3:4.567''
-basics__interval-56	INVALID_INPUT	syntax: mismatched input ''2:3:4.567''
-basics__interval-57	INVALID_INPUT	syntax: mismatched input ''-2:3:4.567''
-basics__interval-58	INVALID_INPUT	syntax: mismatched input ''3:4''
-basics__interval-59	INVALID_INPUT	syntax: mismatched input ''-3:4''
-basics__interval-60	INVALID_INPUT	syntax: mismatched input ''3:4''
-basics__interval-61	INVALID_INPUT	syntax: mismatched input ''-3:4''
-basics__interval-62	INVALID_INPUT	syntax: mismatched input ''3:4.567''
-basics__interval-63	INVALID_INPUT	syntax: mismatched input ''-3:4.567''
-basics__interval-64	INVALID_INPUT	syntax: mismatched input ''3:4.567''
-basics__interval-65	INVALID_INPUT	syntax: mismatched input ''-3:4.567''
-basics__interval-66	INVALID_INPUT	syntax: mismatched input ''2 3:4:5.000006''
-basics__interval-67	INVALID_INPUT	syntax: mismatched input ''-2 -3:4:5.000006''
-basics__interval-68	INVALID_INPUT	syntax: mismatched input ''2 3:4:5.000006000''
-basics__interval-69	INVALID_INPUT	syntax: mismatched input ''-2 -3:4:5.000006000''
-basics__interval-70	INVALID_INPUT	syntax: mismatched input ''2 3:4:5.000''
-basics__interval-71	INVALID_INPUT	syntax: mismatched input ''-2 -3:4:5.000''
-basics__interval-72	INVALID_INPUT	syntax: mismatched input ''2 3:4:5.000000''
-basics__interval-73	INVALID_INPUT	syntax: mismatched input ''-2 -3:4:5.000000''
-basics__interval-74	INVALID_INPUT	syntax: mismatched input ''30''
-basics__interval-75	INVALID_INPUT	syntax: mismatched input ''100''
-basics__interval-76	INVALID_INPUT	syntax: mismatched input ''2000''
-basics__interval-77	INVALID_INPUT	syntax: mismatched input ''100000''
+basics__interval-00	UNSUPPORTED	INTERVAL literal
+basics__interval-01	UNSUPPORTED	INTERVAL literal
+basics__interval-02	UNSUPPORTED	INTERVAL literal
+basics__interval-03	UNSUPPORTED	INTERVAL literal
+basics__interval-04	UNSUPPORTED	INTERVAL literal
+basics__interval-05	UNSUPPORTED	INTERVAL literal
+basics__interval-06	UNSUPPORTED	INTERVAL literal
+basics__interval-07	UNSUPPORTED	INTERVAL literal
+basics__interval-08	UNSUPPORTED	INTERVAL literal
+basics__interval-09	UNSUPPORTED	INTERVAL literal
+basics__interval-10	UNSUPPORTED	INTERVAL literal
+basics__interval-11	UNSUPPORTED	INTERVAL literal
+basics__interval-12	UNSUPPORTED	INTERVAL literal
+basics__interval-13	UNSUPPORTED	INTERVAL literal
+basics__interval-14	UNSUPPORTED	INTERVAL literal
+basics__interval-15	UNSUPPORTED	INTERVAL literal
+basics__interval-16	UNSUPPORTED	INTERVAL literal
+basics__interval-17	UNSUPPORTED	INTERVAL literal
+basics__interval-18	UNSUPPORTED	INTERVAL literal
+basics__interval-19	UNSUPPORTED	INTERVAL literal
+basics__interval-20	UNSUPPORTED	INTERVAL literal
+basics__interval-21	UNSUPPORTED	INTERVAL literal
+basics__interval-22	UNSUPPORTED	INTERVAL literal
+basics__interval-23	UNSUPPORTED	INTERVAL literal
+basics__interval-24	UNSUPPORTED	INTERVAL literal
+basics__interval-25	UNSUPPORTED	INTERVAL literal
+basics__interval-26	UNSUPPORTED	INTERVAL literal
+basics__interval-27	UNSUPPORTED	INTERVAL literal
+basics__interval-28	UNSUPPORTED	INTERVAL literal
+basics__interval-29	UNSUPPORTED	INTERVAL literal
+basics__interval-30	UNSUPPORTED	INTERVAL literal
+basics__interval-31	UNSUPPORTED	INTERVAL literal
+basics__interval-32	UNSUPPORTED	INTERVAL literal
+basics__interval-33	UNSUPPORTED	INTERVAL literal
+basics__interval-34	UNSUPPORTED	INTERVAL literal
+basics__interval-35	UNSUPPORTED	INTERVAL literal
+basics__interval-36	UNSUPPORTED	INTERVAL literal
+basics__interval-37	UNSUPPORTED	INTERVAL literal
+basics__interval-38	UNSUPPORTED	INTERVAL literal
+basics__interval-39	UNSUPPORTED	INTERVAL literal
+basics__interval-40	UNSUPPORTED	INTERVAL literal
+basics__interval-41	UNSUPPORTED	INTERVAL literal
+basics__interval-42	UNSUPPORTED	INTERVAL literal
+basics__interval-43	UNSUPPORTED	INTERVAL literal
+basics__interval-44	UNSUPPORTED	INTERVAL literal
+basics__interval-45	UNSUPPORTED	INTERVAL literal
+basics__interval-46	UNSUPPORTED	INTERVAL literal
+basics__interval-47	UNSUPPORTED	INTERVAL literal
+basics__interval-48	UNSUPPORTED	INTERVAL literal
+basics__interval-49	UNSUPPORTED	INTERVAL literal
+basics__interval-50	UNSUPPORTED	INTERVAL literal
+basics__interval-51	UNSUPPORTED	INTERVAL literal
+basics__interval-52	UNSUPPORTED	INTERVAL literal
+basics__interval-53	UNSUPPORTED	INTERVAL literal
+basics__interval-54	UNSUPPORTED	INTERVAL literal
+basics__interval-55	UNSUPPORTED	INTERVAL literal
+basics__interval-56	UNSUPPORTED	INTERVAL literal
+basics__interval-57	UNSUPPORTED	INTERVAL literal
+basics__interval-58	UNSUPPORTED	INTERVAL literal
+basics__interval-59	UNSUPPORTED	INTERVAL literal
+basics__interval-60	UNSUPPORTED	INTERVAL literal
+basics__interval-61	UNSUPPORTED	INTERVAL literal
+basics__interval-62	UNSUPPORTED	INTERVAL literal
+basics__interval-63	UNSUPPORTED	INTERVAL literal
+basics__interval-64	UNSUPPORTED	INTERVAL literal
+basics__interval-65	UNSUPPORTED	INTERVAL literal
+basics__interval-66	UNSUPPORTED	INTERVAL literal
+basics__interval-67	UNSUPPORTED	INTERVAL literal
+basics__interval-68	UNSUPPORTED	INTERVAL literal
+basics__interval-69	UNSUPPORTED	INTERVAL literal
+basics__interval-70	UNSUPPORTED	INTERVAL literal
+basics__interval-71	UNSUPPORTED	INTERVAL literal
+basics__interval-72	UNSUPPORTED	INTERVAL literal
+basics__interval-73	UNSUPPORTED	INTERVAL literal
+basics__interval-74	UNSUPPORTED	INTERVAL literal
+basics__interval-75	UNSUPPORTED	INTERVAL literal
+basics__interval-76	UNSUPPORTED	INTERVAL literal
+basics__interval-77	UNSUPPORTED	INTERVAL literal
 basics__limit-offset-01	INVALID_INPUT	syntax: mismatched input 'OFFSET'
 basics__limit-offset-03	INVALID_INPUT	syntax: extraneous input '('
 basics__limit-offset-04	INVALID_INPUT	syntax: extraneous input '('
@@ -135,27 +135,27 @@ basics__struct-26	UNSUPPORTED	function `OBJECT`
 basics__struct-27	UNSUPPORTED	function `OBJECT`
 basics__struct-28	UNSUPPORTED	function `OBJECT`
 basics__struct-29	UNSUPPORTED	function `OBJECT`
-basics__window-01	INVALID_INPUT	syntax: mismatched input '('
-basics__window-02	INVALID_INPUT	syntax: mismatched input '('
-basics__window-03	INVALID_INPUT	syntax: mismatched input '('
-basics__window-04	INVALID_INPUT	syntax: mismatched input '('
-basics__window-05	INVALID_INPUT	syntax: mismatched input '('
-basics__window-06	INVALID_INPUT	syntax: mismatched input '('
-basics__window-07	INVALID_INPUT	syntax: mismatched input 'NULLS'
-basics__window-08	INVALID_INPUT	syntax: mismatched input 'NULLS'
-basics__window-09	INVALID_INPUT	syntax: mismatched input 'NULLS'
-basics__window-10	INVALID_INPUT	syntax: mismatched input 'NULLS'
-basics__window-12	INVALID_INPUT	syntax: mismatched input 'NULLS'
-basics__window-14	INVALID_INPUT	syntax: mismatched input 'NULLS'
-basics__window-15	INVALID_INPUT	syntax: mismatched input '('
-basics__window-16	INVALID_INPUT	syntax: mismatched input '('
-basics__window-17	INVALID_INPUT	syntax: mismatched input '('
-basics__window-18	INVALID_INPUT	syntax: mismatched input '('
-basics__window-19	INVALID_INPUT	syntax: mismatched input '('
-basics__window-20	INVALID_INPUT	syntax: mismatched input '('
-basics__window-21	INVALID_INPUT	syntax: mismatched input '('
-basics__window-22	INVALID_INPUT	syntax: mismatched input '('
-basics__window-34	INVALID_INPUT	syntax: mismatched input '('
+basics__window-01	UNSUPPORTED	window function
+basics__window-02	UNSUPPORTED	window function
+basics__window-03	UNSUPPORTED	window function
+basics__window-04	UNSUPPORTED	window function
+basics__window-05	UNSUPPORTED	window function
+basics__window-06	UNSUPPORTED	window function
+basics__window-07	UNSUPPORTED	window function
+basics__window-08	UNSUPPORTED	window function
+basics__window-09	UNSUPPORTED	window function
+basics__window-10	UNSUPPORTED	window function
+basics__window-12	UNSUPPORTED	window function
+basics__window-14	UNSUPPORTED	window function
+basics__window-15	UNSUPPORTED	window function
+basics__window-16	UNSUPPORTED	window function
+basics__window-17	UNSUPPORTED	window function
+basics__window-18	UNSUPPORTED	window function
+basics__window-19	UNSUPPORTED	window function
+basics__window-20	UNSUPPORTED	window function
+basics__window-21	UNSUPPORTED	window function
+basics__window-22	UNSUPPORTED	window function
+basics__window-34	UNSUPPORTED	window function
 basics__with-00	INVALID_INPUT	syntax: mismatched input 'WITH'
 basics__with-01	INVALID_INPUT	syntax: mismatched input 'WITH'
 basics__with-02	INVALID_INPUT	syntax: mismatched input 'WITH'
@@ -193,24 +193,24 @@ builtins__bitwise-and-00	INVALID_INPUT	syntax: mismatched input '&'
 builtins__bitwise-and-01	INVALID_INPUT	syntax: mismatched input '&'
 builtins__char-length-01	MISMATCH	SELECT CHAR_LENGTH(CAST("T"['d']['e'] AS VARCHAR(256))) AS "_1" FROM "default"."T" AS "T"
 builtins__char-length-02	MISMATCH	SELECT CHAR_LENGTH(CAST("T_ALL_TYPES"['col_list_string'][1] AS VARCHAR(256))) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES"
-builtins__extract-61	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(YEAR FROM INTERVAL '5''
-builtins__extract-62	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(MONTH FROM INTERVAL '3''
-builtins__extract-63	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(DAY FROM INTERVAL '10''
-builtins__extract-64	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(HOUR FROM INTERVAL '8''
-builtins__extract-65	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(MINUTE FROM INTERVAL '30''
-builtins__extract-66	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(SECOND FROM INTERVAL '45''
-builtins__extract-67	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(YEAR FROM INTERVAL '2-6''
-builtins__extract-68	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(MONTH FROM INTERVAL '2-6''
-builtins__extract-69	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(DAY FROM INTERVAL '5 12''
-builtins__extract-70	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(HOUR FROM INTERVAL '5 12''
-builtins__extract-71	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(HOUR FROM INTERVAL '14:30''
-builtins__extract-72	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(MINUTE FROM INTERVAL '14:30''
-builtins__extract-73	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(YEAR FROM INTERVAL '-3''
-builtins__extract-74	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(MONTH FROM INTERVAL '-8''
-builtins__extract-75	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(DAY FROM INTERVAL '-15''
-builtins__extract-76	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(YEAR FROM INTERVAL '-1-3''
-builtins__extract-77	INVALID_INPUT	syntax: no viable alternative at input 'EXTRACT(MONTH FROM INTERVAL '-1-3''
-builtins__position-00	INVALID_INPUT	syntax: no viable alternative at input 'POSITION('a' IN "T"'
+builtins__extract-61	UNSUPPORTED	INTERVAL literal
+builtins__extract-62	UNSUPPORTED	INTERVAL literal
+builtins__extract-63	UNSUPPORTED	INTERVAL literal
+builtins__extract-64	UNSUPPORTED	INTERVAL literal
+builtins__extract-65	UNSUPPORTED	INTERVAL literal
+builtins__extract-66	UNSUPPORTED	INTERVAL literal
+builtins__extract-67	UNSUPPORTED	INTERVAL literal
+builtins__extract-68	UNSUPPORTED	INTERVAL literal
+builtins__extract-69	UNSUPPORTED	INTERVAL literal
+builtins__extract-70	UNSUPPORTED	INTERVAL literal
+builtins__extract-71	UNSUPPORTED	INTERVAL literal
+builtins__extract-72	UNSUPPORTED	INTERVAL literal
+builtins__extract-73	UNSUPPORTED	INTERVAL literal
+builtins__extract-74	UNSUPPORTED	INTERVAL literal
+builtins__extract-75	UNSUPPORTED	INTERVAL literal
+builtins__extract-76	UNSUPPORTED	INTERVAL literal
+builtins__extract-77	UNSUPPORTED	INTERVAL literal
+builtins__position-00	UNSUPPORTED	POSITION
 builtins__replace-00	UNSUPPORTED	function `REPLACE`
 builtins__split-00	UNSUPPORTED	function `SPLIT_TO_ARRAY`
 builtins__split-01	UNSUPPORTED	function `SPLIT_TO_ARRAY`
@@ -230,13 +230,13 @@ builtins__substring-11	UNSUPPORTED	function `SUBSTRING`
 builtins__substring-12	UNSUPPORTED	function `SUBSTRING`
 builtins__substring-13	UNSUPPORTED	function `SUBSTRING`
 builtins__substring-14	UNSUPPORTED	function `SUBSTRING`
-builtins__trim-00	INVALID_INPUT	syntax: no viable alternative at input 'TRIM(BOTH "T"'
-builtins__trim-01	INVALID_INPUT	syntax: no viable alternative at input 'TRIM(BOTH "T"'
-builtins__trim-02	INVALID_INPUT	syntax: no viable alternative at input 'TRIM(LEADING "T"'
-builtins__trim-03	INVALID_INPUT	syntax: no viable alternative at input 'TRIM(TRAILING "T"'
-builtins__trim-04	INVALID_INPUT	syntax: no viable alternative at input 'TRIM(BOTH 'xxx''
-builtins__trim-05	INVALID_INPUT	syntax: no viable alternative at input 'TRIM(LEADING 'xxx''
-builtins__trim-06	INVALID_INPUT	syntax: no viable alternative at input 'TRIM(TRAILING 'xxx''
+builtins__trim-00	UNSUPPORTED	TRIM
+builtins__trim-01	UNSUPPORTED	TRIM
+builtins__trim-02	UNSUPPORTED	TRIM
+builtins__trim-03	UNSUPPORTED	TRIM
+builtins__trim-04	UNSUPPORTED	TRIM
+builtins__trim-05	UNSUPPORTED	TRIM
+builtins__trim-06	UNSUPPORTED	TRIM
 extensions__udf-00	UNSUPPORTED	function `"my_udf"`
 operators__cast-00	MISMATCH	SELECT CAST('abc' AS VARCHAR(256)) AS "res" FROM "default"."T" AS "T"
 operators__cast-02	MISMATCH	SELECT CAST('abc' AS CHAR(1)) AS "res" FROM "default"."T" AS "T"
@@ -247,39 +247,39 @@ operators__cast-10	MISMATCH	SELECT CAST(1 AS DECIMAL(18,0)) AS "res" FROM "defau
 operators__cast-11	MISMATCH	SELECT CAST(1 AS DECIMAL(5,0)) AS "res" FROM "default"."T" AS "T"
 operators__cast-13	MISMATCH	SELECT CAST(1 AS DECIMAL(18,0)) AS "res" FROM "default"."T" AS "T"
 operators__cast-14	MISMATCH	SELECT CAST(1 AS DECIMAL(5,0)) AS "res" FROM "default"."T" AS "T"
-operators__cast-41	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_y2mon" AS INTERVAL YEAR'
-operators__cast-42	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_y2mon" AS INTERVAL YEAR'
-operators__cast-43	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_y2mon" AS INTERVAL MONTH'
-operators__cast-44	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_y2mon" AS INTERVAL MONTH'
-operators__cast-45	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_y2mon" AS INTERVAL YEAR'
-operators__cast-46	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_y2mon" AS INTERVAL YEAR'
-operators__cast-47	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-48	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-49	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-50	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-51	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL MINUTE'
-operators__cast-52	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL MINUTE'
-operators__cast-53	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL SECOND'
-operators__cast-54	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL SECOND'
-operators__cast-55	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL SECOND'
-operators__cast-56	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-57	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-58	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-59	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-60	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-61	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-62	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-63	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL DAY'
-operators__cast-64	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-65	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-66	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-67	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-68	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-69	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL HOUR'
-operators__cast-70	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL MINUTE'
-operators__cast-71	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL MINUTE'
-operators__cast-72	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL MINUTE'
-operators__cast-73	INVALID_INPUT	syntax: no viable alternative at input 'CAST("T"."col_d2s" AS INTERVAL MINUTE'
+operators__cast-41	UNSUPPORTED	INTERVAL data type
+operators__cast-42	UNSUPPORTED	INTERVAL data type
+operators__cast-43	UNSUPPORTED	INTERVAL data type
+operators__cast-44	UNSUPPORTED	INTERVAL data type
+operators__cast-45	UNSUPPORTED	INTERVAL data type
+operators__cast-46	UNSUPPORTED	INTERVAL data type
+operators__cast-47	UNSUPPORTED	INTERVAL data type
+operators__cast-48	UNSUPPORTED	INTERVAL data type
+operators__cast-49	UNSUPPORTED	INTERVAL data type
+operators__cast-50	UNSUPPORTED	INTERVAL data type
+operators__cast-51	UNSUPPORTED	INTERVAL data type
+operators__cast-52	UNSUPPORTED	INTERVAL data type
+operators__cast-53	UNSUPPORTED	INTERVAL data type
+operators__cast-54	UNSUPPORTED	INTERVAL data type
+operators__cast-55	UNSUPPORTED	INTERVAL data type
+operators__cast-56	UNSUPPORTED	INTERVAL data type
+operators__cast-57	UNSUPPORTED	INTERVAL data type
+operators__cast-58	UNSUPPORTED	INTERVAL data type
+operators__cast-59	UNSUPPORTED	INTERVAL data type
+operators__cast-60	UNSUPPORTED	INTERVAL data type
+operators__cast-61	UNSUPPORTED	INTERVAL data type
+operators__cast-62	UNSUPPORTED	INTERVAL data type
+operators__cast-63	UNSUPPORTED	INTERVAL data type
+operators__cast-64	UNSUPPORTED	INTERVAL data type
+operators__cast-65	UNSUPPORTED	INTERVAL data type
+operators__cast-66	UNSUPPORTED	INTERVAL data type
+operators__cast-67	UNSUPPORTED	INTERVAL data type
+operators__cast-68	UNSUPPORTED	INTERVAL data type
+operators__cast-69	UNSUPPORTED	INTERVAL data type
+operators__cast-70	UNSUPPORTED	INTERVAL data type
+operators__cast-71	UNSUPPORTED	INTERVAL data type
+operators__cast-72	UNSUPPORTED	INTERVAL data type
+operators__cast-73	UNSUPPORTED	INTERVAL data type
 operators__comparison-array-01	UNSUPPORTED	function `ARRAY`
 operators__comparison-array-02	UNSUPPORTED	function `ARRAY`
 operators__comparison-array-03	UNSUPPORTED	function `ARRAY`

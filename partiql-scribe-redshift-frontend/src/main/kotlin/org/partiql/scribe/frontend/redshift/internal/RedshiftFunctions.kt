@@ -79,6 +79,41 @@ internal class RedshiftFunctions(
                 },
         ) + datetime.rules
 
+    /**
+     * `POSITION(sub IN str)`.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_POSITION.html
+     */
+    fun position(
+        name: Token,
+        sub: Operand,
+        str: Operand,
+    ): Expr = throw UnsupportedConstructException.at(name, "POSITION")
+
+    /**
+     * `SUBSTRING(value FROM start [FOR length])` and `SUBSTRING(value FOR length)`; [start] is null for the second form.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_SUBSTRING.html
+     */
+    fun substring(
+        name: Token,
+        value: Operand,
+        start: Operand?,
+        length: Operand?,
+    ): Expr = throw UnsupportedConstructException.at(name, "SUBSTRING")
+
+    /**
+     * `TRIM([BOTH | LEADING | TRAILING] [chars] FROM value)`; [spec] is the BOTH, LEADING, or TRAILING token, if any.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_TRIM.html
+     */
+    fun trim(
+        name: Token,
+        spec: Token?,
+        chars: Operand?,
+        value: Operand,
+    ): Expr = throw UnsupportedConstructException.at(name, "TRIM")
+
     fun call(
         name: Token,
         args: List<Operand>,
