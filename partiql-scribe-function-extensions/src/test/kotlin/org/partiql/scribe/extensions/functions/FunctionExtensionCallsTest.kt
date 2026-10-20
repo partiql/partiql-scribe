@@ -194,7 +194,7 @@ class FunctionExtensionCallsTest {
                 "utcnow" to "timezone('UTC', current_timestamp)",
                 "contains" to "contains(t.items, 'x')",
                 "hex_to_bigint" to "CAST('0x' || '00C10300' AS BIGINT)",
-                "to_unixtime" to "CAST(epoch(ts) AS BIGINT)",
+                "to_unixtime" to "CAST(floor(epoch(ts)) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
             ),
         )

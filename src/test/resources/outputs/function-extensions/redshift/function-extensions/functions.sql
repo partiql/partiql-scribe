@@ -13,5 +13,11 @@ STRTOL('00C10300', 16);
 --#[to-unixtime]
 CAST(DATE_PART(EPOCH, TIMESTAMP '2017-01-02 03:04:05.006') AS BIGINT);
 
+--#[to-unixtime-fraction]
+CAST(DATE_PART(EPOCH, TIMESTAMP '2017-01-02 03:04:05.6') AS BIGINT);
+
+--#[to-unixtime-pre-epoch]
+CAST(DATE_PART(EPOCH, TIMESTAMP '1969-12-31 23:59:59.6') AS BIGINT);
+
 --#[pow]
 "pow"(2, 3);

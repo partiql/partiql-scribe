@@ -13,5 +13,11 @@ CAST(`conv`('00C10300', 16, 10) AS BIGINT);
 --#[to-unixtime]
 CAST(`unix_timestamp`(TIMESTAMP_NTZ '2017-01-02 03:04:05.006') AS BIGINT);
 
+--#[to-unixtime-fraction]
+CAST(`unix_timestamp`(TIMESTAMP_NTZ '2017-01-02 03:04:05.6') AS BIGINT);
+
+--#[to-unixtime-pre-epoch]
+CAST(`unix_timestamp`(TIMESTAMP_NTZ '1969-12-31 23:59:59.6') AS BIGINT);
+
 --#[pow]
 `pow`(2, 3);
