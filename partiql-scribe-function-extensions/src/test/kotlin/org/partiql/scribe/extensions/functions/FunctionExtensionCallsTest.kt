@@ -17,6 +17,7 @@ import org.partiql.scribe.problems.ScribeException
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
+import org.partiql.scribe.targets.duckdb.DuckDBAstToSql
 import org.partiql.scribe.targets.redshift.RedshiftAstToSql
 import org.partiql.scribe.targets.spark.SparkAstToSql
 import org.partiql.scribe.targets.trino.TrinoAstToSql
@@ -133,7 +134,9 @@ class FunctionExtensionCallsTest {
                 "utcnow" to "`convert_timezone`('UTC', `current_timestamp`())",
                 "contains" to "`array_contains`(`t`.`items`, 'x')",
                 "hex_to_bigint" to "CAST(`conv`('00C10300', 16, 10) AS BIGINT)",
-                "to_unixtime" to "CAST(`unix_timestamp`(`ts`) AS BIGINT)",
+                "to_unixtime" to
+                    "CAST(`unix_timestamp`(`ts`) AS BIGINT) - CASE WHEN `ts` < TIMESTAMP_NTZ '1970-01-01 00:00:00' " +
+                    "AND `date_part`('SECOND', `ts`) <> `second`(`ts`) THEN 1 ELSE 0 END",
                 "pow" to "`pow`(2, 3)",
             ),
         )
@@ -152,7 +155,7 @@ class FunctionExtensionCallsTest {
                 "utcnow" to "at_timezone(current_timestamp, 'UTC')",
                 "contains" to "\"contains\"(t.items, 'x')",
                 "hex_to_bigint" to "from_base('00C10300', 16)",
-                "to_unixtime" to "CAST(to_unixtime(ts) AS BIGINT)",
+                "to_unixtime" to "CAST(to_unixtime(with_timezone(date_trunc('second', ts), 'UTC')) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
             ),
         )
@@ -174,7 +177,30 @@ class FunctionExtensionCallsTest {
                     "FROM t.items AS ___partiql_scribe_contains_element___ " +
                     "WHERE ___partiql_scribe_contains_element___ IN ('x'))",
                 "hex_to_bigint" to "STRTOL('00C10300', 16)",
-                "to_unixtime" to "CAST(DATE_PART(EPOCH, ts) AS BIGINT)",
+                "to_unixtime" to "CAST(DATE_PART(EPOCH, date_trunc('second', ts)) AS BIGINT)",
+                "pow" to "\"pow\"(2, 3)",
+            ),
+        )
+    }
+
+    @Test
+    fun `duckdb extension translations`() {
+        val context = ScribeContext.standard()
+        val calls = TestDuckDBCalls(context, routines)
+
+        assertTranslations(
+            DuckDBAstToSql(context),
+            calls::translate,
+            mapOf(
+                "date_add" to "date_add(ts, to_days(1))",
+                "utcnow" to "timezone('UTC', current_timestamp)",
+                "contains" to "contains(t.items, 'x')",
+                "hex_to_bigint" to
+                    "CAST(CASE WHEN left('00C10300', 1) = '-' " +
+                    "THEN -CAST(CAST('0x' || substring('00C10300', 2) AS UBIGINT) AS HUGEINT) " +
+                    "WHEN left('00C10300', 1) = '+' THEN CAST('0x' || substring('00C10300', 2) AS UBIGINT) " +
+                    "ELSE CAST('0x' || '00C10300' AS UBIGINT) END AS BIGINT)",
+                "to_unixtime" to "CAST(epoch(date_trunc('second', ts)) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
             ),
         )
@@ -250,6 +276,16 @@ class FunctionExtensionCallsTest {
         context: ScribeContext,
         routines: Set<RoutineRef>,
     ) : RedshiftFunctionExtensionCalls(context, routines) {
+        fun translate(
+            name: String,
+            args: SqlArgs,
+        ): Expr = routineRules.getValue(ref(name))(args)
+    }
+
+    private class TestDuckDBCalls(
+        context: ScribeContext,
+        routines: Set<RoutineRef>,
+    ) : DuckDBFunctionExtensionCalls(context, routines) {
         fun translate(
             name: String,
             args: SqlArgs,

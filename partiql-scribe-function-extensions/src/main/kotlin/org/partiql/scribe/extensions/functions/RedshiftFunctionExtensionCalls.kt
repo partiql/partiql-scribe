@@ -57,11 +57,15 @@ public open class RedshiftFunctionExtensionCalls(
                 ),
         )
 
+    // PartiQL drops the fractional second (`...05.6` -> `...05`, `1969-12-31 23:59:59.6` -> `-1`).
+    // `DATE_PART(EPOCH, ...)` returns a DOUBLE, which can't hold microseconds far from 1970
+    // (`9999-12-31 23:59:59.999999` rounds up a second) and which CAST to BIGINT rounds, so truncate to whole seconds
+    // first.
     private fun toUnixTime(args: SqlArgs): Expr =
         exprCast(
             exprCall(
                 Identifier.regular("DATE_PART"),
-                listOf(exprVarRef(Identifier.regular("EPOCH"), false), args[0].expr),
+                listOf(exprVarRef(Identifier.regular("EPOCH"), false), truncateToSecond(args[0].expr)),
             ),
             DataType.BIGINT(),
         )

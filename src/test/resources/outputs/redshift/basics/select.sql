@@ -9,9 +9,8 @@ SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v
 -- ERROR, no SELECT VALUE!
 -- SELECT VALUE { 'a': a, 'b': b, 'c': c } FROM "default"."T" AS "T";
 
--- #[select-03]
--- ERROR, no SELECT VALUE!
--- SELECT VALUE a FROM "default"."T" AS "T";
+--#[select-03]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
 --#[select-04]
 SELECT "t1"."a", "t1"."b", "t1"."c", "t1"."d", "t1"."x", "t1"."array", "t1"."z", "t1"."v", "t1"."timestamp_1", "t1"."timestamp_2", "t2"."a", "t2"."b", "t2"."c", "t2"."d", "t2"."x", "t2"."array", "t2"."z", "t2"."v", "t2"."timestamp_1", "t2"."timestamp_2" FROM "default"."T" AS "t1" INNER JOIN "default"."T" AS "t2" ON true;
@@ -41,8 +40,8 @@ SELECT CURRENT_USER AS "CURRENT_USER" FROM "default"."T" AS "T";
 --#[select-12]
 SELECT "t"."a" FROM "default"."T" AS "t";
 
--- --#[select-13]
--- SELECT VALUE {z: a} FROM T;
+--#[select-13]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
 --#[select-14]
 SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE "T"."b" BETWEEN 0 AND 2;
@@ -95,3 +94,9 @@ SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v
 -- preserve aliases for A, "bB", and "C"; not for d or array index
 --#[select-30]
 SELECT "T"."a" AS "A", "T"."b" AS "bB", "T"."c" AS "C", "T"."d", "T"."array"[1] AS "_1" FROM "default"."T" AS "T";
+
+--#[select-div-00]
+SELECT "T"."b" / 2 AS "q", (-"T"."b") / 2 AS "nq", CAST("T"."b" AS BIGINT) / CAST(2 AS BIGINT) AS "bq" FROM "default"."T" AS "T";
+
+--#[select-div-01]
+SELECT CAST("T"."b" AS DECIMAL(10,0)) / 2.0 AS "q" FROM "default"."T" AS "T";

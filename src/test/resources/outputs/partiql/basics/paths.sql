@@ -157,3 +157,6 @@ SELECT "t"['x'].y AS "v" FROM "default"."T" AS "t";
 
 --#[paths-sfw-31]
 SELECT "t"['x']['y'] AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-32]
+SELECT "t"['a'][0]['nested_list'][0] AS "v" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";

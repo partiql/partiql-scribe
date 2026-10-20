@@ -186,3 +186,12 @@ SELECT "O"['b'] AS "b" FROM "default"."T" AS "O" WHERE "O"['b'] IN (SELECT "E"['
 -- Non-correlated: subquery in FROM
 --#[join-47]
 SELECT "O"['b'] AS "b" FROM "default"."T" AS "O" WHERE "O"['b'] IN (SELECT "sub"['b'] AS "b" FROM (SELECT "E"['b'] AS "b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"['b'] > "E"['b']) AS "sub" WHERE "sub"['b'] > "O"['b']);
+
+--#[join-48]
+SELECT "p" AS "p", "q" AS "q" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "p" ON "p" > 1 INNER JOIN "E"['array'] AS "q" ON "q" > 2;
+
+--#[join-49]
+SELECT "p" AS "p" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "p" ON "p" > 1 WHERE "E"['b'] > 0;
+
+--#[join-50]
+SELECT "p" AS "p" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "p" ON ("p" > 1) OR ("p" < 0) WHERE "E"['b'] > 0;

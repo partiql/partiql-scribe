@@ -1,0 +1,50 @@
+# Builds and tests on the CodeBuild-hosted GitHub Actions runner for this repository.
+# The build runner has no release secrets; releases use a separate runner.
+#
+# The runs-on label has no image suffix, so the job uses the image configured on the
+# CodeBuild project. See
+# https://docs.aws.amazon.com/codebuild/latest/userguide/sample-github-action-runners-update-labels.html
+
+name: Build (CodeBuild)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Defense in depth only: a fork PR can edit this workflow (pull_request runs the PR's version), so
+    # this `if:` does not stop a malicious fork. The protection is the repository's fork-PR approval
+    # setting (approval required for all external contributors); the build runner also holds no
+    # secrets. Maintainers must review workflow changes before approving a fork run.
+    # Unmodified fork PRs skip this job; the GitHub-hosted `gradle.yml` still builds them.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: codebuild-partiql-scribe-${{ github.run_id }}-${{ github.run_attempt }}
+    # Fails a hung build. It starts once a runner picks up the job, so it does not cover a
+    # runner that never starts; that job stays queued until GitHub's queue limit.
+    timeout-minutes: 60
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'corretto'
+
+    # Caches downloaded dependencies between runs.
+    # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Build with Gradle Wrapper
+      run: ./gradlew build

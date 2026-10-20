@@ -46,7 +46,7 @@ SELECT b FROM T WHERE EXISTS (SELECT v FROM T AS t2 WHERE t2.b > 0);
 
 -- NOT EXISTS subquery
 --#[subquery-12]
-SELECT v FROM T WHERE NOT EXISTS (SELECT a FROM T AS t2 WHERE t2.b > 0 AND t2.c > 0);
+SELECT v FROM T WHERE NOT EXISTS (SELECT a FROM T AS t2 WHERE t2.b > 0 AND t2.b < 10);
 
 -- Nested subqueries
 --#[subquery-13]
@@ -83,3 +83,11 @@ SELECT a FROM T as t1 WHERE b > (SELECT AVG(t2.b) FROM T AS t2 WHERE t2.a = t1.a
 -- Correlated with multiple references
 --#[subquery-21]
 SELECT a FROM T as t1 WHERE (SELECT SUM(t2.b) FROM T AS t2 WHERE t2.a = t1.a AND t2.v = t1.v) > 10;
+
+-- Correlated EXISTS subquery (#179)
+--#[subquery-exists-00]
+SELECT b FROM T WHERE EXISTS (SELECT 1 FROM T AS t2 WHERE t2.b = T.b + 1);
+
+-- EXISTS on a collection keeps the collection-size check (#179)
+--#[subquery-exists-01]
+SELECT b FROM T WHERE EXISTS (T."array");

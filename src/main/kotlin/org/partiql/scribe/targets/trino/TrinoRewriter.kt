@@ -129,6 +129,8 @@ public open class TrinoRewriter(internal val context: ScribeContext) : OperatorR
         node: RexPathIndex,
         ctx: ScribeContext,
     ): Operator {
+        // Rewrite the operand and index first, so nested indexes (`a[0].b[0]`) are shifted too, not just the outermost.
+        val node = super.visitPathIndex(node, ctx) as RexPathIndex
         // MAP subscript access — pass through without rewriting
         val type = node.operand.type
         if (type.pType.code() == PType.MAP) {

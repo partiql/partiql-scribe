@@ -30,12 +30,22 @@ Thank you to all who have contributed!
 - Adds an experimental DuckDB SQL transpilation target, with the same PartiQL feature coverage as the Redshift, Spark, and Trino targets.
 - Adds the experimental `partiql-scribe-redshift-frontend` module, which translates Amazon Redshift queries to PartiQL. It parses Redshift with its own grammar, plans the query with the PartiQL planner, and prints it with the PartiQL target. A construct without a translation rule gives an `UNSUPPORTED` result with its location. It covers WITH, set operations, joins and SUPER unnesting, window functions, QUALIFY, the Redshift predicates, casts, literals, and intervals, and the string, conditional, math, aggregate, datetime, and SUPER functions that have exact PartiQL translations; rules whose semantics depend on argument types get the types from the planner.
 - DuckDB target: translates `DATE_ADD(<part>, <amount>, <datetime>)` to `date_add(<datetime>, to_<part>s(<amount>))`.
+- Adds experimental DuckDB translations to `partiql-scribe-function-extensions` (`DuckDBFunctionExtensionTarget` / `DuckDBFunctionExtensionCalls`): `contains`, `to_unixtime`, `hex_to_bigint`, `pow`, `utcnow`, and `date_add`.
 
 ### Changed
 
 ### Deprecated
 
 ### Fixed
+- Function extension `to_unixtime` now truncates toward negative infinity like PartiQL on Trino, Spark and Redshift (previously rounded fractional seconds and lost a second far from 1970; Trino also read the timestamp in the session time zone).
+- Integer division truncates toward zero like PartiQL on Spark (`DIV`) and DuckDB (`//`) instead of returning a fraction.
+- Correlated join `ON` predicates are combined with an existing `WHERE` instead of overwriting it (Trino, Spark, DuckDB).
+- Nested array indexes (`a[0].b[0]`) are all shifted to 1-based on Trino and DuckDB, not just the outermost one.
+- `EXISTS (<subquery>)` is rendered as a native `EXISTS` predicate on every target instead of invalid SQL.
+- SQL targets reject a `SELECT VALUE` that can't be rewritten to a SELECT list instead of emitting `SELECT VALUE`.
+- DuckDB target: `IN` / `NOT IN` keep SQL's NULL result when there is no match and the list or array contains a NULL.
+- `x IN <empty list or array>` is false (and `NOT IN` true) even when `x` is NULL, like PartiQL; an empty literal list no longer renders as invalid `IN ()` (all SQL targets).
+- Redshift target: `IN` / `NOT IN` keep SQL's NULL result for a list with a NULL literal and for SUPER array membership (`array_contains`).
 
 ### Removed
 

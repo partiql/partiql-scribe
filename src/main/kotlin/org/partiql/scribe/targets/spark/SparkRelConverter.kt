@@ -12,6 +12,7 @@ import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.ExprQuerySetFactory
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
+import org.partiql.scribe.sql.andPredicate
 import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.spi.types.PType
 
@@ -20,6 +21,8 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
     context,
     outer,
 ) {
+    override val selectValueSupported: Boolean = false
+
     internal companion object {
         val MARKER_EXPLODE = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}EXPLODE"
         val MARKER_LATERAL = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}LATERAL"
@@ -207,7 +210,7 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
                     predicate.datum.type.code() == PType.BOOL && !predicate.datum.isUnknown() && predicate.datum.boolean
             if (!isTrivialTrue) {
                 val filterRexConverter = transform.getRexConverter(rhsLocals)
-                lhs.where = filterRexConverter.apply(predicate)
+                lhs.where = andPredicate(lhs.where, filterRexConverter.apply(predicate))
             }
         }
 

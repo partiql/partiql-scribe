@@ -1,6 +1,8 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCase
+import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
@@ -16,7 +18,9 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
+import org.partiql.scribe.sql.integerOperands
 import java.math.BigDecimal
 
 public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
@@ -29,6 +33,12 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
          */
         private val REGEX_METACHARACTERS = setOf('\\', '.', '[', ']', '{', '}', '(', ')', '*', '+', '-', '?', '^', '$', '|')
     }
+
+    /**
+     * PartiQL integer division truncates toward zero and returns an integer. Spark's `/` is always floating point
+     * (`3 / 2 = 1.5`), so integer operands use `DIV` (`3 DIV 2 = 1`, `-3 DIV 2 = -1`). `DIV` returns BIGINT.
+     */
+    override fun divFn(args: SqlArgs): Expr = if (integerOperands(args)) binary("DIV", args) else super.divFn(args)
 
     override val rules: Map<String, SqlCallFn> =
         super.rules.toMutableMap().apply {
@@ -486,6 +496,7 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `exists(collection)` -> Spark `size(collection) > 0`
      */
     private fun existsFn(args: SqlArgs): Expr {
+        existsSubquery(args)?.let { return it }
         val sizeId = Identifier.regular("size")
         listener.report(
             ScribeProblem.simpleInfo(
@@ -553,6 +564,13 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                 message = "PartiQL `<value> IN <array>` was replaced by Spark `array_contains(<array>, <value>)`",
             ),
         )
-        return exprCall(Identifier.regular("array_contains"), listOf(collection, value))
+        // `array_contains` is already NULL-aware, except that a NULL value against an empty array gives NULL where
+        // PartiQL gives false, so check for an empty array first.
+        val empty = exprOperator("=", exprCall(Identifier.regular("size"), listOf(collection)), exprLit(Literal.intNum(0L)))
+        return exprCase(
+            null,
+            listOf(exprCaseBranch(empty, exprLit(Literal.bool(false)))),
+            exprCall(Identifier.regular("array_contains"), listOf(collection, value)),
+        )
     }
 }

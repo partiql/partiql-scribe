@@ -29,13 +29,13 @@ SELECT "T"."a" AS "a" FROM "default"."T" AS "T" WHERE "T"."b" NOT IN (SELECT "T"
 
 -- EXISTS subquery
 -- TODO Exists not implemented in scribe yet. Tracking with https://github.com/partiql/partiql-scribe/issues/104
--- #[subquery-11]
--- SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE EXISTS (SELECT "t2"."v" AS "v" FROM "default"."T" AS "t2" WHERE "t2"."b" > 0);
+--#[subquery-11]
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE EXISTS (SELECT "t2"."v" AS "v" FROM "default"."T" AS "t2" WHERE "t2"."b" > 0);
 
 -- NOT EXISTS subquery
 -- TODO Exists not implemented in scribe yet. Tracking with https://github.com/partiql/partiql-scribe/issues/104
--- #[subquery-12]
--- SELECT "T"."v" AS "v" FROM "default"."T" AS "T" WHERE NOT EXISTS (SELECT "t2"."a" AS "a" FROM "default"."T" AS "t2" WHERE "t2"."b" > 0 AND "t2"."b" > 0);
+--#[subquery-12]
+SELECT "T"."v" AS "v" FROM "default"."T" AS "T" WHERE NOT (EXISTS (SELECT "t2"."a" AS "a" FROM "default"."T" AS "t2" WHERE ("t2"."b" > 0) AND ("t2"."b" < 10)));
 
 -- Nested subqueries
 --#[subquery-13]
@@ -73,3 +73,9 @@ SELECT "t1"."a" AS "a" FROM "default"."T" AS "t1" WHERE ("t1"."b" > (SELECT avg(
 -- Correlated with multiple references
 --#[subquery-21]
 SELECT "t1"."a" AS "a" FROM "default"."T" AS "t1" WHERE (SELECT sum("t2"."b") AS "_1" FROM "default"."T" AS "t2" WHERE ("t2"."a" = "t1"."a") AND ("t2"."v" = "t1"."v")) > CAST(10 AS BIGINT);
+
+--#[subquery-exists-00]
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE EXISTS (SELECT 1 AS "_1" FROM "default"."T" AS "t2" WHERE "t2"."b" = ("T"."b" + 1));
+
+--#[subquery-exists-01]
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE len("T"."array") > 0;

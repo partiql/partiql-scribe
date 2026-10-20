@@ -91,3 +91,11 @@ SELECT * FROM T WHERE NOT T.c NOT LIKE 'abc';
 -- preserve aliases for A, "bB", and "C"; not for d or array index
 --#[select-30]
 SELECT a AS A, b AS "bB", "c" AS "C", d, "array"[1] FROM T;
+
+--#[select-div-00]
+-- Integer division truncates toward zero and stays an integer (#200)
+SELECT T.b / 2 AS q, -T.b / 2 AS nq, CAST(T.b AS BIGINT) / 2 AS bq FROM T;
+
+--#[select-div-01]
+-- Non-integer division keeps `/` (#200)
+SELECT T.b / 2.0 AS q FROM T;

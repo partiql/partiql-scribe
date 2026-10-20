@@ -1,14 +1,21 @@
 package org.partiql.scribe.targets.duckdb
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCase
+import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
+import org.partiql.ast.Ast.exprInCollection
 import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.Ast.exprNullPredicate
 import org.partiql.ast.Ast.exprOperator
+import org.partiql.ast.Ast.exprOr
+import org.partiql.ast.Ast.exprRowValue
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprLit
 import org.partiql.scribe.ScribeContext
@@ -17,7 +24,9 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
+import org.partiql.scribe.sql.integerOperands
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.spi.types.PType
 import java.math.BigDecimal
@@ -91,6 +100,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `exists(collection)` -> DuckDB `len(list) > 0` / `cardinality(map) > 0`
      */
     private fun existsFn(args: SqlArgs): Expr {
+        existsSubquery(args)?.let { return it }
         val call = collectionSize(args[0])
         listener.report(
             ScribeProblem.simpleInfo(
@@ -317,23 +327,56 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     /**
-     * PartiQL `<value> IN <array>` (array membership) -> DuckDB `contains(<array>, <value>)`.
+     * PartiQL integer division truncates toward zero and returns an integer. DuckDB's `/` is always floating point
+     * (`3 / 2 = 1.5`), so integer operands use `//` (`3 // 2 = 1`, `-3 // 2 = -1`).
+     */
+    override fun divFn(args: SqlArgs): Expr = if (integerOperands(args)) binary("//", args) else super.divFn(args)
+
+    /**
+     * PartiQL `IN` follows SQL three-valued logic: no match plus a NULL element gives NULL, not false. DuckDB's
+     * list-membership forms lose that NULL, so:
      *
-     * Membership against a runtime array value (e.g. a column) uses the `contains` array function. Literal in-lists and
-     * subqueries keep the base `IN` rendering via [super]. Note: like DuckDB's `x IN <list>`, `contains` returns false
-     * rather than NULL when there's no match and the array contains a NULL (#197).
+     * - A non-empty literal bag `x IN << 1, 2 >>` is rendered as `x IN (1, 2)` rather than the list `x IN [1, 2]`.
+     * - Membership against a runtime array (e.g. a column) uses `contains`, wrapped to restore the NULL:
+     *   `CASE WHEN contains(arr, x) THEN true WHEN len(arr) = 0 THEN false WHEN x IS NULL OR arr IS NULL OR
+     *   list_count(arr) < len(arr) THEN NULL ELSE false END` (`list_count` skips NULL elements, `len` doesn't). An empty
+     *   array is false even for a NULL value, like PartiQL.
      *
      * https://duckdb.org/docs/current/functions/array.html#contains
      */
     override fun inCollection(args: SqlArgs): Expr {
+        val rhs = args[1].expr
+        // An empty bag is handled by [super]: PartiQL gives false even for a NULL value.
+        if (rhs is ExprBag && rhs.values.isNotEmpty()) {
+            return exprInCollection(args[0].expr, exprRowValue(rhs.values), false)
+        }
         val (value, collection) = inCollectionArrayOperands(args) ?: return super.inCollection(args)
         listener.report(
             ScribeProblem.simpleInfo(
                 code = ScribeProblem.TRANSLATION_INFO,
-                message = "PartiQL `<value> IN <array>` was replaced by DuckDB `contains(<array>, <value>)`",
+                message = "PartiQL `<value> IN <array>` was replaced by a NULL-aware DuckDB `contains(<array>, <value>)`",
             ),
         )
-        return exprCall(Identifier.regular("contains"), listOf(collection, value))
+        val contains = exprCall(Identifier.regular("contains"), listOf(collection, value))
+        val hasNullElement =
+            exprOperator(
+                "<",
+                exprCall(Identifier.regular("list_count"), listOf(collection)),
+                exprCall(Identifier.regular("len"), listOf(collection)),
+            )
+        val unknown =
+            exprOr(exprOr(exprNullPredicate(value, false), exprNullPredicate(collection, false)), hasNullElement)
+        // An empty array is false before any NULL check: PartiQL's `NULL IN []` is false.
+        val empty = exprOperator("=", exprCall(Identifier.regular("len"), listOf(collection)), exprLit(Literal.intNum(0L)))
+        return exprCase(
+            null,
+            listOf(
+                exprCaseBranch(contains, exprLit(Literal.bool(true))),
+                exprCaseBranch(empty, exprLit(Literal.bool(false))),
+                exprCaseBranch(unknown, exprLit(Literal.nul())),
+            ),
+            exprLit(Literal.bool(false)),
+        )
     }
 
     /**
