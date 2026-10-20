@@ -67,12 +67,14 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  * @param caseSensitiveIdentifiers The Redshift `enable_case_sensitive_identifier` setting. When false (the Redshift
  * default), Redshift folds quoted and unquoted identifiers to lower case, so both become PartiQL regular
  * (case-insensitive) identifiers. When true, quoted identifiers become PartiQL delimited (case-sensitive) identifiers.
+ * @param types The static types of operands, for the rules that depend on them; see [OperandTypes].
  */
 internal class RedshiftAstBuilder(
     private val caseSensitiveIdentifiers: Boolean,
     private val notes: MutableList<RedshiftProblem>,
+    private val types: OperandTypes,
 ) {
-    private val functions = RedshiftFunctions(notes)
+    private val functions = RedshiftFunctions(notes, types)
 
     fun root(ctx: P.RootContext): Query = query(exprQuerySet(ctx.query()))
 
@@ -312,7 +314,7 @@ internal class RedshiftAstBuilder(
             is P.AtomExtractContext -> extract(ctx)
             is P.AtomCountStarContext -> exprCall(Identifier.regular("count"), emptyList(), null)
             is P.AtomFunctionCallContext ->
-                functions.call(ctx.name.start, ctx.expr().map(::expr), setQuantifier(ctx.setQuantifier()))
+                functions.call(ctx.name.start, ctx.expr().map { Operand(it, expr(it)) }, setQuantifier(ctx.setQuantifier()))
             is P.AtomSysdateContext -> functions.sysdate(ctx.SYSDATE().symbol)
             is P.AtomCurrentDateContext -> exprSessionAttribute(SessionAttribute.CURRENT_DATE())
             is P.AtomSubqueryContext -> exprQuerySet(ctx.query())

@@ -12,6 +12,7 @@ import org.partiql.scribe.Scribe
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftLexer
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser
+import org.partiql.scribe.frontend.redshift.internal.OperandTypes
 import org.partiql.scribe.frontend.redshift.internal.PartiQLOutputTarget
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import org.partiql.scribe.frontend.redshift.internal.RedshiftSyntaxException
@@ -54,7 +55,7 @@ public class RedshiftTranspiler(
         // 1 and 2: Redshift text to PartiQL AST.
         val statement =
             try {
-                toPartiQLAst(sql, problems)
+                toPartiQLAst(sql, problems, session)
             } catch (ex: RedshiftSyntaxException) {
                 return result(RedshiftTranspileResult.Status.INVALID_INPUT, problems + ex.toProblem())
             } catch (ex: UnsupportedConstructException) {
@@ -102,12 +103,16 @@ public class RedshiftTranspiler(
     /**
      * Parses [sql] and returns the PartiQL AST, before planning.
      *
+     * The rules whose translation depends on the static types of their operands get the types from probe passes,
+     * which plan the AST against [session]; see [OperandTypes].
+     *
      * @throws RedshiftSyntaxException at the first syntax error.
      * @throws UnsupportedConstructException at the first construct that has no translation.
      */
     internal fun toPartiQLAst(
         sql: String,
         notes: MutableList<RedshiftProblem>,
+        session: Session,
     ): Statement {
         val lexer = RedshiftLexer(CharStreams.fromString(sql))
         val parser = RedshiftParser(CommonTokenStream(lexer))
@@ -116,13 +121,33 @@ public class RedshiftTranspiler(
         parser.removeErrorListeners()
         parser.addErrorListener(ThrowingErrorListener)
         val tree = parser.root()
-        return RedshiftAstBuilder(caseSensitiveIdentifiers, notes).root(tree)
+        val types = OperandTypes()
+        val probeSession = types.probeSession(session)
+        for (pass in 1..OperandTypes.MAX_PASSES) {
+            types.startProbe()
+            val probe = RedshiftAstBuilder(caseSensitiveIdentifiers, mutableListOf(), types).root(tree)
+            if (!types.probed) break
+            // A probe pass only reads types: the final plan reports the problems of the query.
+            val plan =
+                try {
+                    planner.plan(probe, probeSession, Context.of(IgnoringPErrorListener)).plan
+                } catch (ex: RuntimeException) {
+                    break
+                }
+            if (!types.collect(plan)) break
+        }
+        types.startFinal()
+        return RedshiftAstBuilder(caseSensitiveIdentifiers, notes, types).root(tree)
     }
 
     private fun result(
         status: RedshiftTranspileResult.Status,
         problems: List<RedshiftProblem>,
     ): RedshiftTranspileResult = RedshiftTranspileResult(status, null, problems)
+
+    private object IgnoringPErrorListener : PErrorListener {
+        override fun report(error: PError) {}
+    }
 
     private object ThrowingErrorListener : BaseErrorListener() {
         override fun syntaxError(
