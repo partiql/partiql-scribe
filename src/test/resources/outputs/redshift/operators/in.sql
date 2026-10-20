@@ -24,10 +24,10 @@ SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v
 
 
 --#[in-08]
-SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE array_contains("T"."array", "T"."b");
+SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE CASE WHEN array_contains("T"."array", "T"."b") THEN true WHEN "T"."b" IS NULL OR "T"."array" IS NULL OR (SELECT COUNT(1) FROM "T"."array" AS ___partiql_scribe_in_element___ WHERE ___partiql_scribe_in_element___ IS NULL) > 0 THEN NULL ELSE false END;
 
 --#[in-09]
-SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE NOT (array_contains("T"."array", "T"."b"));
+SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE NOT (CASE WHEN array_contains("T"."array", "T"."b") THEN true WHEN "T"."b" IS NULL OR "T"."array" IS NULL OR (SELECT COUNT(1) FROM "T"."array" AS ___partiql_scribe_in_element___ WHERE ___partiql_scribe_in_element___ IS NULL) > 0 THEN NULL ELSE false END);
 
 --#[in-10]
 SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE "T"."b" IN (SELECT "T"."b" FROM "default"."T" AS "T");
@@ -36,7 +36,7 @@ SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v
 SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE "T"."b" NOT IN (SELECT "T"."b" FROM "default"."T" AS "T");
 
 --#[in-12]
-SELECT "T"."b" IN (1, NULL) AS "r" FROM "default"."T" AS "T";
+SELECT CASE WHEN "T"."b" IN (1) THEN true ELSE CAST(NULL AS BOOLEAN) END AS "r" FROM "default"."T" AS "T";
 
 --#[in-13]
-SELECT "T"."b" NOT IN (1, NULL) AS "r" FROM "default"."T" AS "T";
+SELECT NOT (CASE WHEN "T"."b" IN (1) THEN true ELSE CAST(NULL AS BOOLEAN) END) AS "r" FROM "default"."T" AS "T";

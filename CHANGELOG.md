@@ -40,6 +40,7 @@ Thank you to all who have contributed!
 - `EXISTS (<subquery>)` is rendered as a native `EXISTS` predicate on every target instead of invalid SQL.
 - SQL targets reject a `SELECT VALUE` that can't be rewritten to a SELECT list instead of emitting `SELECT VALUE`.
 - DuckDB target: `IN` / `NOT IN` keep SQL's NULL result when there is no match and the list or array contains a NULL.
+- Redshift target: `IN` / `NOT IN` keep SQL's NULL result for a list with a NULL literal and for SUPER array membership (`array_contains`).
 
 ### Removed
 

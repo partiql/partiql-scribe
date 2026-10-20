@@ -1,16 +1,33 @@
 package org.partiql.scribe.targets.redshift
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCase
+import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
+import org.partiql.ast.Ast.exprInCollection
+import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprNullPredicate
+import org.partiql.ast.Ast.exprOperator
+import org.partiql.ast.Ast.exprOr
 import org.partiql.ast.Ast.exprPath
 import org.partiql.ast.Ast.exprPathStepElement
+import org.partiql.ast.Ast.exprQuerySet
+import org.partiql.ast.Ast.exprRowValue
 import org.partiql.ast.Ast.exprVarRef
+import org.partiql.ast.Ast.from
+import org.partiql.ast.Ast.fromExpr
+import org.partiql.ast.Ast.queryBodySFW
+import org.partiql.ast.Ast.selectItemExpr
+import org.partiql.ast.Ast.selectList
 import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
+import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprArray
+import org.partiql.ast.expr.ExprBag
+import org.partiql.ast.expr.ExprCast
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.TrimSpec
@@ -321,6 +338,16 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
      * https://docs.aws.amazon.com/redshift/latest/dg/r_array_contains.html
      */
     override fun inCollection(args: SqlArgs): Expr {
+        val rhs = args[1].expr
+        val items =
+            when (rhs) {
+                is ExprArray -> rhs.values
+                is ExprBag -> rhs.values
+                else -> null
+            }
+        if (items != null && args[0].expr !is ExprArray && items.any { it.isNullLiteral() }) {
+            return inListWithNull(args[0].expr, items.filterNot { it.isNullLiteral() })
+        }
         val (value, collection) = inCollectionArrayOperands(args) ?: return super.inCollection(args)
         listener.report(
             ScribeProblem.simpleInfo(
@@ -328,6 +355,55 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
                 message = "PartiQL `<value> IN <array>` was replaced by Redshift `array_contains(<array>, <value>)`",
             ),
         )
-        return exprCall(Identifier.regular("array_contains"), listOf(collection, value))
+        val contains = exprCall(Identifier.regular("array_contains"), listOf(collection, value))
+        // Redshift only unnests a SUPER array navigated from a table alias, so other array expressions can't be
+        // checked for NULL elements and keep the plain `array_contains`.
+        if (collection !is ExprPath) {
+            return contains
+        }
+        val element = exprVarRef(Identifier.regular("___partiql_scribe_in_element___"), false)
+        val nullElements =
+            exprQuerySet(
+                queryBodySFW(
+                    select = selectList(listOf(selectItemExpr(exprCall(Identifier.regular("COUNT"), listOf(exprLit(Literal.intNum(1L))))))),
+                    from = from(listOf(fromExpr(collection, FromType.SCAN(), element.identifier.identifier))),
+                    where = exprNullPredicate(element, false),
+                ),
+            )
+        val unknown =
+            exprOr(
+                exprOr(exprNullPredicate(value, false), exprNullPredicate(collection, false)),
+                exprOperator(">", nullElements, exprLit(Literal.intNum(0L))),
+            )
+        return exprCase(
+            null,
+            listOf(
+                exprCaseBranch(contains, exprLit(Literal.bool(true))),
+                exprCaseBranch(unknown, exprLit(Literal.nul())),
+            ),
+            exprLit(Literal.bool(false)),
+        )
     }
+
+    /**
+     * Redshift evaluates `col IN (1, NULL)` as false (not NULL) when there's no match, and `col NOT IN (1, NULL)` as
+     * NULL (not false) when there is one (#207). A list containing NULL can never be false, so drop the NULL items and
+     * emit `CASE WHEN <value> IN (<items>) THEN true END`, which is NULL without a match; `NOT IN` then becomes
+     * `NOT (CASE ... END)`, false or NULL.
+     */
+    private fun inListWithNull(
+        value: Expr,
+        items: List<Expr>,
+    ): Expr {
+        val nullBool = exprCast(exprLit(Literal.nul()), DataType.BOOLEAN())
+        if (items.isEmpty()) {
+            return nullBool
+        }
+        val match = exprInCollection(value, exprRowValue(items), false)
+        return exprCase(null, listOf(exprCaseBranch(match, exprLit(Literal.bool(true)))), nullBool)
+    }
+
+    private fun Expr.isNullLiteral(): Boolean =
+        (this is ExprLit && lit.code() == Literal.NULL) ||
+            (this is ExprCast && value.isNullLiteral())
 }
