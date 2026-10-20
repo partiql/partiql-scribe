@@ -23,6 +23,7 @@ import org.partiql.scribe.sql.SqlFeatures
 import org.partiql.scribe.sql.SqlTarget
 import org.partiql.spi.catalog.Session
 import org.partiql.spi.types.PType
+import java.math.BigDecimal
 
 /**
  * The Scribe target that prints a translated plan as PartiQL.
@@ -34,6 +35,9 @@ import org.partiql.spi.types.PType
  *  - `EXISTS (subquery)`: the PartiQL target quotes the function name, and PartiQL then reads the subquery as a scalar.
  *  - Approximate numeric literals: the PartiQL target prints `1000.0` for the DOUBLE PRECISION value `1e3`, which PartiQL
  *    reads as a DECIMAL. This target keeps an exponent.
+ *  - Exact numeric literals: the PartiQL target prints the DECIMAL value `5.` as `5`, which PartiQL reads as an INTEGER,
+ *    and `0.0000001` as `1E-7`, which PartiQL reads as a DOUBLE PRECISION. This target prints the plain digits, with a
+ *    trailing point for a scale of 0 in the BIGINT range.
  */
 internal class PartiQLOutputTarget : SqlTarget() {
     override val target: String = "PartiQL"
@@ -86,6 +90,7 @@ internal class PartiQLOutputTarget : SqlTarget() {
             val datum = rex.datum
             if (datum.isNull || datum.isMissing) return super.visitLit(rex, ctx)
             return when (datum.type.code()) {
+                PType.DECIMAL, PType.NUMERIC -> exprLit(Literal.exactNum(exact(datum.bigDecimal)))
                 PType.DOUBLE -> exprLit(Literal.approxNum(approximate(datum.double.toString())))
                 // PartiQL has no REAL literal.
                 PType.REAL -> exprCast(exprLit(Literal.approxNum(approximate(datum.float.toString()))), DataType.REAL())
@@ -94,5 +99,20 @@ internal class PartiQLOutputTarget : SqlTarget() {
         }
 
         private fun approximate(text: String): String = if (text.contains('E')) text else "${text}E0"
+
+        /**
+         * PartiQL reads an integer literal in the BIGINT range as an integer, and one outside it as a DECIMAL. A DECIMAL
+         * with scale 0 in the BIGINT range gets a trailing point to stay a DECIMAL.
+         */
+        private fun exact(value: BigDecimal): String {
+            val text = value.toPlainString()
+            val bigint = value.scale() <= 0 && value >= MIN_BIGINT && value <= MAX_BIGINT
+            return if (bigint) "$text." else text
+        }
+
+        private companion object {
+            val MIN_BIGINT: BigDecimal = BigDecimal.valueOf(Long.MIN_VALUE)
+            val MAX_BIGINT: BigDecimal = BigDecimal.valueOf(Long.MAX_VALUE)
+        }
     }
 }
