@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Fixed
+- Function extension `to_unixtime` now truncates toward negative infinity like PartiQL on Trino, Spark and Redshift (previously rounded fractional seconds; Trino also read the timestamp in the session time zone).
 
 ### Removed
 
