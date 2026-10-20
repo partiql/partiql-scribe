@@ -41,6 +41,12 @@ class RedshiftFunctionExtensionTargetSuite : SqlTargetSuite() {
     override val sessions = SessionProvider(fixedSession = SESSION)
 }
 
+class DuckDBFunctionExtensionTargetSuite : SqlTargetSuite() {
+    override val target = DuckDBFunctionExtensionTarget(ROUTINE_REFS)
+    override val root = this::class.java.getResource("/outputs/function-extensions/duckdb")!!.toURI().toPath()
+    override val sessions = SessionProvider(fixedSession = SESSION)
+}
+
 private val NAMESPACE = Namespace.of("extensions")
 private val FUNCTIONS =
     listOf(

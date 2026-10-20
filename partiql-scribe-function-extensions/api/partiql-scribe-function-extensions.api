@@ -1,3 +1,13 @@
+public class org/partiql/scribe/extensions/functions/DuckDBFunctionExtensionCalls : org/partiql/scribe/targets/duckdb/DuckDBCalls {
+	public fun <init> (Lorg/partiql/scribe/ScribeContext;Ljava/util/Set;)V
+	public fun getRoutineRules ()Ljava/util/Map;
+}
+
+public final class org/partiql/scribe/extensions/functions/DuckDBFunctionExtensionTarget : org/partiql/scribe/targets/duckdb/DuckDBTarget {
+	public fun <init> (Ljava/util/Set;)V
+	public fun getCalls (Lorg/partiql/scribe/ScribeContext;)Lorg/partiql/scribe/sql/SqlCalls;
+}
+
 public class org/partiql/scribe/extensions/functions/RedshiftFunctionExtensionCalls : org/partiql/scribe/targets/redshift/RedshiftCalls {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;Ljava/util/Set;)V
 	public fun getRoutineRules ()Ljava/util/Map;
