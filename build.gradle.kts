@@ -122,6 +122,11 @@ kotlin {
     explicitApi = ExplicitApiMode.Strict
 }
 
+apiValidation {
+    // ANTLR-generated parser classes are public Java, but they are not part of the API.
+    ignoredPackages.add("org.partiql.scribe.frontend.redshift.antlr")
+}
+
 nexusPublishing {
     repositories {
         sonatype {
