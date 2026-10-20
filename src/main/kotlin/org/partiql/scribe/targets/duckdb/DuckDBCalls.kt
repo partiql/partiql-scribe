@@ -1,8 +1,10 @@
 package org.partiql.scribe.targets.duckdb
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
+import org.partiql.ast.DataType
 import org.partiql.ast.DatetimeField
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
@@ -194,25 +196,54 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
     }
 
     /**
-     * PartiQL's `DATE_ADD(<part>, <amount>, <datetime>)` has no faithful DuckDB equivalent: DuckDB's
-     * `date_add(date, interval)` takes two arguments, and the `<amount>` may be a dynamic expression that
-     * cannot be rendered as an INTERVAL literal. Rather than emit SQL that fails (or behaves differently) at
-     * runtime, reject the call at transpile time.
+     * PartiQL `DATE_ADD(<part>, <amount>, <datetime>)` -> DuckDB `date_add(<datetime>, to_<part>s(<amount>))`, e.g.
+     * `DATE_ADD(DAY, -30, ts)` -> `date_add(ts, to_days(-30))`. The amount may be an integer expression, not just a
+     * literal. This reverses the rejection added in #198, which assumed the amount had to be an INTERVAL literal;
+     * `to_<part>s(<expr>)` builds the interval at runtime instead. `to_years`, `to_months` and `to_days` take INTEGER,
+     * so a BIGINT amount outside the INTEGER range fails at runtime.
      *
-     * https://duckdb.org/docs/current/functions/datetime.html#date_add
+     * DuckDB's interval arithmetic matches PartiQL's: months/years clamp to the end of the month
+     * (`2024-01-31` + 1 month = `2024-02-29`), and TIME wraps around midnight. `DATE + <interval>` yields a
+     * TIMESTAMP in DuckDB (`date_add` is an alias for `+`), so a DATE operand is cast back to DATE to keep PartiQL's
+     * result type.
+     *
+     * https://duckdb.org/docs/current/functions/interval.html
      */
     override fun dateAdd(
         part: DatetimeField,
         args: SqlArgs,
     ): Expr {
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                ScribeProblem.UNSUPPORTED_OPERATION,
-                "DuckDB does not support PartiQL's `DATE_ADD(<part>, <amount>, <datetime>)`. DuckDB's " +
-                    "`date_add` takes a (date, interval) pair, which cannot faithfully represent a dynamic " +
-                    "amount expression.",
+        val amount = args[0].expr
+        val datetime = args[1]
+        val fn =
+            when (part.code()) {
+                DatetimeField.YEAR -> "to_years"
+                DatetimeField.MONTH -> "to_months"
+                DatetimeField.DAY -> "to_days"
+                DatetimeField.HOUR -> "to_hours"
+                DatetimeField.MINUTE -> "to_minutes"
+                DatetimeField.SECOND -> "to_seconds"
+                else ->
+                    listener.reportAndThrow(
+                        ScribeProblem.simpleError(
+                            ScribeProblem.INVALID_PLAN,
+                            "Unexpected datetime part `$part`",
+                        ),
+                    )
+            }
+        listener.report(
+            ScribeProblem.simpleInfo(
+                ScribeProblem.TRANSLATION_INFO,
+                "PartiQL `DATE_ADD(${part.name()}, <amount>, <datetime>)` was replaced by DuckDB " +
+                    "`date_add(<datetime>, $fn(<amount>))`.",
             ),
         )
+        val call =
+            exprCall(
+                Identifier.regular("date_add"),
+                listOf(datetime.expr, exprCall(Identifier.regular(fn), listOf(amount))),
+            )
+        return if (datetime.type.code() == PType.DATE) exprCast(call, DataType.DATE()) else call
     }
 
     /**
