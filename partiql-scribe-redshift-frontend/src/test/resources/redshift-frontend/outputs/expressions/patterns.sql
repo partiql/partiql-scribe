@@ -58,6 +58,9 @@ SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE "lower"(REPLACE(REPLACE("
 --#[ilike-04]
 [UNSUPPORTED{message="ILIKE with a pattern that is not a literal"}];
 
+--#[ilike-05]
+[UNSUPPORTED{message="`ILIKE` on an aggregate expression (PartiQL does not plan it as an argument of LOWER)"}];
+
 --#[similar-to-00]
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE "t"['c'] LIKE 'a%' AND "t"['z'] NOT LIKE '%x.y_';
 

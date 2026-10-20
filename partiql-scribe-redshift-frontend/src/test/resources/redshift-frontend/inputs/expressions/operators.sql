@@ -91,6 +91,10 @@ SELECT @ -5.0 AS v1, @ b AS v2, @ -5 + 1 AS v3 FROM T;
 --#[abs-operator-01]
 SELECT @ x AS v FROM T;
 
+-- PartiQL does not plan an aggregate call in the argument of a function such as ABS.
+--#[abs-operator-02]
+SELECT @ MAX(b) AS v FROM T;
+
 --#[bitwise-and-00]
 SELECT b & 3 AS v1, b + 1 & 3 AS v2 FROM T;
 

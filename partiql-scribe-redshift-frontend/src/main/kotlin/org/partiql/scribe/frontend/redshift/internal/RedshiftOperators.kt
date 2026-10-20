@@ -171,13 +171,16 @@ internal class RedshiftOperators(
 
     /**
      * The prefix operators: `@` is ABS; `|/` (square root), `||/` (cube root), and `~` (bitwise NOT) have no PartiQL
-     * equivalent.
+     * equivalent. The PartiQL planner does not find an aggregate call in the argument of ABS.
      *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_OPERATOR_SYMBOLS.html
      */
     fun prefix(ctx: P.ValuePrefixOperatorContext): Expr {
         val op = ctx.op
         if (op.type != P.AT_SIGN) unsupported(op, "operator `${op.text}`")
+        if (containsAggregate(ctx.valueExpr())) {
+            unsupported(op, "`@` on an aggregate expression (PartiQL does not plan it as an argument of ABS)")
+        }
         val value = Operand(ctx.valueExpr(), exprs.valueExpr(ctx.valueExpr()))
         return types.resolveTyped(listOf(value)) { (x) ->
             if (x.family == TypeFamily.SUPER) unsupported(op, "arithmetic with a SUPER operand")

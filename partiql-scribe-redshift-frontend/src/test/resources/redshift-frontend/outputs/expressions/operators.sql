@@ -85,6 +85,9 @@ SELECT CAST(ABS(-5.0) AS DECIMAL(2,1)) AS "v1", ABS("t"['b']) AS "v2", ABS(-5 + 
 --#[abs-operator-01]
 [UNSUPPORTED{message="arithmetic with a SUPER operand"}];
 
+--#[abs-operator-02]
+[UNSUPPORTED{message="`@` on an aggregate expression (PartiQL does not plan it as an argument of ABS)"}];
+
 --#[bitwise-and-00]
 SELECT "t"['b'] & 3 AS "v1", ("t"['b'] + 1) & 3 AS "v2" FROM "default"."T" AS "t";
 

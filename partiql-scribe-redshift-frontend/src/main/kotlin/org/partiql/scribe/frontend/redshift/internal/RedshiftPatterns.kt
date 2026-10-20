@@ -100,6 +100,7 @@ internal class RedshiftPatterns(
      * ILIKE is case-insensitive for ASCII letters only, so the translation requires a literal pattern whose characters
      * are ASCII, folds its letters to lower case, and matches `LOWER(x)`. Java lower-cases two non-ASCII characters to
      * ASCII text, U+0130 and U+212A; they are replaced with U+00B7 before LOWER, so that they match only `_` and `%`.
+     * The PartiQL planner does not find an aggregate call in the argument of LOWER.
      */
     private fun ilike(
         op: Token,
@@ -108,6 +109,9 @@ internal class RedshiftPatterns(
         escape: P.ValueExprContext?,
         not: Boolean,
     ): Expr {
+        if (containsAggregate(lhs)) {
+            unsupported(op, "`ILIKE` on an aggregate expression (PartiQL does not plan it as an argument of LOWER)")
+        }
         val value = Operand(lhs, exprs.valueExpr(lhs))
         val pattern = exprs.valueExpr(rhs)
         val escapeChar = escapeChar(op, escape)

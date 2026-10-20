@@ -64,6 +64,9 @@ SELECT a FROM T WHERE c ILIKE '%é%';
 --#[ilike-04]
 SELECT a FROM T WHERE c ILIKE z;
 
+--#[ilike-05]
+SELECT c FROM T GROUP BY c HAVING MAX(z) ILIKE 'a%';
+
 --#[similar-to-00]
 SELECT a FROM T WHERE c SIMILAR TO 'a%' AND z NOT SIMILAR TO '%x\\.y_';
 
