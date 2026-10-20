@@ -19,7 +19,7 @@ SELECT a FROM T WHERE c IN (1, 2);
 
 -- The values need different conversions of the left side.
 --#[in-list-06]
-SELECT col_int32 FROM T_ALL_TYPES WHERE col_float32 IN (1, col_float32);
+SELECT col_int32 FROM T_ALL_TYPES WHERE col_float32 IN (0.1, col_float32);
 
 -- The PartiQL output target writes a subquery value of an IN list without parentheses.
 --#[in-list-07]

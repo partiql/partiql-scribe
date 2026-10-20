@@ -91,6 +91,9 @@ SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS
 --#[float-decimal-03]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE ("t_all_types"['col_float64'] > CAST("t_all_types"['col_int64'] AS DOUBLE PRECISION)) AND (CAST("t_all_types"['col_float32'] AS DOUBLE PRECISION) < "t_all_types"['col_float64']);
 
+--#[float-decimal-04]
+SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE (("t_all_types"['col_float64'] < 100.0) AND ("t_all_types"['col_float32'] >= 0.5)) AND (CAST("t_all_types"['col_float32'] AS DOUBLE PRECISION) < CAST(0.1 AS DOUBLE PRECISION));
+
 --#[datetime-00]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE (CAST("t_all_types"['col_date'] AS TIMESTAMP WITH TIME ZONE) < "t_all_types"['col_timestampz']) AND ("t_all_types"['col_timestamp'] >= CAST("t_all_types"['col_date'] AS TIMESTAMP));
 

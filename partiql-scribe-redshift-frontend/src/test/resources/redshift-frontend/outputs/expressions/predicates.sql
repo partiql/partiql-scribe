@@ -17,7 +17,7 @@ SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS
 [UNSUPPORTED{message="comparison of a number with a character string"}];
 
 --#[in-list-06]
-SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE (CAST("t_all_types"['col_float32'] AS DOUBLE PRECISION) = CAST(1 AS DOUBLE PRECISION)) OR ("t_all_types"['col_float32'] = "t_all_types"['col_float32']);
+SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE (CAST("t_all_types"['col_float32'] AS DOUBLE PRECISION) = CAST(0.1 AS DOUBLE PRECISION)) OR ("t_all_types"['col_float32'] = "t_all_types"['col_float32']);
 
 --#[in-list-07]
 [UNSUPPORTED{message="subquery as a value of an IN list"}];

@@ -103,6 +103,10 @@ SELECT col_int32 FROM T_ALL_TYPES WHERE col_float32 > col_int32;
 --#[float-decimal-03]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_float64 > col_int64 AND col_float32 < col_float64;
 
+-- A literal that the floating-point type holds exactly needs no conversion.
+--#[float-decimal-04]
+SELECT col_int32 FROM T_ALL_TYPES WHERE col_float64 < 100.0 AND col_float32 >= 0.5 AND col_float32 < 0.1;
+
 --#[datetime-00]
 SELECT col_int32 FROM T_ALL_TYPES WHERE col_date < col_timestampz AND col_timestamp >= col_date;
 

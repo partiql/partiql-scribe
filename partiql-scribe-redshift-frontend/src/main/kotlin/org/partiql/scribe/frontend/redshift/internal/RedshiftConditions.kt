@@ -271,7 +271,9 @@ internal class RedshiftConditions(
     /**
      * Redshift compares a REAL or DOUBLE PRECISION value with a DECIMAL value, and a REAL value with an integer, in
      * DOUBLE PRECISION. PartiQL compares a floating-point value with a DECIMAL value by its exact binary value, and a REAL
-     * value with an integer in REAL, so the translation casts the operands that are not DOUBLE PRECISION.
+     * value with an integer in REAL, so the translation casts the operands that are not DOUBLE PRECISION. A numeric
+     * literal whose value the floating-point type of the other operand holds exactly needs no cast: both comparisons are
+     * exact then.
      *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_numeric_computations201.html
      */
@@ -279,12 +281,33 @@ internal class RedshiftConditions(
         a: TypedOperand,
         b: TypedOperand,
     ): Pair<Expr, Expr> {
-        if (!needsDouble(a.type, b.type)) return a.expr to b.expr
+        if (!needsDouble(a.type, b.type) || isExactIn(a, b.type) || isExactIn(b, a.type)) return a.expr to b.expr
         return toDouble(a) to toDouble(b)
     }
 
     private fun toDouble(operand: TypedOperand): Expr =
         if (operand.type.code() == PType.DOUBLE) operand.expr else exprCast(operand.expr, DataType.DOUBLE_PRECISION())
+
+    /** True if [operand] is a numeric literal whose value the REAL or DOUBLE PRECISION [type] holds exactly. */
+    private fun isExactIn(
+        operand: TypedOperand,
+        type: PType,
+    ): Boolean {
+        val lit = operand.literal ?: return false
+        val value =
+            when (lit.code()) {
+                Literal.INT_NUM -> BigDecimal(lit.numberValue())
+                Literal.EXACT_NUM -> lit.bigDecimalValue()
+                else -> return false
+            }
+        val binary =
+            when (type.code()) {
+                PType.REAL -> value.toFloat().toDouble()
+                PType.DOUBLE -> value.toDouble()
+                else -> return false
+            }
+        return binary.isFinite() && BigDecimal(binary).compareTo(value) == 0
+    }
 
     /** Trims the padding of a CHAR(n) operand, which Redshift ignores in comparisons. */
     private fun trimChar(operand: TypedOperand): Expr =
