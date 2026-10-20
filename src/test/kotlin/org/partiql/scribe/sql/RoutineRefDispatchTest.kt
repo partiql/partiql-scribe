@@ -99,7 +99,7 @@ class RoutineRefDispatchTest {
             "experimental_aggregate(",
         )
         assertContains(
-            compile("SELECT VALUE custom_dispatch(x) FROM payload AS x", session),
+            compile("SELECT custom_dispatch(x) AS v FROM payload AS x", session),
             "stable_dispatch(",
         )
     }
@@ -118,7 +118,7 @@ class RoutineRefDispatchTest {
     fun `redshift converter preserves resolved routine identity`() {
         assertContains(compile("custom_scalar(1)", session, RedshiftRoutineTarget), "stable_scalar(1)")
         assertContains(
-            compile("SELECT VALUE custom_dispatch(x) FROM payload AS x", session, RedshiftRoutineTarget),
+            compile("SELECT custom_dispatch(x) AS v FROM payload AS x", session, RedshiftRoutineTarget),
             "stable_dispatch(",
         )
         assertContains(
@@ -173,9 +173,9 @@ class RoutineRefDispatchTest {
                 .catalogs(legacyCatalog)
                 .build()
         val scalarSql = compile("custom_scalar(1)", legacySession)
-        val dispatchSql = compile("SELECT VALUE custom_dispatch(x) FROM payload AS x", legacySession)
+        val dispatchSql = compile("SELECT custom_dispatch(x) AS v FROM payload AS x", legacySession)
         val redshiftDispatchSql =
-            compile("SELECT VALUE custom_dispatch(x) FROM payload AS x", legacySession, RedshiftRoutineTarget)
+            compile("SELECT custom_dispatch(x) AS v FROM payload AS x", legacySession, RedshiftRoutineTarget)
         val aggregateSql = compile("SELECT custom_aggregate(DISTINCT x) FROM << 1, 2 >> AS x", legacySession)
 
         assertContains(scalarSql, "\"custom_scalar\"(1)")

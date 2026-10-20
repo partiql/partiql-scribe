@@ -187,3 +187,12 @@ SELECT "O"."b" FROM "default"."T" AS "O" WHERE "O"."b" IN (SELECT "E"."b" FROM "
 -- Non-correlated: subquery in FROM
 --#[join-47]
 SELECT "O"."b" FROM "default"."T" AS "O" WHERE "O"."b" IN (SELECT "sub"."b" FROM (SELECT "E"."b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"."b" > "E"."b") AS "sub" WHERE "sub"."b" > "O"."b");
+
+--#[join-48]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[join-49]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[join-50]
+[ScribeException{code=UNSUPPORTED_OPERATION}];

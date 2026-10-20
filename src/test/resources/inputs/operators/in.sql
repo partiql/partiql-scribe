@@ -38,3 +38,27 @@ SELECT * FROM T WHERE b IN (SELECT T.b FROM T);
 
 --#[in-11]
 SELECT * FROM T WHERE b NOT IN (SELECT T.b FROM T);
+
+--#[in-12]
+-- IN with a NULL element and no match is NULL (#197)
+SELECT b IN << 1, NULL >> AS r FROM T;
+
+--#[in-13]
+-- NOT IN with a NULL element and no match is NULL (#197)
+SELECT b NOT IN << 1, NULL >> AS r FROM T;
+
+--#[in-14]
+-- IN an empty bag
+SELECT b FROM T WHERE b IN << >>;
+
+--#[in-15]
+-- NOT IN an empty bag
+SELECT b FROM T WHERE b NOT IN << >>;
+
+--#[in-16]
+-- NULL IN an empty bag is false, so NOT IN keeps the row (PartiQL: true)
+SELECT b, NULL NOT IN << >> AS r FROM T;
+
+--#[in-17]
+-- A NULL value NOT IN an array column: true for an empty array, otherwise NULL or false
+SELECT b, CAST(NULL AS INT) NOT IN T."array" AS r FROM T;

@@ -1,6 +1,8 @@
 package org.partiql.scribe.targets.trino
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCase
+import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
@@ -17,6 +19,7 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.spi.types.IntervalCode
@@ -360,6 +363,7 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `exists(collection)` -> Trino `cardinality(collection) > 0`
      */
     private fun existsFn(args: SqlArgs): Expr {
+        existsSubquery(args)?.let { return it }
         val cardId = Identifier.regular("cardinality")
         listener.report(
             ScribeProblem.simpleInfo(
@@ -397,6 +401,13 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
                 message = "PartiQL `<value> IN <array>` was replaced by Trino `contains(<array>, <value>)`",
             ),
         )
-        return exprCall(Identifier.regular("contains"), listOf(collection, value))
+        // `contains` is already NULL-aware, except that a NULL value against an empty array gives NULL where
+        // PartiQL gives false, so check for an empty array first.
+        val empty = exprOperator("=", exprCall(Identifier.regular("cardinality"), listOf(collection)), exprLit(Literal.intNum(0L)))
+        return exprCase(
+            null,
+            listOf(exprCaseBranch(empty, exprLit(Literal.bool(false)))),
+            exprCall(Identifier.regular("contains"), listOf(collection, value)),
+        )
     }
 }

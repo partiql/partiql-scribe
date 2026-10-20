@@ -26,6 +26,8 @@ public open class RedshiftRelConverter(
         context,
         outer,
     ) {
+    override val selectValueSupported: Boolean = false
+
     override fun visitCorrelate(
         rel: RelCorrelate,
         ctx: Unit,

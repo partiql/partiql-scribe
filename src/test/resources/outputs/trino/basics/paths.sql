@@ -59,3 +59,6 @@ SELECT "t"."x".y AS "v" FROM "default"."T" AS "t";
 
 -- --#[paths-sfw-31] TODO(trino)
 SELECT "t"."x"."y" AS "v" FROM "default"."T" AS "t";
+
+--#[paths-sfw-32]
+SELECT "t"."a"[1]."nested_list"[1] AS "v" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";

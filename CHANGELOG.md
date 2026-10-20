@@ -37,6 +37,14 @@ Thank you to all who have contributed!
 
 ### Fixed
 - Function extension `to_unixtime` now truncates toward negative infinity like PartiQL on Trino, Spark and Redshift (previously rounded fractional seconds and lost a second far from 1970; Trino also read the timestamp in the session time zone).
+- Integer division truncates toward zero like PartiQL on Spark (`DIV`) and DuckDB (`//`) instead of returning a fraction.
+- Correlated join `ON` predicates are combined with an existing `WHERE` instead of overwriting it (Trino, Spark, DuckDB).
+- Nested array indexes (`a[0].b[0]`) are all shifted to 1-based on Trino and DuckDB, not just the outermost one.
+- `EXISTS (<subquery>)` is rendered as a native `EXISTS` predicate on every target instead of invalid SQL.
+- SQL targets reject a `SELECT VALUE` that can't be rewritten to a SELECT list instead of emitting `SELECT VALUE`.
+- DuckDB target: `IN` / `NOT IN` keep SQL's NULL result when there is no match and the list or array contains a NULL.
+- `x IN <empty list or array>` is false (and `NOT IN` true) even when `x` is NULL, like PartiQL; an empty literal list no longer renders as invalid `IN ()` (all SQL targets).
+- Redshift target: `IN` / `NOT IN` keep SQL's NULL result for a list with a NULL literal and for SUPER array membership (`array_contains`).
 
 ### Removed
 
