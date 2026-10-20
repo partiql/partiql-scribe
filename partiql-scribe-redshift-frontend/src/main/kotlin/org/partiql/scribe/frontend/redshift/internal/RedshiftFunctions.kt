@@ -41,7 +41,7 @@ internal class Operand(
  * A function that is not in [rules] is unsupported. The translator does not pass unknown functions through by name,
  * because a function with the same name can have different semantics in the two languages. The rules of each function
  * category are in their own class: [RedshiftStringFunctions], [RedshiftConditionalFunctions], [RedshiftMathFunctions],
- * [RedshiftAggregateFunctions], and [RedshiftDatetimeFunctions].
+ * [RedshiftAggregateFunctions], [RedshiftSuperFunctions], and [RedshiftDatetimeFunctions].
  */
 internal class RedshiftFunctions(
     private val notes: MutableList<RedshiftProblem>,
@@ -60,9 +60,11 @@ internal class RedshiftFunctions(
     internal val conditional = RedshiftConditionalFunctions(this)
     internal val math = RedshiftMathFunctions(this)
     internal val aggregates = RedshiftAggregateFunctions(this)
+    internal val superFunctions = RedshiftSuperFunctions(this)
 
     private val rules: Map<String, Rule> =
-        datetime.rules + strings.rules + conditional.rules + math.rules + aggregates.rules + systemFunctions()
+        datetime.rules + strings.rules + conditional.rules + math.rules + aggregates.rules + superFunctions.rules +
+            systemFunctions()
 
     /**
      * The calls of conditional functions (NVL, COALESCE, DECODE, ...) whose translation removed the padding of CHAR(n)
@@ -373,6 +375,12 @@ internal class RedshiftFunctions(
         return if (lit.code() == Literal.STRING) lit.stringValue() else null
     }
 
+    /** The value of [expr] if it is a boolean literal, else null. */
+    internal fun boolLiteral(expr: Expr): Boolean? {
+        val lit = (expr as? ExprLit)?.lit ?: return null
+        return if (lit.code() == Literal.BOOL) lit.booleanValue() else null
+    }
+
     internal fun isNullLiteral(expr: Expr): Boolean = (expr as? ExprLit)?.lit?.code() == Literal.NULL
 
     /*
@@ -488,6 +496,8 @@ internal object FunctionTypes {
 
     fun isText(type: PType): Boolean = type.code() in TEXT
 
+    fun isDatetime(type: PType): Boolean = type.code() in DATETIME
+
     fun isDynamic(type: PType): Boolean = type.code() == PType.DYNAMIC || type.code() == PType.VARIANT
 
     /** The type of the NULL literal, and of an operand that the planner could not resolve. */
@@ -547,4 +557,5 @@ internal object FunctionTypes {
 
     private val INTEGERS = setOf(PType.TINYINT, PType.SMALLINT, PType.INTEGER, PType.BIGINT)
     private val TEXT = setOf(PType.CHAR, PType.VARCHAR, PType.STRING, PType.CLOB)
+    private val DATETIME = setOf(PType.DATE, PType.TIME, PType.TIMEZ, PType.TIMESTAMP, PType.TIMESTAMPZ)
 }
