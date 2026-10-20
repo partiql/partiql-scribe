@@ -2,7 +2,7 @@
 SELECT CAST("t"['b'] AS BIGINT) AS "v" FROM "default"."T" AS "t";
 
 --#[cast-01]
-SELECT CAST("t"['b'] AS VARCHAR(256)) AS "v" FROM "default"."T" AS "t";
+SELECT CAST("t"['b'] AS STRING) AS "v" FROM "default"."T" AS "t";
 
 --#[cast-02]
 SELECT CAST("t"['b'] AS DECIMAL(10,2)) AS "v1", CAST("t"['b'] AS DECIMAL(18,0)) AS "v2" FROM "default"."T" AS "t";
@@ -11,10 +11,10 @@ SELECT CAST("t"['b'] AS DECIMAL(10,2)) AS "v1", CAST("t"['b'] AS DECIMAL(18,0)) 
 SELECT -CAST("t"['b'] AS INT) AS "v" FROM "default"."T" AS "t";
 
 --#[cast-04]
-SELECT CAST("t"['b'] AS DOUBLE PRECISION) AS "v1", CAST("t"['b'] AS REAL) AS "v2", CAST("t"['c'] AS VARCHAR(10)) AS "v3" FROM "default"."T" AS "t";
+[UNSUPPORTED{message="CAST to VARCHAR(10) that can truncate a character string"}];
 
 --#[cast-05]
-SELECT CAST("t"['c'] AS DATE) AS "v1", CAST("t"['c'] AS TIMESTAMP) AS "v2" FROM "default"."T" AS "t";
+[UNSUPPORTED{message="CAST of a character string to DATE"}];
 
 --#[concat-00]
 SELECT "t"['c'] || "t"['z'] AS "v" FROM "default"."T" AS "t";

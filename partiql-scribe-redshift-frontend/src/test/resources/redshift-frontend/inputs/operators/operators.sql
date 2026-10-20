@@ -1,7 +1,7 @@
 --#[cast-00]
 SELECT b::bigint AS v FROM T;
 
--- VARCHAR without a length is VARCHAR(256) in Redshift.
+-- VARCHAR without a length is STRING when the value has at most 256 bytes; see the README.
 --#[cast-01]
 SELECT CAST(b AS VARCHAR) AS v FROM T;
 
