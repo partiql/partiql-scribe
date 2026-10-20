@@ -185,7 +185,7 @@ internal class RedshiftSuperFunctions(
             is P.ValueSignedContext -> nonNull(inner.valueExpr())
             is P.ValueAdditiveContext -> nonNull(inner.lhs) && nonNull(inner.rhs)
             is P.ValueMultiplicativeContext -> nonNull(inner.lhs) && nonNull(inner.rhs)
-            is P.ValueConcatContext -> nonNull(inner.lhs) && nonNull(inner.rhs)
+            is P.ValueOperatorContext -> inner.op.type == P.CONCAT && nonNull(inner.lhs) && nonNull(inner.rhs)
             is P.ValueCastShorthandContext -> nonNull(inner.valueExpr())
             is P.AtomCastContext -> nonNull(inner.expr())
             else -> false

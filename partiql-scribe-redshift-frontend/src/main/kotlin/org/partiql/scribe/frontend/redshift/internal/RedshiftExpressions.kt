@@ -14,7 +14,6 @@ import org.partiql.ast.Ast.exprPathStepElement
 import org.partiql.ast.Ast.exprPathStepField
 import org.partiql.ast.Ast.exprQuerySet
 import org.partiql.ast.Ast.query
-import org.partiql.ast.Ast.exprVarRef
 import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
@@ -54,7 +53,7 @@ internal class RedshiftExpressions(
             parent is P.WhereClauseContext ||
                 parent is P.HavingClauseContext ||
                 parent is P.QualifyClauseContext ||
-                (parent is P.TableJoinContext && parent.condition === ctx)
+                parent is P.JoinOnContext
         return if (isCondition) condition(ctx) else exprOr(ctx.exprOr())
     }
 
@@ -230,9 +229,9 @@ internal class RedshiftExpressions(
     /** The name that a FROM item binds: its alias, or the last name of a table path. */
     private fun bindingName(item: ParserRuleContext): Identifier.Simple? =
         when (item) {
-            is P.TableSubqueryContext -> builder.simple(item.alias)
+            is P.TableSubqueryContext -> item.tableAlias()?.alias?.let(builder::simple)
             is P.TableNameContext ->
-                item.alias?.let(builder::simple)
+                item.tableAlias()?.alias?.let(builder::simple)
                     ?: when (val source = item.primaryExpr()) {
                         is P.PathFieldContext -> builder.simple(source.identifier())
                         is P.PrimaryAtomContext -> (source.atom() as? P.AtomVariableContext)?.let { builder.simple(it.identifier()) }
@@ -330,7 +329,8 @@ internal class RedshiftExpressions(
                     else -> {
                         // The type of an aggregate call follows from the types of its arguments; see [resolveTyped].
                         val aggregate = ctx.name.text.lowercase() in AGGREGATE_FUNCTIONS
-                        val args = ctx.expr().map { Operand(it, if (aggregate) types.operand(it, expr(it)) else expr(it)) }
+                        val args =
+                            ctx.expr().map { arg -> Operand.deferred(arg) { if (aggregate) types.operand(arg, expr(arg)) else expr(arg) } }
                         functions.call(ctx.name.start, args, builder.setQuantifier(ctx.setQuantifier()))
                     }
                 }
@@ -358,7 +358,7 @@ internal class RedshiftExpressions(
      *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_CURRENT_USER.html
      */
-    private fun sessionUser(name: Token): Expr = unsupported(name, name.text.uppercase())
+    private fun sessionUser(name: Token): Expr = unsupported(name, "`${name.text.uppercase()}`")
 
     private fun literal(ctx: P.LiteralContext): Expr =
         when (ctx) {

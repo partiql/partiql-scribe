@@ -77,7 +77,7 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 internal class RedshiftAstBuilder(
     private val caseSensitiveIdentifiers: Boolean,
     private val notes: MutableList<RedshiftProblem>,
-    private val types: OperandTypes,
+    internal val types: OperandTypes,
     private val catalog: RedshiftCatalog,
     private val analysis: NameAnalysis,
 ) {

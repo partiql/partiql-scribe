@@ -649,7 +649,11 @@ internal class RedshiftCasts(
         }
         var block = c?.parent as? ParserRuleContext
         while (block != null && block !is P.RootContext) {
-            if (block !is P.SelectItemsContext && block !is P.QuerySpecificationContext && block !is P.QueryContext) return false
+            // A query block that is not part of a set operation, a WITH query, or a subquery.
+            val outermost =
+                block is P.SelectListContext || block is P.QuerySpecificationContext ||
+                    block is P.QueryPrimarySpecificationContext || block is P.QueryTermPrimaryContext || block is P.QueryContext
+            if (!outermost) return false
             block = block.parent as? ParserRuleContext
         }
         return block != null

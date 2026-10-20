@@ -71,10 +71,10 @@ SELECT "t"['c'] AS "c" FROM "default"."T" AS "t" GROUP BY "t"['c'] HAVING sum("t
 [UNSUPPORTED{message="`ABS` of an aggregate function (the PartiQL planner does not accept an aggregate in a function argument)"}];
 
 --#[agg-nested-03]
-[UNSUPPORTED{message="SUM of an argument of unknown type"}];
+SELECT "t"['c'] AS "c", sum("t"['b']) + CAST(1 AS BIGINT) AS "v1", (sum("t"['b']) / count("t"['b'])) - CAST(1 AS BIGINT) AS "v2" FROM "default"."T" AS "t" GROUP BY "t"['c'];
 
 --#[agg-nested-04]
-[UNSUPPORTED{message="MAX of an argument of unknown type"}];
+SELECT max("t"['b']) - min("t"['b']) AS "v" FROM "default"."T" AS "t";
 
 --#[agg-unsupported-00]
 [UNSUPPORTED{message="function `LISTAGG`; PartiQL has no string aggregation"}];

@@ -130,7 +130,7 @@ SELECT a FROM T WHERE b;
 SELECT a FROM T WHERE a AND NOT b;
 
 --#[condition-02]
-SELECT a FROM T t1 JOIN T t2 ON t1.b;
+SELECT t1.a FROM T t1 JOIN T t2 ON t1.b;
 
 --#[condition-03]
 SELECT c, COUNT(*) AS n FROM T GROUP BY c HAVING COUNT(*);

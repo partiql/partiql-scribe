@@ -17,7 +17,7 @@ SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE "t_all_types"['col_timestamp'] < TIMESTAMP '2020-01-01 10:20:30.5';
 
 --#[string-literal-timestamp-02]
-[UNSUPPORTED{message="comparison of TIMESTAMP with the character string 'Jun 1,2008 09:59:59'"}];
+SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE "t_all_types"['col_timestamp'] = TIMESTAMP '2008-06-01 09:59:59';
 
 --#[string-literal-boolean-00]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE "t_all_types"['col_bool'] = true;

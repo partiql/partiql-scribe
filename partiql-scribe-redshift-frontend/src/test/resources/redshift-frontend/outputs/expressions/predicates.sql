@@ -92,7 +92,7 @@ SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE EXISTS(SELECT 1 AS "_1" F
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE NOT (EXISTS(SELECT 1 AS "_1" FROM "default"."T" AS "s" WHERE "s"['b'] = "t"['b']));
 
 --#[exists-02]
-SELECT EXISTS(SELECT max("s"['b']) AS "_1" FROM "default"."T" AS "s" WHERE "s"['b'] > 100) AS "e" FROM "default"."T" AS "t";
+SELECT EXISTS(SELECT max("s"['b']) AS "max" FROM "default"."T" AS "s" WHERE "s"['b'] > 100) AS "e" FROM "default"."T" AS "t";
 
 --#[is-true-00]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['a'] IS TRUE AND NOT ("t"['a'] IS FALSE);

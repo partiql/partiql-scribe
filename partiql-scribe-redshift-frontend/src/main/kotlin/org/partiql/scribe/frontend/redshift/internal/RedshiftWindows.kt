@@ -181,7 +181,9 @@ internal class RedshiftWindows(private val builder: RedshiftAstBuilder) {
     }
 
     /** The qualified name of a column or SUPER path, `t.c` or `t.x.y`, or null. */
-    private fun qualifiedName(expr: Expr): Identifier? {
+    private fun qualifiedName(probed: Expr): Identifier? {
+        // A probe pass probes the root of a path; a path can also be the root of another path.
+        val expr = flatten(builder.types.unprobe(probed))
         val root = (if (expr is ExprPath) expr.root else expr) as? ExprVarRef ?: return null
         if (root.identifier.hasQualifier() || root.isQualified) return null
         val parts = mutableListOf(root.identifier.identifier)
@@ -206,6 +208,12 @@ internal class RedshiftWindows(private val builder: RedshiftAstBuilder) {
             }
         }
         return Identifier.of(parts)
+    }
+
+    private fun flatten(expr: Expr): Expr {
+        if (expr !is ExprPath) return expr
+        val root = flatten(expr.root)
+        return if (root is ExprPath) org.partiql.ast.Ast.exprPath(root.root, root.steps + expr.steps) else expr
     }
 
     /** The text of a non-negative integer literal, if [ctx] is one. */

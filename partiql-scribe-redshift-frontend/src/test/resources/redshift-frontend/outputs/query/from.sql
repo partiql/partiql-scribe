@@ -80,7 +80,7 @@ SELECT "t"['b'] AS "b" FROM "default"."T" AS "t";
 SELECT "t"['b'] AS "b", "e" AS "e" FROM "default"."T" AS "t" INNER JOIN CASE WHEN @"t"['x'] IS LIST THEN @"t"['x'] ELSE [] END AS "e" ON true;
 
 --#[unnest-path-and-navigation]
-SELECT "t"['b'] AS "b", COALESCE("e".a) AS "a" FROM "default"."T" AS "t" INNER JOIN CASE WHEN @"t"['x'].items IS LIST THEN @"t"['x'].items ELSE [] END AS "e" ON true;
+SELECT "t"['b'] AS "b", COALESCE("e"['a']) AS "a" FROM "default"."T" AS "t" INNER JOIN CASE WHEN @"t"['x'].items IS LIST THEN @"t"['x'].items ELSE [] END AS "e" ON true;
 
 --#[unnest-nested]
 SELECT "el" AS "el", "f" AS "f" FROM "default"."T" AS "t" INNER JOIN CASE WHEN @"t"['x'] IS LIST THEN @"t"['x'] ELSE [] END AS "el" ON true INNER JOIN CASE WHEN @"el" IS LIST THEN @"el" ELSE [] END AS "f" ON true;

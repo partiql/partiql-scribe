@@ -111,6 +111,9 @@ internal class OperandTypes {
      */
     fun typeOf(ctx: ParserRuleContext): PType? = keys[ctx]?.let { ids[it] }?.let { types[it] }
 
+    /** Returns [expr] without probe calls. */
+    fun unprobe(expr: Expr): Expr = Unprobe.apply(expr)
+
     /** The query block (compared by identity) and the translation of an operand without probe calls. */
     private class Key(
         val scope: ParserRuleContext?,

@@ -23,7 +23,7 @@ SELECT CASE WHEN "t_all_types"['col_bool'] THEN "t_all_types"['col_float64'] ELS
 SELECT CASE WHEN "t"['a'] THEN "t"['b'] ELSE 0 END AS "v" FROM "default"."T" AS "t";
 
 --#[case-types-08]
-SELECT CASE WHEN "t"['a'] THEN "t"['c'] ELSE 'none' END AS "v1", CASE WHEN "t"['a'] THEN "t"['x'] ELSE "t"['b'] END AS "v2" FROM "default"."T" AS "t";
+SELECT CASE WHEN "t"['a'] THEN "t"['c'] ELSE 'none' END AS "v1", COALESCE(CASE WHEN "t"['a'] THEN "t"['x'] ELSE "t"['b'] END) AS "v2" FROM "default"."T" AS "t";
 
 --#[case-null-00]
 SELECT 2 AS "v" FROM "default"."T" AS "t";

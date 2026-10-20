@@ -110,8 +110,10 @@ internal fun OperandTypes.resolveTyped(
         operands.map { operand ->
             val lit = (operand.expr as? ExprLit)?.lit
             when {
-                lit != null -> TypedOperand(operand.ctx, operand.expr, literalType(lit))
-                containsAggregate(operand.ctx) -> {
+                // The planner types an INTERVAL literal.
+                lit != null && literalType(lit).code() != PType.DYNAMIC -> TypedOperand(operand.ctx, operand.expr, literalType(lit))
+                // A select-list alias (`s` in `SELECT SUM(b) AS s, s * 2`) can stand for an aggregate.
+                containsAggregate(operand.ctx) || RedshiftQueryBlocks.containsAggregateOrWindow(operand.expr) -> {
                     val type = aggregateType(operand.ctx)
                     TypedOperand(operand.ctx, operand.expr, type ?: PType.dynamic(), untyped = type == null)
                 }

@@ -348,8 +348,9 @@ internal class RedshiftDatetimeFunctions(
         setq: SetQuantifier?,
     ): Expr {
         scalar(name, args, setq, 2)
+        // Read the datepart from the parse tree first: an unquoted datepart (`month`) is not a column.
         val partName =
-            stringLiteral(args[0].expr)
+            (RedshiftDatetime.atomOf(args[0].ctx) as? P.AtomLiteralContext)?.let { stringLiteral(args[0].expr) }
                 ?: throw UnsupportedConstructException.at(args[0].ctx, "DATE_TRUNC with a datepart that is not a character string literal")
         val part =
             DatePart.of(partName)?.takeIf {

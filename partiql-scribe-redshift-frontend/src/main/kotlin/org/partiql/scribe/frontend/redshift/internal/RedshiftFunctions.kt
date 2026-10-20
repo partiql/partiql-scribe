@@ -31,10 +31,26 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  * An argument of a function call: the parse tree of the argument and its translation. A rule that depends on the static
  * type of an argument reads it with [RedshiftFunctions.resolve].
  */
-internal class Operand(
+internal class Operand private constructor(
     val ctx: ParserRuleContext,
-    val expr: Expr,
-)
+    translate: () -> Expr,
+) {
+    constructor(ctx: ParserRuleContext, expr: Expr) : this(ctx, { expr })
+
+    /**
+     * The translation of the argument. An argument of a function call is translated when a rule reads it, so that a rule
+     * can read an argument that is not an expression, such as the datepart `year` in `DATE_PART(year, x)`, from [ctx].
+     */
+    val expr: Expr by lazy(LazyThreadSafetyMode.NONE, translate)
+
+    companion object {
+        /** An argument that is translated by [translate] when a rule reads [expr]. */
+        fun deferred(
+            ctx: ParserRuleContext,
+            translate: () -> Expr,
+        ): Operand = Operand(ctx, translate)
+    }
+}
 
 /**
  * The rules that translate Redshift function calls to PartiQL.

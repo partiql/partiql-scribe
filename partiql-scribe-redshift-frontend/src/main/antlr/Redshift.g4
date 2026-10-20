@@ -574,13 +574,11 @@ YEAR: 'YEAR';
 ZONE: 'ZONE';
 
 /*
- * Keywords of the query clauses (set operations, WITH, FROM, GROUP BY) and the reserved niladic functions.
+ * Keywords of the query clauses (set operations, WITH, FROM, GROUP BY).
  */
 
 CONNECT: 'CONNECT';
 CUBE: 'CUBE';
-CURRENT_USER: 'CURRENT_USER';
-CURRENT_USER_ID: 'CURRENT_USER_ID';
 EXCEPT: 'EXCEPT';
 EXCLUDE: 'EXCLUDE';
 GROUPING: 'GROUPING';
@@ -592,13 +590,11 @@ NATURAL: 'NATURAL';
 PIVOT: 'PIVOT';
 RECURSIVE: 'RECURSIVE';
 ROLLUP: 'ROLLUP';
-SESSION_USER: 'SESSION_USER';
 SETS: 'SETS';
 START: 'START';
 UNION: 'UNION';
 UNNEST: 'UNNEST';
 UNPIVOT: 'UNPIVOT';
-USER: 'USER';
 USING: 'USING';
 
 /*
