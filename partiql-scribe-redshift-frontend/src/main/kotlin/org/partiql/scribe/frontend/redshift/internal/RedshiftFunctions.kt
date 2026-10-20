@@ -24,6 +24,7 @@ import org.partiql.ast.expr.TrimSpec
 import org.partiql.scribe.frontend.redshift.RedshiftProblem
 import org.partiql.spi.types.PType
 import java.util.IdentityHashMap
+import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 
 /**
  * An argument of a function call: the parse tree of the argument and its translation. A rule that depends on the static
@@ -39,8 +40,8 @@ internal class Operand(
  *
  * A function that is not in [rules] is unsupported. The translator does not pass unknown functions through by name,
  * because a function with the same name can have different semantics in the two languages. The rules of each function
- * category are in their own class: [RedshiftConditionalFunctions], [RedshiftAggregateFunctions], and
- * [RedshiftDatetimeFunctions].
+ * category are in their own class: [RedshiftStringFunctions], [RedshiftConditionalFunctions],
+ * [RedshiftAggregateFunctions], and [RedshiftDatetimeFunctions].
  */
 internal class RedshiftFunctions(
     private val notes: MutableList<RedshiftProblem>,
@@ -55,6 +56,7 @@ internal class RedshiftFunctions(
     }
 
     internal val datetime = RedshiftDatetimeFunctions(this)
+    internal val strings = RedshiftStringFunctions(this)
     internal val conditional = RedshiftConditionalFunctions(this)
     internal val aggregates = RedshiftAggregateFunctions(this)
 
@@ -62,23 +64,7 @@ internal class RedshiftFunctions(
         mapOf(
             // Functions with the same name and semantics in both languages.
             "abs" to same("abs", 1),
-            "lower" to same("lower", 1),
-            "upper" to same("upper", 1),
-            "char_length" to Rule { name, args, setq -> length(name, args, setq) },
-            "character_length" to Rule { name, args, setq -> length(name, args, setq) },
-            "octet_length" to same("octet_length", 1),
-            // https://docs.aws.amazon.com/redshift/latest/dg/r_LEN.html
-            "len" to
-                Rule { name, args, setq ->
-                    note(name, "Redshift `LEN` was replaced by PartiQL `CHAR_LENGTH`")
-                    length(name, args, setq)
-                },
-            "length" to
-                Rule { name, args, setq ->
-                    note(name, "Redshift `LENGTH` was replaced by PartiQL `CHAR_LENGTH`")
-                    length(name, args, setq)
-                },
-        ) + datetime.rules + conditional.rules + aggregates.rules + systemFunctions()
+        ) + datetime.rules + strings.rules + conditional.rules + aggregates.rules + systemFunctions()
 
     /**
      * The calls of conditional functions (NVL, COALESCE, DECODE, ...) whose translation removed the padding of CHAR(n)
@@ -89,39 +75,35 @@ internal class RedshiftFunctions(
     internal val charBranches: MutableSet<ParserRuleContext> = HashSet()
 
     /**
-     * `POSITION(sub IN str)`.
-     *
-     * https://docs.aws.amazon.com/redshift/latest/dg/r_POSITION.html
+     * `POSITION(sub IN str)`; see [RedshiftStringFunctions.position].
      */
     fun position(
         name: Token,
         sub: Operand,
         str: Operand,
-    ): Expr = throw UnsupportedConstructException.at(name, "POSITION")
+    ): Expr = strings.position(name, sub, str)
 
     /**
      * `SUBSTRING(value FROM start [FOR length])` and `SUBSTRING(value FOR length)`; [start] is null for the second form.
-     *
-     * https://docs.aws.amazon.com/redshift/latest/dg/r_SUBSTRING.html
+     * See [RedshiftStringFunctions.substring].
      */
     fun substring(
         name: Token,
         value: Operand,
         start: Operand?,
         length: Operand?,
-    ): Expr = throw UnsupportedConstructException.at(name, "SUBSTRING")
+    ): Expr = strings.substring(name, value, start, length)
 
     /**
      * `TRIM([BOTH | LEADING | TRAILING] [chars] FROM value)`; [spec] is the BOTH, LEADING, or TRAILING token, if any.
-     *
-     * https://docs.aws.amazon.com/redshift/latest/dg/r_TRIM.html
+     * See [RedshiftStringFunctions.trim].
      */
     fun trim(
         name: Token,
         spec: Token?,
         chars: Operand?,
         value: Operand,
-    ): Expr = throw UnsupportedConstructException.at(name, "TRIM")
+    ): Expr = strings.trim(name, spec, chars, value)
 
     fun call(
         name: Token,
@@ -219,29 +201,6 @@ internal class RedshiftFunctions(
     private fun systemFunctions(): Map<String, Rule> {
         val rule = unsupported("a Redshift system information function has no PartiQL equivalent")
         return SYSTEM_FUNCTIONS.associateWith { rule }
-    }
-
-    /**
-     * `LEN`, `LENGTH`, `CHAR_LENGTH`, and `CHARACTER_LENGTH` count characters. Redshift does not count the trailing
-     * blanks of a CHAR(n) value; PartiQL counts the padding, so the translation trims the blanks first.
-     *
-     * https://docs.aws.amazon.com/redshift/latest/dg/r_LEN.html
-     */
-    private fun length(
-        name: Token,
-        args: List<Operand>,
-        setq: SetQuantifier?,
-    ): Expr {
-        arity(name, args, 1)
-        if (setq != null) throw UnsupportedConstructException.at(name, "set quantifier in scalar function `${name.text}`")
-        return types.resolve(args.map { it.ctx to it.expr }) { exprs, argTypes ->
-            val arg =
-                when (argTypes[0].code()) {
-                    PType.CHAR -> exprTrim(exprs[0], null, TrimSpec.TRAILING())
-                    else -> exprs[0]
-                }
-            exprCall(Identifier.regular("char_length"), listOf(arg), null)
-        }
     }
 
     /*
@@ -390,12 +349,72 @@ internal class RedshiftFunctions(
      * Expressions
      */
 
+    /** A call of the PartiQL function [name]. */
+    internal fun fn(
+        name: String,
+        vararg args: Expr,
+    ): Expr = exprCall(Identifier.regular(name), args.toList(), null)
+
     /** `TRIM(TRAILING FROM x)`, which removes the padding of a CHAR(n) value. */
     internal fun trimTrailing(x: Expr): Expr = exprTrim(x, null, TrimSpec.TRAILING())
 
+    /** `CAST(x AS STRING)`. PartiQL VARCHAR without a length is VARCHAR(1), so the cast to text is to STRING. */
+    internal fun castToString(x: Expr): Expr = exprCast(x, DataType.STRING())
+
     internal fun int(value: Long): Expr = exprLit(Literal.intNum(value))
 
+    /** The value of [expr] if it is an integer literal, else null. */
+    internal fun intLiteral(expr: Expr): Long? {
+        val lit = (expr as? ExprLit)?.lit ?: return null
+        return if (lit.code() == Literal.INT_NUM) lit.numberValue().toLongOrNull() else null
+    }
+
+    /** The value of [expr] if it is a string literal, else null. */
+    internal fun stringLiteral(expr: Expr): String? {
+        val lit = (expr as? ExprLit)?.lit ?: return null
+        return if (lit.code() == Literal.STRING) lit.stringValue() else null
+    }
+
     internal fun isNullLiteral(expr: Expr): Boolean = (expr as? ExprLit)?.lit?.code() == Literal.NULL
+
+    /*
+     * Parse trees
+     */
+
+    /**
+     * Returns the innermost parse tree of [ctx] that is not a parenthesized expression or a single-alternative wrapper of
+     * the grammar (for example, the `predicate` of a `valueExpr`).
+     */
+    internal fun unwrap(ctx: ParserRuleContext): ParserRuleContext {
+        var current = ctx
+        while (true) {
+            current =
+                when (current) {
+                    is P.ExprContext -> current.exprOr()
+                    is P.OrBaseContext -> current.exprAnd()
+                    is P.AndBaseContext -> current.exprNot()
+                    is P.NotBaseContext -> current.predicate()
+                    is P.PredicateBaseContext -> current.valueExpr()
+                    is P.ValuePrimaryContext -> current.primaryExpr()
+                    is P.PrimaryAtomContext -> current.atom()
+                    is P.AtomParenthesizedContext -> current.expr()
+                    else -> return current
+                }
+        }
+    }
+
+    /**
+     * True if [ctx] is a column reference, a literal (with a sign), or an explicit CAST. For these, the PartiQL type of
+     * the translation is the Redshift type, which is not true for every expression; for example, the scale of a DECIMAL
+     * quotient differs.
+     */
+    internal fun isColumnLiteralOrCast(ctx: ParserRuleContext): Boolean =
+        when (val inner = unwrap(ctx)) {
+            is P.AtomVariableContext, is P.PathFieldContext, is P.AtomLiteralContext -> true
+            is P.AtomCastContext, is P.ValueCastShorthandContext -> true
+            is P.ValueSignedContext -> unwrap(inner.valueExpr()) is P.AtomLiteralContext
+            else -> false
+        }
 
     /*
      * Checks and notes
@@ -408,6 +427,17 @@ internal class RedshiftFunctions(
     ) {
         if (args.size != expected) {
             throw UnsupportedConstructException.at(name, "`${name.text}` with ${args.size} argument(s); expected $expected")
+        }
+    }
+
+    internal fun arity(
+        name: Token,
+        args: List<*>,
+        expected: IntRange,
+    ) {
+        if (args.size !in expected) {
+            val bounds = if (expected.last == Int.MAX_VALUE) "at least ${expected.first}" else "${expected.first} to ${expected.last}"
+            throw UnsupportedConstructException.at(name, "`${name.text}` with ${args.size} argument(s); expected $bounds")
         }
     }
 
