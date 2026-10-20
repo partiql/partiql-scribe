@@ -24,10 +24,10 @@ SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c", "T"."d" AS "d", "T"."x" A
 
 
 --#[in-08]
-SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c", "T"."d" AS "d", "T"."x" AS "x", "T"."array" AS "array", "T"."z" AS "z", "T"."v" AS "v", "T"."timestamp_1" AS "timestamp_1", "T"."timestamp_2" AS "timestamp_2" FROM "default"."T" AS "T" WHERE CASE WHEN contains("T"."array", "T"."b") THEN true WHEN "T"."b" IS NULL OR "T"."array" IS NULL OR list_count("T"."array") < len("T"."array") THEN NULL ELSE false END;
+SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c", "T"."d" AS "d", "T"."x" AS "x", "T"."array" AS "array", "T"."z" AS "z", "T"."v" AS "v", "T"."timestamp_1" AS "timestamp_1", "T"."timestamp_2" AS "timestamp_2" FROM "default"."T" AS "T" WHERE CASE WHEN contains("T"."array", "T"."b") THEN true WHEN len("T"."array") = 0 THEN false WHEN "T"."b" IS NULL OR "T"."array" IS NULL OR list_count("T"."array") < len("T"."array") THEN NULL ELSE false END;
 
 --#[in-09]
-SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c", "T"."d" AS "d", "T"."x" AS "x", "T"."array" AS "array", "T"."z" AS "z", "T"."v" AS "v", "T"."timestamp_1" AS "timestamp_1", "T"."timestamp_2" AS "timestamp_2" FROM "default"."T" AS "T" WHERE NOT (CASE WHEN contains("T"."array", "T"."b") THEN true WHEN "T"."b" IS NULL OR "T"."array" IS NULL OR list_count("T"."array") < len("T"."array") THEN NULL ELSE false END);
+SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c", "T"."d" AS "d", "T"."x" AS "x", "T"."array" AS "array", "T"."z" AS "z", "T"."v" AS "v", "T"."timestamp_1" AS "timestamp_1", "T"."timestamp_2" AS "timestamp_2" FROM "default"."T" AS "T" WHERE NOT (CASE WHEN contains("T"."array", "T"."b") THEN true WHEN len("T"."array") = 0 THEN false WHEN "T"."b" IS NULL OR "T"."array" IS NULL OR list_count("T"."array") < len("T"."array") THEN NULL ELSE false END);
 
 --#[in-10]
 SELECT "T"."a" AS "a", "T"."b" AS "b", "T"."c" AS "c", "T"."d" AS "d", "T"."x" AS "x", "T"."array" AS "array", "T"."z" AS "z", "T"."v" AS "v", "T"."timestamp_1" AS "timestamp_1", "T"."timestamp_2" AS "timestamp_2" FROM "default"."T" AS "T" WHERE "T"."b" IN (SELECT "T"."b" AS "b" FROM "default"."T" AS "T");
@@ -42,7 +42,13 @@ SELECT "T"."b" IN (1, NULL) AS "r" FROM "default"."T" AS "T";
 SELECT "T"."b" NOT IN (1, NULL) AS "r" FROM "default"."T" AS "T";
 
 --#[in-14]
-SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" IN [];
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE false;
 
 --#[in-15]
-SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" NOT IN [];
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE NOT (false);
+
+--#[in-16]
+SELECT "T"."b" AS "b", NOT (false) AS "r" FROM "default"."T" AS "T";
+
+--#[in-17]
+SELECT "T"."b" AS "b", NOT (CASE WHEN contains("T"."array", CAST(NULL AS INT)) THEN true WHEN len("T"."array") = 0 THEN false WHEN CAST(NULL AS INT) IS NULL OR "T"."array" IS NULL OR list_count("T"."array") < len("T"."array") THEN NULL ELSE false END) AS "r" FROM "default"."T" AS "T";

@@ -370,16 +370,20 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
                     where = exprNullPredicate(element, false),
                 ),
             )
-        val unknown =
-            exprOr(
-                exprOr(exprNullPredicate(value, false), exprNullPredicate(collection, false)),
-                exprOperator(">", nullElements, exprLit(Literal.intNum(0L))),
-            )
+        // Same order as PartiQL's `FnInCollection`: an empty array is false even for a NULL value; a NULL value or
+        // array is NULL; then a match is true. The NULL check must come before `array_contains`, which matches a NULL
+        // value against a JSON-null element (`array_contains([1, null], NULL)` is true on Redshift).
+        val empty =
+            exprOperator("=", exprCall(Identifier.regular("get_array_length"), listOf(collection)), exprLit(Literal.intNum(0L)))
+        val nullOperand = exprOr(exprNullPredicate(value, false), exprNullPredicate(collection, false))
+        val hasNullElement = exprOperator(">", nullElements, exprLit(Literal.intNum(0L)))
         return exprCase(
             null,
             listOf(
+                exprCaseBranch(empty, exprLit(Literal.bool(false))),
+                exprCaseBranch(nullOperand, exprLit(Literal.nul())),
                 exprCaseBranch(contains, exprLit(Literal.bool(true))),
-                exprCaseBranch(unknown, exprLit(Literal.nul())),
+                exprCaseBranch(hasNullElement, exprLit(Literal.nul())),
             ),
             exprLit(Literal.bool(false)),
         )

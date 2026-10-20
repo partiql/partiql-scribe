@@ -1,6 +1,8 @@
 package org.partiql.scribe.targets.spark
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCase
+import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
@@ -562,6 +564,13 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                 message = "PartiQL `<value> IN <array>` was replaced by Spark `array_contains(<array>, <value>)`",
             ),
         )
-        return exprCall(Identifier.regular("array_contains"), listOf(collection, value))
+        // `array_contains` is already NULL-aware, except that a NULL value against an empty array gives NULL where
+        // PartiQL gives false, so check for an empty array first.
+        val empty = exprOperator("=", exprCall(Identifier.regular("size"), listOf(collection)), exprLit(Literal.intNum(0L)))
+        return exprCase(
+            null,
+            listOf(exprCaseBranch(empty, exprLit(Literal.bool(false)))),
+            exprCall(Identifier.regular("array_contains"), listOf(collection, value)),
+        )
     }
 }

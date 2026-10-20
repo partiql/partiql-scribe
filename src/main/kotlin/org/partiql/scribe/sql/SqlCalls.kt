@@ -358,6 +358,11 @@ public abstract class SqlCalls(context: ScribeContext) {
 
     // functions to operator
     public open fun inCollection(args: SqlArgs): Expr {
+        // PartiQL: `x IN <empty>` is false even when x is NULL (`NOT IN` is true). SQL has no empty IN list.
+        when (val rhs = args[1].expr) {
+            is ExprArray, is ExprBag -> if (rhs.children.isEmpty()) return exprLit(Literal.bool(false))
+            else -> {}
+        }
         val lhs =
             when (val arg0 = args[0].expr) {
                 is ExprArray -> exprRowValue(arg0.values)
