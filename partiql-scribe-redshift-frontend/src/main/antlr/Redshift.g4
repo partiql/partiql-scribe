@@ -156,6 +156,7 @@ atom
     | CAST PAREN_LEFT expr AS dataType PAREN_RIGHT                                  # atomCast
     | CASE operand=expr? caseWhen+ (ELSE otherwise=expr)? END                       # atomCase
     | name=(DATEADD | DATEDIFF) PAREN_LEFT part=identifier COMMA expr COMMA expr PAREN_RIGHT # atomDateFunction
+    | EXTRACT PAREN_LEFT part=datePart FROM expr PAREN_RIGHT                        # atomExtract
     | COUNT PAREN_LEFT ASTERISK PAREN_RIGHT                                         # atomCountStar
     | name=functionName PAREN_LEFT (setQuantifier? expr (COMMA expr)*)? PAREN_RIGHT # atomFunctionCall
     | SYSDATE                                                                       # atomSysdate
@@ -163,6 +164,11 @@ atom
     | PAREN_LEFT query PAREN_RIGHT                                                  # atomSubquery
     | PAREN_LEFT expr PAREN_RIGHT                                                   # atomParenthesized
     | identifier                                                                    # atomVariable
+    ;
+
+datePart
+    : identifier
+    | STRING_LITERAL
     ;
 
 caseWhen
@@ -183,7 +189,10 @@ literal
     | DECIMAL_LITERAL                           # literalDecimal
     | STRING_LITERAL                            # literalString
     | DATE STRING_LITERAL                       # literalDate
-    | TIMESTAMP STRING_LITERAL                  # literalTimestamp
+    | TIME (WITHOUT TIME ZONE)? STRING_LITERAL                          # literalTime
+    | (TIME WITH TIME ZONE | TIMETZ) STRING_LITERAL                     # literalTimeTz
+    | TIMESTAMP (WITHOUT TIME ZONE)? STRING_LITERAL                     # literalTimestamp
+    | (TIMESTAMP WITH TIME ZONE | TIMESTAMPTZ) STRING_LITERAL           # literalTimestampTz
     ;
 
 /*
@@ -193,8 +202,10 @@ literal
 dataType
     : DOUBLE PRECISION                                                      # typeDoublePrecision
     | CHARACTER VARYING (PAREN_LEFT length=INTEGER_LITERAL PAREN_RIGHT)?    # typeCharacterVarying
+    | TIME (WITHOUT TIME ZONE)?                                             # typeTime
+    | (TIME WITH TIME ZONE | TIMETZ)                                        # typeTimeTz
     | TIMESTAMP (WITHOUT TIME ZONE)?                                        # typeTimestamp
-    | TIMESTAMP WITH TIME ZONE                                              # typeTimestampTz
+    | (TIMESTAMP WITH TIME ZONE | TIMESTAMPTZ)                              # typeTimestampTz
     | DATE                                                                  # typeDate
     | name=identifier (PAREN_LEFT arg0=INTEGER_LITERAL (COMMA arg1=INTEGER_LITERAL)? PAREN_RIGHT)? # typeNamed
     ;
@@ -210,8 +221,8 @@ identifier
  * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_pg_keywords.html
  */
 nonReserved
-    : CHARACTER | COUNT | DATE | DATEADD | DATEDIFF | DOUBLE | ESCAPE | FIRST | LAST | NULLS | PRECISION | TIME
-    | TIMESTAMP | VARYING | WITHOUT | ZONE
+    : CHARACTER | COUNT | DATE | DATEADD | DATEDIFF | DOUBLE | ESCAPE | EXTRACT | FIRST | LAST | NULLS | PRECISION
+    | TIME | TIMESTAMP | TIMESTAMPTZ | TIMETZ | VARYING | WITHOUT | ZONE
     ;
 
 /*
@@ -239,6 +250,7 @@ DOUBLE: 'DOUBLE';
 ELSE: 'ELSE';
 END: 'END';
 ESCAPE: 'ESCAPE';
+EXTRACT: 'EXTRACT';
 FALSE: 'FALSE';
 FIRST: 'FIRST';
 FROM: 'FROM';
@@ -270,6 +282,8 @@ SYSDATE: 'SYSDATE';
 THEN: 'THEN';
 TIME: 'TIME';
 TIMESTAMP: 'TIMESTAMP';
+TIMESTAMPTZ: 'TIMESTAMPTZ';
+TIMETZ: 'TIMETZ';
 TOP: 'TOP';
 TRUE: 'TRUE';
 VARYING: 'VARYING';

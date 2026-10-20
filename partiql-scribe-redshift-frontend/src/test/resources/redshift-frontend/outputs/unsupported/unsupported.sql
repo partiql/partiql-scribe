@@ -24,3 +24,21 @@
 
 --#[top-and-limit]
 [UNSUPPORTED{message="TOP together with LIMIT"}];
+
+--#[extract-week]
+[UNSUPPORTED{message="EXTRACT datepart `week`"}];
+
+--#[extract-timezone-hour]
+[UNSUPPORTED{message="EXTRACT datepart `timezone_hour`"}];
+
+--#[extract-epoch]
+[UNSUPPORTED{message="EXTRACT datepart `epoch`"}];
+
+--#[timetz-zone-name]
+[UNSUPPORTED{message="TIMETZ literal format '12:30:45 PST'"}];
+
+--#[timestamp-with-offset]
+[UNSUPPORTED{message="TIMESTAMP literal format '2026-10-19 12:30:45+08:00'"}];
+
+--#[time-precision-7]
+[UNSUPPORTED{message="TIME literal format '12:30:45.1234567'"}];

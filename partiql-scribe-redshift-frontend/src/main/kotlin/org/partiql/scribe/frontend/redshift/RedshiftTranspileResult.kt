@@ -22,7 +22,7 @@ public class RedshiftTranspileResult internal constructor(
         /** The input is not valid: a syntax error, or a reference that the catalog does not resolve. */
         INVALID_INPUT,
 
-        /** The translator produced output that the PartiQL parser rejects. This is a translator defect. */
+        /** The translator produced output that the PartiQL parser or planner rejects. This is a translator defect. */
         INTERNAL_ERROR,
     }
 

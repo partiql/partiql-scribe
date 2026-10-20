@@ -33,7 +33,7 @@ import org.partiql.spi.errors.Severity as PSeverity
  *  1. Parse the Redshift text with the Redshift grammar.
  *  2. Build a PartiQL AST from the parse tree. Dialect differences are rewritten here.
  *  3. Plan the AST with the PartiQL planner against [Session]. This resolves names and types.
- *  4. Print the plan with the Scribe [PartiQLTarget], then parse the output with the PartiQL parser to verify it.
+ *  4. Print the plan with the Scribe [PartiQLTarget], then parse and plan the output to verify it.
  *
  * The translation is deterministic: the same input and session always give the same result.
  *
@@ -82,12 +82,13 @@ public class RedshiftTranspiler(
             return result(RedshiftTranspileResult.Status.UNSUPPORTED, problems + scribeProblems)
         }
 
-        // Verify that the output is valid PartiQL.
-        val parseErrors = CollectingPErrorListener()
-        partiqlParser.parse(partiql, Context.of(parseErrors))
-        if (parseErrors.errors.isNotEmpty()) {
+        // Verify that the output is valid PartiQL: it parses, and it plans against the same session.
+        val outputErrors = CollectingPErrorListener()
+        val outputContext = Context.of(outputErrors)
+        partiqlParser.parse(partiql, outputContext).statements.singleOrNull()?.let { planner.plan(it, session, outputContext) }
+        if (outputErrors.errors.isNotEmpty()) {
             val internal =
-                parseErrors.errors.map {
+                outputErrors.errors.map {
                     RedshiftProblem(RedshiftProblem.Code.INTERNAL_ERROR, "Output is not valid PartiQL: $it; output: $partiql")
                 }
             return result(RedshiftTranspileResult.Status.INTERNAL_ERROR, problems + internal)

@@ -9,6 +9,7 @@ import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprCase
 import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
+import org.partiql.ast.Ast.exprExtract
 import org.partiql.ast.Ast.exprInCollection
 import org.partiql.ast.Ast.exprLike
 import org.partiql.ast.Ast.exprLit
@@ -36,6 +37,7 @@ import org.partiql.ast.Ast.selectList
 import org.partiql.ast.Ast.selectStar
 import org.partiql.ast.Ast.sort
 import org.partiql.ast.DataType
+import org.partiql.ast.DatetimeField
 import org.partiql.ast.FromTableRef
 import org.partiql.ast.FromType
 import org.partiql.ast.GroupByStrategy
@@ -307,6 +309,7 @@ internal class RedshiftAstBuilder(
                     ctx.otherwise?.let(::expr),
                 )
             is P.AtomDateFunctionContext -> dateFunction(ctx)
+            is P.AtomExtractContext -> extract(ctx)
             is P.AtomCountStarContext -> exprCall(Identifier.regular("count"), emptyList(), null)
             is P.AtomFunctionCallContext ->
                 functions.call(ctx.name.start, ctx.expr().map(::expr), setQuantifier(ctx.setQuantifier()))
@@ -338,6 +341,31 @@ internal class RedshiftAstBuilder(
         return exprCall(Identifier.regular("$SYSTEM_PREFIX_INTERNAL${function}_$part"), args, null)
     }
 
+    /**
+     * Translates `EXTRACT(part FROM x)`.
+     *
+     * For SECOND the result types are different: Redshift returns INTEGER (the fraction is truncated) for TIMESTAMP
+     * and TIME, and DOUBLE PRECISION for TIMESTAMPTZ; PartiQL returns a DECIMAL that keeps the fraction. PartiQL has
+     * no truncation function to make the result equal, so the translator adds a note.
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_EXTRACT_function.html
+     */
+    private fun extract(ctx: P.AtomExtractContext): Expr {
+        val partToken = ctx.part.start
+        val partText =
+            if (ctx.part.STRING_LITERAL() != null) stringValue(partToken).lowercase() else ctx.part.text.lowercase()
+        // TIMEZONE_HOUR and TIMEZONE_MINUTE are not supported: the Scribe PartiQL target cannot print them.
+        val part = DATE_PARTS[partText] ?: throw UnsupportedConstructException.at(partToken, "EXTRACT datepart `${ctx.part.text}`")
+        if (part == "second") {
+            note(
+                partToken,
+                "Redshift `EXTRACT(SECOND ...)` returns INTEGER for TIMESTAMP and TIME values, without the fraction; " +
+                    "PartiQL returns a DECIMAL with the fraction",
+            )
+        }
+        return exprExtract(DatetimeField.parse(part.uppercase()), expr(ctx.expr()))
+    }
+
     private fun literal(ctx: P.LiteralContext): Expr =
         when (ctx) {
             is P.LiteralNullContext -> exprLit(Literal.nul())
@@ -351,15 +379,38 @@ internal class RedshiftAstBuilder(
                 if (!DATE_PATTERN.matches(value)) throw UnsupportedConstructException.at(ctx, "DATE literal format '$value'")
                 exprLit(Literal.typedString(DataType.DATE(), value))
             }
-            is P.LiteralTimestampContext -> {
-                val value = stringValue(ctx.STRING_LITERAL().symbol)
-                if (!TIMESTAMP_PATTERN.matches(value)) {
-                    throw UnsupportedConstructException.at(ctx, "TIMESTAMP literal format '$value'")
-                }
-                exprLit(Literal.typedString(DataType.TIMESTAMP(), value))
-            }
+            is P.LiteralTimeContext -> typedLiteral(ctx, ctx.STRING_LITERAL().symbol, "TIME", TIME_PATTERN, DataType.TIME())
+            is P.LiteralTimeTzContext ->
+                typedLiteral(ctx, ctx.STRING_LITERAL().symbol, "TIMETZ", TIME_TZ_PATTERN, DataType.TIME_WITH_TIME_ZONE())
+            is P.LiteralTimestampContext ->
+                typedLiteral(ctx, ctx.STRING_LITERAL().symbol, "TIMESTAMP", TIMESTAMP_PATTERN, DataType.TIMESTAMP())
+            is P.LiteralTimestampTzContext ->
+                typedLiteral(
+                    ctx,
+                    ctx.STRING_LITERAL().symbol,
+                    "TIMESTAMPTZ",
+                    TIMESTAMP_TZ_PATTERN,
+                    DataType.TIMESTAMP_WITH_TIME_ZONE(),
+                )
             else -> unexpected(ctx)
         }
+
+    /**
+     * Translates a typed datetime literal. A value that does not match [pattern] is unsupported: Redshift accepts more
+     * formats (for example time zone names), and a TIMESTAMP or TIME value with an offset, which Redshift ignores but
+     * PartiQL does not.
+     */
+    private fun typedLiteral(
+        ctx: P.LiteralContext,
+        string: Token,
+        name: String,
+        pattern: Regex,
+        type: DataType,
+    ): Expr {
+        val value = stringValue(string)
+        if (!pattern.matches(value)) throw UnsupportedConstructException.at(ctx, "$name literal format '$value'")
+        return exprLit(Literal.typedString(type, value))
+    }
 
     /*
      * Data types
@@ -371,8 +422,11 @@ internal class RedshiftAstBuilder(
         when (ctx) {
             is P.TypeDoublePrecisionContext -> DataType.DOUBLE_PRECISION()
             is P.TypeCharacterVaryingContext -> varchar(ctx.length?.text?.toInt())
+            is P.TypeTimeContext -> DataType.TIME(DATETIME_PRECISION)
+            is P.TypeTimeTzContext -> DataType.TIME_WITH_TIME_ZONE(DATETIME_PRECISION)
+            // TIMESTAMP without a precision is TIMESTAMP(6) in PartiQL.
             is P.TypeTimestampContext -> DataType.TIMESTAMP()
-            is P.TypeTimestampTzContext -> DataType.TIMESTAMP_WITH_TIME_ZONE()
+            is P.TypeTimestampTzContext -> DataType.TIMESTAMP_WITH_TIME_ZONE(DATETIME_PRECISION)
             is P.TypeDateContext -> DataType.DATE()
             is P.TypeNamedContext -> namedType(ctx)
             else -> unexpected(ctx)
@@ -403,7 +457,6 @@ internal class RedshiftAstBuilder(
             "char", "character", "nchar", "bpchar" -> if (arg1 != null) unexpected(ctx) else DataType.CHAR(arg0 ?: 1)
             "varchar", "nvarchar" -> if (arg1 != null) unexpected(ctx) else varchar(arg0)
             "text" -> noArgs(varchar(null))
-            "timestamptz" -> noArgs(DataType.TIMESTAMP_WITH_TIME_ZONE())
             else -> throw UnsupportedConstructException.at(ctx, "data type `${ctx.name.text}`")
         }
     }
@@ -446,8 +499,17 @@ internal class RedshiftAstBuilder(
         /** The prefix of hidden PartiQL built-in function names; see `FunctionUtils` in partiql-spi. */
         const val SYSTEM_PREFIX_INTERNAL = "\uFDEF"
 
+        /**
+         * Redshift stores TIME, TIMETZ, TIMESTAMP, and TIMESTAMPTZ values with microsecond precision. PartiQL TIME
+         * without a precision is TIME(0), so the translator writes the precision.
+         */
+        const val DATETIME_PRECISION = 6
+
         val DATE_PATTERN = Regex("""\d{4}-\d{2}-\d{2}""")
-        val TIMESTAMP_PATTERN = Regex("""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{1,9})?""")
+        val TIME_PATTERN = Regex("""\d{2}:\d{2}:\d{2}(\.\d{1,6})?""")
+        val TIME_TZ_PATTERN = Regex("""\d{2}:\d{2}:\d{2}(\.\d{1,6})?[+-]\d{2}:\d{2}""")
+        val TIMESTAMP_PATTERN = Regex("""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{1,6})?""")
+        val TIMESTAMP_TZ_PATTERN = Regex("""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{1,6})?[+-]\d{2}:\d{2}""")
 
         /**
          * Redshift datepart names and abbreviations that have a PartiQL equivalent.

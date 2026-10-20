@@ -55,6 +55,10 @@ tasks.named("runKtlintCheckOverMainSourceSet") {
     dependsOn(tasks.generateGrammarSource)
 }
 
+tasks.named("runKtlintCheckOverTestSourceSet") {
+    dependsOn(tasks.generateTestGrammarSource)
+}
+
 ktlint {
     filter {
         exclude { it.file.path.contains("generated-src") }
@@ -77,6 +81,11 @@ java {
 
 tasks.test {
     useJUnitPlatform()
+    // `-PupdateRoundTrip` classifies the Scribe fixtures again and writes the round-trip sets; see RoundTripSuite.
+    if (project.hasProperty("updateRoundTrip")) {
+        systemProperty("redshift.roundtrip.update", file("src/test/resources/redshift-frontend/roundtrip").absolutePath)
+        outputs.upToDateWhen { false }
+    }
     testLogging {
         events.add(TestLogEvent.FAILED)
         exceptionFormat = TestExceptionFormat.FULL
