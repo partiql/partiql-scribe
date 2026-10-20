@@ -21,6 +21,8 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
     context,
     outer,
 ) {
+    override val selectValueSupported: Boolean = false
+
     internal companion object {
         val MARKER_EXPLODE = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}EXPLODE"
         val MARKER_LATERAL = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}LATERAL"

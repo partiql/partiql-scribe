@@ -15,3 +15,9 @@ package org.partiql.scribe
  * produces the real function name (e.g., "EXPLODE").
  */
 internal const val SCRIBE_MARKER_FN_PREFIX: String = "SCRIBE_MARKER_FN_"
+
+/**
+ * Marks an `EXISTS (<subquery>)` predicate. There is no EXISTS AST node, and rendering it as a plain call would
+ * emit `exists(SELECT ...)` or a quoted function name, so [org.partiql.scribe.sql.AstToSql] renders it directly.
+ */
+internal const val MARKER_EXISTS: String = "${SCRIBE_MARKER_FN_PREFIX}EXISTS"

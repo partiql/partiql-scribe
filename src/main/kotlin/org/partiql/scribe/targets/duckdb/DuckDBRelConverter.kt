@@ -21,6 +21,8 @@ public open class DuckDBRelConverter(transform: DuckDBPlanToAst, context: Scribe
     context,
     outer,
 ) {
+    override val selectValueSupported: Boolean = false
+
     internal companion object {
         val MARKER_UNNEST = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}UNNEST"
         val MARKER_LATERAL = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}LATERAL"

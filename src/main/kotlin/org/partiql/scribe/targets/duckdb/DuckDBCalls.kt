@@ -22,6 +22,7 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
 import org.partiql.scribe.sql.integerOperands
 import org.partiql.scribe.sql.utils.unquotedStringExpr
@@ -97,6 +98,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `exists(collection)` -> DuckDB `len(list) > 0` / `cardinality(map) > 0`
      */
     private fun existsFn(args: SqlArgs): Expr {
+        existsSubquery(args)?.let { return it }
         val call = collectionSize(args[0])
         listener.report(
             ScribeProblem.simpleInfo(

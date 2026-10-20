@@ -17,6 +17,7 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.spi.types.IntervalCode
@@ -360,6 +361,7 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `exists(collection)` -> Trino `cardinality(collection) > 0`
      */
     private fun existsFn(args: SqlArgs): Expr {
+        existsSubquery(args)?.let { return it }
         val cardId = Identifier.regular("cardinality")
         listener.report(
             ScribeProblem.simpleInfo(

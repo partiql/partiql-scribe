@@ -35,6 +35,7 @@ import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.SessionAttribute
 import org.partiql.ast.expr.TrimSpec
 import org.partiql.plan.RoutineRef
+import org.partiql.scribe.MARKER_EXISTS
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.spi.types.PType
@@ -96,6 +97,7 @@ public abstract class SqlCalls(context: ScribeContext) {
     public open val rules: Map<String, SqlCallFn> =
         mapOf(
             "not" to ::notFn,
+            "exists" to { args -> existsSubquery(args) ?: default("exists", args) },
             "pos" to ::posFn,
             "neg" to ::negFn,
             "eq" to ::eqFn,
@@ -525,3 +527,11 @@ internal fun inCollectionArrayOperands(args: SqlArgs): Pair<Expr, Expr>? {
 internal fun integerOperands(args: SqlArgs): Boolean = args.size == 2 && args.all { it.type.code() in INTEGER_TYPE_CODES }
 
 private val INTEGER_TYPE_CODES = setOf(PType.TINYINT, PType.SMALLINT, PType.INTEGER, PType.BIGINT)
+
+/**
+ * `EXISTS (<subquery>)`: the planner lowers it to `exists(<subquery>)`, which targets otherwise rewrite to a
+ * collection-size check (`cardinality(...) > 0`), invalid for a subquery (#179). Returns the [MARKER_EXISTS] call for a
+ * subquery argument, and `null` for a collection argument.
+ */
+internal fun existsSubquery(args: SqlArgs): Expr? =
+    (args.firstOrNull()?.expr as? ExprQuerySet)?.let { exprCall(Identifier.regular(MARKER_EXISTS), listOf(it)) }

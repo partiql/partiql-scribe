@@ -16,6 +16,7 @@ import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
+import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
 import org.partiql.scribe.sql.integerOperands
 import java.math.BigDecimal
@@ -493,6 +494,7 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `exists(collection)` -> Spark `size(collection) > 0`
      */
     private fun existsFn(args: SqlArgs): Expr {
+        existsSubquery(args)?.let { return it }
         val sizeId = Identifier.regular("size")
         listener.report(
             ScribeProblem.simpleInfo(

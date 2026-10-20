@@ -6,7 +6,7 @@
 utcnow();
 
 --#[contains]
-SELECT VALUE contains(p.items, 'x') FROM payload AS p;
+SELECT contains(p.items, 'x') AS c FROM payload AS p;
 
 --#[hex-to-bigint]
 hex_to_bigint('00C10300');

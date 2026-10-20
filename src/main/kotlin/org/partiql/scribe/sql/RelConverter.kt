@@ -180,6 +180,12 @@ public open class RelConverter(
     internal val listener = context.getProblemListener()
 
     /**
+     * Whether the target can emit `SELECT VALUE`. Only PartiQL can; SQL targets reject a `SELECT VALUE` that can't be
+     * rewritten to a SELECT list instead of emitting it (#203).
+     */
+    internal open val selectValueSupported: Boolean = true
+
+    /**
      * Converts a [Rel] to an [ExprQuerySetFactory].
      */
     public fun apply(
@@ -597,7 +603,7 @@ public open class RelConverter(
                             val key = field.name
                             val value = field.value
                             if (key !is ExprLit || key.lit.code() != Literal.STRING) {
-                                return select
+                                return unconvertedSelectValue(select)
                             }
                             val keyName = key.lit.stringValue()
                             // valid key-value pair
@@ -607,7 +613,7 @@ public open class RelConverter(
                             )
                         }
                     } else {
-                        return select
+                        return unconvertedSelectValue(select)
                     }
                 selectList(
                     items = projectionItems,
@@ -616,6 +622,20 @@ public open class RelConverter(
             }
             else -> select
         }
+    }
+
+    private fun unconvertedSelectValue(select: SelectValue): Select {
+        if (!selectValueSupported) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                    message =
+                        "SELECT VALUE is not supported by SQL targets unless it is a struct with string-literal keys " +
+                            "(e.g. SELECT VALUE {'a': a}); use a SELECT list instead",
+                ),
+            )
+        }
+        return select
     }
 
     override fun visitScan(
