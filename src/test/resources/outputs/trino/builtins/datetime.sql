@@ -129,3 +129,9 @@ SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."timestamp_1" > date_a
 
 --#[datetime-69]
 SELECT date_add('day', "T"."b", "T"."timestamp_1") AS "d" FROM "default"."T" AS "T";
+
+--#[datetime-70]
+SELECT date_add('hour', 13, TIME '12:34:56') AS "t" FROM "default"."T" AS "T";
+
+--#[datetime-71]
+SELECT date_add('month', 1, DATE '2024-01-31') AS "d" FROM "default"."T" AS "T";

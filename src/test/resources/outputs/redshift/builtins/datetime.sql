@@ -195,3 +195,9 @@ SELECT "T"."b" FROM "default"."T" AS "T" WHERE CAST("T"."timestamp_1" AS TIMESTA
 
 --#[datetime-69]
 SELECT DATEADD(DAY, "T"."b", CAST("T"."timestamp_1" AS TIMESTAMP)) AS "d" FROM "default"."T" AS "T";
+
+--#[datetime-70]
+SELECT DATEADD(HOUR, 13, TIME '12:34:56') AS "t" FROM "default"."T" AS "T";
+
+--#[datetime-71]
+SELECT DATEADD(MONTH, 1, DATE '2024-01-31') AS "d" FROM "default"."T" AS "T";

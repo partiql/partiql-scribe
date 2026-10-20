@@ -74,3 +74,9 @@ SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T` WHERE `T`.`timestamp_1` > (CAST(
 
 --#[datetime-69]
 SELECT `T`.`timestamp_1` + `make_interval`(0, 0, 0, `T`.`b`, 0, 0, 0) AS `d` FROM `default`.`T` AS `T`;
+
+--#[datetime-70]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[datetime-71]
+SELECT DATE '2024-01-31' + `make_interval`(0, 1, 0, 0, 0, 0, 0) AS `d` FROM `default`.`T` AS `T`;

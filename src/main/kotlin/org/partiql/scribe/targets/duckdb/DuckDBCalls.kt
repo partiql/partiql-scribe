@@ -197,7 +197,10 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
 
     /**
      * PartiQL `DATE_ADD(<part>, <amount>, <datetime>)` -> DuckDB `date_add(<datetime>, to_<part>s(<amount>))`, e.g.
-     * `DATE_ADD(DAY, -30, ts)` -> `date_add(ts, to_days(-30))`. The amount may be any integer expression.
+     * `DATE_ADD(DAY, -30, ts)` -> `date_add(ts, to_days(-30))`. The amount may be an integer expression, not just a
+     * literal. This reverses the rejection added in #198, which assumed the amount had to be an INTERVAL literal;
+     * `to_<part>s(<expr>)` builds the interval at runtime instead. `to_years`, `to_months` and `to_days` take INTEGER,
+     * so a BIGINT amount outside the INTEGER range fails at runtime.
      *
      * DuckDB's interval arithmetic matches PartiQL's: months/years clamp to the end of the month
      * (`2024-01-31` + 1 month = `2024-02-29`), and TIME wraps around midnight. `DATE + <interval>` yields a
@@ -223,8 +226,8 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
                 else ->
                     listener.reportAndThrow(
                         ScribeProblem.simpleError(
-                            ScribeProblem.UNSUPPORTED_OPERATION,
-                            "DuckDB does not support `DATE_ADD` with datetime part ${part.name()}.",
+                            ScribeProblem.INVALID_PLAN,
+                            "Unexpected datetime part `$part`",
                         ),
                     )
             }
