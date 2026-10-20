@@ -316,6 +316,9 @@ internal class RedshiftExpressions(
                     Operand(ctx.value, expr(ctx.value)),
                 )
             is P.AtomApproximateContext -> throw UnsupportedConstructException.at(ctx, "APPROXIMATE aggregate")
+            // https://docs.aws.amazon.com/redshift/latest/dg/r_object_transform_function.html
+            is P.AtomObjectTransformContext ->
+                throw UnsupportedConstructException.at(ctx, "function `OBJECT_TRANSFORM`; PartiQL has no object transformation")
             is P.AtomCountStarContext ->
                 if (ctx.overClause() != null) {
                     builder.window(ctx)

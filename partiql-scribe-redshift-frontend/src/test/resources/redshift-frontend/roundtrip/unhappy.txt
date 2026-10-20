@@ -1,291 +1,282 @@
 # Scribe fixtures that do not round-trip. Columns: test key, expected status, reason. See RoundTripSuite.
-basics__case-00	INVALID_INPUT	syntax: missing 'SELECT' at 'CASE'
-basics__case-01	INVALID_INPUT	syntax: missing 'SELECT' at 'CASE'
-basics__case-02	INVALID_INPUT	syntax: missing 'SELECT' at 'CASE'
-basics__case-03	INVALID_INPUT	syntax: missing 'SELECT' at 'CASE'
+basics__case-00	INVALID_INPUT	syntax: mismatched input 'CASE'
+basics__case-01	INVALID_INPUT	syntax: mismatched input 'CASE'
+basics__case-02	INVALID_INPUT	syntax: mismatched input 'CASE'
+basics__case-03	INVALID_INPUT	syntax: mismatched input 'CASE'
 basics__case-09	INVALID_INPUT	syntax: no viable alternative at input 'CASE\n WHEN "T"."x" IS INT'
-basics__case-10	INVALID_INPUT	syntax: missing 'SELECT' at 'CASE'
-basics__distinct-02	INVALID_INPUT	syntax: extraneous input '('
-basics__distinct-03	INVALID_INPUT	syntax: extraneous input '('
-basics__distinct-04	INVALID_INPUT	syntax: extraneous input '('
-basics__exclude-02	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t"."flds" KEEP'
-basics__exclude-03	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t"."flds" KEEP'
-basics__exclude-04	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t"."flds" KEEP'
-basics__exclude-05	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t"."flds" KEEP'
-basics__exclude-06	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t"."flds" KEEP'
-basics__exclude-09	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t2"."flds" KEEP'
-basics__exclude-10	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t1"."flds" KEEP'
-basics__exclude-11	INVALID_INPUT	syntax: no viable alternative at input 'OBJECT_TRANSFORM("t1"."flds" KEEP'
-basics__interval-00	UNSUPPORTED	INTERVAL literal
-basics__interval-01	UNSUPPORTED	INTERVAL literal
-basics__interval-02	UNSUPPORTED	INTERVAL literal
-basics__interval-03	UNSUPPORTED	INTERVAL literal
-basics__interval-04	UNSUPPORTED	INTERVAL literal
-basics__interval-05	UNSUPPORTED	INTERVAL literal
-basics__interval-06	UNSUPPORTED	INTERVAL literal
-basics__interval-07	UNSUPPORTED	INTERVAL literal
-basics__interval-08	UNSUPPORTED	INTERVAL literal
-basics__interval-09	UNSUPPORTED	INTERVAL literal
-basics__interval-10	UNSUPPORTED	INTERVAL literal
-basics__interval-11	UNSUPPORTED	INTERVAL literal
-basics__interval-12	UNSUPPORTED	INTERVAL literal
-basics__interval-13	UNSUPPORTED	INTERVAL literal
-basics__interval-14	UNSUPPORTED	INTERVAL literal
-basics__interval-15	UNSUPPORTED	INTERVAL literal
-basics__interval-16	UNSUPPORTED	INTERVAL literal
-basics__interval-17	UNSUPPORTED	INTERVAL literal
-basics__interval-18	UNSUPPORTED	INTERVAL literal
-basics__interval-19	UNSUPPORTED	INTERVAL literal
-basics__interval-20	UNSUPPORTED	INTERVAL literal
-basics__interval-21	UNSUPPORTED	INTERVAL literal
-basics__interval-22	UNSUPPORTED	INTERVAL literal
-basics__interval-23	UNSUPPORTED	INTERVAL literal
-basics__interval-24	UNSUPPORTED	INTERVAL literal
-basics__interval-25	UNSUPPORTED	INTERVAL literal
-basics__interval-26	UNSUPPORTED	INTERVAL literal
-basics__interval-27	UNSUPPORTED	INTERVAL literal
-basics__interval-28	UNSUPPORTED	INTERVAL literal
-basics__interval-29	UNSUPPORTED	INTERVAL literal
-basics__interval-30	UNSUPPORTED	INTERVAL literal
-basics__interval-31	UNSUPPORTED	INTERVAL literal
-basics__interval-32	UNSUPPORTED	INTERVAL literal
-basics__interval-33	UNSUPPORTED	INTERVAL literal
-basics__interval-34	UNSUPPORTED	INTERVAL literal
-basics__interval-35	UNSUPPORTED	INTERVAL literal
-basics__interval-36	UNSUPPORTED	INTERVAL literal
-basics__interval-37	UNSUPPORTED	INTERVAL literal
-basics__interval-38	UNSUPPORTED	INTERVAL literal
-basics__interval-39	UNSUPPORTED	INTERVAL literal
-basics__interval-40	UNSUPPORTED	INTERVAL literal
-basics__interval-41	UNSUPPORTED	INTERVAL literal
-basics__interval-42	UNSUPPORTED	INTERVAL literal
-basics__interval-43	UNSUPPORTED	INTERVAL literal
-basics__interval-44	UNSUPPORTED	INTERVAL literal
-basics__interval-45	UNSUPPORTED	INTERVAL literal
-basics__interval-46	UNSUPPORTED	INTERVAL literal
-basics__interval-47	UNSUPPORTED	INTERVAL literal
-basics__interval-48	UNSUPPORTED	INTERVAL literal
-basics__interval-49	UNSUPPORTED	INTERVAL literal
-basics__interval-50	UNSUPPORTED	INTERVAL literal
-basics__interval-51	UNSUPPORTED	INTERVAL literal
-basics__interval-52	UNSUPPORTED	INTERVAL literal
-basics__interval-53	UNSUPPORTED	INTERVAL literal
-basics__interval-54	UNSUPPORTED	INTERVAL literal
-basics__interval-55	UNSUPPORTED	INTERVAL literal
-basics__interval-56	UNSUPPORTED	INTERVAL literal
-basics__interval-57	UNSUPPORTED	INTERVAL literal
-basics__interval-58	UNSUPPORTED	INTERVAL literal
-basics__interval-59	UNSUPPORTED	INTERVAL literal
-basics__interval-60	UNSUPPORTED	INTERVAL literal
-basics__interval-61	UNSUPPORTED	INTERVAL literal
-basics__interval-62	UNSUPPORTED	INTERVAL literal
-basics__interval-63	UNSUPPORTED	INTERVAL literal
-basics__interval-64	UNSUPPORTED	INTERVAL literal
-basics__interval-65	UNSUPPORTED	INTERVAL literal
-basics__interval-66	UNSUPPORTED	INTERVAL literal
-basics__interval-67	UNSUPPORTED	INTERVAL literal
-basics__interval-68	UNSUPPORTED	INTERVAL literal
-basics__interval-69	UNSUPPORTED	INTERVAL literal
-basics__interval-70	UNSUPPORTED	INTERVAL literal
-basics__interval-71	UNSUPPORTED	INTERVAL literal
-basics__interval-72	UNSUPPORTED	INTERVAL literal
-basics__interval-73	UNSUPPORTED	INTERVAL literal
-basics__interval-74	UNSUPPORTED	INTERVAL literal
-basics__interval-75	UNSUPPORTED	INTERVAL literal
-basics__interval-76	UNSUPPORTED	INTERVAL literal
-basics__interval-77	UNSUPPORTED	INTERVAL literal
-basics__limit-offset-01	INVALID_INPUT	syntax: mismatched input 'OFFSET'
-basics__limit-offset-03	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-04	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-05	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-06	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-07	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-08	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-09	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-10	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-11	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-12	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-13	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-14	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-15	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-16	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-17	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-18	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-19	INVALID_INPUT	syntax: extraneous input '('
-basics__limit-offset-20	INVALID_INPUT	syntax: extraneous input '('
-basics__map-00	UNSUPPORTED	function `OBJECT`
-basics__map-02	UNSUPPORTED	function `OBJECT`
-basics__map-03	UNSUPPORTED	function `OBJECT`
-basics__map-04	UNSUPPORTED	function `OBJECT`
-basics__order-by-07	INVALID_INPUT	syntax: extraneous input '('
-basics__order-by-08	INVALID_INPUT	syntax: extraneous input '('
-basics__order-by-09	INVALID_INPUT	syntax: extraneous input '('
-basics__select-10	INVALID_INPUT	semantic: VAR_REF_NOT_FOUND
-basics__select-11	INVALID_INPUT	semantic: VAR_REF_NOT_FOUND
-basics__setop-00	INVALID_INPUT	syntax: extraneous input '('
-basics__setop-01	INVALID_INPUT	syntax: extraneous input '('
-basics__setop-02	INVALID_INPUT	syntax: missing 'SELECT' at '('
-basics__setop-03	INVALID_INPUT	syntax: extraneous input '('
-basics__setop-04	INVALID_INPUT	syntax: extraneous input '('
-basics__setop-05	INVALID_INPUT	syntax: missing 'SELECT' at '('
-basics__struct-11	UNSUPPORTED	function `OBJECT`
-basics__struct-12	UNSUPPORTED	function `OBJECT`
-basics__struct-13	UNSUPPORTED	function `OBJECT`
-basics__struct-26	UNSUPPORTED	function `OBJECT`
-basics__struct-27	UNSUPPORTED	function `OBJECT`
-basics__struct-28	UNSUPPORTED	function `OBJECT`
-basics__struct-29	UNSUPPORTED	function `OBJECT`
-basics__window-01	UNSUPPORTED	window function
-basics__window-02	UNSUPPORTED	window function
-basics__window-03	UNSUPPORTED	window function
-basics__window-04	UNSUPPORTED	window function
-basics__window-05	UNSUPPORTED	window function
-basics__window-06	UNSUPPORTED	window function
-basics__window-07	UNSUPPORTED	window function
-basics__window-08	UNSUPPORTED	window function
-basics__window-09	UNSUPPORTED	window function
-basics__window-10	UNSUPPORTED	window function
-basics__window-12	UNSUPPORTED	window function
-basics__window-14	UNSUPPORTED	window function
-basics__window-15	UNSUPPORTED	window function
-basics__window-16	UNSUPPORTED	window function
-basics__window-17	UNSUPPORTED	window function
-basics__window-18	UNSUPPORTED	window function
-basics__window-19	UNSUPPORTED	window function
-basics__window-20	UNSUPPORTED	window function
-basics__window-21	UNSUPPORTED	window function
-basics__window-22	UNSUPPORTED	window function
-basics__window-34	UNSUPPORTED	window function
-basics__with-00	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-01	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-02	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-03	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-04	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-05	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-06	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-07	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-08	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-09	INVALID_INPUT	syntax: mismatched input 'WITH'
-basics__with-10	INVALID_INPUT	syntax: mismatched input 'WITH'
-builtins__abs-select-1	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-10	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-11	INVALID_INPUT	syntax: no viable alternative at input 'ABS(-1.7976931348623157E308'
-builtins__abs-select-12	INVALID_INPUT	syntax: no viable alternative at input 'ABS(1.7976931348623157E308'
-builtins__abs-select-13	INVALID_INPUT	syntax: no viable alternative at input 'ABS(-3.4028235E38'
-builtins__abs-select-14	INVALID_INPUT	syntax: no viable alternative at input 'ABS(3.4028235E38'
-builtins__abs-select-16	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-17	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-18	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-19	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-2	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-21	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-22	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-23	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-24	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-3	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-4	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-5	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-6	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-7	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-8	INVALID_INPUT	syntax: extraneous input ';'
-builtins__abs-select-9	INVALID_INPUT	syntax: extraneous input ';'
-builtins__bitwise-and-00	INVALID_INPUT	syntax: mismatched input '&'
-builtins__bitwise-and-01	INVALID_INPUT	syntax: mismatched input '&'
-builtins__char-length-01	MISMATCH	SELECT CHAR_LENGTH(CAST("T"['d']['e'] AS VARCHAR(256))) AS "_1" FROM "default"."T" AS "T"
-builtins__char-length-02	MISMATCH	SELECT CHAR_LENGTH(CAST("T_ALL_TYPES"['col_list_string'][1] AS VARCHAR(256))) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES"
-builtins__extract-61	UNSUPPORTED	INTERVAL literal
-builtins__extract-62	UNSUPPORTED	INTERVAL literal
-builtins__extract-63	UNSUPPORTED	INTERVAL literal
-builtins__extract-64	UNSUPPORTED	INTERVAL literal
-builtins__extract-65	UNSUPPORTED	INTERVAL literal
-builtins__extract-66	UNSUPPORTED	INTERVAL literal
-builtins__extract-67	UNSUPPORTED	INTERVAL literal
-builtins__extract-68	UNSUPPORTED	INTERVAL literal
-builtins__extract-69	UNSUPPORTED	INTERVAL literal
-builtins__extract-70	UNSUPPORTED	INTERVAL literal
-builtins__extract-71	UNSUPPORTED	INTERVAL literal
-builtins__extract-72	UNSUPPORTED	INTERVAL literal
-builtins__extract-73	UNSUPPORTED	INTERVAL literal
-builtins__extract-74	UNSUPPORTED	INTERVAL literal
-builtins__extract-75	UNSUPPORTED	INTERVAL literal
-builtins__extract-76	UNSUPPORTED	INTERVAL literal
-builtins__extract-77	UNSUPPORTED	INTERVAL literal
-builtins__position-00	UNSUPPORTED	POSITION
-builtins__replace-00	UNSUPPORTED	function `REPLACE`
+basics__case-10	INVALID_INPUT	syntax: mismatched input 'CASE'
+basics__datetime-11	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 03:35:06.78+00:00' AS "_1" FROM "default"."T" AS "T"
+basics__datetime-12	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '0001-02-03 04:35:06.78+00:00' AS "_1" FROM "default"."T" AS "T"
+basics__exclude-02	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__exclude-03	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__exclude-04	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__exclude-05	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__exclude-06	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__exclude-09	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__exclude-10	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__exclude-11	UNSUPPORTED	function `OBJECT_TRANSFORM`
+basics__interval-20	MISMATCH	SELECT INTERVAL '10.000000' SECOND (9, 6) AS "i" FROM "default"."T" AS "T"
+basics__interval-21	MISMATCH	SELECT INTERVAL '-10.000000' SECOND (9, 6) AS "i" FROM "default"."T" AS "T"
+basics__interval-22	MISMATCH	SELECT INTERVAL '10.000000' SECOND (9, 6) AS "i" FROM "default"."T" AS "T"
+basics__interval-23	MISMATCH	SELECT INTERVAL '-10.000000' SECOND (9, 6) AS "i" FROM "default"."T" AS "T"
+basics__interval-38	MISMATCH	SELECT INTERVAL '10 3:4:5.000000' DAY (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-39	MISMATCH	SELECT INTERVAL '-10 3:4:5.000000' DAY (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-40	MISMATCH	SELECT INTERVAL '10 3:4:5.000000' DAY (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-41	MISMATCH	SELECT INTERVAL '-10 3:4:5.000000' DAY (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-50	MISMATCH	SELECT INTERVAL '2:3:4.000000' HOUR (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-51	MISMATCH	SELECT INTERVAL '-2:3:4.000000' HOUR (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-52	MISMATCH	SELECT INTERVAL '2:3:4.000000' HOUR (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-53	MISMATCH	SELECT INTERVAL '-2:3:4.000000' HOUR (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-58	MISMATCH	SELECT INTERVAL '3:4.000000' MINUTE (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-59	MISMATCH	SELECT INTERVAL '-3:4.000000' MINUTE (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-60	MISMATCH	SELECT INTERVAL '3:4.000000' MINUTE (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-61	MISMATCH	SELECT INTERVAL '-3:4.000000' MINUTE (9) TO SECOND (6) AS "i" FROM "default"."T" AS "T"
+basics__interval-68	UNSUPPORTED	INTERVAL qualifier `DAY TO SECOND(9)`
+basics__interval-69	UNSUPPORTED	INTERVAL qualifier `DAY TO SECOND(9)`
+basics__interval-77	MISMATCH	SELECT INTERVAL '100000.000000' SECOND (9, 6) AS "i" FROM "default"."T" AS "T"
+basics__join-35	MISMATCH	SELECT "E"['a'] AS "a" FROM "default"."T" AS "E" INNER JOIN CASE WHEN @"E"['array'] IS LIST THEN @"E"['array'] ELSE [] END AS "item" ON true
+basics__join-36	MISMATCH	SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN CASE WHEN @"E"['array'] IS LIST THEN @"E"['array'] ELSE [] END AS "item" ON true
+basics__join-37	MISMATCH	SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN CASE WHEN @"E"['array'] IS LIST THEN @"E"['array'] ELSE [] END AS "item" ON true
+basics__join-40	MISMATCH	SELECT "E"['a'] AS "a", "item" AS "item" FROM "default"."T" AS "E" LEFT JOIN CASE WHEN @"E"['array'] IS LIST THEN @"E"['array'] ELSE [] END AS "item" ON true
+basics__join-42	MISMATCH	SELECT "item" AS "item" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "E" INNER JOIN CASE WHEN @"E"['a'] IS LIST THEN @"E"['a'] ELSE [] END AS "nested" ON true INNER JOIN CASE WHEN @"nested"['nested_list'] IS LIST THEN @"nested"['nested_list'] ELSE [] END AS "item" ON true
+basics__join-43	MISMATCH	SELECT "item" AS "item" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON true INNER JOIN CASE WHEN @"E"['array'] IS LIST THEN @"E"['array'] ELSE [] END AS "item" ON true
+basics__limit-offset-10	INVALID_INPUT	semantic: EXCEPT ALL is not supported in Redshift
+basics__limit-offset-11	INVALID_INPUT	semantic: INTERSECT ALL is not supported in Redshift
+basics__limit-offset-19	INVALID_INPUT	semantic: EXCEPT ALL is not supported in Redshift
+basics__limit-offset-20	INVALID_INPUT	semantic: INTERSECT ALL is not supported in Redshift
+basics__map-02	UNSUPPORTED	`OBJECT` with a value that can be NULL (Redshift does not document whether it keeps the attribute)
+basics__map-03	UNSUPPORTED	`OBJECT` with a key that is not a string literal
+basics__paths-sfw-00	MISMATCH	SELECT COALESCE("t"['x']['y']) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-01	MISMATCH	SELECT COALESCE("t"['x'][0]) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-03	MISMATCH	SELECT COALESCE("t"['x']['y']) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-06	MISMATCH	SELECT COALESCE("t"['x']['y'][0]['y']) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-24	MISMATCH	SELECT COALESCE("t"['array']["t"['b']]) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-25	MISMATCH	SELECT COALESCE("t"['array']["t"['b'] + 1]) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-26	MISMATCH	SELECT COALESCE("t"['array'][-1]) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-27	MISMATCH	SELECT COALESCE("t"['array'][9223372036854775807]) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-30	MISMATCH	SELECT COALESCE("t"['x']['y']) AS "v" FROM "default"."T" AS "t"
+basics__paths-sfw-31	MISMATCH	SELECT COALESCE("t"['x']['y']) AS "v" FROM "default"."T" AS "t"
+basics__rel-aggregation-multiple-00	MISMATCH	SELECT count(1) AS "_1", sum("T"['b']) AS "_2", sum("T"['b']) / count("T"['b']) AS "_3", min("T"['b']) AS "_4", max("T"['b']) AS "_5" FROM "default"."T" AS "T"
+basics__rel-aggregation-multiple-01	MISMATCH	SELECT "T"['a'] AS "a", count(1) AS "_1", sum("T"['b']) AS "_2", sum("T"['b']) / count("T"['b']) AS "_3" FROM "default"."T" AS "T" GROUP BY "T"['a']
+basics__rel-aggregation-multiple-group-01	MISMATCH	SELECT "T"['a'] AS "a", "T"['c'] AS "c", sum("T"['b']) AS "_1", sum("T"['b']) / count("T"['b']) AS "_2" FROM "default"."T" AS "T" GROUP BY "T"['a'], "T"['c']
+basics__rel-aggregation-multiple-group-02	MISMATCH	SELECT sum("T"['b']) AS "_1", "T"['a'] AS "a", sum("T"['b']) / count("T"['b']) AS "_2", "T"['c'] AS "c" FROM "default"."T" AS "T" GROUP BY "T"['a'], "T"['c']
+basics__select-06	UNSUPPORTED	reference to the FROM item `T` as a value
+basics__select-10	UNSUPPORTED	`CURRENT_USER`
+basics__select-11	UNSUPPORTED	`CURRENT_USER`
+basics__struct-11	UNSUPPORTED	`OBJECT` with a value that can be NULL (Redshift does not document whether it keeps the attribute)
+basics__struct-12	UNSUPPORTED	`OBJECT` with a value that can be NULL (Redshift does not document whether it keeps the attribute)
+basics__struct-13	UNSUPPORTED	`OBJECT` with a value that can be NULL (Redshift does not document whether it keeps the attribute)
+basics__struct-28	UNSUPPORTED	`OBJECT` with a value that can be NULL (Redshift does not document whether it keeps the attribute)
+basics__struct-29	UNSUPPORTED	DECIMAL division
+basics__subquery-16	MISMATCH	SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE CAST("t1"['b'] AS BIGINT) > (SELECT sum("t2"['b']) / count("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE "t1"['a'] = "t2"['a'])
+basics__subquery-19	MISMATCH	SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE (CAST("t1"['b'] AS BIGINT) > (SELECT sum("t2"['b']) / count("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE "t2"['a'] = "t1"['a'])) AND "t1"['v'] IN (SELECT "t3"['v'] AS "v" FROM "default"."T" AS "t3" WHERE "t3"['b'] = "t1"['b'])
+basics__subquery-20	MISMATCH	SELECT "t1"['a'] AS "a" FROM "default"."T" AS "t1" WHERE CAST("t1"['b'] AS BIGINT) > (SELECT sum("t2"['b']) / count("t2"['b']) AS "_1" FROM "default"."T" AS "t2" WHERE ("t2"['a'] = "t1"['a']) AND ("t2"['b'] > (SELECT min("t3"['b']) AS "_1" FROM "default"."T" AS "t3" WHERE "t3"['a'] = "t1"['a'])))
+basics__with-00	MISMATCH	SELECT "cte1"['a'] AS "a", "cte1"['b'] AS "b", "cte1"['c'] AS "c" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b", "SIMPLE_T"['c'] AS "c" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "cte1"
+basics__with-01	MISMATCH	SELECT "cte1"['a'] AS "a", "cte1"['b'] AS "b", "cte1"['c'] AS "c" FROM (SELECT "wle1"['a'] AS "a", "wle1"['b'] AS "b", "wle1"['c'] AS "c" FROM "default"."SIMPLE_T" AS "wle1") AS "cte1"
+basics__with-02	MISMATCH	SELECT "cte1"['a'] AS "a" FROM (SELECT "wle1"['a'] AS "a" FROM "default"."SIMPLE_T" AS "wle1") AS "cte1"
+basics__with-03	MISMATCH	SELECT "cte1"['a'] AS "a", "cte1"['cnt'] AS "cnt" FROM (SELECT "SIMPLE_T"['a'] AS "a", count(1) AS "cnt" FROM "default"."SIMPLE_T" AS "SIMPLE_T" GROUP BY "SIMPLE_T"['a']) AS "cte1" WHERE "cte1"['cnt'] > CAST(1 AS BIGINT)
+basics__with-04	MISMATCH	SELECT "cte1"['a'] AS "a", "cte1"['b'] AS "b" FROM (SELECT "t1"['a'] AS "a", "t2"['b'] AS "b" FROM "default"."SIMPLE_T" AS "t1" INNER JOIN "default"."SIMPLE_T" AS "t2" ON "t1"['a'] = "t2"['a']) AS "cte1"
+basics__with-05	MISMATCH	SELECT "cte3"['a'] AS "a" FROM (SELECT "cte2"['a'] AS "a" FROM (SELECT "cte1"['a'] AS "a" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "cte1") AS "cte2") AS "cte3"
+basics__with-06	MISMATCH	SELECT "cte1"['a'] AS "a", "cte1"['b'] AS "b", "cte2"['a'] AS "a", "cte3"['a'] AS "a" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "cte1" INNER JOIN (SELECT "cte1"['a'] AS "a" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "cte1") AS "cte2" ON "cte1"['a'] = "cte2"['a'] INNER JOIN (SELECT "cte2"['a'] AS "a" FROM (SELECT "cte1"['a'] AS "a" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "cte1") AS "cte2") AS "cte3" ON "cte2"['a'] = "cte3"['a']
+basics__with-07	MISMATCH	SELECT "cte1"['a'] AS "a" FROM (SELECT "SIMPLE_T"['a'] AS "a" FROM "default"."SIMPLE_T" AS "SIMPLE_T" WHERE CAST("SIMPLE_T"['b'] AS BIGINT) > (SELECT sum("SIMPLE_T"['b']) / count("SIMPLE_T"['b']) AS "_1" FROM "default"."SIMPLE_T" AS "SIMPLE_T")) AS "cte1"
+basics__with-08	MISMATCH	SELECT "c1"['a'] AS "a", "c1"['b'] AS "b", "c2"['a'] AS "a", "c2"['b'] AS "b" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "c1" INNER JOIN (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "c2" ON "c1"['a'] = "c2"['a']
+basics__with-09	MISMATCH	SELECT ROW_NUMBER() OVER (ORDER BY "cte1"['a'] ASC NULLS LAST) AS "rn", count(1) AS "cnt", "cte1"['a'] AS "a" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "cte1" GROUP BY "cte1"['a']
+basics__with-10	MISMATCH	SELECT "_0"['a'] AS "a", "_0"['b'] AS "b" FROM (SELECT "cte3"['a'] AS "a", "cte3"['b'] AS "b" FROM (SELECT "cte1"['a'] AS "a", "cte1"['b'] AS "b" FROM (SELECT "cte2"['a'] AS "a", "cte2"['b'] AS "b" FROM (SELECT "SIMPLE_T"['a'] AS "a", "SIMPLE_T"['b'] AS "b" FROM "default"."SIMPLE_T" AS "SIMPLE_T") AS "cte2") AS "cte1") AS "cte3") AS "_0"
+builtins__abs-select-11	UNSUPPORTED	numeric literal with an exponent
+builtins__abs-select-12	UNSUPPORTED	numeric literal with an exponent
+builtins__abs-select-13	UNSUPPORTED	numeric literal with an exponent
+builtins__abs-select-14	UNSUPPORTED	numeric literal with an exponent
+builtins__abs-select-18	MISMATCH	SELECT CAST(ABS(CAST(-99.99 AS DECIMAL(10,2))) AS DECIMAL(10,2)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__abs-select-24	MISMATCH	SELECT CAST(ABS("T"['col_decimal']) AS DECIMAL(38,0)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__abs-select-3	MISMATCH	SELECT CAST(ABS(-3.14) AS DECIMAL(3,2)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__abs-select-4	MISMATCH	SELECT CAST(ABS(3.14) AS DECIMAL(3,2)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__char-length-01	UNSUPPORTED	CAST to VARCHAR without a length of a string that can exceed 256 bytes
+builtins__char-length-02	UNSUPPORTED	CAST to VARCHAR without a length of a string that can exceed 256 bytes
+builtins__datetime-08	MISMATCH	SELECT CAST("utcnow"() AS DATE) AS "CURRENT_DATE" FROM "default"."T" AS "T"
+builtins__datetime-12	MISMATCH	SELECT DATE_ADD(DAY, 5, CAST(CAST("utcnow"() AS DATE) AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-13	MISMATCH	SELECT DATE_ADD(MONTH, 5, CAST(CAST("utcnow"() AS DATE) AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-14	MISMATCH	SELECT DATE_ADD(DAY, EXTRACT(DAY FROM CAST(CAST("utcnow"() AS DATE) AS TIMESTAMP)) - EXTRACT(DAY FROM DATE_ADD(YEAR, 5, CAST(CAST("utcnow"() AS DATE) AS TIMESTAMP))), DATE_ADD(YEAR, 5, CAST(CAST("utcnow"() AS DATE) AS TIMESTAMP))) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-15	MISMATCH	SELECT DATE_DIFF(YEAR, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_2'] AS TIMESTAMP)) - DATE_DIFF(YEAR, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_1'] AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-16	MISMATCH	SELECT DATE_DIFF(MONTH, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_2'] AS TIMESTAMP)) - DATE_DIFF(MONTH, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_1'] AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-17	MISMATCH	SELECT DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_2'] AS TIMESTAMP)) - DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_1'] AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-18	MISMATCH	SELECT DATE_DIFF(HOUR, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_2'] AS TIMESTAMP)) - DATE_DIFF(HOUR, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_1'] AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-19	MISMATCH	SELECT DATE_DIFF(MINUTE, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_2'] AS TIMESTAMP)) - DATE_DIFF(MINUTE, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_1'] AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-20	MISMATCH	SELECT DATE_DIFF(SECOND, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_2'] AS TIMESTAMP)) - DATE_DIFF(SECOND, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['timestamp_1'] AS TIMESTAMP)) AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-22	MISMATCH	SELECT DATE_DIFF(SECOND, TIMESTAMP '0001-01-01 00:00:00', TIMESTAMP '2017-01-02 03:04:20.006') - DATE_DIFF(SECOND, TIMESTAMP '0001-01-01 00:00:00', TIMESTAMP '2017-01-02 03:04:05.006') AS "_1" FROM "default"."T" AS "T"
+builtins__datetime-41	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', CAST("T"['col_time'] AS TIME (6))) - DATE_DIFF(SECOND, TIME '00:00:00', CAST("T"['col_time'] AS TIME (6))) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-42	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST("T"['col_time'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_time'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_time'] AS TIME (6) WITH TIME ZONE))) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-43	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST("T"['col_time'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_time'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_time'] AS TIME (6) WITH TIME ZONE))) - DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-44	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-46	MISMATCH	SELECT DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['col_timestamp'] AS TIMESTAMP)) - DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['col_date'] AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-48	MISMATCH	SELECT DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['col_date'] AS TIMESTAMP)) - DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['col_timestamp'] AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-49	MISMATCH	SELECT DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['col_timestamp'] AS TIMESTAMP)) - DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST("T"['col_timestamp'] AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-54	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', TIME '13:45:00') - DATE_DIFF(SECOND, TIME '00:00:00', TIME '12:34:56') AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-55	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', CAST(TIME WITH TIME ZONE '13:45:00+08:00' AS TIME (6)) - (CAST(CAST(TIME WITH TIME ZONE '13:45:00+08:00' AS TIME (6)) AS TIME (6) WITH TIME ZONE) - TIME WITH TIME ZONE '13:45:00+08:00')) - DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST(TIME '12:34:56' AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST(TIME '12:34:56' AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST(TIME '12:34:56' AS TIME (6) WITH TIME ZONE))) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-56	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', CAST(CAST(TIME '13:45:00' AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST(TIME '13:45:00' AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST(TIME '13:45:00' AS TIME (6) WITH TIME ZONE))) - DATE_DIFF(SECOND, TIME '00:00:00', CAST(TIME WITH TIME ZONE '12:34:56+08:00' AS TIME (6)) - (CAST(CAST(TIME WITH TIME ZONE '12:34:56+08:00' AS TIME (6)) AS TIME (6) WITH TIME ZONE) - TIME WITH TIME ZONE '12:34:56+08:00')) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-57	MISMATCH	SELECT DATE_DIFF(SECOND, TIME '00:00:00', CAST(TIME WITH TIME ZONE '13:45:00+08:00' AS TIME (6)) - (CAST(CAST(TIME WITH TIME ZONE '13:45:00+08:00' AS TIME (6)) AS TIME (6) WITH TIME ZONE) - TIME WITH TIME ZONE '13:45:00+08:00')) - DATE_DIFF(SECOND, TIME '00:00:00', CAST(TIME WITH TIME ZONE '12:34:56+08:00' AS TIME (6)) - (CAST(CAST(TIME WITH TIME ZONE '12:34:56+08:00' AS TIME (6)) AS TIME (6) WITH TIME ZONE) - TIME WITH TIME ZONE '12:34:56+08:00')) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-59	MISMATCH	SELECT DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', TIMESTAMP '2023-12-25 10:30:00') - DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST(DATE '2023-01-15' AS TIMESTAMP)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-61	MISMATCH	SELECT DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', CAST(DATE '2023-12-25' AS TIMESTAMP)) - DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', TIMESTAMP '2023-01-15 08:00:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-62	MISMATCH	SELECT DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', TIMESTAMP '2023-12-25 10:30:00') - DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', TIMESTAMP '2023-01-15 08:00:00') AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+builtins__datetime-67	MISMATCH	SELECT CAST("utcnow"() AS TIMESTAMP) AS "u" FROM "default"."T" AS "T"
+builtins__datetime-68	MISMATCH	SELECT "T"['b'] AS "b" FROM "default"."T" AS "T" WHERE CAST("T"['timestamp_1'] AS TIMESTAMP) > DATE_ADD(DAY, -30, CAST(CAST("utcnow"() AS TIMESTAMP) AS TIMESTAMP))
+builtins__datetime-71	MISMATCH	SELECT DATE_ADD(MONTH, 1, CAST(DATE '2024-01-31' AS TIMESTAMP)) AS "d" FROM "default"."T" AS "T"
+builtins__extract-54	MISMATCH	SELECT CAST(CAST(EXTRACT(SECOND FROM TIMESTAMP '2023-10-19 12:34:56') * CAST(1000000000 AS DECIMAL(10,0)) AS BIGINT) / CAST(1000000000 AS BIGINT) AS INT) AS "_1" FROM "default"."T" AS "T"
+builtins__extract-60	MISMATCH	SELECT CAST(CAST(EXTRACT(SECOND FROM TIME '12:34:56') * CAST(1000000000 AS DECIMAL(10,0)) AS BIGINT) / CAST(1000000000 AS BIGINT) AS INT) AS "_1" FROM "default"."T" AS "T"
+builtins__extract-66	MISMATCH	SELECT EXTRACT(SECOND FROM INTERVAL '45.000000' SECOND (9, 6)) AS "_1" FROM "default"."T" AS "T"
+builtins__extract-83	MISMATCH	SELECT CAST(CAST(EXTRACT(SECOND FROM CAST("T_INTERVALS"['col_timestamp'] AS TIMESTAMP)) * CAST(1000000000 AS DECIMAL(10,0)) AS BIGINT) / CAST(1000000000 AS BIGINT) AS INT) AS "_1" FROM "default"."T_INTERVALS" AS "T_INTERVALS"
+builtins__extract-89	MISMATCH	SELECT CAST(CAST(EXTRACT(SECOND FROM CAST("T_INTERVALS"['col_time'] AS TIME (6))) * CAST(1000000000 AS DECIMAL(10,0)) AS BIGINT) / CAST(1000000000 AS BIGINT) AS INT) AS "_1" FROM "default"."T_INTERVALS" AS "T_INTERVALS"
 builtins__split-00	UNSUPPORTED	function `SPLIT_TO_ARRAY`
 builtins__split-01	UNSUPPORTED	function `SPLIT_TO_ARRAY`
 builtins__split-02	UNSUPPORTED	function `SPLIT_TO_ARRAY`
-builtins__split-03	UNSUPPORTED	function `SPLIT_TO_ARRAY`
+builtins__split-03	INVALID_INPUT	syntax: no viable alternative at input 'SPLIT_TO_ARRAY("T"."c", ''
 builtins__split-04	UNSUPPORTED	function `SPLIT_TO_ARRAY`
 builtins__split-05	UNSUPPORTED	function `SPLIT_TO_ARRAY`
 builtins__split-06	UNSUPPORTED	function `SPLIT_TO_ARRAY`
 builtins__split-07	UNSUPPORTED	function `SPLIT_TO_ARRAY`
 builtins__split-08	UNSUPPORTED	function `SPLIT_TO_ARRAY`
-builtins__substring-00	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-01	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-02	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-03	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-10	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-11	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-12	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-13	UNSUPPORTED	function `SUBSTRING`
-builtins__substring-14	UNSUPPORTED	function `SUBSTRING`
-builtins__trim-00	UNSUPPORTED	TRIM
-builtins__trim-01	UNSUPPORTED	TRIM
-builtins__trim-02	UNSUPPORTED	TRIM
-builtins__trim-03	UNSUPPORTED	TRIM
-builtins__trim-04	UNSUPPORTED	TRIM
-builtins__trim-05	UNSUPPORTED	TRIM
-builtins__trim-06	UNSUPPORTED	TRIM
 extensions__udf-00	UNSUPPORTED	function `"my_udf"`
-operators__cast-00	MISMATCH	SELECT CAST('abc' AS VARCHAR(256)) AS "res" FROM "default"."T" AS "T"
+operators__cast-00	MISMATCH	SELECT CAST('abc' AS STRING) AS "res" FROM "default"."T" AS "T"
 operators__cast-02	MISMATCH	SELECT CAST('abc' AS CHAR(1)) AS "res" FROM "default"."T" AS "T"
-operators__cast-04	MISMATCH	SELECT CAST('abc' AS VARCHAR(256)) AS "res" FROM "default"."T" AS "T"
+operators__cast-04	MISMATCH	SELECT CAST('abc' AS STRING) AS "res" FROM "default"."T" AS "T"
 operators__cast-07	MISMATCH	SELECT CAST(1 AS DECIMAL(18,0)) AS "res" FROM "default"."T" AS "T"
 operators__cast-08	MISMATCH	SELECT CAST(1 AS DECIMAL(5,0)) AS "res" FROM "default"."T" AS "T"
 operators__cast-10	MISMATCH	SELECT CAST(1 AS DECIMAL(18,0)) AS "res" FROM "default"."T" AS "T"
 operators__cast-11	MISMATCH	SELECT CAST(1 AS DECIMAL(5,0)) AS "res" FROM "default"."T" AS "T"
 operators__cast-13	MISMATCH	SELECT CAST(1 AS DECIMAL(18,0)) AS "res" FROM "default"."T" AS "T"
 operators__cast-14	MISMATCH	SELECT CAST(1 AS DECIMAL(5,0)) AS "res" FROM "default"."T" AS "T"
-operators__cast-41	UNSUPPORTED	INTERVAL data type
-operators__cast-42	UNSUPPORTED	INTERVAL data type
-operators__cast-43	UNSUPPORTED	INTERVAL data type
-operators__cast-44	UNSUPPORTED	INTERVAL data type
-operators__cast-45	UNSUPPORTED	INTERVAL data type
-operators__cast-46	UNSUPPORTED	INTERVAL data type
-operators__cast-47	UNSUPPORTED	INTERVAL data type
-operators__cast-48	UNSUPPORTED	INTERVAL data type
-operators__cast-49	UNSUPPORTED	INTERVAL data type
-operators__cast-50	UNSUPPORTED	INTERVAL data type
-operators__cast-51	UNSUPPORTED	INTERVAL data type
-operators__cast-52	UNSUPPORTED	INTERVAL data type
-operators__cast-53	UNSUPPORTED	INTERVAL data type
-operators__cast-54	UNSUPPORTED	INTERVAL data type
-operators__cast-55	UNSUPPORTED	INTERVAL data type
-operators__cast-56	UNSUPPORTED	INTERVAL data type
-operators__cast-57	UNSUPPORTED	INTERVAL data type
-operators__cast-58	UNSUPPORTED	INTERVAL data type
-operators__cast-59	UNSUPPORTED	INTERVAL data type
-operators__cast-60	UNSUPPORTED	INTERVAL data type
-operators__cast-61	UNSUPPORTED	INTERVAL data type
-operators__cast-62	UNSUPPORTED	INTERVAL data type
-operators__cast-63	UNSUPPORTED	INTERVAL data type
-operators__cast-64	UNSUPPORTED	INTERVAL data type
-operators__cast-65	UNSUPPORTED	INTERVAL data type
-operators__cast-66	UNSUPPORTED	INTERVAL data type
-operators__cast-67	UNSUPPORTED	INTERVAL data type
-operators__cast-68	UNSUPPORTED	INTERVAL data type
-operators__cast-69	UNSUPPORTED	INTERVAL data type
-operators__cast-70	UNSUPPORTED	INTERVAL data type
-operators__cast-71	UNSUPPORTED	INTERVAL data type
-operators__cast-72	UNSUPPORTED	INTERVAL data type
-operators__cast-73	UNSUPPORTED	INTERVAL data type
-operators__comparison-array-01	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-02	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-03	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-04	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-05	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-06	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-08	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-09	UNSUPPORTED	function `ARRAY`
-operators__comparison-array-10	UNSUPPORTED	function `ARRAY`
+operators__cast-35	UNSUPPORTED	CAST of TIMESTAMP to TIMETZ
+operators__cast-36	UNSUPPORTED	CAST of TIMESTAMP to TIMETZ
+operators__cast-41	UNSUPPORTED	data type `INTERVAL YEAR`
+operators__cast-42	UNSUPPORTED	data type `INTERVAL YEAR`
+operators__cast-43	UNSUPPORTED	data type `INTERVAL MONTH`
+operators__cast-44	UNSUPPORTED	data type `INTERVAL MONTH`
+operators__cast-45	UNSUPPORTED	data type `INTERVAL YEAR TO MONTH`
+operators__cast-46	UNSUPPORTED	data type `INTERVAL YEAR TO MONTH`
+operators__cast-47	UNSUPPORTED	data type `INTERVAL DAY`
+operators__cast-48	UNSUPPORTED	data type `INTERVAL DAY`
+operators__cast-49	UNSUPPORTED	data type `INTERVAL HOUR`
+operators__cast-50	UNSUPPORTED	data type `INTERVAL HOUR`
+operators__cast-51	UNSUPPORTED	data type `INTERVAL MINUTE`
+operators__cast-52	UNSUPPORTED	data type `INTERVAL MINUTE`
+operators__cast-53	UNSUPPORTED	data type `INTERVAL SECOND`
+operators__cast-54	UNSUPPORTED	data type `INTERVAL SECOND`
+operators__cast-55	UNSUPPORTED	data type `INTERVAL SECOND(3)`
+operators__cast-56	UNSUPPORTED	data type `INTERVAL DAY TO HOUR`
+operators__cast-57	UNSUPPORTED	data type `INTERVAL DAY TO HOUR`
+operators__cast-58	UNSUPPORTED	data type `INTERVAL DAY TO MINUTE`
+operators__cast-59	UNSUPPORTED	data type `INTERVAL DAY TO MINUTE`
+operators__cast-60	UNSUPPORTED	data type `INTERVAL DAY TO SECOND`
+operators__cast-61	UNSUPPORTED	data type `INTERVAL DAY TO SECOND`
+operators__cast-62	UNSUPPORTED	data type `INTERVAL DAY TO SECOND(3)`
+operators__cast-63	UNSUPPORTED	data type `INTERVAL DAY TO SECOND(3)`
+operators__cast-64	UNSUPPORTED	data type `INTERVAL HOUR TO MINUTE`
+operators__cast-65	UNSUPPORTED	data type `INTERVAL HOUR TO MINUTE`
+operators__cast-66	UNSUPPORTED	data type `INTERVAL HOUR TO SECOND`
+operators__cast-67	UNSUPPORTED	data type `INTERVAL HOUR TO SECOND`
+operators__cast-68	UNSUPPORTED	data type `INTERVAL HOUR TO SECOND(3)`
+operators__cast-69	UNSUPPORTED	data type `INTERVAL HOUR TO SECOND(3)`
+operators__cast-70	UNSUPPORTED	data type `INTERVAL MINUTE TO SECOND`
+operators__cast-71	UNSUPPORTED	data type `INTERVAL MINUTE TO SECOND`
+operators__cast-72	UNSUPPORTED	data type `INTERVAL MINUTE TO SECOND(3)`
+operators__cast-73	UNSUPPORTED	data type `INTERVAL MINUTE TO SECOND(3)`
+operators__cast-74	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__cast-75	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__cast-76	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__cast-77	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__cast-78	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__cast-79	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__cast-80	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__cast-81	MISMATCH	SELECT CAST(TIMESTAMP '2023-01-15 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-01-15 02:15:30+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-100	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' > TIMESTAMP WITH TIME ZONE '2023-06-15 00:00:00+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-101	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' < TIMESTAMP WITH TIME ZONE '2023-12-31 16:00:00+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-102	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' >= TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-103	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' <= TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-56	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-57	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-58	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-59	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-60	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-61	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-62	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-63	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-64	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-65	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-66	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-67	UNSUPPORTED	comparison with a TIMETZ literal whose offset is not UTC
+operators__comparison-datetime-76	MISMATCH	SELECT CAST(DATE '2023-12-25' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-06-15 00:00:00+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-77	MISMATCH	SELECT CAST(DATE '2023-12-25' AS TIMESTAMP (6) WITH TIME ZONE) < TIMESTAMP WITH TIME ZONE '2023-12-31 16:00:00+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-78	MISMATCH	SELECT CAST(DATE '2023-12-25' AS TIMESTAMP (6) WITH TIME ZONE) >= TIMESTAMP WITH TIME ZONE '2023-12-24 16:00:00+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-79	MISMATCH	SELECT CAST(DATE '2023-12-25' AS TIMESTAMP (6) WITH TIME ZONE) <= TIMESTAMP WITH TIME ZONE '2023-12-25 15:59:59+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-88	MISMATCH	SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) > TIMESTAMP WITH TIME ZONE '2023-06-15 00:00:00+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-89	MISMATCH	SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) < TIMESTAMP WITH TIME ZONE '2023-12-31 16:00:00+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-90	MISMATCH	SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) >= TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-91	MISMATCH	SELECT CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) <= TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-92	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' > CAST(DATE '2023-06-15' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-93	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' < CAST(DATE '2024-01-01' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-94	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' >= CAST(DATE '2023-12-25' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-95	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' <= CAST(DATE '2023-12-25' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-96	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' > CAST(TIMESTAMP '2023-06-15 08:00:00' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-97	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' < CAST(TIMESTAMP '2024-01-01 00:00:00' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-98	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' >= CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__comparison-datetime-99	MISMATCH	SELECT TIMESTAMP WITH TIME ZONE '2023-12-25 04:30:45+00:00' <= CAST(TIMESTAMP '2023-12-25 12:30:45' AS TIMESTAMP (6) WITH TIME ZONE) AS "_1" FROM "default"."T_ALL_TYPES" AS "T"
+operators__dt-minus-dt-00	MISMATCH	SELECT CAST(DATE_DIFF(DAY, CAST("T"['col_date'] AS DATE), CAST("T"['col_date'] AS DATE)) AS INT) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-02	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_d'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-03	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_h'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-04	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_min'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-05	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-07	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_d2h'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-08	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_d2min'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-09	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_d2s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-10	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_h2min'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-11	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_h2s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-12	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) - "T"['col_m2s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-28	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_d'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-29	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_h'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-30	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_min'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-31	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-33	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_d2h'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-34	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_d2min'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-35	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_d2s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-36	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_h2min'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-37	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_h2s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-minus-interval-38	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) - "T"['col_m2s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-02	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_d'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-03	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_h'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-04	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_min'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-05	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-07	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_d2h'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-08	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_d2min'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-09	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_d2s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-10	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_h2min'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-11	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_h2s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-12	MISMATCH	SELECT CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) + "T"['col_m2s'] AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-28	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_d'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-29	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_h'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-30	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_min'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-31	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-33	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_d2h'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-34	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_d2min'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-35	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_d2s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-36	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_h2min'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-37	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_h2s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__dt-plus-interval-38	MISMATCH	SELECT CAST((CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) + "T"['col_m2s'] AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-02	MISMATCH	SELECT "T"['col_d'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-03	MISMATCH	SELECT "T"['col_h'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-04	MISMATCH	SELECT "T"['col_min'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-05	MISMATCH	SELECT "T"['col_s'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-07	MISMATCH	SELECT "T"['col_d2h'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-08	MISMATCH	SELECT "T"['col_d2min'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-09	MISMATCH	SELECT "T"['col_d2s'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-10	MISMATCH	SELECT "T"['col_h2min'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-11	MISMATCH	SELECT "T"['col_h2s'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-12	MISMATCH	SELECT "T"['col_m2s'] + CAST(CAST("T"['col_date'] AS DATE) AS TIMESTAMP) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-28	MISMATCH	SELECT CAST("T"['col_d'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-29	MISMATCH	SELECT CAST("T"['col_h'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-30	MISMATCH	SELECT CAST("T"['col_min'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-31	MISMATCH	SELECT CAST("T"['col_s'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-33	MISMATCH	SELECT CAST("T"['col_d2h'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-34	MISMATCH	SELECT CAST("T"['col_d2min'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-35	MISMATCH	SELECT CAST("T"['col_d2s'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-36	MISMATCH	SELECT CAST("T"['col_h2min'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-37	MISMATCH	SELECT CAST("T"['col_h2s'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"
+operators__interval-plus-38	MISMATCH	SELECT CAST("T"['col_m2s'] + (CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) - (CAST(CAST(CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE) AS TIME (6)) AS TIME (6) WITH TIME ZONE) - CAST("T"['col_timez'] AS TIME (6) WITH TIME ZONE))) AS TIME (6) WITH TIME ZONE) AS "res" FROM "default"."T_INTERVALS" AS "T"

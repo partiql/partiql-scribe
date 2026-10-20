@@ -30,3 +30,7 @@ SELECT TIMESTAMP '2026-10-19 12:30:45+08:00' AS v FROM T;
 
 --#[time-precision-7]
 SELECT TIME '12:30:45.1234567' AS v FROM T;
+
+-- OBJECT_TRANSFORM with KEEP and SET paths is recognized.
+--#[object-transform]
+SELECT OBJECT_TRANSFORM(t.x KEEP '"a"' SET '"b"', 1) AS v FROM T t;

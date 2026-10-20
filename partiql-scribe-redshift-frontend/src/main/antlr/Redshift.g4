@@ -310,6 +310,7 @@ atom
     | SUBSTRING PAREN_LEFT value=expr FOR length=expr PAREN_RIGHT                   # atomSubstringFor
     | TRIM PAREN_LEFT spec=(BOTH | LEADING | TRAILING)? (chars=expr? FROM)? value=expr PAREN_RIGHT # atomTrim
     | APPROXIMATE atom                                                              # atomApproximate
+    | OBJECT_TRANSFORM balanced                                                     # atomObjectTransform
     | COUNT PAREN_LEFT ASTERISK PAREN_RIGHT overClause?                             # atomCountStar
     | name=functionName PAREN_LEFT (setQuantifier? expr (COMMA expr)*)? PAREN_RIGHT
       withinGroup? nullTreatment? overClause?                                       # atomFunctionCall
@@ -449,9 +450,9 @@ identifier
 nonReserved
     : APPROXIMATE | ASYMMETRIC | AT | CHAR | CHARACTER | CONNECT | CONVERT | COUNT | CUBE | CURRENT | DATE | DATEADD
     | DATEDIFF | DAY | DOUBLE | ESCAPE | EXCLUDE | EXISTS | EXTRACT | FIRST | FOLLOWING | GROUPING | HOUR | INCLUDE
-    | LAST | MAX | MINUTE | MONTH | NATIONAL | NCHAR | OVER | POSITION | PRECEDING | PRECISION | QUALIFY | RANGE
-    | RECURSIVE | ROLLUP | ROW | ROWS | SECOND | SETS | START | SUBSTRING | SYMMETRIC | TIME | TIMESTAMPTZ | TIMETZ
-    | TRIM | TRY_CAST | UNBOUNDED | UNKNOWN | VARYING | WITHIN | YEAR | ZONE
+    | LAST | MAX | MINUTE | MONTH | NATIONAL | NCHAR | OBJECT_TRANSFORM | OVER | POSITION | PRECEDING | PRECISION
+    | QUALIFY | RANGE | RECURSIVE | ROLLUP | ROW | ROWS | SECOND | SETS | START | SUBSTRING | SYMMETRIC | TIME
+    | TIMESTAMPTZ | TIMETZ | TRIM | TRY_CAST | UNBOUNDED | UNKNOWN | VARYING | WITHIN | YEAR | ZONE
     ;
 
 /*
@@ -526,6 +527,7 @@ NCHAR: 'NCHAR';
 NOT: 'NOT';
 NULL: 'NULL';
 NULLS: 'NULLS';
+OBJECT_TRANSFORM: 'OBJECT_TRANSFORM';
 OFFSET: 'OFFSET';
 ON: 'ON';
 OR: 'OR';

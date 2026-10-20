@@ -27,3 +27,6 @@ SELECT TIMESTAMP '2026-10-19 12:30:45' AS "v" FROM "default"."T" AS "t";
 
 --#[time-precision-7]
 [UNSUPPORTED{message="TIME literal format '12:30:45.1234567'"}];
+
+--#[object-transform]
+[UNSUPPORTED{message="function `OBJECT_TRANSFORM`; PartiQL has no object transformation"}];
