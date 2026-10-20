@@ -30,15 +30,17 @@ internal class Operand(
  */
 internal class RedshiftFunctions(
     private val notes: MutableList<RedshiftProblem>,
-    private val types: OperandTypes,
+    internal val types: OperandTypes,
 ) {
-    private fun interface Rule {
+    internal fun interface Rule {
         fun apply(
             name: Token,
             args: List<Operand>,
             setq: SetQuantifier?,
         ): Expr
     }
+
+    internal val datetime = RedshiftDatetimeFunctions(this)
 
     private val rules: Map<String, Rule> =
         mapOf(
@@ -75,13 +77,7 @@ internal class RedshiftFunctions(
                     note(name, "Redshift `LENGTH` was replaced by PartiQL `CHAR_LENGTH`")
                     length(name, args, setq)
                 },
-            // https://docs.aws.amazon.com/redshift/latest/dg/r_GETDATE.html
-            "getdate" to
-                Rule { name, args, _ ->
-                    arity(name, args, 0)
-                    utcnow(name, "GETDATE()")
-                },
-        )
+        ) + datetime.rules
 
     fun call(
         name: Token,
@@ -92,27 +88,7 @@ internal class RedshiftFunctions(
         return rule.apply(name, args, setq)
     }
 
-    /**
-     * https://docs.aws.amazon.com/redshift/latest/dg/r_SYSDATE.html
-     */
-    fun sysdate(name: Token): Expr = utcnow(name, "SYSDATE")
-
-    /**
-     * Redshift returns TIMESTAMP (without time zone) in the session time zone; PartiQL `UTCNOW()` returns TIMESTAMP
-     * WITH TIME ZONE in UTC. The values are equal when the session time zone is UTC, which is the Redshift default.
-     */
-    private fun utcnow(
-        name: Token,
-        source: String,
-    ): Expr {
-        note(
-            name,
-            "Redshift `$source` was replaced by PartiQL `UTCNOW()`; the result type is TIMESTAMP WITH TIME ZONE in UTC",
-        )
-        return exprCall(Identifier.regular("utcnow"), emptyList(), null)
-    }
-
-    private fun same(
+    internal fun same(
         partiql: String,
         arity: Int,
     ): Rule =
@@ -122,7 +98,7 @@ internal class RedshiftFunctions(
             exprCall(Identifier.regular(partiql), args.map { it.expr }, null)
         }
 
-    private fun renamed(
+    internal fun renamed(
         redshift: String,
         partiql: String,
         arity: Int,
@@ -134,7 +110,7 @@ internal class RedshiftFunctions(
         }
     }
 
-    private fun aggregate(partiql: String): Rule =
+    internal fun aggregate(partiql: String): Rule =
         Rule { name, args, setq ->
             arity(name, args, 1)
             exprCall(Identifier.regular(partiql), args.map { it.expr }, setq)
@@ -179,7 +155,7 @@ internal class RedshiftFunctions(
         return exprNullIf(args[0], args[1])
     }
 
-    private fun arity(
+    internal fun arity(
         name: Token,
         args: List<*>,
         expected: Int,
@@ -189,7 +165,7 @@ internal class RedshiftFunctions(
         }
     }
 
-    private fun note(
+    internal fun note(
         token: Token,
         message: String,
     ) {
