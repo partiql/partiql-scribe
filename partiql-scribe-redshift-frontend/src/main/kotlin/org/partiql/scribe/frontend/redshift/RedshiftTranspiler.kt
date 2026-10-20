@@ -12,6 +12,7 @@ import org.partiql.scribe.Scribe
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftLexer
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser
+import org.partiql.scribe.frontend.redshift.internal.PartiQLOutputTarget
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import org.partiql.scribe.frontend.redshift.internal.RedshiftSyntaxException
 import org.partiql.scribe.frontend.redshift.internal.UnsupportedConstructException
@@ -19,7 +20,6 @@ import org.partiql.scribe.problems.ScribeException
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
 import org.partiql.scribe.problems.Severity
-import org.partiql.scribe.targets.partiql.PartiQLTarget
 import org.partiql.spi.Context
 import org.partiql.spi.catalog.Session
 import org.partiql.spi.errors.PError
@@ -33,7 +33,7 @@ import org.partiql.spi.errors.Severity as PSeverity
  *  1. Parse the Redshift text with the Redshift grammar.
  *  2. Build a PartiQL AST from the parse tree. Dialect differences are rewritten here.
  *  3. Plan the AST with the PartiQL planner against [Session]. This resolves names and types.
- *  4. Print the plan with the Scribe [PartiQLTarget], then parse and plan the output to verify it.
+ *  4. Print the plan as PartiQL with [PartiQLOutputTarget], then parse and plan the output to verify it.
  *
  * The translation is deterministic: the same input and session always give the same result.
  *
@@ -73,7 +73,7 @@ public class RedshiftTranspiler(
         val scribeListener = CollectingScribeListener()
         val partiql =
             try {
-                Scribe(scribeContext = ScribeContextOf(scribeListener)).compile(plan, session, PartiQLTarget).output.value
+                Scribe(scribeContext = ScribeContextOf(scribeListener)).compile(plan, session, PartiQLOutputTarget()).output.value
             } catch (ex: ScribeException) {
                 null
             }
