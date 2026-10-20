@@ -156,7 +156,7 @@ atom
     : literal                                                                       # atomLiteral
     | CAST PAREN_LEFT expr AS dataType PAREN_RIGHT                                  # atomCast
     | CASE operand=expr? caseWhen+ (ELSE otherwise=expr)? END                       # atomCase
-    | name=(DATEADD | DATEDIFF) PAREN_LEFT part=identifier COMMA expr COMMA expr PAREN_RIGHT # atomDateFunction
+    | name=(DATEADD | DATEDIFF) PAREN_LEFT part=datePart COMMA expr COMMA expr PAREN_RIGHT # atomDateFunction
     | EXTRACT PAREN_LEFT part=datePart FROM expr PAREN_RIGHT                        # atomExtract
     | POSITION PAREN_LEFT sub=valueExpr IN str=valueExpr PAREN_RIGHT                # atomPosition
     | SUBSTRING PAREN_LEFT value=expr FROM start=expr (FOR length=expr)? PAREN_RIGHT # atomSubstringFrom
@@ -174,6 +174,10 @@ atom
     | identifier                                                                    # atomVariable
     ;
 
+/*
+ * A date part of DATEADD, DATEDIFF, and EXTRACT: a name (`day`) or a character string (`'day'`).
+ * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_Dateparts_for_datetime_functions.html
+ */
 datePart
     : identifier
     | STRING_LITERAL

@@ -38,7 +38,7 @@ SELECT EXTRACT(epoch FROM timestamp_1) AS e FROM T;
 --#[timetz-zone-name]
 SELECT TIMETZ '12:30:45 PST' AS v FROM T;
 
--- Redshift ignores an offset in a TIMESTAMP literal; PartiQL does not.
+-- Redshift ignores an offset in a TIMESTAMP literal; the translation removes it.
 --#[timestamp-with-offset]
 SELECT TIMESTAMP '2026-10-19 12:30:45+08:00' AS v FROM T;
 

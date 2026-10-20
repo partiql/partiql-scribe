@@ -19,7 +19,7 @@ SELECT EXTRACT(YEAR FROM timestamp_1) AS y, EXTRACT(month FROM timestamp_1) AS m
 --#[extract-01]
 SELECT EXTRACT(hour FROM TIME '12:30:45') AS h, EXTRACT(minute FROM TIME '12:30:45') AS m FROM T;
 
--- Redshift returns INTEGER; PartiQL returns a DECIMAL with the fraction. The translation adds a note.
+-- Redshift returns whole seconds as an INTEGER; the translation removes the fraction of PartiQL EXTRACT(SECOND).
 --#[extract-02]
 SELECT EXTRACT(SECOND FROM timestamp_1) AS s FROM T;
 

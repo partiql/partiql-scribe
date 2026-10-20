@@ -20,13 +20,13 @@ SELECT DATE_ADD(DAY, 5, "t"['timestamp_1']) AS "v" FROM "default"."T" AS "t";
 SELECT DATE_ADD(MONTH, 1, "t"['timestamp_1']) AS "v" FROM "default"."T" AS "t";
 
 --#[datediff-00]
-SELECT DATE_DIFF(HOUR, "t"['timestamp_1'], "t"['timestamp_2']) AS "v" FROM "default"."T" AS "t";
+SELECT DATE_DIFF(HOUR, TIMESTAMP '0001-01-01 00:00:00', "t"['timestamp_2']) - DATE_DIFF(HOUR, TIMESTAMP '0001-01-01 00:00:00', "t"['timestamp_1']) AS "v" FROM "default"."T" AS "t";
 
 --#[getdate-00]
-SELECT "utcnow"() AS "v" FROM "default"."T" AS "t";
+SELECT DATE_ADD(SECOND, DATE_DIFF(SECOND, CAST(TIMESTAMP '0001-01-01 00:00:00' AS TIMESTAMP WITH TIME ZONE), "utcnow"()), TIMESTAMP '0001-01-01 00:00:00') AS "v" FROM "default"."T" AS "t";
 
 --#[sysdate-00]
-SELECT "utcnow"() AS "v" FROM "default"."T" AS "t";
+SELECT CAST("utcnow"() AS TIMESTAMP) AS "v" FROM "default"."T" AS "t";
 
 --#[current-date-00]
-SELECT CURRENT_DATE AS "v" FROM "default"."T" AS "t";
+SELECT CAST("utcnow"() AS DATE) AS "v" FROM "default"."T" AS "t";
