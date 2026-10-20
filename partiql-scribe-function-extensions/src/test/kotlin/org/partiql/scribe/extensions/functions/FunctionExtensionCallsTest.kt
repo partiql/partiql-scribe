@@ -155,7 +155,7 @@ class FunctionExtensionCallsTest {
                 "utcnow" to "at_timezone(current_timestamp, 'UTC')",
                 "contains" to "\"contains\"(t.items, 'x')",
                 "hex_to_bigint" to "from_base('00C10300', 16)",
-                "to_unixtime" to "CAST(floor(to_unixtime(with_timezone(ts, 'UTC'))) AS BIGINT)",
+                "to_unixtime" to "CAST(to_unixtime(with_timezone(date_trunc('second', ts), 'UTC')) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
             ),
         )
@@ -177,7 +177,7 @@ class FunctionExtensionCallsTest {
                     "FROM t.items AS ___partiql_scribe_contains_element___ " +
                     "WHERE ___partiql_scribe_contains_element___ IN ('x'))",
                 "hex_to_bigint" to "STRTOL('00C10300', 16)",
-                "to_unixtime" to "CAST(FLOOR(DATE_PART(EPOCH, ts)) AS BIGINT)",
+                "to_unixtime" to "CAST(DATE_PART(EPOCH, date_trunc('second', ts)) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
             ),
         )
@@ -196,7 +196,7 @@ class FunctionExtensionCallsTest {
                 "utcnow" to "timezone('UTC', current_timestamp)",
                 "contains" to "contains(t.items, 'x')",
                 "hex_to_bigint" to "CAST('0x' || '00C10300' AS BIGINT)",
-                "to_unixtime" to "CAST(floor(epoch(ts)) AS BIGINT)",
+                "to_unixtime" to "CAST(epoch(date_trunc('second', ts)) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
             ),
         )

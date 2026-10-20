@@ -11,13 +11,16 @@ SELECT 1 <= (SELECT COUNT(___partiql_scribe_contains_element___) FROM "p"."items
 STRTOL('00C10300', 16);
 
 --#[to-unixtime]
-CAST(FLOOR(DATE_PART(EPOCH, TIMESTAMP '2017-01-02 03:04:05.006')) AS BIGINT);
+CAST(DATE_PART(EPOCH, date_trunc('second', TIMESTAMP '2017-01-02 03:04:05.006')) AS BIGINT);
 
 --#[to-unixtime-fraction]
-CAST(FLOOR(DATE_PART(EPOCH, TIMESTAMP '2017-01-02 03:04:05.6')) AS BIGINT);
+CAST(DATE_PART(EPOCH, date_trunc('second', TIMESTAMP '2017-01-02 03:04:05.6')) AS BIGINT);
 
 --#[to-unixtime-pre-epoch]
-CAST(FLOOR(DATE_PART(EPOCH, TIMESTAMP '1969-12-31 23:59:59.6')) AS BIGINT);
+CAST(DATE_PART(EPOCH, date_trunc('second', TIMESTAMP '1969-12-31 23:59:59.6')) AS BIGINT);
+
+--#[to-unixtime-max]
+CAST(DATE_PART(EPOCH, date_trunc('second', TIMESTAMP '9999-12-31 23:59:59.999999')) AS BIGINT);
 
 --#[pow]
 "pow"(2, 3);

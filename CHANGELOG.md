@@ -36,7 +36,7 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
-- Function extension `to_unixtime` now truncates toward negative infinity like PartiQL on Trino, Spark and Redshift (previously rounded fractional seconds; Trino also read the timestamp in the session time zone).
+- Function extension `to_unixtime` now truncates toward negative infinity like PartiQL on Trino, Spark and Redshift (previously rounded fractional seconds and lost a second far from 1970; Trino also read the timestamp in the session time zone).
 
 ### Removed
 

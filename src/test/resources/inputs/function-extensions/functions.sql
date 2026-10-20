@@ -22,5 +22,9 @@ to_unixtime(TIMESTAMP '2017-01-02 03:04:05.6');
 --#[to-unixtime-pre-epoch]
 to_unixtime(TIMESTAMP '1969-12-31 23:59:59.6');
 
+-- Far from 1970 a DOUBLE epoch can't hold microseconds; must not round up (PartiQL: 253402300799)
+--#[to-unixtime-max]
+to_unixtime(TIMESTAMP '9999-12-31 23:59:59.999999');
+
 --#[pow]
 pow(2, 3);

@@ -73,3 +73,9 @@ private fun dateAdd(
 }
 
 internal fun intLiteral(value: Int): Expr = exprLit(Literal.intNum(value.toLong()))
+
+/**
+ * `date_trunc('second', <timestamp>)`, used by `to_unixtime` to drop the fractional second before converting to a
+ * DOUBLE epoch.
+ */
+internal fun truncateToSecond(ts: Expr): Expr = exprCall(Identifier.regular("date_trunc"), listOf(exprLit(Literal.string("second")), ts))

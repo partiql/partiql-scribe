@@ -11,13 +11,16 @@ SELECT "contains"("p"."items", 'x') AS "c" FROM "test"."payload" AS "p";
 from_base('00C10300', 16);
 
 --#[to-unixtime]
-CAST(floor(to_unixtime(with_timezone(TIMESTAMP '2017-01-02 03:04:05.006', 'UTC'))) AS BIGINT);
+CAST(to_unixtime(with_timezone(date_trunc('second', TIMESTAMP '2017-01-02 03:04:05.006'), 'UTC')) AS BIGINT);
 
 --#[to-unixtime-fraction]
-CAST(floor(to_unixtime(with_timezone(TIMESTAMP '2017-01-02 03:04:05.6', 'UTC'))) AS BIGINT);
+CAST(to_unixtime(with_timezone(date_trunc('second', TIMESTAMP '2017-01-02 03:04:05.6'), 'UTC')) AS BIGINT);
 
 --#[to-unixtime-pre-epoch]
-CAST(floor(to_unixtime(with_timezone(TIMESTAMP '1969-12-31 23:59:59.6', 'UTC'))) AS BIGINT);
+CAST(to_unixtime(with_timezone(date_trunc('second', TIMESTAMP '1969-12-31 23:59:59.6'), 'UTC')) AS BIGINT);
+
+--#[to-unixtime-max]
+CAST(to_unixtime(with_timezone(date_trunc('second', TIMESTAMP '9999-12-31 23:59:59.999999'), 'UTC')) AS BIGINT);
 
 --#[pow]
 "pow"(2, 3);

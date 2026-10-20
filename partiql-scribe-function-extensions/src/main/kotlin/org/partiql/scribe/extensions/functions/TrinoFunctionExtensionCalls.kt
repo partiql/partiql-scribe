@@ -44,19 +44,18 @@ public open class TrinoFunctionExtensionCalls(
     private fun contains(args: SqlArgs): Expr = exprCall(Identifier.delimited("contains"), args.map { it.expr })
 
     /**
-     * PartiQL reads the TIMESTAMP as UTC and truncates toward negative infinity. Trino's `to_unixtime(TIMESTAMP)`
-     * reads it in the session time zone, and its CAST from DOUBLE to BIGINT rounds. So pin the zone with
-     * `with_timezone(ts, 'UTC')` and `floor` first (`...05.6` -> `...05`, `1969-12-31 23:59:59.6` -> `-1`).
+     * PartiQL reads the TIMESTAMP as UTC and drops the fractional second (`...05.6` -> `...05`,
+     * `1969-12-31 23:59:59.6` -> `-1`). Trino's `to_unixtime(TIMESTAMP)` reads it in the session time zone and returns
+     * a DOUBLE, which can't hold microseconds far from 1970 (`9999-12-31 23:59:59.999999` rounds up a second) and which
+     * CAST to BIGINT rounds. So truncate to whole seconds and pin the zone with `with_timezone(ts, 'UTC')`.
      */
     private fun toUnixTime(args: SqlArgs): Expr {
-        val utc = exprCall(Identifier.regular("with_timezone"), listOf(args[0].expr, exprLit(Literal.string("UTC"))))
-        return exprCast(
+        val utc =
             exprCall(
-                Identifier.regular("floor"),
-                listOf(exprCall(Identifier.regular("to_unixtime"), listOf(utc))),
-            ),
-            DataType.BIGINT(),
-        )
+                Identifier.regular("with_timezone"),
+                listOf(truncateToSecond(args[0].expr), exprLit(Literal.string("UTC"))),
+            )
+        return exprCast(exprCall(Identifier.regular("to_unixtime"), listOf(utc)), DataType.BIGINT())
     }
 
     private fun hexToBigInt(args: SqlArgs): Expr =

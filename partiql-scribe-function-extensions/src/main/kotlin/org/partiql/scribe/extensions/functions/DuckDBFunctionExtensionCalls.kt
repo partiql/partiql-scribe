@@ -50,16 +50,11 @@ public open class DuckDBFunctionExtensionCalls(
     // https://duckdb.org/docs/current/sql/functions/list.html#containslist-element
     private fun contains(args: SqlArgs): Expr = exprCall(Identifier.regular("contains"), args.map { it.expr })
 
-    // `epoch` returns seconds as a DOUBLE, and DuckDB's CAST to BIGINT rounds. PartiQL truncates toward negative
-    // infinity, so `floor` first (`...05.6` -> `...05`, `1969-12-31 23:59:59.6` -> `-1`, not `0`).
+    // PartiQL drops the fractional second (`...05.6` -> `...05`, `1969-12-31 23:59:59.6` -> `-1`). `epoch` returns a
+    // DOUBLE, which can't hold microseconds far from 1970 (`9999-12-31 23:59:59.999999` rounds up a second) and which
+    // CAST to BIGINT rounds, so truncate to whole seconds first.
     private fun toUnixTime(args: SqlArgs): Expr =
-        exprCast(
-            exprCall(
-                Identifier.regular("floor"),
-                listOf(exprCall(Identifier.regular("epoch"), args.map { it.expr })),
-            ),
-            DataType.BIGINT(),
-        )
+        exprCast(exprCall(Identifier.regular("epoch"), listOf(truncateToSecond(args[0].expr))), DataType.BIGINT())
 
     // DuckDB parses a `0x`-prefixed hex string when casting to an integer type.
     private fun hexToBigInt(args: SqlArgs): Expr =
