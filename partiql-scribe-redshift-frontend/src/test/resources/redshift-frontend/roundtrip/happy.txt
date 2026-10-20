@@ -207,6 +207,8 @@ basics__select-26	PARTIQL
 basics__select-27	PARTIQL
 basics__select-28	PARTIQL
 basics__select-29	PARTIQL
+basics__select-div-00	PARTIQL
+basics__select-div-01	PARTIQL
 basics__setop-00	PARTIQL
 basics__setop-01	PARTIQL
 basics__setop-02	PARTIQL
@@ -246,11 +248,14 @@ basics__subquery-07	PARTIQL
 basics__subquery-08	PARTIQL
 basics__subquery-09	PARTIQL
 basics__subquery-10	PARTIQL
+basics__subquery-11	REDSHIFT
+basics__subquery-12	REDSHIFT
 basics__subquery-13	PARTIQL
 basics__subquery-14	PARTIQL
 basics__subquery-17	PARTIQL
 basics__subquery-18	PARTIQL
 basics__subquery-21	PARTIQL
+basics__subquery-exists-00	REDSHIFT
 basics__window-01	PARTIQL
 basics__window-02	PARTIQL
 basics__window-03	PARTIQL
