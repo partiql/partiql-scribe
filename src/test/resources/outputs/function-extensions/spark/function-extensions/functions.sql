@@ -10,6 +10,8 @@ SELECT `array_contains`(`p`.`items`, 'x') AS `c` FROM `test`.`payload` AS `p`;
 --#[hex-to-bigint]
 CAST(`conv`('00C10300', 16, 10) AS BIGINT);
 
+
+
 --#[to-unixtime]
 CAST(`unix_timestamp`(TIMESTAMP_NTZ '2017-01-02 03:04:05.006') AS BIGINT) - CASE WHEN TIMESTAMP_NTZ '2017-01-02 03:04:05.006' < TIMESTAMP_NTZ '1970-01-01 00:00:00' AND `date_part`('SECOND', TIMESTAMP_NTZ '2017-01-02 03:04:05.006') <> `second`(TIMESTAMP_NTZ '2017-01-02 03:04:05.006') THEN 1 ELSE 0 END;
 

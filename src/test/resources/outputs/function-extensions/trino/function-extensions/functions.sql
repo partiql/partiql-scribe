@@ -10,6 +10,12 @@ SELECT "contains"("p"."items", 'x') AS "c" FROM "test"."payload" AS "p";
 --#[hex-to-bigint]
 from_base('00C10300', 16);
 
+--#[hex-to-bigint-negative]
+from_base('-FF', 16);
+
+--#[hex-to-bigint-min]
+from_base('-8000000000000000', 16);
+
 --#[to-unixtime]
 CAST(to_unixtime(with_timezone(date_trunc('second', TIMESTAMP '2017-01-02 03:04:05.006'), 'UTC')) AS BIGINT);
 

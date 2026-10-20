@@ -10,6 +10,12 @@ SELECT 1 <= (SELECT COUNT(___partiql_scribe_contains_element___) FROM "p"."items
 --#[hex-to-bigint]
 STRTOL('00C10300', 16);
 
+--#[hex-to-bigint-negative]
+STRTOL('-FF', 16);
+
+--#[hex-to-bigint-min]
+STRTOL('-8000000000000000', 16);
+
 --#[to-unixtime]
 CAST(DATE_PART(EPOCH, date_trunc('second', TIMESTAMP '2017-01-02 03:04:05.006')) AS BIGINT);
 

@@ -11,6 +11,14 @@ SELECT contains(p.items, 'x') AS c FROM payload AS p;
 --#[hex-to-bigint]
 hex_to_bigint('00C10300');
 
+-- A leading sign is accepted, like Long.parseLong (PartiQL: -255)
+--#[hex-to-bigint-negative]
+hex_to_bigint('-FF');
+
+-- The most negative BIGINT (PartiQL: -9223372036854775808)
+--#[hex-to-bigint-min]
+hex_to_bigint('-8000000000000000');
+
 --#[to-unixtime]
 to_unixtime(TIMESTAMP '2017-01-02 03:04:05.006');
 

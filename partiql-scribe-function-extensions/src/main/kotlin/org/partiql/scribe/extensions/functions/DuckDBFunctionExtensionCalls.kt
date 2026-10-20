@@ -1,6 +1,8 @@
 package org.partiql.scribe.extensions.functions
 
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCase
+import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprOperator
@@ -56,10 +58,33 @@ public open class DuckDBFunctionExtensionCalls(
     private fun toUnixTime(args: SqlArgs): Expr =
         exprCast(exprCall(Identifier.regular("epoch"), listOf(truncateToSecond(args[0].expr))), DataType.BIGINT())
 
-    // DuckDB parses a `0x`-prefixed hex string when casting to an integer type.
-    private fun hexToBigInt(args: SqlArgs): Expr =
-        exprCast(
-            exprOperator("||", exprLit(Literal.string("0x")), args[0].expr),
-            DataType.BIGINT(),
-        )
+    /**
+     * PartiQL's `hex_to_bigint` is `Long.parseLong(s, 16)`, which accepts a leading `-` or `+`. DuckDB parses a
+     * `0x`-prefixed hex string when casting to an integer type, but not a signed one (`'-0xFF'` fails). So strip the
+     * sign, parse the magnitude as UBIGINT, and negate through HUGEINT so `-8000000000000000` reaches BIGINT's minimum.
+     * The final CAST to BIGINT rejects anything out of range, like `parseLong`.
+     */
+    private fun hexToBigInt(args: SqlArgs): Expr {
+        val s = args[0].expr
+        val sign = exprCall(Identifier.regular("left"), listOf(s, exprLit(Literal.intNum(1L))))
+        val magnitude = exprCall(Identifier.regular("substring"), listOf(s, exprLit(Literal.intNum(2L))))
+
+        fun hex(digits: Expr): Expr = exprCast(exprOperator("||", exprLit(Literal.string("0x")), digits), UBIGINT)
+        val negative = exprOperator("-", null, exprCast(hex(magnitude), HUGEINT))
+        val parsed =
+            exprCase(
+                null,
+                listOf(
+                    exprCaseBranch(exprOperator("=", sign, exprLit(Literal.string("-"))), negative),
+                    exprCaseBranch(exprOperator("=", sign, exprLit(Literal.string("+"))), hex(magnitude)),
+                ),
+                hex(s),
+            )
+        return exprCast(parsed, DataType.BIGINT())
+    }
+
+    private companion object {
+        val UBIGINT: DataType = DataType.USER_DEFINED(Identifier.regular("UBIGINT"))
+        val HUGEINT: DataType = DataType.USER_DEFINED(Identifier.regular("HUGEINT"))
+    }
 }

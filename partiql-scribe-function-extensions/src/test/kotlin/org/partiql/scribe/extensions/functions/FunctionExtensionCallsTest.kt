@@ -195,7 +195,11 @@ class FunctionExtensionCallsTest {
                 "date_add" to "date_add(ts, to_days(1))",
                 "utcnow" to "timezone('UTC', current_timestamp)",
                 "contains" to "contains(t.items, 'x')",
-                "hex_to_bigint" to "CAST('0x' || '00C10300' AS BIGINT)",
+                "hex_to_bigint" to
+                    "CAST(CASE WHEN left('00C10300', 1) = '-' " +
+                    "THEN -CAST(CAST('0x' || substring('00C10300', 2) AS UBIGINT) AS HUGEINT) " +
+                    "WHEN left('00C10300', 1) = '+' THEN CAST('0x' || substring('00C10300', 2) AS UBIGINT) " +
+                    "ELSE CAST('0x' || '00C10300' AS UBIGINT) END AS BIGINT)",
                 "to_unixtime" to "CAST(epoch(date_trunc('second', ts)) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
             ),

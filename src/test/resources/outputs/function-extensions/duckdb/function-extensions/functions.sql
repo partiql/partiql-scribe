@@ -8,7 +8,13 @@ timezone('UTC', current_timestamp);
 SELECT contains("p"."items", 'x') AS "c" FROM "test"."payload" AS "p";
 
 --#[hex-to-bigint]
-CAST('0x' || '00C10300' AS BIGINT);
+CAST(CASE WHEN left('00C10300', 1) = '-' THEN -CAST(CAST('0x' || substring('00C10300', 2) AS UBIGINT) AS HUGEINT) WHEN left('00C10300', 1) = '+' THEN CAST('0x' || substring('00C10300', 2) AS UBIGINT) ELSE CAST('0x' || '00C10300' AS UBIGINT) END AS BIGINT);
+
+--#[hex-to-bigint-negative]
+CAST(CASE WHEN left('-FF', 1) = '-' THEN -CAST(CAST('0x' || substring('-FF', 2) AS UBIGINT) AS HUGEINT) WHEN left('-FF', 1) = '+' THEN CAST('0x' || substring('-FF', 2) AS UBIGINT) ELSE CAST('0x' || '-FF' AS UBIGINT) END AS BIGINT);
+
+--#[hex-to-bigint-min]
+CAST(CASE WHEN left('-8000000000000000', 1) = '-' THEN -CAST(CAST('0x' || substring('-8000000000000000', 2) AS UBIGINT) AS HUGEINT) WHEN left('-8000000000000000', 1) = '+' THEN CAST('0x' || substring('-8000000000000000', 2) AS UBIGINT) ELSE CAST('0x' || '-8000000000000000' AS UBIGINT) END AS BIGINT);
 
 --#[to-unixtime]
 CAST(epoch(date_trunc('second', TIMESTAMP '2017-01-02 03:04:05.006')) AS BIGINT);
