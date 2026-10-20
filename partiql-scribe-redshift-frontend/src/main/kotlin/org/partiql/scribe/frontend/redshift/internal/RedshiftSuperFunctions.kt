@@ -232,7 +232,9 @@ internal class RedshiftSuperFunctions(
         functions.scalar(name, setq)
         functions.note(name, "Redshift `${name.text.uppercase()}(x)` was replaced by `CASE WHEN x IS $typeName THEN CARDINALITY(x) END`")
         return functions.resolve(args) { exprs, _ ->
-            exprCase(null, listOf(exprCaseBranch(isType(exprs[0], type), functions.fn("cardinality", exprs[0]))), null)
+            functions.nonMissing(
+                exprCase(null, listOf(exprCaseBranch(isType(exprs[0], type), functions.fn("cardinality", exprs[0]))), null),
+            )
         }
     }
 
@@ -422,7 +424,7 @@ internal class RedshiftSuperFunctions(
         then: Expr,
     ): Expr {
         val test = arrays.map { isType(it, DataType.LIST()) }.reduce<Expr, Expr> { x, y -> exprAnd(x, y) }
-        return exprCase(null, listOf(exprCaseBranch(test, then)), null)
+        return functions.nonMissing(exprCase(null, listOf(exprCaseBranch(test, then)), null))
     }
 
     /** `(SELECT COUNT(*) FROM b AS e2 WHERE e1 = e2 OR (e1 IS NULL AND e2 IS NULL)) > 0`, with the element e1. */

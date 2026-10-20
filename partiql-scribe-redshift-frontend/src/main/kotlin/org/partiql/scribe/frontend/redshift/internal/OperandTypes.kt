@@ -3,9 +3,12 @@ package org.partiql.scribe.frontend.redshift.internal
 import org.antlr.v4.runtime.ParserRuleContext
 import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.AstNode
+import org.partiql.ast.AstRewriter
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprCall
 import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.Plan
@@ -22,6 +25,7 @@ import org.partiql.spi.function.FnOverload
 import org.partiql.spi.function.RoutineOverloadSignature
 import org.partiql.spi.types.PType
 import org.partiql.spi.value.Datum
+import java.util.IdentityHashMap
 
 /**
  * The static types of Redshift operands, for the rules whose translation depends on them.
@@ -39,14 +43,18 @@ import org.partiql.spi.value.Datum
  *     placeholder, so the number of passes is one more than the nesting depth of such rules.
  *  4. The AST builder translates the query without probes, with the final types.
  *
- * An operand is identified by its text and the query block that contains it, which are the same in all passes. Two
- * operands with the same text in one query block have the same probe, so that a select item and the GROUP BY key that
- * it repeats stay equal in a probe pass.
+ * An operand is identified by its translation, without probe calls, and the query block that contains it. Two operands
+ * with the same translation in one query block have the same probe, so that a select item and the GROUP BY key that it
+ * repeats (`UPPER(c)` and `UPPER(t.c)`) stay equal in a probe pass. When a rule in an operand is resolved, the
+ * translation of the operand changes, and the next pass probes it again.
  */
 internal class OperandTypes {
     private val ids = HashMap<Key, Int>()
     private val types = HashMap<Int, PType>()
     private val scopes = ArrayDeque<ParserRuleContext>()
+
+    /** The key of each operand, from the last probe pass that translated it. */
+    private val keys = IdentityHashMap<ParserRuleContext, Key>()
 
     /** True in a probe pass; false when the AST builder makes the final AST. */
     var probing: Boolean = false
@@ -88,9 +96,12 @@ internal class OperandTypes {
         ctx: ParserRuleContext,
         expr: Expr,
     ): Expr {
+        // The final pass reads the types that the last probe pass found for the same operands.
         if (!probing) return expr
+        val key = Key(scopes.lastOrNull(), Unprobe.apply(expr))
+        keys[ctx] = key
         probed = true
-        val id = ids.getOrPut(key(ctx)) { ids.size }
+        val id = ids.getOrPut(key) { ids.size }
         return exprCall(Identifier.regular(PROBE), listOf(exprLit(Literal.intNum(id)), expr))
     }
 
@@ -98,18 +109,32 @@ internal class OperandTypes {
      * Returns the static type of the operand [ctx], or null if it is not known: in the first probe pass, or when the
      * planner could not type the operand.
      */
-    fun typeOf(ctx: ParserRuleContext): PType? = ids[key(ctx)]?.let { types[it] }
+    fun typeOf(ctx: ParserRuleContext): PType? = keys[ctx]?.let { ids[it] }?.let { types[it] }
 
-    private fun key(ctx: ParserRuleContext): Key = Key(scopes.lastOrNull(), ctx.text)
-
-    /** The query block (compared by identity) and the text of an operand. */
+    /** The query block (compared by identity) and the translation of an operand without probe calls. */
     private class Key(
         val scope: ParserRuleContext?,
-        val text: String,
+        val expr: Expr,
     ) {
-        override fun equals(other: Any?): Boolean = other is Key && other.scope === scope && other.text == text
+        private val hash = 31 * System.identityHashCode(scope) + expr.hashCode()
 
-        override fun hashCode(): Int = 31 * System.identityHashCode(scope) + text.hashCode()
+        override fun equals(other: Any?): Boolean = other is Key && other.scope === scope && other.expr == expr
+
+        override fun hashCode(): Int = hash
+    }
+
+    /** Removes the probe calls from a translation. */
+    private object Unprobe : AstRewriter<Unit>() {
+        fun apply(expr: Expr): Expr = expr.accept(this, Unit) as Expr
+
+        override fun visitExprCall(
+            node: ExprCall,
+            ctx: Unit,
+        ): AstNode {
+            val name = node.function.identifier
+            if (name.isRegular() && name.getText() == PROBE && node.args.size == 2) return node.args[1].accept(this, ctx)
+            return super.visitExprCall(node, ctx)
+        }
     }
 
     /**
@@ -255,7 +280,7 @@ internal class OperandTypes {
 
     companion object {
         /** The number of probe passes after which the transpiler stops, even if the types still change. */
-        const val MAX_PASSES = 5
+        const val MAX_PASSES = 8
 
         private const val MAX_PENDING_ARITY = 16
 

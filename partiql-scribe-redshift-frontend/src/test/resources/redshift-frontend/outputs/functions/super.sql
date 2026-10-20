@@ -32,7 +32,7 @@ SELECT CASE WHEN "t"['x'] IS STRUCT THEN "cardinality"("t"['x']) ELSE NULL END A
 SELECT CASE WHEN "t"['x'] IS LIST THEN COALESCE('red' IN "t"['x'], false) ELSE NULL END AS "v" FROM "default"."T" AS "t";
 
 --#[super-array-contains-01]
-SELECT CASE WHEN "t"['array'] IS LIST THEN CASE WHEN "t"['b'] IS NULL THEN (SELECT count(1) AS "_1" FROM "t"['array'] AS "$e1" WHERE "$e1" IS NULL) > CAST(0 AS BIGINT) ELSE COALESCE("t"['b'] IN "t"['array'], false) END ELSE NULL END AS "v" FROM "default"."T" AS "t";
+SELECT CASE WHEN "t"['array'] IS LIST THEN CASE WHEN "t"['b'] IS NULL THEN (SELECT count(1) AS "_1" FROM @"t"['array'] AS "$e1" WHERE "$e1" IS NULL) > CAST(0 AS BIGINT) ELSE COALESCE("t"['b'] IN "t"['array'], false) END ELSE NULL END AS "v" FROM "default"."T" AS "t";
 
 --#[super-array-contains-02]
 SELECT CASE WHEN "t"['x'] IS LIST THEN "t"['c'] IN "t"['x'] ELSE NULL END AS "v" FROM "default"."T" AS "t";
@@ -44,19 +44,19 @@ SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE CASE WHEN "t"['x'] IS LIS
 [UNSUPPORTED{message="`ARRAY_CONTAINS` with a non-literal null_match argument"}];
 
 --#[super-arrays-overlap-00]
-SELECT CASE WHEN "t"['x'] IS LIST AND "t"['array'] IS LIST THEN (SELECT count(1) AS "_1" FROM "t"['x'] AS "$e1" WHERE (SELECT count(1) AS "_1" FROM "t"['array'] AS "$e2" WHERE ("$e1" = "$e2") OR ("$e1" IS NULL AND "$e2" IS NULL)) > CAST(0 AS BIGINT)) > CAST(0 AS BIGINT) ELSE NULL END AS "v" FROM "default"."T" AS "t";
+SELECT CASE WHEN "t"['x'] IS LIST AND "t"['array'] IS LIST THEN (SELECT count(1) AS "_1" FROM @"t"['x'] AS "$e1" WHERE (SELECT count(1) AS "_1" FROM @"t"['array'] AS "$e2" WHERE ("$e1" = "$e2") OR ("$e1" IS NULL AND "$e2" IS NULL)) > CAST(0 AS BIGINT)) > CAST(0 AS BIGINT) ELSE NULL END AS "v" FROM "default"."T" AS "t";
 
 --#[super-array-distinct-00]
-SELECT CASE WHEN "t"['x'] IS LIST THEN (SELECT DISTINCT VALUE "$e1" FROM "t"['x'] AS "$e1" ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v" FROM "default"."T" AS "t";
+SELECT CASE WHEN "t"['x'] IS LIST THEN (SELECT DISTINCT VALUE "$e1" FROM @"t"['x'] AS "$e1" ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v" FROM "default"."T" AS "t";
 
 --#[super-array-sort-00]
-SELECT CASE WHEN "t"['x'] IS LIST THEN (SELECT VALUE "$e1" FROM "t"['x'] AS "$e1" ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v1", CASE WHEN "t"['x'] IS LIST THEN (SELECT VALUE "$e1" FROM "t"['x'] AS "$e1" ORDER BY "$e1" DESC NULLS FIRST) ELSE NULL END AS "v2", CASE WHEN "t"['x'] IS LIST THEN (SELECT VALUE "$e1" FROM "t"['x'] AS "$e1" ORDER BY "$e1" DESC NULLS LAST) ELSE NULL END AS "v3" FROM "default"."T" AS "t";
+SELECT CASE WHEN "t"['x'] IS LIST THEN (SELECT VALUE "$e1" FROM @"t"['x'] AS "$e1" ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v1", CASE WHEN "t"['x'] IS LIST THEN (SELECT VALUE "$e1" FROM @"t"['x'] AS "$e1" ORDER BY "$e1" DESC NULLS FIRST) ELSE NULL END AS "v2", CASE WHEN "t"['x'] IS LIST THEN (SELECT VALUE "$e1" FROM @"t"['x'] AS "$e1" ORDER BY "$e1" DESC NULLS LAST) ELSE NULL END AS "v3" FROM "default"."T" AS "t";
 
 --#[super-array-union-00]
-SELECT CASE WHEN "t"['x'] IS LIST AND "t"['array'] IS LIST THEN (SELECT DISTINCT VALUE "$e1" FROM ["t"['x'], "t"['array']] AS "$p1" INNER JOIN "$p1" AS "$e1" ON true ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v" FROM "default"."T" AS "t";
+SELECT CASE WHEN "t"['x'] IS LIST AND "t"['array'] IS LIST THEN (SELECT DISTINCT VALUE "$e1" FROM [@"t"['x'], @"t"['array']] AS "$p1" INNER JOIN @"$p1" AS "$e1" ON true ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v" FROM "default"."T" AS "t";
 
 --#[super-array-intersection-00]
-SELECT CASE WHEN "t"['x'] IS LIST AND "t"['array'] IS LIST THEN (SELECT DISTINCT VALUE "$e1" FROM "t"['x'] AS "$e1" WHERE (SELECT count(1) AS "_1" FROM "t"['array'] AS "$e2" WHERE ("$e1" = "$e2") OR ("$e1" IS NULL AND "$e2" IS NULL)) > CAST(0 AS BIGINT) ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v" FROM "default"."T" AS "t";
+SELECT CASE WHEN "t"['x'] IS LIST AND "t"['array'] IS LIST THEN (SELECT DISTINCT VALUE "$e1" FROM @"t"['x'] AS "$e1" WHERE (SELECT count(1) AS "_1" FROM @"t"['array'] AS "$e2" WHERE ("$e1" = "$e2") OR ("$e1" IS NULL AND "$e2" IS NULL)) > CAST(0 AS BIGINT) ORDER BY "$e1" ASC NULLS LAST) ELSE NULL END AS "v" FROM "default"."T" AS "t";
 
 --#[super-array-intersection-01]
 [UNSUPPORTED{message="`ARRAY_INTERSECTION` without a literal TRUE distinct argument (duplicate elements)"}];

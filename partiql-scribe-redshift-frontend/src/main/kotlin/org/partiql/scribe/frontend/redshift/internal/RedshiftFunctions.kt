@@ -23,6 +23,7 @@ import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.TrimSpec
 import org.partiql.scribe.frontend.redshift.RedshiftProblem
 import org.partiql.spi.types.PType
+import java.util.Collections
 import java.util.IdentityHashMap
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 
@@ -104,6 +105,17 @@ internal class RedshiftFunctions(
         chars: Operand?,
         value: Operand,
     ): Expr = strings.trim(name, spec, chars, value)
+
+    private val nonMissing: MutableSet<Expr> = Collections.newSetFromMap(IdentityHashMap())
+
+    /**
+     * Marks [expr], the translation of a rule, as a value that is never MISSING, for example a CASE that tests the type
+     * of a SUPER value first. The select list does not wrap such a value in COALESCE.
+     */
+    internal fun nonMissing(expr: Expr): Expr = expr.also { nonMissing.add(it) }
+
+    /** True if [expr] is a value that is never MISSING; see [nonMissing]. */
+    internal fun isNonMissing(expr: Expr): Boolean = expr in nonMissing
 
     fun call(
         name: Token,

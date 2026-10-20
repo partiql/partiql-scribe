@@ -524,24 +524,29 @@ internal class RedshiftAstBuilder(
         expr: Expr,
     ): Expr {
         val operand = (ctx as? P.SelectItemExprContext)?.expr() ?: return expr
-        if (expr is ExprCoalesce || isColumn(expr)) return expr
+        if (expr is ExprCoalesce || isColumn(expr) || functions.isNonMissing(expr)) return expr
         // An aggregate or window function does not return MISSING. The planner also does not find an aggregate in the
         // argument of a function call, such as the probe of the operand types.
         if (containsAggregate(operand) || containsWindow(operand) || RedshiftQueryBlocks.containsAggregateOrWindow(expr)) return expr
-        return types.resolve(listOf(operand to expr)) { probed, operandTypes ->
-            if (operandTypes[0].code() == PType.DYNAMIC && probed[0] !is ExprCoalesce) {
+        val probed = types.operand(operand, expr)
+        val type = types.typeOf(operand)
+        return when {
+            // The type is not known yet, or the planner could not find it: no wrap.
+            type == null -> if (types.probing) types.pending(listOf(probed)) else probed
+            // An array subscript out of range is MISSING also for an array of a static element type.
+            type.code() != PType.DYNAMIC && !hasSubscript(expr) -> probed
+            else -> {
                 if (!types.probing) {
-                    note(
-                        operand.start,
-                        "The SUPER value was wrapped in COALESCE, so that PartiQL returns NULL instead of MISSING",
-                    )
+                    note(operand.start, "The SUPER value was wrapped in COALESCE, so that PartiQL returns NULL instead of MISSING")
                 }
-                exprCoalesce(listOf(probed[0]))
-            } else {
-                probed[0]
+                exprCoalesce(listOf(probed))
             }
         }
     }
+
+    /** True if [expr] is a path with an array subscript. */
+    private fun hasSubscript(expr: Expr): Boolean =
+        expr is org.partiql.ast.expr.ExprPath && expr.steps.any { it is org.partiql.ast.expr.PathStep.Element }
 
     /**
      * True if [expr] is a column of a FROM item with known columns, or an unnested array element, which is never

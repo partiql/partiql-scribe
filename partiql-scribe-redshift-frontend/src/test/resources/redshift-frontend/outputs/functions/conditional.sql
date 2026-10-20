@@ -101,7 +101,7 @@ SELECT CASE WHEN "t_all_types"['col_int32'] IS NOT NULL THEN 5 ELSE 7 END AS "v1
 [UNSUPPORTED{message="subquery as an argument of `NVL` (the Scribe PartiQL target prints it without parentheses)"}];
 
 --#[cond-subquery-01]
-SELECT CASE WHEN (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") >= 0 THEN (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") ELSE 0 END AS "v" FROM "default"."T" AS "t";
+SELECT CASE WHEN (SELECT max("t"['b']) AS "max" FROM "default"."T" AS "t") >= 0 THEN (SELECT max("t"['b']) AS "max" FROM "default"."T" AS "t") ELSE 0 END AS "v" FROM "default"."T" AS "t";
 
 --#[cond-nested-00]
 SELECT COALESCE(sum("t"['b']), CAST(0 AS BIGINT)) AS "v" FROM "default"."T" AS "t";
