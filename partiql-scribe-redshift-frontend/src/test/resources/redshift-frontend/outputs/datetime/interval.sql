@@ -37,6 +37,12 @@ SELECT INTERVAL '-30' MINUTE (9) AS "v" FROM "default"."T" AS "t";
 --#[interval-qualified-12]
 [UNSUPPORTED{message="INTERVAL qualifier `YEAR TO DAY`"}];
 
+--#[interval-qualified-13]
+[UNSUPPORTED{message="INTERVAL qualifier `SECOND(7)`"}];
+
+--#[interval-qualified-14]
+SELECT INTERVAL '25:0' HOUR (9) TO MINUTE AS "v1", INTERVAL '5' DAY (9) AS "v2" FROM "default"."T" AS "t";
+
 --#[interval-unqualified-00]
 SELECT INTERVAL '7' DAY (9) AS "v" FROM "default"."T" AS "t";
 

@@ -42,6 +42,13 @@ SELECT INTERVAL '2' DAY(3) AS v FROM T;
 --#[interval-qualified-12]
 SELECT INTERVAL '1-2' YEAR TO DAY AS v FROM T;
 
+--#[interval-qualified-13]
+SELECT INTERVAL '1' SECOND(7) AS v FROM T;
+
+-- The leading field holds the larger units.
+--#[interval-qualified-14]
+SELECT INTERVAL '25:00' HOUR TO MINUTE AS v1, INTERVAL '+5' DAY AS v2 FROM T;
+
 -- A literal without a qualifier is rewritten with a qualifier.
 --#[interval-unqualified-00]
 SELECT INTERVAL '7 days' AS v FROM T;

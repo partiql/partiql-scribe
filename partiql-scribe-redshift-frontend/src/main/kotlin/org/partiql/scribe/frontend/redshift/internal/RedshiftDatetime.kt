@@ -642,14 +642,15 @@ internal class RedshiftDatetime(
         val start = IntervalText.Field.valueOf(ctx.start.text.uppercase())
         val end = ctx.end?.let { IntervalText.Field.valueOf(it.text.uppercase()) }
         val unsupported = { UnsupportedConstructException.at(ctx, "INTERVAL qualifier `${textOf(ctx).uppercase()}`") }
-        val fraction =
+        val fractionToken =
             when {
-                end == null && start == IntervalText.Field.SECOND -> ctx.precision?.text?.toIntOrNull()
+                end == null && start == IntervalText.Field.SECOND -> ctx.precision
                 ctx.precision != null -> throw unsupported()
-                end == IntervalText.Field.SECOND -> ctx.fraction?.text?.toIntOrNull()
+                end == IntervalText.Field.SECOND -> ctx.fraction
                 ctx.fraction != null -> throw unsupported()
                 else -> null
             }
+        val fraction = fractionToken?.let { it.text.toIntOrNull() ?: throw unsupported() }
         if (fraction != null && fraction > 6) throw unsupported()
         val qualifier = IntervalText.Qualifier(start, end ?: start, fraction)
         if (!qualifier.isValid) throw unsupported()

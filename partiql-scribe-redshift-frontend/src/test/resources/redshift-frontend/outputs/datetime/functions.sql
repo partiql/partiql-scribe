@@ -91,6 +91,9 @@ SELECT TIMESTAMP '2008-08-21 07:23:54' AS "v" FROM "default"."T" AS "t";
 --#[convert-timezone-04]
 [UNSUPPORTED{message="CONVERT_TIMEZONE with a time zone that is not a literal"}];
 
+--#[convert-timezone-05]
+[UNSUPPORTED{message="`CONVERT_TIMEZONE` with 1 argument(s); expected 2 or 3"}];
+
 --#[at-time-zone-00]
 SELECT CAST("t"['timestamp_1'] AS TIMESTAMP (6) WITH TIME ZONE) AS "v" FROM "default"."T" AS "t";
 

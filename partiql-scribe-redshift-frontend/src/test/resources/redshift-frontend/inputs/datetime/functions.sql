@@ -97,6 +97,9 @@ SELECT CONVERT_TIMEZONE('UTC', 'America/New_York', timestamp_1) AS v FROM T;
 --#[convert-timezone-04]
 SELECT CONVERT_TIMEZONE(c, timestamp_1) AS v FROM T;
 
+--#[convert-timezone-05]
+SELECT CONVERT_TIMEZONE('UTC') AS v FROM T;
+
 --#[at-time-zone-00]
 SELECT timestamp_1 AT TIME ZONE 'UTC' AS v FROM T;
 

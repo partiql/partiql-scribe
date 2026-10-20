@@ -493,6 +493,10 @@ internal class RedshiftDatetimeFunctions(
     /**
      * The comparison functions `DATE_CMP`, `TIMESTAMP_CMP`, ...: -1, 0, or 1, and NULL for a NULL argument. The
      * arguments must have the types of the function, or a type that converts to them exactly (DATE to TIMESTAMP).
+     *
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_DATE_CMP.html
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_TIMESTAMP_CMP.html
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_TIMESTAMPTZ_CMP.html
      */
     private fun compare(
         redshift: String,
@@ -557,7 +561,9 @@ internal class RedshiftDatetimeFunctions(
         args: List<Operand>,
         setq: SetQuantifier?,
     ): Expr {
-        if (args.size != 2 && args.size != 3) functions.arity(name, args, 3)
+        if (args.size != 2 && args.size != 3) {
+            throw UnsupportedConstructException.at(name, "`${name.text}` with ${args.size} argument(s); expected 2 or 3")
+        }
         if (setq != null) throw UnsupportedConstructException.at(name, "set quantifier in scalar function `${name.text}`")
         for (zone in args.dropLast(1)) {
             val value =
