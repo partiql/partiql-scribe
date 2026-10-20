@@ -188,7 +188,7 @@ SELECT "O"['b'] AS "b" FROM "default"."T" AS "O" WHERE "O"['b'] IN (SELECT "E"['
 SELECT "O"['b'] AS "b" FROM "default"."T" AS "O" WHERE "O"['b'] IN (SELECT "sub"['b'] AS "b" FROM (SELECT "E"['b'] AS "b" FROM "default"."T" AS "E" INNER JOIN "default"."T" AS "T2" ON "T2"['b'] > "E"['b']) AS "sub" WHERE "sub"['b'] > "O"['b']);
 
 --#[join-48]
-SELECT "x" AS "x", "y" AS "y" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "x" ON "x" > 1 INNER JOIN "E"['array'] AS "y" ON "y" > 2;
+SELECT "p" AS "p", "q" AS "q" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "p" ON "p" > 1 INNER JOIN "E"['array'] AS "q" ON "q" > 2;
 
 --#[join-49]
-SELECT "x" AS "x" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "x" ON "x" > 1 WHERE "E"['b'] > 0;
+SELECT "p" AS "p" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "p" ON "p" > 1 WHERE "E"['b'] > 0;
