@@ -46,6 +46,8 @@ basics__limit-offset-19	INVALID_INPUT	semantic: EXCEPT ALL is not supported in R
 basics__limit-offset-20	INVALID_INPUT	semantic: INTERSECT ALL is not supported in Redshift
 basics__map-02	UNSUPPORTED	`OBJECT` with a value that can be NULL (Redshift does not document whether it keeps the attribute)
 basics__map-03	UNSUPPORTED	`OBJECT` with a key that is not a string literal
+basics__order-by-08	MISMATCH	SELECT "$s"['a'] AS "a", "$s"['b'] AS "b" FROM ((SELECT "T"['a'] AS "a", "T"['b'] AS "b" FROM "default"."T" AS "T" ORDER BY "T"['a'] ASC NULLS LAST, "T"['b'] ASC NULLS LAST) UNION DISTINCT (SELECT "T"['a'] AS "a", "T"['b'] AS "b" FROM "default"."T" AS "T" ORDER BY "T"['a'] ASC NULLS LAST, "T"['b'] ASC NULLS LAST)) AS "$s" ORDER BY "$s"['a'] ASC NULLS LAST
+basics__order-by-09	MISMATCH	SELECT "$s"['a'] AS "a", "$s"['b'] AS "b" FROM ((SELECT "T"['a'] AS "a", "T"['b'] AS "b" FROM "default"."T" AS "T" ORDER BY "T"['a'] ASC NULLS LAST, "T"['b'] ASC NULLS LAST LIMIT 1 OFFSET 2) UNION DISTINCT (SELECT "T"['a'] AS "a", "T"['b'] AS "b" FROM "default"."T" AS "T" ORDER BY "T"['a'] ASC NULLS LAST, "T"['b'] ASC NULLS LAST LIMIT 3 OFFSET 4)) AS "$s" ORDER BY "$s"['a'] ASC NULLS LAST LIMIT 5 OFFSET 6
 basics__paths-sfw-00	MISMATCH	SELECT COALESCE("t"['x']['y']) AS "v" FROM "default"."T" AS "t"
 basics__paths-sfw-01	MISMATCH	SELECT COALESCE("t"['x'][0]) AS "v" FROM "default"."T" AS "t"
 basics__paths-sfw-03	MISMATCH	SELECT COALESCE("t"['x']['y']) AS "v" FROM "default"."T" AS "t"

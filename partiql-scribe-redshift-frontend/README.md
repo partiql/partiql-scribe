@@ -93,7 +93,8 @@ Names and output
 
 - Identifiers: by default, quoted and unquoted identifiers fold to lower case, as with the Redshift default
   `enable_case_sensitive_identifier = false`. Use `RedshiftTranspiler(caseSensitiveIdentifiers = true)` for sources
-  that set it to true. Only the ASCII letters A to Z fold, as in Redshift.
+  that set it to true: then only unquoted identifiers fold, and names match exactly. Only the ASCII letters A to Z
+  fold, as in Redshift.
 - Every column reference is qualified with the alias of its FROM item, by the Redshift scoping rules (the innermost
   query block that has a FROM item with the column, then the enclosing blocks), because PartiQL resolves an
   unqualified name as a FROM alias or a catalog table first. A table without an alias gets its name as the alias. An
@@ -106,8 +107,9 @@ Names and output
   one it uses. A bare ORDER BY name is an output column first. GROUP BY and ORDER BY positions and GROUP BY ALL are
   replaced by the select-list expressions.
 - Default output column names: an unaliased column or SUPER path is named after the column or the last attribute, a
-  function call or window function after the function (`count`, `row_number`), and a CAST after its operand. Other
-  expressions keep the PartiQL name (`_1`, ...) with a note; Redshift names them `?column?`.
+  function call or window function after the function (`count`, `row_number`; `NVL` is `coalesce`, `DECODE` is
+  `case`, `DATE_PART` is `pgdate_part`, and `GETDATE` is `timestamp`, as in Redshift), and a CAST after its operand.
+  Other expressions keep the PartiQL name (`_1`, ...) with a note; Redshift names them `?column?`.
 - The output is parsed and planned again; an error, or a planner warning that the input does not have, is an internal
   error.
 
@@ -123,8 +125,11 @@ Query structure
   allow window functions in ORDER BY. A reference to the alias of a window function in QUALIFY is the column of the
   item. A FROM item directly before QUALIFY needs an alias, because Redshift reads QUALIFY as the alias.
 - Set operations: the later queries name their items like the first query; when the names of the first query repeat,
-  every query names its items `$c1`, `$c2`, ..., and an outer query restores the names. `INTERSECT ALL` and `EXCEPT
-  ALL` are invalid in Redshift.
+  every query names its items `$c1`, `$c2`, ..., and an outer query restores the names. A set operation with ORDER BY
+  moves into a subquery that an outer query sorts, because the PartiQL planner resolves an ORDER BY name of a set
+  operation as a FROM alias or a table. A set operation as a scalar, `IN`, `ANY`, `ALL`, or `EXISTS` subquery becomes
+  the FROM item of a query block, because PartiQL reads the rows of a set operation as structs, not values.
+  `INTERSECT ALL` and `EXCEPT ALL` are invalid in Redshift.
 - WITH: each common table expression is inlined as a subquery where the query refers to it; `WITH RECURSIVE` is
   unsupported.
 - SELECT without FROM reads from a one-row bag.
@@ -138,7 +143,8 @@ Comparisons, conversions, and literals
   comparisons across type families, are unsupported.
 - Redshift compares and computes `REAL` with another number, and `DOUBLE PRECISION` with `DECIMAL`, in `DOUBLE
   PRECISION`; the translation casts the operands. A comparison with a literal that the floating-point type holds
-  exactly needs no cast.
+  exactly needs no cast. An operand with an aggregate of a `REAL` value whose type the translation cannot tell
+  (`COALESCE(MAX(r), 0) * 3`) is unsupported.
 - `BETWEEN` with a bound that is not a literal, or is NULL, becomes `x >= a AND x <= b`, because PartiQL `BETWEEN`
   is NULL when a bound is NULL.
 - `CASE`, `NVL`, `COALESCE`, and the other conditional expressions cast their results to the common result type when
@@ -226,8 +232,9 @@ SUPER values
   writes each attribute step as a delimited name with the ASCII letters folded (`t.x.Y` becomes `"t"['x']['y']`). A
   bracket step with a character string key is unsupported.
 - A top-level select item whose static type is dynamic (a SUPER value), or that has an array subscript, is wrapped in
-  `COALESCE(e)`, so that a navigation to a missing attribute returns NULL, as in Redshift, instead of MISSING. The
-  elements of `ARRAY(...)` and `OBJECT(...)` that have the dynamic type are wrapped the same way.
+  `COALESCE(e)`, so that a navigation to a missing attribute or an index out of range returns NULL, as in Redshift,
+  instead of MISSING. The elements of `ARRAY(...)` and `OBJECT(...)` that have the dynamic type or an array subscript
+  are wrapped the same way.
 - SUPER arrays in FROM: Redshift unnests only arrays, so the FROM item iterates `CASE WHEN x IS LIST THEN x ELSE []
   END`, and the root of the source is a variable reference (`@"t"['x']`), so that a catalog table of the same name
   does not capture it. The evaluator must run in PERMISSIVE mode, as for SUPER navigation.

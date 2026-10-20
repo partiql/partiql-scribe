@@ -50,6 +50,16 @@ class RedshiftTranspilerTest {
     }
 
     @Test
+    fun unquotedIdentifiersMatchExactlyWhenCaseSensitive() {
+        val transpiler = RedshiftTranspiler(caseSensitiveIdentifiers = true)
+        val result = transpiler.transpile("SELECT c FROM (SELECT 2 AS \"C\", 1 AS \"c\") AS t", session)
+        assertEquals(RedshiftTranspileResult.Status.VALID, result.status, result.toString())
+        assertTrue(result.partiql!!.startsWith("SELECT \"t\"['c'] AS \"c\""), result.toString())
+        val star = transpiler.transpile("SELECT * FROM (SELECT 2 AS \"C\", 1 AS \"c\") AS t", session)
+        assertTrue(star.partiql!!.startsWith("SELECT \"t\"['C'] AS \"C\", \"t\"['c'] AS \"c\""), star.toString())
+    }
+
+    @Test
     fun unsupportedConstructHasLocation() {
         val result = RedshiftTranspiler().transpile("SELECT b\nFROM T\nNATURAL JOIN SIMPLE_T", session)
         assertEquals(RedshiftTranspileResult.Status.UNSUPPORTED, result.status)

@@ -205,7 +205,8 @@ internal class RedshiftSuperFunctions(
                     name,
                     "`${name.text.uppercase()}` with a ${FunctionTypes.name(type)} argument (Redshift does not convert it to SUPER)",
                 )
-            isDynamic(type) && operand.expr !is ExprCoalesce -> exprCoalesce(listOf(x))
+            // A SUPER path or an array subscript out of range is MISSING, which Redshift returns as NULL.
+            (isDynamic(type) || containsSubscript(operand.expr, functions)) && operand.expr !is ExprCoalesce -> exprCoalesce(listOf(x))
             else -> x
         }
 

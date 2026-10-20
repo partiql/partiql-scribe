@@ -9,6 +9,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprCall
+import org.partiql.ast.expr.ExprLit
 import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.Plan
@@ -168,16 +169,42 @@ internal class OperandTypes {
     }
 
     /**
-     * Reads the types of the probed operands from [plan]. Returns true if a type changed, which means that another
-     * probe pass can resolve more rules.
+     * Reads the types of the probed operands from [plan], the plan of [ast]. Returns true if a type changed, which means
+     * that another probe pass can resolve more rules.
+     *
+     * The plan has no probe in a call that the planner could not resolve. When a rule translated an operand of the
+     * dynamic type, which can be the type of a placeholder of the last pass, and the call does not resolve with the real
+     * type, the probe is lost and the type would stay dynamic: the type is forgotten, so that the next pass translates
+     * the operand with the placeholder again.
      */
-    fun collect(plan: Plan): Boolean {
+    fun collect(
+        ast: AstNode,
+        plan: Plan,
+    ): Boolean {
         val found = HashMap<Int, PType>()
         val action = plan.action
         if (action is org.partiql.plan.Action.Query) Collector(found).visit(action.rex, Unit)
-        val changed = found.any { (id, type) -> types[id] != type }
+        var changed = found.any { (id, type) -> types[id] != type }
         types.putAll(found)
+        for (id in probeIds(ast, HashSet())) {
+            if (id !in found && types[id]?.code() == PType.DYNAMIC) {
+                types.remove(id)
+                changed = true
+            }
+        }
         return changed
+    }
+
+    /** Adds the ids of the probe calls in [node] to [ids]. */
+    private fun probeIds(
+        node: AstNode,
+        ids: MutableSet<Int>,
+    ): Set<Int> {
+        if (node is ExprCall && node.function.identifier.let { it.isRegular() && it.getText() == PROBE } && node.args.size == 2) {
+            ((node.args[0] as? ExprLit)?.lit?.bigDecimalValue())?.let { ids.add(it.toInt()) }
+        }
+        node.children.forEach { probeIds(it, ids) }
+        return ids
     }
 
     /**

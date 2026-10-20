@@ -30,6 +30,7 @@ import org.partiql.ast.Ast.setOp
 import org.partiql.ast.Ast.sort
 import org.partiql.ast.Ast.with
 import org.partiql.ast.Ast.withListElement
+import org.partiql.ast.AstNode
 import org.partiql.ast.DataType
 import org.partiql.ast.From
 import org.partiql.ast.FromTableRef
@@ -69,7 +70,8 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  *
  * @param caseSensitiveIdentifiers The Redshift `enable_case_sensitive_identifier` setting. When false (the Redshift
  * default), Redshift folds quoted and unquoted identifiers to lower case, so both become PartiQL regular
- * (case-insensitive) identifiers. When true, quoted identifiers become PartiQL delimited (case-sensitive) identifiers.
+ * (case-insensitive) identifiers. When true, Redshift folds only unquoted identifiers and compares names exactly, so
+ * identifiers become PartiQL delimited (case-sensitive) identifiers, unquoted ones in lower case.
  * @param types The static types of operands, for the rules that depend on them; see [OperandTypes].
  * @param catalog The tables of the session, for the columns of FROM items.
  * @param analysis The decisions about names that hold for all passes over the parse tree.
@@ -115,10 +117,36 @@ internal class RedshiftAstBuilder(
     /**
      * Translates a subquery of an expression (scalar, IN, EXISTS), which can refer to the FROM items of the query
      * blocks that contain it.
+     *
+     * PartiQL reads the rows of a subquery as values only for a query block (`SELECT ...`); the rows of a set operation
+     * stay structs, so `1 IN (SELECT 1 UNION SELECT 2)` is false. A set operation becomes the FROM item of a query block
+     * that selects its columns.
      */
     internal fun exprQuerySet(ctx: P.QueryContext): ExprQuerySet {
         val outer = blocks.lastOrNull()?.scope
-        return inClause(Clause.OTHER) { query(ctx, outer, outer?.commonTables ?: emptyList()).expr }
+        return inClause(Clause.OTHER) {
+            val query = query(ctx, outer, outer?.commonTables ?: emptyList())
+            if (query.expr.body !is QueryBody.SetOp) return@inClause query.expr
+            val columns = query.columns ?: throw UnsupportedConstructException.at(ctx, "set operation with unknown columns as a subquery")
+            note(ctx.start, "The set operation was moved into a subquery, so that PartiQL reads its rows as values")
+            selectColumns(query.expr, columns, columns, null, null, null)
+        }
+    }
+
+    /** `SELECT "$s".c1 AS n1, ... FROM (<query>) AS "$s" [ORDER BY ...] [LIMIT ...] [OFFSET ...]`. */
+    private fun selectColumns(
+        query: ExprQuerySet,
+        columns: List<Identifier.Simple>,
+        names: List<Identifier.Simple>,
+        sorts: List<Sort>?,
+        limit: Expr?,
+        offset: Expr?,
+    ): ExprQuerySet {
+        val alias = generated.fresh("\$s")
+        val items = columns.indices.map { selectItemExpr(field(alias, columns[it]), names[it]) }
+        val outerSorts = sorts?.map { sort(field(alias, ((it.expr as ExprVarRef).identifier.identifier)), it.order, it.nulls) }
+        val body = queryBodySFW(selectList(items, null), null, from(listOf(fromExpr(query, FromType.SCAN(), alias, null))))
+        return exprQuerySet(body, outerSorts?.let(::orderBy), limit, offset)
     }
 
     /**
@@ -175,7 +203,9 @@ internal class RedshiftAstBuilder(
      * names of the first query repeat, PartiQL cannot tell the columns apart, so every query names its items
      * `$c1`, `$c2`, ..., and an outer query renames them.
      *
-     * ORDER BY of a set operation can use the output names and positions.
+     * ORDER BY of a set operation can use the output names and positions. The PartiQL planner resolves a name in the
+     * ORDER BY of a set operation as a FROM alias or a catalog table, so the set operation becomes the FROM item of a
+     * query block with the ORDER BY.
      *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_UNION.html
      */
@@ -200,16 +230,13 @@ internal class RedshiftAstBuilder(
             }
         val sorts = orderBy?.sortItem()?.map { setOperationSort(it, columns, names) }
         val (limitExpr, offsetExpr) = limitOffset(limit)
+        if (unique && sorts == null) return Translated(exprQuerySet(expr.body, null, limitExpr, offsetExpr), names)
         if (unique) {
-            return Translated(exprQuerySet(expr.body, sorts?.let(::orderBy), limitExpr, offsetExpr), names)
+            note(orderBy!!.start, "The set operation was moved into a subquery, so that ORDER BY refers to its output columns")
+        } else {
+            note(ctx.start, "The set operation was moved into a subquery, because its column names repeat")
         }
-        // SELECT "$s"."$c1" AS n1, ... FROM (<set operation>) AS "$s"
-        val alias = generated.fresh("\$s")
-        val items = columns.indices.map { selectItemExpr(field(alias, columns[it]), names[it]) }
-        val outerSorts = sorts?.map { sort(field(alias, ((it.expr as ExprVarRef).identifier.identifier)), it.order, it.nulls) }
-        val body = queryBodySFW(selectList(items, null), null, from(listOf(fromExpr(expr, FromType.SCAN(), alias, null))))
-        note(ctx.start, "The set operation was moved into a subquery, because its column names repeat")
-        return Translated(exprQuerySet(body, outerSorts?.let(::orderBy), limitExpr, offsetExpr), names)
+        return Translated(selectColumns(expr, columns, names, sorts, limitExpr, offsetExpr), names)
     }
 
     /** The set operation [ctx] with the names of its first query; the later queries are renamed by the caller. */
@@ -544,9 +571,8 @@ internal class RedshiftAstBuilder(
         }
     }
 
-    /** True if [expr] is a path with an array subscript. */
-    private fun hasSubscript(expr: Expr): Boolean =
-        expr is org.partiql.ast.expr.ExprPath && expr.steps.any { it is org.partiql.ast.expr.PathStep.Element }
+    /** True if [expr] has an array subscript outside a subquery. */
+    private fun hasSubscript(expr: Expr): Boolean = containsSubscript(expr, functions)
 
     /**
      * True if [expr] is a column of a FROM item with known columns, or an unnested array element, which is never
@@ -649,10 +675,8 @@ internal class RedshiftAstBuilder(
         for (column in columns) {
             // The step that a reference to the column has, so that the item is equal to the reference.
             val step =
-                if (caseSensitiveIdentifiers && column != foldAscii(column)) {
-                    Identifier.Simple.delimited(
-                        column,
-                    )
+                if (caseSensitiveIdentifiers) {
+                    Identifier.Simple.delimited(column)
                 } else {
                     Identifier.Simple.regular(foldAscii(column))
                 }
@@ -697,8 +721,8 @@ internal class RedshiftAstBuilder(
 
     /**
      * The output name that Redshift gives an item without an alias: the column for a column reference, the last
-     * attribute for a SUPER path, the function name (lower case) for a function call, the operand for a CAST. Other
-     * expressions get the PartiQL name.
+     * attribute for a SUPER path, the function name (lower case) for a function call (see [FUNCTION_COLUMN_NAMES]), the
+     * operand for a CAST. Other expressions get the PartiQL name.
      *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_SELECT_list.html
      */
@@ -723,7 +747,10 @@ internal class RedshiftAstBuilder(
                     is P.AtomVariableContext -> Identifier.Simple.delimited(simple(atom.identifier()).text)
                     is P.AtomCastContext -> derivedName(atom.expr())
                     is P.AtomParenthesizedContext -> derivedName(atom.expr())
-                    is P.AtomFunctionCallContext -> Identifier.Simple.delimited(foldAscii(atom.name.text.removeSurrounding("\"")))
+                    is P.AtomFunctionCallContext -> {
+                        val name = foldAscii(atom.name.text.removeSurrounding("\""))
+                        Identifier.Simple.delimited(FUNCTION_COLUMN_NAMES[name] ?: name)
+                    }
                     is P.AtomCountStarContext -> Identifier.Simple.delimited("count")
                     is P.AtomApproximateContext -> (atom.atom() as? P.AtomCountStarContext)?.let { Identifier.Simple.delimited("count") }
                     else -> null
@@ -1592,7 +1619,12 @@ internal class RedshiftAstBuilder(
      */
     internal fun simple(ctx: P.IdentifierContext): Identifier.Simple =
         when (ctx) {
-            is P.IdentifierUnquotedContext, is P.IdentifierNonReservedContext -> Identifier.Simple.regular(foldAscii(ctx.text))
+            is P.IdentifierUnquotedContext, is P.IdentifierNonReservedContext ->
+                if (caseSensitiveIdentifiers) {
+                    Identifier.Simple.delimited(foldAscii(ctx.text))
+                } else {
+                    Identifier.Simple.regular(foldAscii(ctx.text))
+                }
             is P.IdentifierQuotedContext -> {
                 val text = ctx.text.removePrefix("\"").removeSuffix("\"").replace("\"\"", "\"")
                 if (caseSensitiveIdentifiers) Identifier.Simple.delimited(text) else Identifier.Simple.regular(foldAscii(text))
@@ -1708,3 +1740,30 @@ internal class RedshiftAstBuilder(
         fun groupByOf(keys: List<org.partiql.ast.GroupBy.Key>) = groupBy(GroupByStrategy.FULL(), keys, null)
     }
 }
+
+/**
+ * Redshift names the calls of some functions after the expression that it rewrites them to.
+ *
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_NVL_function.html,
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_DECODE_expression.html,
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_DATE_PART_function.html,
+ * https://docs.aws.amazon.com/redshift/latest/dg/r_GETDATE.html
+ */
+private val FUNCTION_COLUMN_NAMES =
+    mapOf("nvl" to "coalesce", "decode" to "case", "date_part" to "pgdate_part", "getdate" to "timestamp")
+
+/**
+ * True if [node] has an array subscript outside a subquery and outside a translation that is never MISSING (see
+ * [RedshiftFunctions.nonMissing]): the value can be MISSING where Redshift returns NULL.
+ */
+internal fun containsSubscript(
+    node: AstNode,
+    functions: RedshiftFunctions,
+): Boolean =
+    when {
+        node is ExprQuerySet || (node is Expr && functions.isNonMissing(node)) -> false
+        // A constructor is not MISSING; the SUPER functions wrap the elements.
+        node is org.partiql.ast.expr.ExprArray || node is org.partiql.ast.expr.ExprStruct -> false
+        node is org.partiql.ast.expr.PathStep.Element -> true
+        else -> node.children.any { containsSubscript(it, functions) }
+    }

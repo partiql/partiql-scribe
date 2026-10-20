@@ -175,7 +175,7 @@ public class RedshiftTranspiler(
                 } catch (ex: RuntimeException) {
                     break
                 }
-            if (!types.collect(plan)) break
+            if (!types.collect(probe, plan)) break
         }
         types.startFinal()
         return RedshiftAstBuilder(caseSensitiveIdentifiers, notes, types, catalog, analysis).root(tree)

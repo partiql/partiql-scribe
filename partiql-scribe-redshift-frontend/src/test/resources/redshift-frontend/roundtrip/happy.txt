@@ -163,8 +163,6 @@ basics__order-by-04	PARTIQL
 basics__order-by-05	PARTIQL
 basics__order-by-06	PARTIQL
 basics__order-by-07	PARTIQL
-basics__order-by-08	PARTIQL
-basics__order-by-09	PARTIQL
 basics__order-by-11	PARTIQL
 basics__order-by-12	PARTIQL
 basics__order-by-13	PARTIQL

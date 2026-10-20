@@ -115,6 +115,13 @@ internal fun OperandTypes.resolveTyped(
                 // A select-list alias (`s` in `SELECT SUM(b) AS s, s * 2`) can stand for an aggregate.
                 containsAggregate(operand.ctx) || RedshiftQueryBlocks.containsAggregateOrWindow(operand.expr) -> {
                     val type = aggregateType(operand.ctx)
+                    // Redshift computes REAL with another number in DOUBLE PRECISION, which needs the type.
+                    if (type == null && !probing && aggregatesReal(operand.ctx)) {
+                        throw UnsupportedConstructException.at(
+                            operand.ctx,
+                            "operator on an expression with an aggregate of a REAL value",
+                        )
+                    }
                     TypedOperand(operand.ctx, operand.expr, type ?: PType.dynamic(), untyped = type == null)
                 }
                 else -> {
@@ -166,6 +173,17 @@ internal fun containsAggregate(ctx: ParserRuleContext): Boolean =
         // A subquery has its own aggregation.
         is P.QueryContext -> false
         else -> (0 until ctx.childCount).any { (ctx.getChild(it) as? ParserRuleContext)?.let(::containsAggregate) == true }
+    }
+
+/** True if [ctx] calls an aggregate function of its own query block with a REAL argument. */
+private fun OperandTypes.aggregatesReal(ctx: ParserRuleContext): Boolean =
+    when (ctx) {
+        is P.AtomFunctionCallContext -> {
+            val aggregate = ctx.overClause() == null && ctx.name.text.lowercase() in AGGREGATE_FUNCTIONS
+            (aggregate && ctx.expr().any { typeOf(it)?.code() == PType.REAL }) || ctx.expr().any { aggregatesReal(it) }
+        }
+        is P.QueryContext -> false
+        else -> (0 until ctx.childCount).any { (ctx.getChild(it) as? ParserRuleContext)?.let { c -> aggregatesReal(c) } == true }
     }
 
 /**

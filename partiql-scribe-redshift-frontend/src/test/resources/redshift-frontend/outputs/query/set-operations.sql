@@ -32,10 +32,10 @@
 [INVALID_INPUT{message="each UNION query must have the same number of columns"}];
 
 --#[set-operation-order-by-position]
-(SELECT "t"['b'] AS "b" FROM "default"."T" AS "t") UNION ALL (SELECT "simple_t"['b'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t") ORDER BY "_1"['b'] ASC NULLS LAST LIMIT 5;
+SELECT "$s"['b'] AS "b" FROM ((SELECT "t"['b'] AS "b" FROM "default"."T" AS "t") UNION ALL (SELECT "simple_t"['b'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t")) AS "$s" ORDER BY "$s"['b'] ASC NULLS LAST LIMIT 5;
 
 --#[set-operation-order-by-name]
-(SELECT "t"['b'] AS "x" FROM "default"."T" AS "t") UNION DISTINCT (SELECT "simple_t"['b'] AS "x" FROM "default"."SIMPLE_T" AS "simple_t") ORDER BY "_1"['x'] DESC NULLS FIRST LIMIT 3 OFFSET 1;
+SELECT "$s"['x'] AS "x" FROM ((SELECT "t"['b'] AS "x" FROM "default"."T" AS "t") UNION DISTINCT (SELECT "simple_t"['b'] AS "x" FROM "default"."SIMPLE_T" AS "simple_t")) AS "$s" ORDER BY "$s"['x'] DESC NULLS FIRST LIMIT 3 OFFSET 1;
 
 --#[set-operation-order-by-expression]
 [INVALID_INPUT{message="ORDER BY of a set operation can use only output column names or positions"}];

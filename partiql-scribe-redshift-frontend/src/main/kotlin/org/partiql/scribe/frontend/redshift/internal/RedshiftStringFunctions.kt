@@ -280,13 +280,16 @@ internal class RedshiftStringFunctions(
                     if (literalDelimiter == null) exprNullPredicate(d, true) else null,
                     if (literalPart == null) exprNullPredicate(part, true) else null,
                 ).reduce { a, b -> exprAnd(a, b) }
-            exprCase(
-                null,
-                listOf(
-                    exprCaseBranch(present, exprPath(split, listOf(exprPathStepElement(index)))),
-                    exprCaseBranch(notNull, string("")),
+            // The subscript is in range.
+            functions.nonMissing(
+                exprCase(
+                    null,
+                    listOf(
+                        exprCaseBranch(present, exprPath(split, listOf(exprPathStepElement(index)))),
+                        exprCaseBranch(notNull, string("")),
+                    ),
+                    null,
                 ),
-                null,
             )
         }
     }
