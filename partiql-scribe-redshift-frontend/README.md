@@ -29,11 +29,20 @@ function with the same name can have different semantics in the two languages.
 - Comparison, `BETWEEN`, `IN`, `LIKE`, `IS [NOT] NULL`, `AND`, `OR`, `NOT`, arithmetic, `||`, `CASE`
 - `CAST(x AS t)` and `x::t` for numeric, character, boolean, `DATE`, `TIME`, `TIMETZ`, `TIMESTAMP`, and
   `TIMESTAMPTZ` types
-- Typed literals: `DATE`, `TIME`, `TIMETZ`, `TIMESTAMP`, and `TIMESTAMPTZ`, with a numeric time zone offset
+- Typed literals: `DATE`, `TIME`, `TIMETZ`, `TIMESTAMP`, and `TIMESTAMPTZ` in the ISO format and the Redshift formats
+  that do not depend on the DateStyle setting (`20080215`, `Feb 15, 2008`, `04:05 PM`), with a numeric time zone
+  offset, `Z`, `UTC`, or `GMT`
+- `INTERVAL` literals with a qualifier (`INTERVAL '1 2:03:04' DAY TO SECOND`) and without (`INTERVAL '3 hours,
+  35 minutes'`)
+- Datetime arithmetic: `date +- integer`, `date - date`, `date + time`, datetime and interval `+` and `-`
 - SUPER navigation: `t.a.b`, `t.a[0]`
 - Functions: `NVL`, `COALESCE`, `NULLIF`, `LEN`, `LENGTH`, `UPPER`, `LOWER`, `CHAR_LENGTH`, `OCTET_LENGTH`, `ABS`,
-  `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`, `DATEADD`, `DATEDIFF`, `GETDATE`, `SYSDATE`, `CURRENT_DATE`
-- `EXTRACT(part FROM x)` for the year, month, day, hour, minute, and second dateparts and their abbreviations
+  `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`
+- Datetime functions: `DATEADD`, `DATEDIFF`, `DATE_PART`, `PGDATE_PART`, `DATE_PART_YEAR`, `DATE_TRUNC`, `LAST_DAY`,
+  `ADD_MONTHS`, `NEXT_DAY`, `DATE_CMP` and the other comparison functions, `GETDATE`, `SYSDATE`, `CURRENT_DATE`, and
+  `CONVERT_TIMEZONE`, `TIMEZONE`, and `AT TIME ZONE` for the UTC time zone
+- `EXTRACT(part FROM x)` for the year, quarter, month, week, day, day of week, day of year, hour, minute, second,
+  millisecond, decade, century, and millennium dateparts and their abbreviations
 
 ## Semantic rules
 
@@ -42,14 +51,40 @@ function with the same name can have different semantics in the two languages.
   that set it to true.
 - `ORDER BY` always writes the null order: Redshift puts NULL values last for `ASC` and first for `DESC`.
 - `VARCHAR` and `TEXT` without a length are `VARCHAR(256)`; `DECIMAL` without parameters is `DECIMAL(18, 0)`.
-- `GETDATE()` and `SYSDATE` become `UTCNOW()`, which returns `TIMESTAMP WITH TIME ZONE` in UTC.
+- The Redshift session time zone is assumed to be UTC, the Redshift default: `GETDATE()`, `SYSDATE`, and
+  `CURRENT_DATE` become `UTCNOW()` cast to `TIMESTAMP` (truncated to the second for `GETDATE()`) or `DATE`, and the
+  fields of a `TIMESTAMPTZ` value are its UTC fields. PartiQL evaluates `UTCNOW()` for each call and row; Redshift
+  returns one value per statement or transaction. The translation adds a note.
+- `TIMESTAMPTZ` values in the source data are assumed to be UTC instants. `TIMESTAMPTZ` literals are converted to UTC,
+  as Redshift stores them; a `TIMESTAMPTZ` or `TIMETZ` literal without a time zone is in UTC.
 - `TIME`, `TIMETZ`, and `TIMESTAMPTZ` types get precision 6, which is the Redshift precision. PartiQL `TIME` without
   a precision is `TIME(0)`.
-- `EXTRACT(SECOND ...)` returns an INTEGER in Redshift for `TIMESTAMP` and `TIME` values, and a DECIMAL with the
-  fraction in PartiQL. The translation adds a note.
-- A `TIMESTAMP` or `TIME` literal with an offset, and a literal with a time zone name, are unsupported. Redshift
-  ignores the offset of a `TIMESTAMP` literal; PartiQL accepts only numeric offsets.
+- `DATEDIFF` counts date part boundaries, PartiQL `DATE_DIFF` counts whole units: the translation counts the whole
+  units from `TIMESTAMP '0001-01-01 00:00:00'` (from midnight for `TIME`). The same reference is used by `DATE_TRUNC`,
+  `LAST_DAY`, `NEXT_DAY`, and the day of week, day of year, and week dateparts, so values before the year 1 are not
+  supported.
+- `DATEADD` returns `TIMESTAMP` for a `DATE` value, and moves February 29 to March 1 when it adds years. `EXTRACT`
+  returns whole seconds, and `DOUBLE PRECISION` for a `TIMESTAMPTZ` value; `DATE_PART` returns `DOUBLE PRECISION`.
+- A character string literal argument of a datetime function becomes a datetime literal, as Redshift converts it.
+  Formats that depend on the DateStyle setting, special values (`'today'`), and `24:00:00` are unsupported. A
+  `TIMESTAMP` literal ignores its time zone, as in Redshift.
+- An interval literal without a qualifier is rewritten with a qualifier, with the leading field precision 9. Redshift
+  keeps a time of 24 hours or more (`'36 hours'`) unnormalized, so such a literal is supported only as an operand of
+  datetime `+` and `-`.
+- Week and quarter boundaries in `DATEDIFF`, quarters, decades, centuries, and millennia in `DATEADD`, `TIMESTAMPTZ`
+  arguments of `DATEADD`, `DATEDIFF`, `DATE_TRUNC`, and `ADD_MONTHS`, `EXTRACT(microsecond)`, `EXTRACT(epoch)`, the
+  `DOUBLE PRECISION` seconds of `DATE_PART`, `INTERVAL` data types, and time zones other than UTC are unsupported:
+  the Redshift documentation does not specify their semantics, or PartiQL has no equivalent.
 - `GROUP BY 1` and `ORDER BY 1` are unsupported, because PartiQL reads the number as a constant, not a position.
+
+## PLK 1.6.1 runtime gaps
+
+The translation follows the PartiQL specification. The PartiQL Kotlin implementation 1.6.1 differs in these cases:
+
+- `INTERVAL + INTERVAL` raises an error when a field carries (`INTERVAL '12' HOUR + INTERVAL '13' HOUR`).
+- `TIMESTAMP - TIMESTAMP` keeps only milliseconds for differences of about 146 years or more.
+- The Scribe PartiQL printer drops the sign of a negative interval shorter than one second, so such interval literals
+  are unsupported.
 
 ## Tests
 
