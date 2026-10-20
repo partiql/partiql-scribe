@@ -517,3 +517,11 @@ internal fun inCollectionArrayOperands(args: SqlArgs): Pair<Expr, Expr>? {
         else -> null
     }
 }
+
+/**
+ * True when both operands are exact integers (TINYINT, SMALLINT, INTEGER, BIGINT). PartiQL integer division then
+ * truncates toward zero and returns an integer.
+ */
+internal fun integerOperands(args: SqlArgs): Boolean = args.size == 2 && args.all { it.type.code() in INTEGER_TYPE_CODES }
+
+private val INTEGER_TYPE_CODES = setOf(PType.TINYINT, PType.SMALLINT, PType.INTEGER, PType.BIGINT)

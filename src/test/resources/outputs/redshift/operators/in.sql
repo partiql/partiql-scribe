@@ -34,3 +34,9 @@ SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v
 
 --#[in-11]
 SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v", "T"."timestamp_1", "T"."timestamp_2" FROM "default"."T" AS "T" WHERE "T"."b" NOT IN (SELECT "T"."b" FROM "default"."T" AS "T");
+
+--#[in-12]
+SELECT "T"."b" IN (1, NULL) AS "r" FROM "default"."T" AS "T";
+
+--#[in-13]
+SELECT "T"."b" NOT IN (1, NULL) AS "r" FROM "default"."T" AS "T";

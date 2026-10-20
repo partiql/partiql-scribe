@@ -189,3 +189,11 @@ SELECT O.b FROM T AS O WHERE O.b IN (SELECT E.b FROM T AS E INNER JOIN T AS T2 O
 -- Non-correlated: subquery in FROM with join inside
 --#[join-47]
 SELECT O.b FROM T AS O WHERE O.b IN (SELECT sub.b FROM (SELECT E.b FROM T AS E INNER JOIN T AS T2 ON T2.b > E.b) AS sub WHERE sub.b > O.b);
+
+--#[join-48]
+-- Chained correlated join predicates are combined, not overwritten (#193)
+SELECT x, y FROM T AS E INNER JOIN E."array" AS x ON x > 1 INNER JOIN E."array" AS y ON y > 2;
+
+--#[join-49]
+-- A query WHERE is combined with a correlated join predicate (#193)
+SELECT x FROM T AS E INNER JOIN E."array" AS x ON x > 1 WHERE E.b > 0;

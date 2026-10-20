@@ -133,3 +133,9 @@ SELECT "T"['a'] AS "a", "T"['b'] AS "b", "T"['c'] AS "c", "T"['d'] AS "d", "T"['
 SELECT "T"['a'] AS "a", "T"['b'] AS "b", "T"['c'] AS "c", "T"['d'] AS "d", "T"['x'] AS "x", "T"['array'] AS "array", "T"['z'] AS "z", "T"['v'] AS "v", "T"['timestamp_1'] AS "timestamp_1", "T"['timestamp_2'] AS "timestamp_2" FROM "default"."T" AS "T" WHERE "T"['c'] LIKE 'abc';
 -- previous output before `SELECT *` expansion:
 -- SELECT "T".* FROM "default"."T" AS "T" WHERE "T"['c'] LIKE 'abc';
+
+--#[select-div-00]
+SELECT "T"['b'] / 2 AS "q", (-"T"['b']) / 2 AS "nq", CAST("T"['b'] AS BIGINT) / CAST(2 AS BIGINT) AS "bq" FROM "default"."T" AS "T";
+
+--#[select-div-01]
+SELECT CAST("T"['b'] AS DECIMAL(10,0)) / 2.0 AS "q" FROM "default"."T" AS "T";

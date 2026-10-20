@@ -95,3 +95,9 @@ SELECT "T"."a", "T"."b", "T"."c", "T"."d", "T"."x", "T"."array", "T"."z", "T"."v
 -- preserve aliases for A, "bB", and "C"; not for d or array index
 --#[select-30]
 SELECT "T"."a" AS "A", "T"."b" AS "bB", "T"."c" AS "C", "T"."d", "T"."array"[1] AS "_1" FROM "default"."T" AS "T";
+
+--#[select-div-00]
+SELECT "T"."b" / 2 AS "q", (-"T"."b") / 2 AS "nq", CAST("T"."b" AS BIGINT) / CAST(2 AS BIGINT) AS "bq" FROM "default"."T" AS "T";
+
+--#[select-div-01]
+SELECT CAST("T"."b" AS DECIMAL(10,0)) / 2.0 AS "q" FROM "default"."T" AS "T";

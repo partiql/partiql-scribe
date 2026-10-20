@@ -17,6 +17,7 @@ import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.inCollectionArrayOperands
+import org.partiql.scribe.sql.integerOperands
 import java.math.BigDecimal
 
 public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
@@ -29,6 +30,12 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
          */
         private val REGEX_METACHARACTERS = setOf('\\', '.', '[', ']', '{', '}', '(', ')', '*', '+', '-', '?', '^', '$', '|')
     }
+
+    /**
+     * PartiQL integer division truncates toward zero and returns an integer. Spark's `/` is always floating point
+     * (`3 / 2 = 1.5`), so integer operands use `DIV` (`3 DIV 2 = 1`, `-3 DIV 2 = -1`). `DIV` returns BIGINT.
+     */
+    override fun divFn(args: SqlArgs): Expr = if (integerOperands(args)) binary("DIV", args) else super.divFn(args)
 
     override val rules: Map<String, SqlCallFn> =
         super.rules.toMutableMap().apply {

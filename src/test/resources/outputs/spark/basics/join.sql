@@ -186,3 +186,9 @@ SELECT `O`.`b` AS `b` FROM `default`.`T` AS `O` WHERE `O`.`b` IN (SELECT `E`.`b`
 -- Non-correlated: subquery in FROM
 --#[join-47]
 SELECT `O`.`b` AS `b` FROM `default`.`T` AS `O` WHERE `O`.`b` IN (SELECT `sub`.`b` AS `b` FROM (SELECT `E`.`b` AS `b` FROM `default`.`T` AS `E` INNER JOIN `default`.`T` AS `T2` ON `T2`.`b` > `E`.`b`) AS `sub` WHERE `sub`.`b` > `O`.`b`);
+
+--#[join-48]
+SELECT `x` AS `x`, `y` AS `y` FROM `default`.`T` AS `E` LATERAL VIEW `EXPLODE`(`E`.`array`) `_x` AS `x` LATERAL VIEW `EXPLODE`(`E`.`array`) `_y` AS `y` WHERE `x` > 1 AND `y` > 2;
+
+--#[join-49]
+SELECT `x` AS `x` FROM `default`.`T` AS `E` LATERAL VIEW `EXPLODE`(`E`.`array`) `_x` AS `x` WHERE `x` > 1 AND `E`.`b` > 0;

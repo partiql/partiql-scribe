@@ -43,4 +43,8 @@ SELECT `t`.`a` AS `a` FROM `default`.`T` AS `t`;
 -- No Select Value
 -- SELECT VALUE {z: a} FROM T;
 
+--#[select-div-00]
+SELECT `T`.`b` DIV 2 AS `q`, (-`T`.`b`) DIV 2 AS `nq`, CAST(`T`.`b` AS BIGINT) DIV CAST(2 AS BIGINT) AS `bq` FROM `default`.`T` AS `T`;
 
+--#[select-div-01]
+SELECT CAST(`T`.`b` AS DECIMAL(10,0)) / 2.0 AS `q` FROM `default`.`T` AS `T`;

@@ -34,3 +34,9 @@ SELECT `T`.`a` AS `a`, `T`.`b` AS `b`, `T`.`c` AS `c`, `T`.`d` AS `d`, `T`.`x` A
 
 --#[in-11]
 SELECT `T`.`a` AS `a`, `T`.`b` AS `b`, `T`.`c` AS `c`, `T`.`d` AS `d`, `T`.`x` AS `x`, `T`.`array` AS `array`, `T`.`z` AS `z`, `T`.`v` AS `v`, `T`.`timestamp_1` AS `timestamp_1`, `T`.`timestamp_2` AS `timestamp_2` FROM `default`.`T` AS `T` WHERE `T`.`b` NOT IN (SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T`);
+
+--#[in-12]
+SELECT `T`.`b` IN (1, NULL) AS `r` FROM `default`.`T` AS `T`;
+
+--#[in-13]
+SELECT `T`.`b` NOT IN (1, NULL) AS `r` FROM `default`.`T` AS `T`;
