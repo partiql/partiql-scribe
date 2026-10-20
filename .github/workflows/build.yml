@@ -19,8 +19,11 @@ permissions:
 
 jobs:
   build:
-    # Fork PRs would run untrusted code on the CodeBuild runner, so they are skipped here.
-    # The GitHub-hosted `gradle.yml` workflow still builds them.
+    # Defense in depth only: a fork PR can edit this workflow (pull_request runs the PR's version), so
+    # this `if:` does not stop a malicious fork. The protection is the repository's fork-PR approval
+    # setting (approval required for all external contributors), plus the runner's webhook filter
+    # and IAM scope. Maintainers must check workflow changes before approving a fork run.
+    # Unmodified fork PRs skip this job; the GitHub-hosted `gradle.yml` still builds them.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: codebuild-partiql-scribe-${{ github.run_id }}-${{ github.run_attempt }}
     # Fails a hung build. It starts once a runner picks up the job, so it does not cover a
