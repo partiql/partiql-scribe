@@ -1,6 +1,3 @@
---#[qualify]
-[UNSUPPORTED{message="QUALIFY clause"}];
-
 --#[ilike]
 [UNSUPPORTED{message="ILIKE"}];
 
@@ -10,20 +7,8 @@
 --#[datepart-week]
 SELECT DATE_ADD(DAY, 7 * 1, "t"['timestamp_1']) AS "v" FROM "default"."T" AS "t";
 
---#[group-by-position]
-[UNSUPPORTED{message="GROUP BY column position"}];
-
---#[order-by-position]
-[UNSUPPORTED{message="ORDER BY column position"}];
-
---#[no-from]
-[UNSUPPORTED{message="SELECT without FROM"}];
-
 --#[super-type]
 [UNSUPPORTED{message="data type `super`"}];
-
---#[top-and-limit]
-[UNSUPPORTED{message="TOP together with LIMIT"}];
 
 --#[extract-week]
 SELECT CAST((DATE_DIFF(DAY, DATE_ADD(YEAR, DATE_DIFF(YEAR, TIMESTAMP '0001-01-01 00:00:00', CAST(DATE_ADD(DAY, (DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', "t"['timestamp_1']) - (DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', "t"['timestamp_1']) % CAST(7 AS BIGINT))) + CAST(3 AS BIGINT), DATE '0001-01-01') AS TIMESTAMP (6))), DATE '0001-01-01'), DATE_ADD(DAY, (DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', "t"['timestamp_1']) - (DATE_DIFF(DAY, TIMESTAMP '0001-01-01 00:00:00', "t"['timestamp_1']) % CAST(7 AS BIGINT))) + CAST(3 AS BIGINT), DATE '0001-01-01')) / CAST(7 AS BIGINT)) + CAST(1 AS BIGINT) AS INT) AS "w" FROM "default"."T" AS "t";

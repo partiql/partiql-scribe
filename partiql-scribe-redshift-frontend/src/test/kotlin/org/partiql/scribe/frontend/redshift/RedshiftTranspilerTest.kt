@@ -51,11 +51,11 @@ class RedshiftTranspilerTest {
 
     @Test
     fun unsupportedConstructHasLocation() {
-        val result = RedshiftTranspiler().transpile("SELECT b\nFROM T\nQUALIFY b > 1", session)
+        val result = RedshiftTranspiler().transpile("SELECT b\nFROM T\nNATURAL JOIN SIMPLE_T", session)
         assertEquals(RedshiftTranspileResult.Status.UNSUPPORTED, result.status)
         val problem = result.problems.single()
         assertEquals(3, problem.line)
         assertEquals(1, problem.column)
-        assertTrue(problem.message.contains("QUALIFY"))
+        assertTrue(problem.message.contains("NATURAL JOIN"))
     }
 }
