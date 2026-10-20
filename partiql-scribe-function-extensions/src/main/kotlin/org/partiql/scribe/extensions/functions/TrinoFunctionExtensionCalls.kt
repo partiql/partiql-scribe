@@ -41,9 +41,14 @@ public open class TrinoFunctionExtensionCalls(
 
     private fun contains(args: SqlArgs): Expr = exprCall(Identifier.delimited("contains"), args.map { it.expr })
 
+    // `to_unixtime` returns a DOUBLE and Trino's CAST to BIGINT rounds. PartiQL truncates toward negative infinity,
+    // so `floor` first (`...05.6` -> `...05`, `1969-12-31 23:59:59.6` -> `-1`).
     private fun toUnixTime(args: SqlArgs): Expr =
         exprCast(
-            exprCall(Identifier.regular("to_unixtime"), args.map { it.expr }),
+            exprCall(
+                Identifier.regular("floor"),
+                listOf(exprCall(Identifier.regular("to_unixtime"), args.map { it.expr })),
+            ),
             DataType.BIGINT(),
         )
 

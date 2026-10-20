@@ -57,11 +57,18 @@ public open class RedshiftFunctionExtensionCalls(
                 ),
         )
 
+    // `DATE_PART(EPOCH, ...)` returns a DOUBLE and Redshift's CAST to BIGINT rounds. PartiQL truncates toward
+    // negative infinity, so `FLOOR` first (`...05.6` -> `...05`, `1969-12-31 23:59:59.6` -> `-1`).
     private fun toUnixTime(args: SqlArgs): Expr =
         exprCast(
             exprCall(
-                Identifier.regular("DATE_PART"),
-                listOf(exprVarRef(Identifier.regular("EPOCH"), false), args[0].expr),
+                Identifier.regular("FLOOR"),
+                listOf(
+                    exprCall(
+                        Identifier.regular("DATE_PART"),
+                        listOf(exprVarRef(Identifier.regular("EPOCH"), false), args[0].expr),
+                    ),
+                ),
             ),
             DataType.BIGINT(),
         )
