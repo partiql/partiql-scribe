@@ -222,6 +222,10 @@ builtins__datetime-59	REDSHIFT
 builtins__datetime-61	REDSHIFT
 builtins__datetime-62	PARTIQL
 builtins__datetime-67	PARTIQL
+builtins__datetime-68	REDSHIFT
+builtins__datetime-69	REDSHIFT
+builtins__datetime-70	PARTIQL
+builtins__datetime-71	PARTIQL
 builtins__extract-49	PARTIQL
 builtins__extract-50	PARTIQL
 builtins__extract-51	PARTIQL
