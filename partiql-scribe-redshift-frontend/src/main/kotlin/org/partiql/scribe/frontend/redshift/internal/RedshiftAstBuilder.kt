@@ -82,7 +82,10 @@ internal class RedshiftAstBuilder(
      * Queries
      */
 
-    private fun exprQuerySet(ctx: P.QueryContext): ExprQuerySet {
+    // The ORDER BY clause is in the query block of the SELECT, for the operand types.
+    private fun exprQuerySet(ctx: P.QueryContext): ExprQuerySet = types.inScope(ctx) { exprQuerySetInScope(ctx) }
+
+    private fun exprQuerySetInScope(ctx: P.QueryContext): ExprQuerySet {
         val spec = ctx.querySpecification()
         val body = querySpecification(spec)
         val orderBy = ctx.orderByClause()?.let { orderBy(it.sortItem().map(::sortItem)) }

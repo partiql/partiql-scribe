@@ -22,7 +22,6 @@ import org.partiql.spi.function.FnOverload
 import org.partiql.spi.function.RoutineOverloadSignature
 import org.partiql.spi.types.PType
 import org.partiql.spi.value.Datum
-import java.util.IdentityHashMap
 
 /**
  * The static types of Redshift operands, for the rules whose translation depends on them.
@@ -40,11 +39,14 @@ import java.util.IdentityHashMap
  *     placeholder, so the number of passes is one more than the nesting depth of such rules.
  *  4. The AST builder translates the query without probes, with the final types.
  *
- * The operands are identified by their parse tree nodes, which are the same in all passes.
+ * An operand is identified by its text and the query block that contains it, which are the same in all passes. Two
+ * operands with the same text in one query block have the same probe, so that a select item and the GROUP BY key that
+ * it repeats stay equal in a probe pass.
  */
 internal class OperandTypes {
-    private val ids = IdentityHashMap<ParserRuleContext, Int>()
+    private val ids = HashMap<Key, Int>()
     private val types = HashMap<Int, PType>()
+    private val scopes = ArrayDeque<ParserRuleContext>()
 
     /** True in a probe pass; false when the AST builder makes the final AST. */
     var probing: Boolean = false
@@ -65,6 +67,19 @@ internal class OperandTypes {
         probing = false
     }
 
+    /** Translates [block] with [ctx] as the query block that contains the operands. */
+    fun <T> inScope(
+        ctx: ParserRuleContext,
+        block: () -> T,
+    ): T {
+        scopes.addLast(ctx)
+        try {
+            return block()
+        } finally {
+            scopes.removeLast()
+        }
+    }
+
     /**
      * Returns [expr], the translation of [ctx], wrapped in a probe call in a probe pass. A rule that reads the type of
      * [ctx] with [typeOf] must use the returned expression in its translation.
@@ -75,7 +90,7 @@ internal class OperandTypes {
     ): Expr {
         if (!probing) return expr
         probed = true
-        val id = ids.getOrPut(ctx) { ids.size }
+        val id = ids.getOrPut(key(ctx)) { ids.size }
         return exprCall(Identifier.regular(PROBE), listOf(exprLit(Literal.intNum(id)), expr))
     }
 
@@ -83,7 +98,19 @@ internal class OperandTypes {
      * Returns the static type of the operand [ctx], or null if it is not known: in the first probe pass, or when the
      * planner could not type the operand.
      */
-    fun typeOf(ctx: ParserRuleContext): PType? = ids[ctx]?.let { types[it] }
+    fun typeOf(ctx: ParserRuleContext): PType? = ids[key(ctx)]?.let { types[it] }
+
+    private fun key(ctx: ParserRuleContext): Key = Key(scopes.lastOrNull(), ctx.text)
+
+    /** The query block (compared by identity) and the text of an operand. */
+    private class Key(
+        val scope: ParserRuleContext?,
+        val text: String,
+    ) {
+        override fun equals(other: Any?): Boolean = other is Key && other.scope === scope && other.text == text
+
+        override fun hashCode(): Int = 31 * System.identityHashCode(scope) + text.hashCode()
+    }
 
     /**
      * Returns the placeholder for a rule whose operand types are not known yet. The placeholder accepts [args] of any
