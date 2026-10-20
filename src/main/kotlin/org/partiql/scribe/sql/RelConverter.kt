@@ -1028,9 +1028,10 @@ public open class RelConverter(
 
 /**
  * Adds [predicate] to an existing WHERE/ON predicate with AND instead of replacing it. A correlated join can already
- * have put its ON predicate in WHERE, so overwriting would silently drop that filter (#193).
+ * have put its ON predicate in WHERE, so overwriting would silently drop that filter (#193). Uses the operator form,
+ * like [SqlCalls.andFn], so each side is parenthesized: `ExprAnd` would render `a OR b AND c` for `(a OR b) AND c`.
  */
 internal fun andPredicate(
     existing: Expr?,
     predicate: Expr,
-): Expr = if (existing == null) predicate else Ast.exprAnd(existing, predicate)
+): Expr = if (existing == null) predicate else Ast.exprOperator("AND", existing, predicate)

@@ -192,3 +192,6 @@ SELECT "p" AS "p", "q" AS "q" FROM "default"."T" AS "E" INNER JOIN "E"['array'] 
 
 --#[join-49]
 SELECT "p" AS "p" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "p" ON "p" > 1 WHERE "E"['b'] > 0;
+
+--#[join-50]
+SELECT "p" AS "p" FROM "default"."T" AS "E" INNER JOIN "E"['array'] AS "p" ON ("p" > 1) OR ("p" < 0) WHERE "E"['b'] > 0;

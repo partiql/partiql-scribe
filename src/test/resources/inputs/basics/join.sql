@@ -197,3 +197,7 @@ SELECT p, q FROM T AS E INNER JOIN E."array" AS p ON p > 1 INNER JOIN E."array" 
 --#[join-49]
 -- A query WHERE is combined with a correlated join predicate (#193)
 SELECT p FROM T AS E INNER JOIN E."array" AS p ON p > 1 WHERE E.b > 0;
+
+--#[join-50]
+-- An OR in the join predicate keeps its grouping when combined with WHERE (#193)
+SELECT p FROM T AS E INNER JOIN E."array" AS p ON p > 1 OR p < 0 WHERE E.b > 0;

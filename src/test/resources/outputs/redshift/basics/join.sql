@@ -193,3 +193,6 @@ SELECT "O"."b" FROM "default"."T" AS "O" WHERE "O"."b" IN (SELECT "sub"."b" FROM
 
 --#[join-49]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[join-50]
+[ScribeException{code=UNSUPPORTED_OPERATION}];

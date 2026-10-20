@@ -46,3 +46,11 @@ SELECT b IN << 1, NULL >> AS r FROM T;
 --#[in-13]
 -- NOT IN with a NULL element and no match is NULL (#197)
 SELECT b NOT IN << 1, NULL >> AS r FROM T;
+
+--#[in-14]
+-- IN an empty bag
+SELECT b FROM T WHERE b IN << >>;
+
+--#[in-15]
+-- NOT IN an empty bag
+SELECT b FROM T WHERE b NOT IN << >>;

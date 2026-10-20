@@ -40,3 +40,9 @@ SELECT "T"."b" IN (1, NULL) AS "r" FROM "default"."T" AS "T";
 
 --#[in-13]
 SELECT "T"."b" NOT IN (1, NULL) AS "r" FROM "default"."T" AS "T";
+
+--#[in-14]
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" IN [];
+
+--#[in-15]
+SELECT "T"."b" AS "b" FROM "default"."T" AS "T" WHERE "T"."b" NOT IN [];

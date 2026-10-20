@@ -305,7 +305,7 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      * PartiQL `IN` follows SQL three-valued logic: no match plus a NULL element gives NULL, not false. DuckDB's
      * list-membership forms lose that NULL, so:
      *
-     * - A literal bag `x IN << 1, 2 >>` is rendered as `x IN (1, 2)` rather than the list `x IN [1, 2]`.
+     * - A non-empty literal bag `x IN << 1, 2 >>` is rendered as `x IN (1, 2)` rather than the list `x IN [1, 2]`.
      * - Membership against a runtime array (e.g. a column) uses `contains`, wrapped to restore the NULL:
      *   `CASE WHEN contains(arr, x) THEN true WHEN x IS NULL OR arr IS NULL OR list_count(arr) < len(arr) THEN NULL
      *   ELSE false END` (`list_count` skips NULL elements, `len` doesn't).
@@ -314,7 +314,8 @@ public open class DuckDBCalls(context: ScribeContext) : SqlCalls(context) {
      */
     override fun inCollection(args: SqlArgs): Expr {
         val rhs = args[1].expr
-        if (rhs is ExprBag) {
+        // An empty bag keeps DuckDB's list form: `x IN []` is valid (false), `x IN ()` is a syntax error.
+        if (rhs is ExprBag && rhs.values.isNotEmpty()) {
             return exprInCollection(args[0].expr, exprRowValue(rhs.values), false)
         }
         val (value, collection) = inCollectionArrayOperands(args) ?: return super.inCollection(args)
