@@ -555,18 +555,17 @@ internal class RedshiftAstBuilder(
         // An aggregate or window function does not return MISSING. The planner also does not find an aggregate in the
         // argument of a function call, such as the probe of the operand types.
         if (containsAggregate(operand) || containsWindow(operand) || RedshiftQueryBlocks.containsAggregateOrWindow(expr)) return expr
-        val probed = types.operand(operand, expr)
-        val type = types.typeOf(operand)
-        return when {
-            // The type is not known yet, or the planner could not find it: no wrap.
-            type == null -> if (types.probing) types.pending(listOf(probed)) else probed
-            // An array subscript out of range is MISSING also for an array of a static element type.
-            type.code() != PType.DYNAMIC && !hasSubscript(expr) -> probed
-            else -> {
-                if (!types.probing) {
+        return functions.resolveOperands(listOf(operand to expr), typing = "select_item") { e, t ->
+            val type = t[0]
+            when {
+                // The planner could not find the type: no wrap.
+                type === FunctionTypes.UNRESOLVED -> e[0]
+                // An array subscript out of range is MISSING also for an array of a static element type.
+                type.code() != PType.DYNAMIC && !hasSubscript(e[0]) -> e[0]
+                else -> {
                     note(operand.start, "The SUPER value was wrapped in COALESCE, so that PartiQL returns NULL instead of MISSING")
+                    exprCoalesce(listOf(e[0]))
                 }
-                exprCoalesce(listOf(probed))
             }
         }
     }
