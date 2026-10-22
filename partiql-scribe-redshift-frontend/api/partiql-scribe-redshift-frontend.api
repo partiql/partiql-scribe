@@ -39,6 +39,7 @@ public final class org/partiql/scribe/frontend/redshift/RedshiftTranspiler {
 	public fun <init> ()V
 	public fun <init> (Z)V
 	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun tables (Ljava/lang/String;)Ljava/util/List;
 	public final fun transpile (Ljava/lang/String;Lorg/partiql/spi/catalog/Session;)Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult;
 }
 

@@ -19,6 +19,7 @@ import org.partiql.scribe.frontend.redshift.internal.PartiQLOutputTarget
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import org.partiql.scribe.frontend.redshift.internal.RedshiftCatalog
 import org.partiql.scribe.frontend.redshift.internal.RedshiftSyntaxException
+import org.partiql.scribe.frontend.redshift.internal.TableReferences
 import org.partiql.scribe.frontend.redshift.internal.UnsupportedConstructException
 import org.partiql.scribe.problems.ScribeException
 import org.partiql.scribe.problems.ScribeProblem
@@ -54,6 +55,17 @@ public class RedshiftTranspiler(
     /** The number of probe passes that planned the query in the last translation; for diagnostics. */
     internal var lastProbePasses: Int = 0
         private set
+
+    /**
+     * Returns the tables that [sql] reads: the qualified name of every `FROM` item that names a table, as the query
+     * writes it (`andes.provider.table` gives `["andes", "provider", "table"]`), folded as [transpile] folds identifiers,
+     * without duplicates, in order of first appearance. Common table expressions and references to other `FROM` items
+     * are not tables. A caller uses it to build the [Session] of [transpile]: each table needs a schema that is a bag
+     * of rows with the column types.
+     *
+     * @throws RedshiftSyntaxException at the first syntax error.
+     */
+    public fun tables(sql: String): List<List<String>> = TableReferences(caseSensitiveIdentifiers).collect(parse(sql).first)
 
     public fun transpile(
         sql: String,
@@ -156,14 +168,7 @@ public class RedshiftTranspiler(
         notes: MutableList<RedshiftProblem>,
         session: Session,
     ): Statement {
-        val lexer = RedshiftLexer(CharStreams.fromString(sql))
-        val tokens = CommonTokenStream(lexer)
-        val parser = RedshiftParser(tokens)
-        lexer.removeErrorListeners()
-        lexer.addErrorListener(ThrowingErrorListener)
-        parser.removeErrorListeners()
-        parser.addErrorListener(ThrowingErrorListener)
-        val tree = parser.root()
+        val (tree, tokens) = parse(sql)
         checkComments(tokens)
         val catalog = RedshiftCatalog(session)
         val analysis = NameAnalysis(tokens.tokens.mapTo(HashSet()) { it.text.removeSurrounding("\"").lowercase() })
@@ -212,6 +217,18 @@ public class RedshiftTranspiler(
 
     private object IgnoringPErrorListener : PErrorListener {
         override fun report(error: PError) {}
+    }
+
+    /** Parses [sql] with the Redshift grammar and returns the parse tree and its tokens. */
+    private fun parse(sql: String): Pair<RedshiftParser.RootContext, CommonTokenStream> {
+        val lexer = RedshiftLexer(CharStreams.fromString(sql))
+        val tokens = CommonTokenStream(lexer)
+        val parser = RedshiftParser(tokens)
+        lexer.removeErrorListeners()
+        lexer.addErrorListener(ThrowingErrorListener)
+        parser.removeErrorListeners()
+        parser.addErrorListener(ThrowingErrorListener)
+        return parser.root() to tokens
     }
 
     private object ThrowingErrorListener : BaseErrorListener() {
