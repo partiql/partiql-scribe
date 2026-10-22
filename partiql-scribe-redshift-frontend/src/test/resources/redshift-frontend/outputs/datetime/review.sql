@@ -2,7 +2,7 @@
 [UNSUPPORTED{message="`datetime +` of an aggregate function (the PartiQL planner does not accept an aggregate in a function argument)"}];
 
 --#[review-aggregate-01]
-[UNSUPPORTED{message="MAX of an argument of unknown type"}];
+[UNSUPPORTED{message="DATEADD with an argument of unknown type"}];
 
 --#[review-subquery-00]
 [UNSUPPORTED{message="DATEDIFF with an argument of unknown type"}];

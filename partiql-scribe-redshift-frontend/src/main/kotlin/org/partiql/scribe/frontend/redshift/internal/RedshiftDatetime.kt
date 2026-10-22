@@ -91,8 +91,8 @@ internal class RedshiftDatetime(
     ): Expr {
         val part = DatePart.of(partName)
         if (part == null || part !in DIFF_PARTS) throw UnsupportedConstructException.at(partToken, "datepart `$partName` in DATEDIFF")
-        return types.resolve(listOf(a.ctx to a.expr, b.ctx to b.expr)) { e, t ->
-            if (functions.waiting(t)) return@resolve types.pending(e)
+        return builder.functions.resolveOperands(listOf(a.ctx to a.expr, b.ctx to b.expr), typing = "datediff:$partName") { e, t ->
+            if (functions.waiting(t)) return@resolveOperands types.pending(e)
             val kinds = t.map(Kind::of)
             val isTime = kinds.any { it == Kind.TIME || it == Kind.TIMETZ }
             val target = if (isTime) PType.TIME else PType.TIMESTAMP
@@ -111,7 +111,7 @@ internal class RedshiftDatetime(
                 kx.isDateOrTimestamp && ky.isDateOrTimestamp -> {
                     if (part == DatePart.DAY && kx == Kind.DATE && ky == Kind.DATE) {
                         builder.note(name, "Redshift `DATEDIFF` was replaced by PartiQL `DATE_DIFF`")
-                        return@resolve dateDiffCall(DatePart.DAY, x.first, y.first)
+                        return@resolveOperands dateDiffCall(DatePart.DAY, x.first, y.first)
                     }
                     builder.note(name, boundaryNote(partName, part, "a fixed reference timestamp"))
                     boundaries(part, REFERENCE, x.first, y.first)
@@ -192,8 +192,8 @@ internal class RedshiftDatetime(
     ): Expr {
         val part = DatePart.of(partName)
         if (part == null || part !in ADD_PARTS) throw UnsupportedConstructException.at(partToken, "datepart `$partName` in DATEADD")
-        return types.resolve(listOf(n.ctx to n.expr, x.ctx to x.expr)) { e, t ->
-            if (functions.waiting(t)) return@resolve types.pending(e)
+        return builder.functions.resolveOperands(listOf(n.ctx to n.expr, x.ctx to x.expr), typing = "dateadd:$partName") { e, t ->
+            if (functions.waiting(t)) return@resolveOperands types.pending(e)
             if (Kind.of(t[0]) != Kind.INTEGER) throw UnsupportedConstructException.at(n.ctx, "DATEADD with a non-integer interval")
             val count = e[0]
             val (value, kind) = functions.datetimeArgument("DATEADD", x, e[1], Kind.of(t[1]), PType.TIMESTAMP)
