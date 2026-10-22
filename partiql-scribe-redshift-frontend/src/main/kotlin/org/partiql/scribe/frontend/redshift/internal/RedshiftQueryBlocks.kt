@@ -471,7 +471,8 @@ internal class KeySubstitution(
 
         fun isAggregate(call: ExprCall): Boolean {
             if (call.function.hasQualifier()) return false
-            return call.function.identifier.text.removePrefix("\uFDEF").lowercase() in AGGREGATES
+            val name = call.function.identifier.text
+            return name.removePrefix("\uFDEF").lowercase() in AGGREGATES || OperandTypes.isAggregateTyping(name)
         }
     }
 }

@@ -17,12 +17,14 @@ import org.partiql.ast.AstNode
 import org.partiql.ast.AstRewriter
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
+import org.partiql.ast.SetQuantifier
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprLit
 import org.partiql.plan.Operator
 import org.partiql.plan.OperatorRewriter
 import org.partiql.plan.Plan
+import org.partiql.plan.rel.RelAggregate
 import org.partiql.plan.rel.RelSort
 import org.partiql.plan.rel.RelWindow
 import org.partiql.plan.rex.RexCall
@@ -34,6 +36,8 @@ import org.partiql.spi.catalog.Catalogs
 import org.partiql.spi.catalog.Namespace
 import org.partiql.spi.catalog.Path
 import org.partiql.spi.catalog.Session
+import org.partiql.spi.function.Agg
+import org.partiql.spi.function.AggOverload
 import org.partiql.spi.function.Fn
 import org.partiql.spi.function.FnOverload
 import org.partiql.spi.errors.PError
@@ -129,6 +133,8 @@ internal class OperandTypes {
         /** The operands of the rule, without probe calls; a literal operand is passed to the rule as the literal. */
         val operands: List<Expr>,
         val rule: (List<Expr>, List<PType?>) -> Expr,
+        /** True for the rule of an aggregate function, whose call the planner reads as an aggregation. */
+        val aggregate: Boolean = false,
     ) {
         private val cache = HashMap<List<PType>, PType?>()
 
@@ -213,7 +219,35 @@ internal class OperandTypes {
     ): Expr {
         val exprs = operands.map { it.second }
         if (!probing) return rule(exprs, operands.map { (ctx, _) -> typeOf(ctx, name) })
-        val unprobed = exprs.map(Unprobe::apply)
+        val id = register(name, operands, rule, aggregate = false)
+        return exprCall(Identifier.regular(id), exprs)
+    }
+
+    /**
+     * [resolve] for the rule of an aggregate function: the call of the typing is an aggregate call with [setq], which
+     * the planner reads as an aggregation, so that the argument is typed in the input of the aggregation. The type of
+     * the aggregation is read from the plan too; see [aggregateResultOf].
+     */
+    fun resolveAggregate(
+        name: String,
+        operands: List<Pair<ParserRuleContext, Expr>>,
+        setq: SetQuantifier?,
+        rule: (List<Expr>, List<PType?>) -> Expr,
+    ): Expr {
+        val exprs = operands.map { it.second }
+        if (!probing) return rule(exprs, operands.map { (ctx, _) -> typeOf(ctx, name) })
+        val id = register(name, operands, rule, aggregate = true)
+        return exprCall(Identifier.regular(id), exprs, setq)
+    }
+
+    /** Registers the typing of a rule call in a probe pass and returns the name of its function; see [resolve]. */
+    private fun register(
+        name: String,
+        operands: List<Pair<ParserRuleContext, Expr>>,
+        rule: (List<Expr>, List<PType?>) -> Expr,
+        aggregate: Boolean,
+    ): String {
+        val unprobed = operands.map { Unprobe.apply(it.second) }
         val key = Key(scopes.lastOrNull(), exprCall(Identifier.regular("$RULE$name"), unprobed))
         val base =
             ids.getOrPut(key) {
@@ -221,13 +255,25 @@ internal class OperandTypes {
                 nextId += maxOf(operands.size, 1)
                 base
             }
-        val id = "$RULE$base"
-        typings[id] = Typing(id, unprobed, rule)
+        val id = "${if (aggregate) AGGREGATE else RULE}$base"
+        typings[id] = Typing(id, unprobed, rule, aggregate)
         operands.forEachIndexed { slot, (ctx, _) ->
             keys[ctx to name] = key to slot
             if (typeOf(ctx, name) == null) probed = true
         }
-        return exprCall(Identifier.regular(id), exprs)
+        return id
+    }
+
+    /** The result types of the aggregate typing calls, by first operand id, from the last probe pass. */
+    private val aggregateResults = HashMap<Int, PType>()
+
+    /**
+     * The static type of [call], the call of an aggregate typing from an earlier probe pass, or null if the call is not
+     * one or its type is not known yet.
+     */
+    fun aggregateResultOf(call: ExprCall): PType? {
+        val name = call.function.identifier.takeIf { it.isRegular() }?.getText() ?: return null
+        return typingBase(name)?.takeIf { name.startsWith(AGGREGATE) }?.let { aggregateResults[it] }
     }
 
     /**
@@ -242,8 +288,8 @@ internal class OperandTypes {
         if (!probing) return expr
         val key = Key(scopes.lastOrNull(), Unprobe.apply(expr))
         keys[ctx to null] = key to 0
-        probed = true
         val id = ids.getOrPut(key) { nextId++ }
+        if (id !in types) probed = true
         return exprCall(Identifier.regular(PROBE), listOf(exprLit(Literal.intNum(id)), expr))
     }
 
@@ -326,7 +372,7 @@ internal class OperandTypes {
     ): Boolean {
         val found = HashMap<Int, PType>()
         val action = plan.action
-        if (action is org.partiql.plan.Action.Query) Collector(found).visit(action.rex, Unit)
+        if (action is org.partiql.plan.Action.Query) Collector(found, aggregateResults).visit(action.rex, Unit)
         var changed = found.any { (id, type) -> types[id] != type }
         types.putAll(found)
         for (id in probeIds(ast, HashSet())) {
@@ -359,7 +405,10 @@ internal class OperandTypes {
      */
     fun probeSession(session: Session): Session = ProbeSession(session, RedshiftCatalog())
 
-    private class Collector(private val found: MutableMap<Int, PType>) : OperatorRewriter<Unit>() {
+    private class Collector(
+        private val found: MutableMap<Int, PType>,
+        private val aggregates: MutableMap<Int, PType>,
+    ) : OperatorRewriter<Unit>() {
         override fun visitCall(
             rex: RexCall,
             ctx: Unit,
@@ -371,6 +420,18 @@ internal class OperandTypes {
             }
             typingBase(name)?.let { base -> rex.args.forEachIndexed { slot, arg -> found[base + slot] = arg.type.pType } }
             return super.visitCall(rex, ctx)
+        }
+
+        override fun visitAggregateMeasure(
+            measure: RelAggregate.Measure,
+            ctx: Unit,
+        ): RelAggregate.Measure {
+            val signature = measure.agg.signature
+            typingBase(signature.name)?.let { base ->
+                measure.args.forEachIndexed { slot, arg -> found[base + slot] = arg.type.pType }
+                aggregates[base] = signature.returns
+            }
+            return super.visitAggregateMeasure(measure, ctx)
         }
 
         // The rewriter does not visit the expressions of ORDER BY.
@@ -436,8 +497,28 @@ internal class OperandTypes {
             when (name) {
                 PROBE -> listOf(Probe)
                 PENDING -> Pending.OVERLOADS
-                else -> typings[name]?.let { listOf(TypingOverload(it)) } ?: emptyList()
+                else -> typings[name]?.takeIf { !it.aggregate }?.let { listOf(TypingOverload(it)) } ?: emptyList()
             }
+
+        override fun getAggregations(
+            session: Session,
+            name: String,
+        ): Collection<AggOverload> = typings[name]?.takeIf { it.aggregate }?.let { listOf(AggregateTypingOverload(it)) } ?: emptyList()
+    }
+
+    /** The overload of the [Typing] of an aggregate rule; see [RedshiftCatalog]. Its accumulator is never run. */
+    private inner class AggregateTypingOverload(private val typing: Typing) : AggOverload() {
+        private val signature = RoutineOverloadSignature(typing.id, List(typing.operands.size) { PType.dynamic() })
+
+        override fun getSignature(): RoutineOverloadSignature = signature
+
+        override fun getInstance(args: Array<PType>): Agg =
+            AggOverload.Builder(typing.id)
+                .addParameters(*args)
+                .returns(typing.resultType(args.toList()) ?: PType.dynamic())
+                .body { error("The Redshift catalog is not executable") }
+                .build()
+                .getInstance(args)!!
     }
 
     /** The overload of a [Typing]; see [RedshiftCatalog]. */
@@ -502,7 +583,15 @@ internal class OperandTypes {
         private const val MAX_PENDING_ARITY = 16
 
         /** The first operand id of the typing [name], or null if it is not the name of a typing. */
-        private fun typingBase(name: String): Int? = if (name.startsWith(RULE)) name.removePrefix(RULE).toIntOrNull() else null
+        private fun typingBase(name: String): Int? =
+            when {
+                name.startsWith(RULE) -> name.removePrefix(RULE).toIntOrNull()
+                name.startsWith(AGGREGATE) -> name.removePrefix(AGGREGATE).toIntOrNull()
+                else -> null
+            }
+
+        /** True if [name] is the name of the typing of an aggregate rule, whose call is an aggregation; see [resolveAggregate]. */
+        fun isAggregateTyping(name: String): Boolean = name.startsWith(AGGREGATE)
 
         private const val TYPING_CATALOG = "\$redshift_frontend_typing"
         private const val TYPING_TABLE = "\$operands"
@@ -513,7 +602,8 @@ internal class OperandTypes {
         private const val PROBE = "\uFDEFredshift_probe"
         private const val PENDING = "\uFDEFredshift_pending"
 
-        /** The prefix of the hidden names of the typings, followed by the first operand id; see [Typing]. */
+        /** The prefixes of the hidden names of the typings, followed by the first operand id; see [Typing]. */
         private const val RULE = "\uFDEFredshift_rule_"
+        private const val AGGREGATE = "\uFDEFredshift_agg_"
     }
 }

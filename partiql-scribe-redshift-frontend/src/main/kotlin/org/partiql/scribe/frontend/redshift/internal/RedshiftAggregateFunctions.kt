@@ -272,7 +272,7 @@ internal class RedshiftAggregateFunctions(
         setq: SetQuantifier?,
         rule: (Expr, PType) -> Expr,
     ): Expr =
-        functions.resolve(listOf(arg), { exprs -> agg("count", exprs[0], setq) }) { exprs, argTypes ->
+        functions.resolveAggregate(fn, listOf(arg), setq) { exprs, argTypes ->
             val expr = rule(exprs[0], argTypes[0])
             val type = resultType(fn, argTypes[0])
             if (type != null) functions.aggregateResult(expr, type) else expr

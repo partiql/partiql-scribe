@@ -416,6 +416,7 @@ internal class RedshiftFunctions(
                     ctx: Unit,
                 ): AstNode {
                     aggregateTypes[node]?.let { return nullOf(it) }
+                    if (node is ExprCall) types.aggregateResultOf(node)?.let { return nullOf(it) }
                     return when {
                         node is ExprQuerySet -> node
                         // COUNT(*) is a special form of the grammar.
@@ -449,7 +450,22 @@ internal class RedshiftFunctions(
         return exprCast(exprLit(Literal.nul()), dataType)
     }
 
-    private fun isAggregate(call: ExprCall): Boolean = call.function.identifier.text.lowercase() in AGGREGATES
+    private fun isAggregate(call: ExprCall): Boolean {
+        val name = call.function.identifier.text
+        return name.lowercase() in AGGREGATES || OperandTypes.isAggregateTyping(name)
+    }
+
+    /**
+     * Translates the aggregate rule [typing] with [rule], as [resolve] does; in a probe pass, the rule translates to an
+     * aggregate call of the Redshift catalog with [setq]. See [OperandTypes.resolveAggregate].
+     */
+    internal fun resolveAggregate(
+        typing: String,
+        operands: List<Operand>,
+        setq: SetQuantifier?,
+        rule: (List<Expr>, List<PType>) -> Expr,
+    ): Expr =
+        types.resolveAggregate(typing, operands.map { it.ctx to it.expr }, setq) { exprs, known -> rule(exprs, resolvedTypes(operands, known)) }
 
     /*
      * Expressions
