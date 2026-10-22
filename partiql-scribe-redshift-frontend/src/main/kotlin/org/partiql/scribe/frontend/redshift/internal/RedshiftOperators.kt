@@ -49,7 +49,7 @@ internal class RedshiftOperators(
         lhs: Operand,
         rhs: Operand,
     ): Expr =
-        types.resolveTyped(listOf(lhs, rhs)) { (a, b) ->
+        builder.functions.resolveTyped("arithmetic:${op.text}", listOf(lhs, rhs)) { (a, b) ->
             val additive = if (op.type == P.PLUS || op.type == P.MINUS) datetime.additive(op, a.expr, a.type, b.expr, b.type) else null
             additive?.let { builder.functions.checked(op, "datetime ${op.text}", it) } ?: numeric(op, a, b)
         }
@@ -176,7 +176,7 @@ internal class RedshiftOperators(
                 else -> return exprOperator(sign.text, null, value)
             }
         }
-        return types.resolveTyped(listOf(Operand(ctx.valueExpr(), value))) { (x) ->
+        return builder.functions.resolveTyped("sign:${sign.text}", listOf(Operand(ctx.valueExpr(), value))) { (x) ->
             when (x.family) {
                 TypeFamily.SUPER -> unsupported(sign, "arithmetic with a SUPER operand")
                 TypeFamily.DECIMAL -> if (sign.type == P.PLUS) x.expr else castTo(exprOperator("-", null, x.expr), x.type)
@@ -209,7 +209,7 @@ internal class RedshiftOperators(
             unsupported(op, "`@` on an aggregate expression (PartiQL does not plan it as an argument of ABS)")
         }
         val value = Operand(ctx.valueExpr(), exprs.valueExpr(ctx.valueExpr()))
-        return types.resolveTyped(listOf(value)) { (x) ->
+        return builder.functions.resolveTyped("prefix:${op.text}", listOf(value)) { (x) ->
             if (x.family == TypeFamily.SUPER) unsupported(op, "arithmetic with a SUPER operand")
             builder.note(op, "Redshift `@` was replaced by PartiQL `ABS`")
             val abs = exprCall(Identifier.regular("abs"), listOf(x.expr), null)
@@ -246,7 +246,7 @@ internal class RedshiftOperators(
         lhs: Operand,
         rhs: Operand,
     ): Expr =
-        types.resolveTyped(listOf(lhs, rhs)) { (a, b) ->
+        builder.functions.resolveTyped("concat", listOf(lhs, rhs)) { (a, b) ->
             if (a.type.code() == PType.CHAR && b.type.code() == PType.CHAR) unsupported(op, "`||` of two CHAR values")
             val text = listOf(a, b).any { it.family in setOf(TypeFamily.TEXT, TypeFamily.SUPER, TypeFamily.UNKNOWN, TypeFamily.UNTYPED) }
             if (!text) unsupported(op, "`||` without a character string operand")
@@ -263,7 +263,7 @@ internal class RedshiftOperators(
         lhs: Operand,
         rhs: Operand,
     ): Expr =
-        types.resolveTyped(listOf(lhs, rhs)) { (a, b) ->
+        builder.functions.resolveTyped("bitwise_and", listOf(lhs, rhs)) { (a, b) ->
             val integers = listOf(a, b).all { it.family == TypeFamily.INTEGER || it.family == TypeFamily.UNKNOWN }
             if (!integers) unsupported(op, "`&` with a non-integer operand")
             exprOperator("&", a.expr, b.expr)

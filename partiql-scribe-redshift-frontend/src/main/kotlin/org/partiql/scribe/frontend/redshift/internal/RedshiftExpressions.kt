@@ -76,7 +76,7 @@ internal class RedshiftExpressions(
             if (code != Literal.BOOL && code != Literal.NULL) unsupported(ctx.start, "non-boolean condition")
             return expr
         }
-        return types.resolveTyped(listOf(Operand(ctx, expr))) { (x) ->
+        return functions.resolveTyped("condition", listOf(Operand(ctx, expr))) { (x) ->
             if (x.family !in setOf(TypeFamily.BOOLEAN, TypeFamily.UNKNOWN, TypeFamily.SUPER, TypeFamily.UNTYPED)) {
                 unsupported(ctx.start, "non-boolean condition")
             }

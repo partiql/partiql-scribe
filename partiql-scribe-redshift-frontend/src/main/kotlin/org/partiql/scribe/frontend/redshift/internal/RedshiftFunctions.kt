@@ -341,6 +341,49 @@ internal class RedshiftFunctions(
     private val aggregateTypes = IdentityHashMap<Expr, PType>()
 
     /**
+     * [resolveTyped] with a [typing], for the rules of the expression classes: the rule translates to a call of the
+     * Redshift catalog in a probe pass; see [resolve]. The operands are classified as [resolveTyped] does: a literal has
+     * the type of the literal, and an operand with an aggregate call has the Redshift result type of the aggregate, or is
+     * [TypedOperand.untyped]. In a probe pass, an operand with an aggregate whose type is not known yet cannot be an
+     * argument of the call, so the rule falls back to [resolveTyped] in that pass.
+     */
+    internal fun resolveTyped(
+        typing: String,
+        operands: List<Operand>,
+        rule: (List<TypedOperand>) -> Expr,
+    ): Expr {
+        val arguments =
+            operands.map { operand ->
+                if (types.probing && isLiteral(operand.expr).not() && isAggregateOperand(operand)) {
+                    withoutAggregates(operand.expr)
+                } else {
+                    operand.expr
+                }
+            }
+        if (types.probing && arguments.any { it == null }) return types.resolveTyped(operands, rule)
+        return types.resolve(typing, operands.mapIndexed { i, operand -> operand.ctx to arguments[i]!! }) { exprs, known ->
+            val typed =
+                operands.mapIndexed { i, operand ->
+                    val lit = (operand.expr as? ExprLit)?.lit
+                    when {
+                        lit != null && literalType(lit).code() != PType.DYNAMIC -> TypedOperand(operand.ctx, exprs[i], literalType(lit))
+                        isAggregateOperand(operand) -> {
+                            val type = types.aggregateOperandType(operand.ctx)
+                            TypedOperand(operand.ctx, exprs[i], type ?: PType.dynamic(), untyped = type == null)
+                        }
+                        else -> TypedOperand(operand.ctx, exprs[i], known[i] ?: PType.dynamic(), probed = true)
+                    }
+                }
+            rule(typed)
+        }
+    }
+
+    private fun isLiteral(expr: Expr): Boolean = (expr as? ExprLit)?.lit?.let { literalType(it).code() != PType.DYNAMIC } == true
+
+    private fun isAggregateOperand(operand: Operand): Boolean =
+        containsAggregate(operand.ctx) || RedshiftQueryBlocks.containsAggregateOrWindow(operand.expr)
+
+    /**
      * Records [type], the static PartiQL type of [expr], the translation of an aggregate call, and returns [expr]; see
      * [probe].
      */

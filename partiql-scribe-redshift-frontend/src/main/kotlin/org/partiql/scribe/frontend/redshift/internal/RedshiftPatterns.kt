@@ -1,5 +1,6 @@
 package org.partiql.scribe.frontend.redshift.internal
 
+import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprLike
@@ -80,7 +81,7 @@ internal class RedshiftPatterns(
         val escapeChar = escapeChar(op, escape)
         val literal = stringLiteral(pattern)
         val parts = literal?.let { parse(op, it, escapeChar) }
-        return text(op, value) { x ->
+        return text(op, value, rhs) { x ->
             if (literal == null || parts == null) {
                 // A pattern that is not a literal cannot be decoded at translation time.
                 val c = escapeChar ?: '\\'.code
@@ -119,7 +120,7 @@ internal class RedshiftPatterns(
         val parts = parse(op, literal, escapeChar)
         if (parts.any { it is Part.Char && it.codePoint > ASCII_MAX }) unsupported(op, "`ILIKE` with a non-ASCII pattern")
         val folded = parts.map { if (it is Part.Char && it.codePoint in 'A'.code..'Z'.code) Part.Char(it.codePoint + CASE_OFFSET) else it }
-        return text(op, value) { x ->
+        return text(op, value, rhs) { x ->
             builder.note(op, "Redshift `ILIKE` was replaced by PartiQL `LIKE` on the lower-case value")
             val lower =
                 exprCall(
@@ -174,7 +175,7 @@ internal class RedshiftPatterns(
             }
             i++
         }
-        return text(op, value) { x ->
+        return text(op, value, ctx.rhs) { x ->
             builder.note(op, "Redshift `SIMILAR TO` was replaced by PartiQL `LIKE`")
             encode(op, x, parts, not, changed = null, escapeChar = escapeChar, explicitEscape = ctx.escape != null)
         }
@@ -194,7 +195,7 @@ internal class RedshiftPatterns(
         val literal =
             stringLiteral(exprs.valueExpr(ctx.rhs)) ?: unsupported(op, "POSIX regular expression with a pattern that is not a literal")
         if (literal.any { it in POSIX_METACHARACTERS }) unsupported(op, "POSIX regular expression `${op.text}` with metacharacters")
-        return text(op, value, allowChar = false) { x ->
+        return text(op, value, ctx.rhs, allowChar = false) { x ->
             builder.note(op, "Redshift `${op.text}` was replaced by PartiQL `POSITION`")
             val position = exprPosition(exprLit(Literal.string(literal)), x)
             exprOperator(if (op.type == P.TILDE) ">" else "=", position, exprLit(Literal.intNum(0)))
@@ -208,10 +209,11 @@ internal class RedshiftPatterns(
     private fun text(
         op: Token,
         value: Operand,
+        pattern: ParserRuleContext,
         allowChar: Boolean = true,
         match: (Expr) -> Expr,
     ): Expr =
-        types.resolveTyped(listOf(value)) { (x) ->
+        builder.functions.resolveTyped("pattern:${op.text.lowercase()}:${pattern.text}", listOf(value)) { (x) ->
             if (!allowChar && x.type.code() == PType.CHAR) unsupported(op, "POSIX regular expression on a CHAR value")
             match(RedshiftOperators.toText(op, x, "`${op.text.uppercase()}`", trimChar = false))
         }

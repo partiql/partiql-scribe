@@ -213,7 +213,7 @@ internal class RedshiftCasts(
         type: P.DataTypeContext,
     ): Expr {
         val target = target(type)
-        return types.resolveTyped(listOf(value)) { (x) -> cast(token, ctx, x, target) }
+        return builder.functions.resolveTyped("cast:${type.text}", listOf(value)) { (x) -> cast(token, ctx, x, target) }
     }
 
     /**

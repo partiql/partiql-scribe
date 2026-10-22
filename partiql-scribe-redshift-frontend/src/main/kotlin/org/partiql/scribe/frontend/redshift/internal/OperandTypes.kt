@@ -43,7 +43,6 @@ import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
 import org.partiql.spi.catalog.Table
 import org.partiql.spi.value.Datum
-import java.util.IdentityHashMap
 
 /**
  * The static types of Redshift operands, for the rules whose translation depends on them.
@@ -74,8 +73,12 @@ internal class OperandTypes {
     private val types = HashMap<Int, PType>()
     private val scopes = ArrayDeque<ParserRuleContext>()
 
-    /** The key of each operand, from the last probe pass that translated it, and its slot in a rule call. */
-    private val keys = IdentityHashMap<ParserRuleContext, Pair<Key, Int>>()
+    /**
+     * The key of each operand, from the last probe pass that translated it, and its slot in a rule call. An operand is
+     * identified by its parse tree and the rule that reads its type (null for a probe call), because an expression can
+     * be an operand of several rules: a condition of a CASE is an operand of the condition rule and of the CASE.
+     */
+    private val keys = HashMap<Pair<ParserRuleContext, String?>, Pair<Key, Int>>()
 
     /** The typings of the Redshift catalog, by hidden function name, from the last probe pass; see [Typing]. */
     private val typings = HashMap<String, Typing>()
@@ -209,7 +212,7 @@ internal class OperandTypes {
         rule: (List<Expr>, List<PType?>) -> Expr,
     ): Expr {
         val exprs = operands.map { it.second }
-        if (!probing) return rule(exprs, operands.map { (ctx, _) -> typeOf(ctx) })
+        if (!probing) return rule(exprs, operands.map { (ctx, _) -> typeOf(ctx, name) })
         val unprobed = exprs.map(Unprobe::apply)
         val key = Key(scopes.lastOrNull(), exprCall(Identifier.regular("$RULE$name"), unprobed))
         val base =
@@ -221,8 +224,8 @@ internal class OperandTypes {
         val id = "$RULE$base"
         typings[id] = Typing(id, unprobed, rule)
         operands.forEachIndexed { slot, (ctx, _) ->
-            keys[ctx] = key to slot
-            if (typeOf(ctx) == null) probed = true
+            keys[ctx to name] = key to slot
+            if (typeOf(ctx, name) == null) probed = true
         }
         return exprCall(Identifier.regular(id), exprs)
     }
@@ -238,17 +241,20 @@ internal class OperandTypes {
         // The final pass reads the types that the last probe pass found for the same operands.
         if (!probing) return expr
         val key = Key(scopes.lastOrNull(), Unprobe.apply(expr))
-        keys[ctx] = key to 0
+        keys[ctx to null] = key to 0
         probed = true
         val id = ids.getOrPut(key) { nextId++ }
         return exprCall(Identifier.regular(PROBE), listOf(exprLit(Literal.intNum(id)), expr))
     }
 
     /**
-     * Returns the static type of the operand [ctx], or null if it is not known: in the first probe pass, or when the
-     * planner could not type the operand.
+     * Returns the static type of the operand [ctx] of a probe call, or of the rule [name], or null if it is not known: in
+     * the first probe pass, or when the planner could not type the operand.
      */
-    fun typeOf(ctx: ParserRuleContext): PType? = keys[ctx]?.let { (key, slot) -> ids[key]?.let { types[it + slot] } }
+    fun typeOf(
+        ctx: ParserRuleContext,
+        name: String? = null,
+    ): PType? = keys[ctx to name]?.let { (key, slot) -> ids[key]?.let { types[it + slot] } }
 
     /** Returns [expr] without probe calls. */
     fun unprobe(expr: Expr): Expr = Unprobe.apply(expr)

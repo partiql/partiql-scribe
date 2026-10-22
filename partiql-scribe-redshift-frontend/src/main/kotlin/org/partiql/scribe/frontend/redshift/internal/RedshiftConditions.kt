@@ -105,7 +105,7 @@ internal class RedshiftConditions(
         lhs: Operand,
         rhs: Operand,
     ): Expr =
-        types.resolveTyped(listOf(lhs, rhs)) { (a, b) ->
+        builder.functions.resolveTyped("compare:${op.partiql}", listOf(lhs, rhs)) { (a, b) ->
             val (x, y) = convertPair(token, op, a, b)
             exprOperator(op.partiql, x, y)
         }
@@ -330,7 +330,7 @@ internal class RedshiftConditions(
             throw UnsupportedConstructException.at(it.ctx, "subquery as a value of an IN list")
         }
         val token = ctx.IN().symbol
-        return types.resolveTyped(listOf(lhs) + values) { typed ->
+        return builder.functions.resolveTyped("in:$not", listOf(lhs) + values) { typed ->
             val x = typed[0]
             val pairs = typed.drop(1).map { convertPair(token, Cmp.EQ, x, it) }
             if (pairs.all { it.first == pairs[0].first }) {
@@ -450,7 +450,7 @@ internal class RedshiftConditions(
         val token = ctx.BETWEEN().symbol
         val operands =
             listOf(ctx.lhs, ctx.lower, ctx.upper).map { Operand(it, exprs.valueExpr(it)) }
-        return types.resolveTyped(operands) { (x, lower, upper) ->
+        return builder.functions.resolveTyped("between:$not", operands) { (x, lower, upper) ->
             val (x1, lo) = convertPair(token, Cmp.GE, x, lower)
             val (x2, hi) = convertPair(token, Cmp.LE, x, upper)
             val literalBounds = listOf(lower, upper).all { it.literal != null && !it.isNullLiteral }
@@ -489,7 +489,7 @@ internal class RedshiftConditions(
         }
         val truth = if (ctx.truth.type == P.TRUE) TruthValue.TRUE() else TruthValue.FALSE()
         if (isBooleanForm(ctx.lhs)) return exprBoolTest(value.expr, not, truth)
-        return types.resolveTyped(listOf(value)) { (x) ->
+        return builder.functions.resolveTyped("is:${ctx.truth.text.lowercase()}:$not", listOf(value)) { (x) ->
             if (x.family != TypeFamily.BOOLEAN && x.family != TypeFamily.UNKNOWN) {
                 unsupported(ctx.IS().symbol, "`IS ${ctx.truth.text.uppercase()}` on a non-boolean value")
             }
@@ -536,7 +536,11 @@ internal class RedshiftConditions(
         }
         val elseResult = ctx.otherwise?.let { Operand(it, exprs.expr(it)) }
         val results = whens.map { Operand(it.result, exprs.expr(it.result)) } + listOfNotNull(elseResult)
-        return types.resolveTyped(results) { typed ->
+        // The conditions are operands of the typing too, so that the Redshift catalog tells CASE expressions apart.
+        val conditionOperands = whens.indices.map { Operand(whens[it].condition, conditions[it]) }
+        return builder.functions.resolveTyped("case:${ctx.otherwise != null}:$keep", results + conditionOperands) { all ->
+            val typed = all.take(results.size)
+            val conditions = all.drop(results.size).map { it.expr }
             val target = resultType(ctx.CASE().symbol, typed)
             val converted = convertResults(typed, target)
             val branches = keep.map { exprCaseBranch(conditions[it], converted[it]) }

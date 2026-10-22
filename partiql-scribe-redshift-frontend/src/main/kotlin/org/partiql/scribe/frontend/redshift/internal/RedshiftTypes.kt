@@ -114,14 +114,7 @@ internal fun OperandTypes.resolveTyped(
                 lit != null && literalType(lit).code() != PType.DYNAMIC -> TypedOperand(operand.ctx, operand.expr, literalType(lit))
                 // A select-list alias (`s` in `SELECT SUM(b) AS s, s * 2`) can stand for an aggregate.
                 containsAggregate(operand.ctx) || RedshiftQueryBlocks.containsAggregateOrWindow(operand.expr) -> {
-                    val type = aggregateType(operand.ctx)
-                    // Redshift computes REAL with another number in DOUBLE PRECISION, which needs the type.
-                    if (type == null && !probing && aggregatesReal(operand.ctx)) {
-                        throw UnsupportedConstructException.at(
-                            operand.ctx,
-                            "operator on an expression with an aggregate of a REAL value",
-                        )
-                    }
+                    val type = aggregateOperandType(operand.ctx)
                     TypedOperand(operand.ctx, operand.expr, type ?: PType.dynamic(), untyped = type == null)
                 }
                 else -> {
@@ -140,6 +133,19 @@ internal fun OperandTypes.resolveTyped(
     } catch (ex: UnsupportedConstructException) {
         if (probing) placeholder(typed) else throw ex
     }
+}
+
+/**
+ * The static type of an operand that contains an aggregate call (see [aggregateType]), or null if it is not known. In
+ * the final pass, an operand of unknown type with an aggregate of a REAL value is unsupported: Redshift computes REAL
+ * with another number in DOUBLE PRECISION, which needs the type.
+ */
+internal fun OperandTypes.aggregateOperandType(ctx: ParserRuleContext): PType? {
+    val type = aggregateType(ctx)
+    if (type == null && !probing && aggregatesReal(ctx)) {
+        throw UnsupportedConstructException.at(ctx, "operator on an expression with an aggregate of a REAL value")
+    }
+    return type
 }
 
 /**
