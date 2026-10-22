@@ -135,7 +135,7 @@ internal class RedshiftStringFunctions(
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
         if (rename) functions.note(name, "Redshift `${name.text.uppercase()}` was replaced by PartiQL `CHAR_LENGTH`")
-        return functions.resolve(args) { exprs, types -> charLength(text(name, args[0], exprs[0], types[0], Padding.TRIM)) }
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> charLength(text(name, args[0], exprs[0], types[0], Padding.TRIM)) }
     }
 
     /**
@@ -150,9 +150,7 @@ internal class RedshiftStringFunctions(
     ): Expr {
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
-        return functions.resolve(
-            args,
-        ) { exprs, types -> functions.fn("octet_length", text(name, args[0], exprs[0], types[0], Padding.COUNT)) }
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> functions.fn("octet_length", text(name, args[0], exprs[0], types[0], Padding.COUNT)) }
     }
 
     /**
@@ -169,7 +167,7 @@ internal class RedshiftStringFunctions(
     ): Expr {
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
-        return functions.resolve(args) { exprs, types -> functions.fn(fn, text(name, args[0], exprs[0], types[0], Padding.KEEP)) }
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> functions.fn(fn, text(name, args[0], exprs[0], types[0], Padding.KEEP)) }
     }
 
     /*
@@ -190,7 +188,7 @@ internal class RedshiftStringFunctions(
         start: Operand?,
         length: Operand?,
     ): Expr =
-        functions.resolve(listOfNotNull(value, start, length)) { exprs, types ->
+        functions.resolve(listOfNotNull(value, start, length), typing = "substring:${start != null}:${length != null}") { exprs, types ->
             val s = text(name, value, exprs[0], types[0], Padding.TRIM)
             var i = 1
             // SUBSTRING(s FOR n) starts at the first character.
@@ -227,7 +225,7 @@ internal class RedshiftStringFunctions(
         val n = functions.intLiteral(args[1].expr) ?: throw UnsupportedConstructException.at(name, "`$fn` with a non-literal length")
         if (n < 1) throw UnsupportedConstructException.at(name, "`$fn` with a length less than 1")
         functions.note(name, "Redshift `$fn` was replaced by PartiQL `SUBSTRING`")
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val s = text(name, args[0], exprs[0], types[0], Padding.TRIM)
             if (left) {
                 exprSubstring(s, functions.int(1), functions.int(n))
@@ -267,7 +265,7 @@ internal class RedshiftStringFunctions(
         val literalDelimiter = functions.stringLiteral(args[1].expr)
         if (literalDelimiter == "") throw UnsupportedConstructException.at(name, "`SPLIT_PART` with an empty delimiter")
         functions.note(name, "Redshift `SPLIT_PART` was replaced by a CASE expression over PartiQL `SPLIT`")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val s = text(name, args[0], exprs[0], types[0], Padding.TRIM)
             val d = text(name, args[1], exprs[1], types[1], Padding.TRIM)
             val part = integer(name, "part", exprs[2], types[2])
@@ -326,7 +324,7 @@ internal class RedshiftStringFunctions(
         value: Operand,
         chars: Operand?,
     ): Expr =
-        functions.resolve(listOfNotNull(value, chars)) { exprs, types ->
+        functions.resolve(listOfNotNull(value, chars), typing = "trim:${spec.code()}") { exprs, types ->
             val removesPadding = chars == null && spec.code() != TrimSpec.LEADING
             val s = text(name, value, exprs[0], types[0], if (removesPadding) Padding.KEEP else Padding.TRIM)
             val set = chars?.let { text(name, it, exprs[1], types[1], Padding.TRIM) }
@@ -379,7 +377,7 @@ internal class RedshiftStringFunctions(
         sub: Operand,
         str: Operand,
     ): Expr =
-        functions.resolve(listOf(sub, str)) { exprs, types ->
+        functions.resolve(listOf(sub, str), typing = name.text.lowercase()) { exprs, types ->
             exprPosition(text(name, sub, exprs[0], types[0], Padding.REJECT), text(name, str, exprs[1], types[1], Padding.REJECT))
         }
 
@@ -436,7 +434,7 @@ internal class RedshiftStringFunctions(
         functions.arity(name, args, 2)
         functions.scalar(name, setq)
         functions.note(name, "Redshift `OCTETINDEX` was replaced by a CASE expression over PartiQL `POSITION` and `OCTET_LENGTH`")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val sub = text(name, args[0], exprs[0], types[0], Padding.REJECT)
             val s = text(name, args[1], exprs[1], types[1], Padding.REJECT)
             val position = exprPosition(sub, s)
@@ -465,7 +463,7 @@ internal class RedshiftStringFunctions(
     ): Expr {
         functions.arity(name, args, 3)
         functions.scalar(name, setq)
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             functions.fn("replace", *exprs.indices.map { text(name, args[it], exprs[it], types[it], Padding.TRIM) }.toTypedArray())
         }
     }
@@ -484,7 +482,7 @@ internal class RedshiftStringFunctions(
         functions.arity(name, args, 2)
         functions.scalar(name, setq)
         functions.note(name, "Redshift `CONCAT` was replaced by PartiQL `||`")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             if (types.all { it.code() == PType.CHAR }) {
                 throw UnsupportedConstructException.at(name, "`CONCAT` of two CHAR arguments")
             }
@@ -510,7 +508,7 @@ internal class RedshiftStringFunctions(
         val k = functions.intLiteral(args[1].expr) ?: throw UnsupportedConstructException.at(name, "`$fn` with a non-literal count")
         if (k < 1 || k > MAX_REPEAT) throw UnsupportedConstructException.at(name, "`$fn` with a count other than 1 to $MAX_REPEAT")
         functions.note(name, "Redshift `$fn` was replaced by PartiQL `||`")
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val s = text(name, args[0], exprs[0], types[0], Padding.TRIM)
             (2..k).fold(s) { acc, _ -> exprOperator("||", acc, s) }
         }
@@ -548,7 +546,7 @@ internal class RedshiftStringFunctions(
             }
         if (fill.isEmpty()) throw UnsupportedConstructException.at(name, "`$fn` with an empty fill")
         functions.note(name, "Redshift `$fn` was replaced by a CASE expression over PartiQL `SUBSTRING`")
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val s = text(name, args[0], exprs[0], types[0], Padding.TRIM)
             if (n <= 0) {
                 exprSubstring(s, functions.int(1), functions.int(0))
@@ -591,7 +589,7 @@ internal class RedshiftStringFunctions(
         if (from == null || to == null) throw UnsupportedConstructException.at(name, "`TRANSLATE` with non-literal characters")
         val replacements = translations(name, from, to)
         functions.note(name, "Redshift `TRANSLATE` was replaced by PartiQL `REPLACE` calls")
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val s = text(name, args[0], exprs[0], types[0], Padding.TRIM)
             replacements.fold(s) { acc, (old, new) -> functions.fn("replace", acc, string(old), string(new)) }
         }
@@ -676,7 +674,7 @@ internal class RedshiftStringFunctions(
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
         functions.note(name, "Redshift `QUOTE_LITERAL` was replaced by PartiQL `||` with quotes")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val type = types[0]
             val quoted =
                 when {
@@ -708,7 +706,7 @@ internal class RedshiftStringFunctions(
         setq: SetQuantifier?,
     ): Expr {
         val pattern = literalPattern(name, args, setq, 2..2, emptyAllowed = false)
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val s = text(name, args[0], exprs[0], types[0], Padding.TRIM)
             val removed = exprOperator("-", charLength(s), charLength(functions.fn("replace", s, string(pattern), string(""))))
             val m = pattern.codePointCount(0, pattern.length)
@@ -729,7 +727,7 @@ internal class RedshiftStringFunctions(
     ): Expr {
         val pattern = literalPattern(name, args, setq, 2..2, emptyAllowed = false)
         functions.note(name, "Redshift `REGEXP_INSTR` returns INTEGER; PartiQL `POSITION` returns BIGINT")
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             exprPosition(string(pattern), text(name, args[0], exprs[0], types[0], Padding.TRIM))
         }
     }
@@ -760,7 +758,7 @@ internal class RedshiftStringFunctions(
             name,
             "Redshift `REGEXP_REPLACE` with a pattern without regular expression operators was replaced by PartiQL `REPLACE`",
         )
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             functions.fn("replace", text(name, args[0], exprs[0], types[0], Padding.TRIM), string(pattern), string(replacement))
         }
     }
@@ -782,7 +780,7 @@ internal class RedshiftStringFunctions(
             "Redshift `REGEXP_SUBSTR` with a pattern without regular expression operators was replaced by a CASE expression " +
                 "over PartiQL `POSITION`",
         )
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val s = text(name, args[0], exprs[0], types[0], Padding.TRIM)
             exprCase(
                 null,
