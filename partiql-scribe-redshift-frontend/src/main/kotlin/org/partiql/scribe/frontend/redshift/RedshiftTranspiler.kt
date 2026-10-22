@@ -49,6 +49,10 @@ public class RedshiftTranspiler(
     private val planner = PartiQLPlanner.standard()
     private val partiqlParser = PartiQLParser.standard()
 
+    /** The number of probe passes that planned the query in the last translation; for diagnostics. */
+    internal var lastProbePasses: Int = 0
+        private set
+
     public fun transpile(
         sql: String,
         session: Session,
@@ -162,12 +166,14 @@ public class RedshiftTranspiler(
         val analysis = NameAnalysis(tokens.tokens.mapTo(HashSet()) { it.text.removeSurrounding("\"").lowercase() })
         val types = OperandTypes()
         val probeSession = types.probeSession(session)
+        lastProbePasses = 0
         for (pass in 1..OperandTypes.MAX_PASSES) {
             types.startProbe()
             val probe = RedshiftAstBuilder(caseSensitiveIdentifiers, mutableListOf(), types, catalog, analysis).root(tree)
             // A pass that renames FROM aliases makes a different AST in the next pass.
             if (analysis.finishPass()) continue
             if (!types.probed) break
+            lastProbePasses++
             // A probe pass only reads types: the final plan reports the problems of the query.
             val plan =
                 try {

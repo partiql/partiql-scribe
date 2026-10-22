@@ -249,8 +249,13 @@ internal class RedshiftFunctions(
     /**
      * Translates with [rule], which receives the probed [operands] and their static types; see [OperandTypes]. This is
      * [OperandTypes.resolve], with these changes:
-     *  - In a probe pass, the rule gets [placeholder] while a type is not known yet. An aggregate rule passes a
-     *    placeholder that is an aggregation, so that the query block stays a grouped query.
+     *  - A rule with a [typing] name translates to a call of the Redshift catalog in a probe pass (see
+     *    [OperandTypes.resolve]), so that its operands and its result are typed in one pass. An operand that contains an
+     *    aggregate whose type is not known yet (see [probe]) cannot be an argument of the call, so the rule gets
+     *    [placeholder] in that pass. The rule must not read state of the translation other than its arguments, because
+     *    the typing runs it with operands of the argument types.
+     *  - In a probe pass, a rule without a typing gets [placeholder] while a type is not known yet. An aggregate rule
+     *    passes a placeholder that is an aggregation, so that the query block stays a grouped query.
      *  - In a probe pass, a type can be provisional: an operand that contains a placeholder has the dynamic type until
      *    the next pass. So a rule that reports a construct as unsupported in a probe pass gets the placeholder instead;
      *    the final pass, which has the final types, reports it.
@@ -261,24 +266,42 @@ internal class RedshiftFunctions(
     internal fun resolve(
         operands: List<Operand>,
         placeholder: (List<Expr>) -> Expr = ::pending,
+        typing: String? = null,
         rule: (List<Expr>, List<PType>) -> Expr,
     ): Expr {
+        if (typing != null) {
+            val arguments = operands.map { argument(it) }
+            if (types.probing && arguments.any { it == null }) return placeholder(operands.map(::probe))
+            return types.resolve(typing, operands.mapIndexed { i, operand -> operand.ctx to arguments[i]!! }) { exprs, known ->
+                rule(exprs, resolvedTypes(operands, known))
+            }
+        }
         val exprs = operands.map(::probe)
         val known = operands.map { types.typeOf(it.ctx) }
         if (types.probing && known.any { it == null }) return placeholder(exprs)
-        // An operand that the planner could not type in the last probe pass has the unknown type, as the NULL literal.
-        val resolved =
-            known.mapIndexed {
-                    i,
-                    type,
-                ->
-                if (type == null || (type.code() == PType.UNKNOWN && !isNullLiteral(operands[i].expr))) FunctionTypes.UNRESOLVED else type
-            }
         return try {
-            rule(exprs, resolved)
+            rule(exprs, resolvedTypes(operands, known))
         } catch (ex: UnsupportedConstructException) {
             if (types.probing) placeholder(exprs) else throw ex
         }
+    }
+
+    /** The types that a rule receives: an operand that the planner could not type has the unknown type, as the NULL literal. */
+    private fun resolvedTypes(
+        operands: List<Operand>,
+        known: List<PType?>,
+    ): List<PType> =
+        known.mapIndexed { i, type ->
+            if (type == null || (type.code() == PType.UNKNOWN && !isNullLiteral(operands[i].expr))) FunctionTypes.UNRESOLVED else type
+        }
+
+    /**
+     * The argument of a typing call for [operand]: its translation, or in a probe pass a copy in which each aggregate is
+     * a NULL of its static type (see [probe]); null if the type of an aggregate in it is not known yet.
+     */
+    private fun argument(operand: Operand): Expr? {
+        if (!types.probing || !containsAggregate(operand.expr)) return operand.expr
+        return withoutAggregates(operand.expr)
     }
 
     /**
@@ -310,8 +333,9 @@ internal class RedshiftFunctions(
      */
     internal fun resolveOperands(
         operands: List<Pair<ParserRuleContext, Expr>>,
+        typing: String? = null,
         rule: (List<Expr>, List<PType>) -> Expr,
-    ): Expr = resolve(operands.map { (ctx, expr) -> Operand(ctx, expr) }, ::pending, rule)
+    ): Expr = resolve(operands.map { (ctx, expr) -> Operand(ctx, expr) }, ::pending, typing, rule)
 
     /** The static PartiQL types of the translations of aggregate calls in this pass, by identity; see [probe]. */
     private val aggregateTypes = IdentityHashMap<Expr, PType>()

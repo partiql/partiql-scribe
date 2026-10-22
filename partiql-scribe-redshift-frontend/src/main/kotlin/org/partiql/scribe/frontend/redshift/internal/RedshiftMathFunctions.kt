@@ -86,7 +86,7 @@ internal class RedshiftMathFunctions(
     ): Expr {
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val type = types[0]
             val abs = functions.fn("abs", exprs[0])
             when {
@@ -112,7 +112,7 @@ internal class RedshiftMathFunctions(
         functions.arity(name, args, 2)
         functions.scalar(name, setq)
         functions.note(name, "Redshift `MOD(a, b)` was replaced by PartiQL `a % b`")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             for (type in types) {
                 if (isApproximateNumeric(type)) throw UnsupportedConstructException.at(name, "`MOD` with a floating-point argument")
                 if (!isExactNumeric(type) && !isUnknown(type)) unsupported(name, type)
@@ -147,7 +147,7 @@ internal class RedshiftMathFunctions(
         functions.arity(name, args, 1..2)
         functions.scalar(name, setq)
         val n = digits(name, args)
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val x = exprs[0]
             val type = types[0]
             when {
@@ -215,7 +215,7 @@ internal class RedshiftMathFunctions(
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
         val fn = name.text.uppercase()
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val x = exprs[0]
             val type = types[0]
             val test = if (floor) "<" else ">"
@@ -284,7 +284,7 @@ internal class RedshiftMathFunctions(
         functions.arity(name, args, 1..2)
         functions.scalar(name, setq)
         val n = digits(name, args)
-        return functions.resolve(args.take(1)) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val x = exprs[0]
             val type = types[0]
             when {
@@ -363,7 +363,7 @@ internal class RedshiftMathFunctions(
     ): Expr {
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val x = exprs[0]
             if (!isNumeric(types[0]) && !isUnknown(types[0])) unsupported(name, types[0])
             functions.note(name, "Redshift `SIGN(x)` was rewritten as a CASE expression; the result type is INTEGER")

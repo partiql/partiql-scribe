@@ -3,6 +3,16 @@ package org.partiql.scribe.frontend.redshift.internal
 import org.antlr.v4.runtime.ParserRuleContext
 import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.Ast.exprPath
+import org.partiql.ast.Ast.exprPathStepField
+import org.partiql.ast.Ast.exprQuerySet
+import org.partiql.ast.Ast.exprVarRef
+import org.partiql.ast.Ast.from
+import org.partiql.ast.Ast.fromExpr
+import org.partiql.ast.Ast.query
+import org.partiql.ast.Ast.queryBodySFW
+import org.partiql.ast.Ast.selectValue
+import org.partiql.ast.FromType
 import org.partiql.ast.AstNode
 import org.partiql.ast.AstRewriter
 import org.partiql.ast.Identifier
@@ -17,6 +27,8 @@ import org.partiql.plan.rel.RelSort
 import org.partiql.plan.rel.RelWindow
 import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexLit
+import org.partiql.planner.PartiQLPlanner
+import org.partiql.spi.Context
 import org.partiql.spi.catalog.Catalog
 import org.partiql.spi.catalog.Catalogs
 import org.partiql.spi.catalog.Namespace
@@ -24,8 +36,12 @@ import org.partiql.spi.catalog.Path
 import org.partiql.spi.catalog.Session
 import org.partiql.spi.function.Fn
 import org.partiql.spi.function.FnOverload
+import org.partiql.spi.errors.PError
+import org.partiql.spi.errors.PErrorListener
 import org.partiql.spi.function.RoutineOverloadSignature
 import org.partiql.spi.types.PType
+import org.partiql.spi.types.PTypeField
+import org.partiql.spi.catalog.Table
 import org.partiql.spi.value.Datum
 import java.util.IdentityHashMap
 
@@ -36,33 +52,39 @@ import java.util.IdentityHashMap
  * value does not count trailing blanks, and `AVG` of an integer argument truncates the result. The AST builder gets
  * the types from the PartiQL planner:
  *
- *  1. In a probe pass, the AST builder wraps each operand whose type a rule needs in a probe call (see [operand]). The
- *     probe returns its argument with the argument's type. A rule whose operand types are not known yet translates to
- *     a placeholder (see [pending]), which accepts arguments of any type and returns a value of the dynamic type.
- *  2. The planner plans the AST against the session and the probe functions (see [probeSession]), and [collect] reads
- *     the type of each probed operand from the plan.
- *  3. Steps 1 and 2 repeat until the types do not change. Each pass resolves the rules whose operands contain no
- *     placeholder, so the number of passes is one more than the nesting depth of such rules.
- *  4. The AST builder translates the query without probes, with the final types.
+ *  1. In a probe pass, a rule whose translation depends on its operand types translates to a call of its [Typing] in
+ *     the Redshift catalog (see [resolve]): a hidden function whose arguments are the operands and whose result type is
+ *     the Redshift result type of the rule for the argument types. The planner plans the AST against the session and
+ *     the Redshift catalog (see [probeSession]), so the plan is typed as Redshift types the query, and [collect] reads
+ *     the type of each operand from the plan.
+ *  2. A rule without a typing wraps each operand in a probe call instead (see [operand]), which returns its argument
+ *     with the argument's type, and translates to a placeholder of the dynamic type while its operand types are not
+ *     known (see [pending]). Such a rule in an operand of another rule costs one more pass: steps 1 and 2 repeat until
+ *     the types do not change.
+ *  3. The AST builder translates the query without probes, with the final types.
  *
  * An operand is identified by its translation, without probe calls, and the query block that contains it. Two operands
  * with the same translation in one query block have the same probe, so that a select item and the GROUP BY key that it
- * repeats (`UPPER(c)` and `UPPER(t.c)`) stay equal in a probe pass. When a rule in an operand is resolved, the
+ * repeats (`UPPER(c)` and `UPPER(t.c)`) stay equal in a probe pass. When a placeholder in an operand is resolved, the
  * translation of the operand changes, and the next pass probes it again.
  */
 internal class OperandTypes {
     private val ids = HashMap<Key, Int>()
+    private var nextId = 0
     private val types = HashMap<Int, PType>()
     private val scopes = ArrayDeque<ParserRuleContext>()
 
-    /** The key of each operand, from the last probe pass that translated it. */
-    private val keys = IdentityHashMap<ParserRuleContext, Key>()
+    /** The key of each operand, from the last probe pass that translated it, and its slot in a rule call. */
+    private val keys = IdentityHashMap<ParserRuleContext, Pair<Key, Int>>()
+
+    /** The typings of the Redshift catalog, by hidden function name, from the last probe pass; see [Typing]. */
+    private val typings = HashMap<String, Typing>()
 
     /** True in a probe pass; false when the AST builder makes the final AST. */
     var probing: Boolean = false
         private set
 
-    /** True if the last probe pass wrapped an operand in a probe call. */
+    /** True if the last probe pass probed an operand whose type is not known yet. */
     var probed: Boolean = false
         private set
 
@@ -91,6 +113,121 @@ internal class OperandTypes {
     }
 
     /**
+     * The typing of a rule in the Redshift catalog: a hidden function that the probe pass calls in place of the rule,
+     * with the operands of the rule as arguments. Its result type is the static type of the translation that the rule
+     * produces for the argument types: the typing translates the rule with operands of those types and plans the
+     * translation (see [resultType]). So the probe plan is typed as the final translation is, and the Redshift
+     * semantics of a construct are described once, by its rule.
+     *
+     * One typing exists for each distinct rule call (see [Key]); its [id] is the name of the hidden function.
+     */
+    private inner class Typing(
+        val id: String,
+        /** The operands of the rule, without probe calls; a literal operand is passed to the rule as the literal. */
+        val operands: List<Expr>,
+        val rule: (List<Expr>, List<PType?>) -> Expr,
+    ) {
+        private val cache = HashMap<List<PType>, PType?>()
+
+        /**
+         * The static type of the translation of the rule for operands of [argTypes], or null if the rule has no
+         * translation for them. A non-literal operand is a column of its type in a one-row table.
+         */
+        fun resultType(argTypes: List<PType>): PType? =
+            cache.getOrPut(argTypes) {
+                val exprs = operands.mapIndexed { i, operand -> if (operand is ExprLit) operand else column(i) }
+                val translation =
+                    try {
+                        withoutProbing { rule(exprs, argTypes) }
+                    } catch (ex: UnsupportedConstructException) {
+                        return@getOrPut null
+                    } catch (ex: InvalidQueryException) {
+                        return@getOrPut null
+                    }
+                planType(translation, argTypes)
+            }
+    }
+
+    /** Runs [block] as the final pass does: a rule that resolves other rules in its translation uses the known types. */
+    private fun <T> withoutProbing(block: () -> T): T {
+        val saved = probing
+        probing = false
+        try {
+            return block()
+        } finally {
+            probing = saved
+        }
+    }
+
+    /** The column of operand [i] in the one-row table of a typing; see [planType]. */
+    private fun column(i: Int): Expr =
+        exprPath(
+            exprVarRef(Identifier.regular(TYPING_ROW), isQualified = false),
+            listOf(exprPathStepField(Identifier.Simple.regular("${TYPING_COLUMN}$i"))),
+        )
+
+    /**
+     * Plans `SELECT VALUE translation FROM table AS row`, where the table has one column for each type in [argTypes],
+     * and returns the element type of the result, or null if the translation does not plan.
+     */
+    private fun planType(
+        translation: Expr,
+        argTypes: List<PType>,
+    ): PType? {
+        val fields = argTypes.mapIndexed { i, type -> PTypeField.of("${TYPING_COLUMN}$i", type) }
+        val table = Table.empty(TYPING_TABLE, PType.bag(PType.row(fields)))
+        val catalog = Catalog.builder().name(TYPING_CATALOG).define(table).build()
+        val session = Session.builder().catalog(TYPING_CATALOG).catalogs(catalog).build()
+        val from = from(listOf(fromExpr(exprVarRef(Identifier.regular(TYPING_TABLE), isQualified = false), FromType.SCAN(), Identifier.Simple.regular(TYPING_ROW))))
+        val query = query(exprQuerySet(queryBodySFW(selectValue(translation), from)))
+        val plan =
+            try {
+                typingPlanner.plan(query, session, Context.of(IgnoringPErrorListener)).plan
+            } catch (ex: RuntimeException) {
+                return null
+            }
+        val action = plan.action as? org.partiql.plan.Action.Query ?: return null
+        val type = action.rex.type.pType
+        return if (type.code() == PType.BAG) type.typeParameter else null
+    }
+
+    private val typingPlanner = PartiQLPlanner.standard()
+
+    /**
+     * Translates the rule [name] with [operands] with [rule], which receives the operands and their static types, null
+     * for an operand that the planner could not type. In a probe pass, the result is the call of the [Typing] of the
+     * rule with the operands as arguments, so that the planner types the operands and the call in one pass; [rule]
+     * runs in the final pass, and in the typing. Two calls of the same rule with the same operands in one query block
+     * share a typing, and so stay equal in the probe pass.
+     *
+     * The caller translates the operands before the call; an operand must not contain an aggregate call in a probe pass
+     * (see [RedshiftFunctions.resolve]), because the planner does not find an aggregate in a function argument.
+     */
+    fun resolve(
+        name: String,
+        operands: List<Pair<ParserRuleContext, Expr>>,
+        rule: (List<Expr>, List<PType?>) -> Expr,
+    ): Expr {
+        val exprs = operands.map { it.second }
+        if (!probing) return rule(exprs, operands.map { (ctx, _) -> typeOf(ctx) })
+        val unprobed = exprs.map(Unprobe::apply)
+        val key = Key(scopes.lastOrNull(), exprCall(Identifier.regular("$RULE$name"), unprobed))
+        val base =
+            ids.getOrPut(key) {
+                val base = nextId
+                nextId += maxOf(operands.size, 1)
+                base
+            }
+        val id = "$RULE$base"
+        typings[id] = Typing(id, unprobed, rule)
+        operands.forEachIndexed { slot, (ctx, _) ->
+            keys[ctx] = key to slot
+            if (typeOf(ctx) == null) probed = true
+        }
+        return exprCall(Identifier.regular(id), exprs)
+    }
+
+    /**
      * Returns [expr], the translation of [ctx], wrapped in a probe call in a probe pass. A rule that reads the type of
      * [ctx] with [typeOf] must use the returned expression in its translation.
      */
@@ -101,9 +238,9 @@ internal class OperandTypes {
         // The final pass reads the types that the last probe pass found for the same operands.
         if (!probing) return expr
         val key = Key(scopes.lastOrNull(), Unprobe.apply(expr))
-        keys[ctx] = key
+        keys[ctx] = key to 0
         probed = true
-        val id = ids.getOrPut(key) { ids.size }
+        val id = ids.getOrPut(key) { nextId++ }
         return exprCall(Identifier.regular(PROBE), listOf(exprLit(Literal.intNum(id)), expr))
     }
 
@@ -111,7 +248,7 @@ internal class OperandTypes {
      * Returns the static type of the operand [ctx], or null if it is not known: in the first probe pass, or when the
      * planner could not type the operand.
      */
-    fun typeOf(ctx: ParserRuleContext): PType? = keys[ctx]?.let { ids[it] }?.let { types[it] }
+    fun typeOf(ctx: ParserRuleContext): PType? = keys[ctx]?.let { (key, slot) -> ids[key]?.let { types[it + slot] } }
 
     /** Returns [expr] without probe calls. */
     fun unprobe(expr: Expr): Expr = Unprobe.apply(expr)
@@ -128,7 +265,7 @@ internal class OperandTypes {
         override fun hashCode(): Int = hash
     }
 
-    /** Removes the probe calls from a translation. */
+    /** Removes the probe calls from a translation. The calls of typings stay: their ids follow from their operands. */
     private object Unprobe : AstRewriter<Unit>() {
         fun apply(expr: Expr): Expr = expr.accept(this, Unit) as Expr
 
@@ -195,32 +332,38 @@ internal class OperandTypes {
         return changed
     }
 
-    /** Adds the ids of the probe calls in [node] to [ids]. */
+    /** Adds the ids of the probe calls and of the operands of typing calls in [node] to [ids]. */
     private fun probeIds(
         node: AstNode,
         ids: MutableSet<Int>,
     ): Set<Int> {
-        if (node is ExprCall && node.function.identifier.let { it.isRegular() && it.getText() == PROBE } && node.args.size == 2) {
-            ((node.args[0] as? ExprLit)?.lit?.bigDecimalValue())?.let { ids.add(it.toInt()) }
+        if (node is ExprCall && node.function.identifier.isRegular()) {
+            val name = node.function.identifier.getText()
+            if (name == PROBE && node.args.size == 2) {
+                ((node.args[0] as? ExprLit)?.lit?.bigDecimalValue())?.let { ids.add(it.toInt()) }
+            }
+            typingBase(name)?.let { base -> node.args.indices.forEach { ids.add(base + it) } }
         }
         node.children.forEach { probeIds(it, ids) }
         return ids
     }
 
     /**
-     * Returns [session] with the probe functions.
+     * Returns [session] with the Redshift catalog: the probe functions and the typings.
      */
-    fun probeSession(session: Session): Session = ProbeSession(session)
+    fun probeSession(session: Session): Session = ProbeSession(session, RedshiftCatalog())
 
     private class Collector(private val found: MutableMap<Int, PType>) : OperatorRewriter<Unit>() {
         override fun visitCall(
             rex: RexCall,
             ctx: Unit,
         ): Operator {
-            if (rex.function.signature.name == PROBE) {
+            val name = rex.function.signature.name
+            if (name == PROBE) {
                 val id = (rex.args[0] as? RexLit)?.datum
                 if (id != null && !id.isNull && !id.isMissing) found[id.int] = rex.args[1].type.pType
             }
+            typingBase(name)?.let { base -> rex.args.forEachIndexed { slot, arg -> found[base + slot] = arg.type.pType } }
             return super.visitCall(rex, ctx)
         }
 
@@ -249,26 +392,35 @@ internal class OperandTypes {
     }
 
     /**
-     * The session of a probe pass: [session] with a catalog for the probe functions, which is last in the path.
+     * The session of a probe pass: [session] with the Redshift [catalog], which is last in the path.
      */
-    private class ProbeSession(private val session: Session) : Session by session {
+    private class ProbeSession(
+        private val session: Session,
+        private val catalog: Catalog,
+    ) : Session by session {
         private val catalogs =
             object : Catalogs {
                 override fun getCatalog(
                     name: String,
                     ignoreCase: Boolean,
-                ): Catalog? = if (name == ProbeCatalog.getName()) ProbeCatalog else session.getCatalogs().getCatalog(name, ignoreCase)
+                ): Catalog? = if (name == catalog.getName()) catalog else session.getCatalogs().getCatalog(name, ignoreCase)
             }
 
         override fun getCatalogs(): Catalogs = catalogs
 
         override fun getPath(): Path {
-            val namespaces = session.getPath().toList() + listOf(Namespace.of(ProbeCatalog.getName()))
+            val namespaces = session.getPath().toList() + listOf(Namespace.of(catalog.getName()))
             return Path.of(*namespaces.toTypedArray())
         }
     }
 
-    private object ProbeCatalog : Catalog {
+    /**
+     * The Redshift catalog of a probe pass: the probe and placeholder functions, and the function of each [Typing]. A
+     * typing call has the parameter types of its arguments, so that the planner matches the call exactly and does not
+     * coerce the arguments, and returns the type of the translation of its rule for the argument types, or the dynamic
+     * type when the rule has no translation for them.
+     */
+    private inner class RedshiftCatalog : Catalog {
         override fun getName(): String = "\$redshift_frontend_probes"
 
         override fun getFunctions(
@@ -278,8 +430,22 @@ internal class OperandTypes {
             when (name) {
                 PROBE -> listOf(Probe)
                 PENDING -> Pending.OVERLOADS
-                else -> emptyList()
+                else -> typings[name]?.let { listOf(TypingOverload(it)) } ?: emptyList()
             }
+    }
+
+    /** The overload of a [Typing]; see [RedshiftCatalog]. */
+    private inner class TypingOverload(private val typing: Typing) : FnOverload() {
+        private val signature = RoutineOverloadSignature(typing.id, List(typing.operands.size) { PType.dynamic() })
+
+        override fun getSignature(): RoutineOverloadSignature = signature
+
+        override fun getInstance(args: Array<PType>): Fn =
+            Fn.Builder(typing.id)
+                .addParameters(*args)
+                .returns(typing.resultType(args.toList()) ?: PType.dynamic())
+                .body { Datum.nullValue() }
+                .build()
     }
 
     /**
@@ -319,14 +485,29 @@ internal class OperandTypes {
         }
     }
 
+    private object IgnoringPErrorListener : PErrorListener {
+        override fun report(error: PError) {}
+    }
+
     companion object {
         /** The number of probe passes after which the transpiler stops, even if the types still change. */
         const val MAX_PASSES = 8
 
         private const val MAX_PENDING_ARITY = 16
 
+        /** The first operand id of the typing [name], or null if it is not the name of a typing. */
+        private fun typingBase(name: String): Int? = if (name.startsWith(RULE)) name.removePrefix(RULE).toIntOrNull() else null
+
+        private const val TYPING_CATALOG = "\$redshift_frontend_typing"
+        private const val TYPING_TABLE = "\$operands"
+        private const val TYPING_ROW = "\$row"
+        private const val TYPING_COLUMN = "\$a"
+
         /** Hidden function names, which cannot appear in the input; see `FunctionUtils` in partiql-spi. */
         private const val PROBE = "\uFDEFredshift_probe"
         private const val PENDING = "\uFDEFredshift_pending"
+
+        /** The prefix of the hidden names of the typings, followed by the first operand id; see [Typing]. */
+        private const val RULE = "\uFDEFredshift_rule_"
     }
 }
