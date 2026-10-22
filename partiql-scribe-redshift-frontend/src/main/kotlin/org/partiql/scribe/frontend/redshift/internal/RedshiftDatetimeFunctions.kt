@@ -184,8 +184,8 @@ internal class RedshiftDatetimeFunctions(
             DatePart.SECOND, DatePart.MILLISECOND -> if (!isExtract) throw unsupportedPart()
             else -> {}
         }
-        return types.resolve(listOf(source.ctx to source.expr)) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(listOf(source.ctx to source.expr), typing = "$function:$partName") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             if (isExtract && Kind.of(t[0]) == Kind.STRING) {
                 // Redshift can read the string as a TIMESTAMPTZ value, for which EXTRACT returns DOUBLE PRECISION.
                 throw UnsupportedConstructException.at(source.ctx, "EXTRACT from a character string")
@@ -205,7 +205,7 @@ internal class RedshiftDatetimeFunctions(
                             "Redshift `$function($partName, ...)` was replaced by PartiQL " +
                                 "`DATE_DIFF(SECOND, TIMESTAMP '1970-01-01 00:00:00', ...)` cast to DOUBLE PRECISION",
                         )
-                        return@resolve exprCast(dateDiffCall(DatePart.SECOND, EPOCH, x), DataType.DOUBLE_PRECISION())
+                        return@resolveOperands exprCast(dateDiffCall(DatePart.SECOND, EPOCH, x), DataType.DOUBLE_PRECISION())
                     }
                     if (kind == Kind.TIMESTAMPTZ && isExtract && (part == DatePart.SECOND || part == DatePart.MILLISECOND)) {
                         throw UnsupportedConstructException.at(location, "EXTRACT(${part.name} ...) of a TIMESTAMPTZ value")
@@ -323,8 +323,8 @@ internal class RedshiftDatetimeFunctions(
         setq: SetQuantifier?,
     ): Expr {
         scalar(name, args, setq, 1)
-        return types.resolve(listOf(args[0].ctx to args[0].expr)) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(listOf(args[0].ctx to args[0].expr), typing = "date_part_year") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             val (x, kind) = datetimeArgument("DATE_PART_YEAR", args[0], e[0], Kind.of(t[0]), PType.TIMESTAMP)
             if (!kind.isTimestampLike) throw UnsupportedConstructException.at(args[0].ctx, "DATE_PART_YEAR with ${kind.argument}")
             functions.note(name, "Redshift `DATE_PART_YEAR` was replaced by PartiQL `EXTRACT(YEAR ...)`")
@@ -356,8 +356,8 @@ internal class RedshiftDatetimeFunctions(
             DatePart.of(partName)?.takeIf {
                 it in TRUNC_PARTS
             } ?: throw UnsupportedConstructException.at(args[0].ctx, "DATE_TRUNC datepart '$partName'")
-        return types.resolve(listOf(args[1].ctx to args[1].expr)) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(listOf(args[1].ctx to args[1].expr), typing = "date_trunc:$partName") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             val (x, kind) = datetimeArgument("DATE_TRUNC", args[1], e[0], Kind.of(t[0]), PType.TIMESTAMP)
             when (kind) {
                 Kind.DATE, Kind.TIMESTAMP -> {}
@@ -412,8 +412,8 @@ internal class RedshiftDatetimeFunctions(
         setq: SetQuantifier?,
     ): Expr {
         scalar(name, args, setq, 1)
-        return types.resolve(listOf(args[0].ctx to args[0].expr)) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(listOf(args[0].ctx to args[0].expr), typing = "last_day") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             val (x, kind) = datetimeArgument("LAST_DAY", args[0], e[0], Kind.of(t[0]), PType.TIMESTAMP)
             if (!kind.isTimestampLike) throw UnsupportedConstructException.at(args[0].ctx, "LAST_DAY with ${kind.argument}")
             functions.note(name, "Redshift `LAST_DAY` was replaced by PartiQL date arithmetic")
@@ -436,8 +436,8 @@ internal class RedshiftDatetimeFunctions(
         setq: SetQuantifier?,
     ): Expr {
         scalar(name, args, setq, 2)
-        return types.resolve(args.map { it.ctx to it.expr }) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(args.map { it.ctx to it.expr }, typing = "add_months") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             val (x, kind) = datetimeArgument("ADD_MONTHS", args[0], e[0], Kind.of(t[0]), PType.TIMESTAMP)
             if (Kind.of(t[1]) != Kind.INTEGER) {
                 throw UnsupportedConstructException.at(
@@ -477,8 +477,8 @@ internal class RedshiftDatetimeFunctions(
             stringLiteral(args[1].expr)
                 ?: throw UnsupportedConstructException.at(args[1].ctx, "NEXT_DAY with a day name that is not a literal")
         val weekday = WEEKDAYS[dayName.lowercase()] ?: throw UnsupportedConstructException.at(args[1].ctx, "NEXT_DAY day name '$dayName'")
-        return types.resolve(listOf(args[0].ctx to args[0].expr)) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(listOf(args[0].ctx to args[0].expr), typing = "next_day:$weekday") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             val (x, kind) = datetimeArgument("NEXT_DAY", args[0], e[0], Kind.of(t[0]), PType.TIMESTAMP)
             if (!kind.isTimestampLike) throw UnsupportedConstructException.at(args[0].ctx, "NEXT_DAY with ${kind.argument}")
             functions.note(name, "Redshift `NEXT_DAY` was replaced by PartiQL date arithmetic")
@@ -506,8 +506,8 @@ internal class RedshiftDatetimeFunctions(
     ): RedshiftFunctions.Rule =
         RedshiftFunctions.Rule { name, args, setq ->
             scalar(name, args, setq, 2)
-            types.resolve(args.map { it.ctx to it.expr }) { e, t ->
-                if (waiting(t)) return@resolve types.pending(e)
+            functions.resolveOperands(args.map { it.ctx to it.expr }, typing = redshift.lowercase()) { e, t ->
+                if (waiting(t)) return@resolveOperands types.pending(e)
                 val a = compareArgument(redshift, args[0], e[0], Kind.of(t[0]), first)
                 val b = compareArgument(redshift, args[1], e[1], Kind.of(t[1]), second)
                 functions.note(name, "Redshift `$redshift` was replaced by a CASE expression")
@@ -573,8 +573,8 @@ internal class RedshiftDatetimeFunctions(
             if (!isUtc(value)) throw UnsupportedConstructException.at(zone.ctx, "CONVERT_TIMEZONE with time zone '$value'")
         }
         val operand = args.last()
-        return types.resolve(listOf(operand.ctx to operand.expr)) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(listOf(operand.ctx to operand.expr), typing = "convert_timezone:${args.size}") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             val (x, kind) = datetimeArgument("CONVERT_TIMEZONE", operand, e[0], Kind.of(t[0]), PType.TIMESTAMP)
             if (!kind.isTimestampLike) throw UnsupportedConstructException.at(operand.ctx, "CONVERT_TIMEZONE with ${kind.argument}")
             if (kind == Kind.TIMESTAMP) {
@@ -604,8 +604,8 @@ internal class RedshiftDatetimeFunctions(
     ): Expr {
         val source = if (construct == "TIMEZONE") "TIMEZONE('$zone', ...)" else "AT TIME ZONE '$zone'"
         if (!isUtc(zone)) throw UnsupportedConstructException.at(location, source)
-        return types.resolve(listOf(operand.ctx to operand.expr)) { e, t ->
-            if (waiting(t)) return@resolve types.pending(e)
+        return functions.resolveOperands(listOf(operand.ctx to operand.expr), typing = "at_time_zone:$construct:$stringValues") { e, t ->
+            if (waiting(t)) return@resolveOperands types.pending(e)
             var x = e[0]
             var kind = Kind.of(t[0])
             if (kind == Kind.STRING && stringValues) {

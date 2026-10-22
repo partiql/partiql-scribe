@@ -67,7 +67,7 @@ internal class RedshiftConditionalFunctions(
         functions.scalar(name, setq)
         if (args.isEmpty()) throw UnsupportedConstructException.at(name, "`${name.text}` with no arguments")
         if (nvl) functions.note(name, "Redshift `NVL` was replaced by PartiQL `COALESCE`")
-        return functions.resolve(args) { exprs, types -> exprCoalesce(unify(name, Values(args, exprs, types))) }
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> exprCoalesce(unify(name, Values(args, exprs, types))) }
     }
 
     /**
@@ -86,7 +86,7 @@ internal class RedshiftConditionalFunctions(
         functions.arity(name, args, 3)
         functions.scalar(name, setq)
         functions.note(name, "Redshift `NVL2(e, a, b)` was replaced by `CASE WHEN e IS NOT NULL THEN a ELSE b END`")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val values = Values(args.drop(1), exprs.drop(1), types.drop(1))
             if (!nvl2Compatible(values)) {
                 val (ta, tb) = values.types
@@ -132,7 +132,7 @@ internal class RedshiftConditionalFunctions(
     ): Expr {
         functions.arity(name, args, 2)
         functions.scalar(name, setq)
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val values = Values(args, exprs, types)
             if (values.string(0) != null && !isText(types[1]) && !isDynamic(types[1]) && !isUnknown(types[1])) {
                 throw UnsupportedConstructException.at(
@@ -170,7 +170,7 @@ internal class RedshiftConditionalFunctions(
         functions.scalar(name, setq)
         if (args.size < 3) throw UnsupportedConstructException.at(name, "`DECODE` with fewer than 3 arguments")
         functions.note(name, "Redshift `DECODE` was replaced by a CASE expression; a NULL search value matches a NULL expression")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val all = Values(args, exprs, types)
             val pairs = (args.size - 1) / 2
             val searches = (0 until pairs).map { 1 + 2 * it }
@@ -221,7 +221,7 @@ internal class RedshiftConditionalFunctions(
         val fn = name.text.uppercase()
         if (args.isEmpty()) throw UnsupportedConstructException.at(name, "`$fn` with no arguments")
         functions.note(name, "Redshift `$fn` was replaced by a CASE expression that ignores NULL arguments")
-        return functions.resolve(args) { exprs, types ->
+        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types ->
             val all = Values(args, exprs, types)
             types.forEachIndexed { i, type ->
                 val comparable = isNumeric(type) || isText(type) || type.code() in DATETIMES || all.isNull(i)
