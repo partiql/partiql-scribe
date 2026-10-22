@@ -5,8 +5,8 @@ import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-import org.partiql.scribe.utils.ScribeTestProvider
 import org.partiql.scribe.frontend.redshift.internal.OperandTypes
+import org.partiql.scribe.utils.ScribeTestProvider
 import org.partiql.scribe.utils.SessionProvider
 import org.partiql.scribe.utils.SqlEqualsNaive
 import kotlin.io.path.toPath

@@ -135,7 +135,10 @@ internal class RedshiftStringFunctions(
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
         if (rename) functions.note(name, "Redshift `${name.text.uppercase()}` was replaced by PartiQL `CHAR_LENGTH`")
-        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> charLength(text(name, args[0], exprs[0], types[0], Padding.TRIM)) }
+        return functions.resolve(
+            args,
+            typing = name.text.lowercase(),
+        ) { exprs, types -> charLength(text(name, args[0], exprs[0], types[0], Padding.TRIM)) }
     }
 
     /**
@@ -150,7 +153,10 @@ internal class RedshiftStringFunctions(
     ): Expr {
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
-        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> functions.fn("octet_length", text(name, args[0], exprs[0], types[0], Padding.COUNT)) }
+        return functions.resolve(
+            args,
+            typing = name.text.lowercase(),
+        ) { exprs, types -> functions.fn("octet_length", text(name, args[0], exprs[0], types[0], Padding.COUNT)) }
     }
 
     /**
@@ -167,7 +173,10 @@ internal class RedshiftStringFunctions(
     ): Expr {
         functions.arity(name, args, 1)
         functions.scalar(name, setq)
-        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> functions.fn(fn, text(name, args[0], exprs[0], types[0], Padding.KEEP)) }
+        return functions.resolve(
+            args,
+            typing = name.text.lowercase(),
+        ) { exprs, types -> functions.fn(fn, text(name, args[0], exprs[0], types[0], Padding.KEEP)) }
     }
 
     /*

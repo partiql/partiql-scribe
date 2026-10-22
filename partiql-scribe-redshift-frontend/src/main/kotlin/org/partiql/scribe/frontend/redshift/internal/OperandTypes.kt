@@ -12,9 +12,9 @@ import org.partiql.ast.Ast.fromExpr
 import org.partiql.ast.Ast.query
 import org.partiql.ast.Ast.queryBodySFW
 import org.partiql.ast.Ast.selectValue
-import org.partiql.ast.FromType
 import org.partiql.ast.AstNode
 import org.partiql.ast.AstRewriter
+import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.SetQuantifier
@@ -36,16 +36,16 @@ import org.partiql.spi.catalog.Catalogs
 import org.partiql.spi.catalog.Namespace
 import org.partiql.spi.catalog.Path
 import org.partiql.spi.catalog.Session
+import org.partiql.spi.catalog.Table
+import org.partiql.spi.errors.PError
+import org.partiql.spi.errors.PErrorListener
 import org.partiql.spi.function.Agg
 import org.partiql.spi.function.AggOverload
 import org.partiql.spi.function.Fn
 import org.partiql.spi.function.FnOverload
-import org.partiql.spi.errors.PError
-import org.partiql.spi.errors.PErrorListener
 import org.partiql.spi.function.RoutineOverloadSignature
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
-import org.partiql.spi.catalog.Table
 import org.partiql.spi.value.Datum
 
 /**
@@ -187,7 +187,16 @@ internal class OperandTypes {
         val table = Table.empty(TYPING_TABLE, PType.bag(PType.row(fields)))
         val catalog = Catalog.builder().name(TYPING_CATALOG).define(table).build()
         val session = Session.builder().catalog(TYPING_CATALOG).catalogs(catalog).build()
-        val from = from(listOf(fromExpr(exprVarRef(Identifier.regular(TYPING_TABLE), isQualified = false), FromType.SCAN(), Identifier.Simple.regular(TYPING_ROW))))
+        val from =
+            from(
+                listOf(
+                    fromExpr(
+                        exprVarRef(Identifier.regular(TYPING_TABLE), isQualified = false),
+                        FromType.SCAN(),
+                        Identifier.Simple.regular(TYPING_ROW),
+                    ),
+                ),
+            )
         val query = query(exprQuerySet(queryBodySFW(selectValue(translation), from)))
         val plan =
             try {

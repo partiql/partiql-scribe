@@ -18,8 +18,14 @@ result.problems // TRANSLATION_INFO notes for TOP and NVL, with line and column
    `RedshiftOperators`, and `RedshiftCasts`), datetime constructs in `RedshiftDatetime`, and function calls in
    `RedshiftFunctions` and its category classes.
 3. A rule whose Redshift semantics depend on the static types of its operands (for example `AVG` of an integer, or
-   `LEN` of a `CHAR(n)` value) gets the types from probe passes, which plan the AST with probe calls before the final
-   translation (`OperandTypes`).
+   `LEN` of a `CHAR(n)` value) gets the types from a probe pass (`OperandTypes`). In the probe pass, such a rule
+   translates to a call of the Redshift catalog: a hidden function whose arguments are the operands of the rule and
+   whose result type is the type of the rule's translation for the argument types, which the catalog computes by
+   running the rule with columns of those types and planning the translation. The planner plans the probe AST against
+   the session and the Redshift catalog, so the probe plan is the Redshift query typed as Redshift types it (`AVG` of
+   an integer is `BIGINT`, `LEN` is `INTEGER`, a comparison of a `DATE` with a string literal is `BOOLEAN`), and the
+   rules read the operand types from it. Nested rules resolve in one pass; an aggregate in an operand of a rule needs
+   a second pass, because the planner does not find an aggregate in a function argument.
 4. Plan the AST with the PartiQL planner against a `Session`. This resolves names and types.
 5. Print the plan as PartiQL with `PartiQLOutputTarget`, the Scribe PartiQL target with the print rules that the
    translation needs, then parse and plan the output to verify it.
@@ -292,8 +298,8 @@ construct as unsupported:
   fails: the translation casts the result.
 - The planner does not find an aggregate call in the arguments of a scalar function call: `ABS(SUM(x))` fails with
   `FUNCTION_NOT_FOUND`, and such a call is unsupported. Operators, `CAST`, `CASE`, `COALESCE`, `TRIM`, and `POSITION`
-  are not function calls. The probe calls of the operand types are function calls too, so the probe passes probe a
-  copy of an operand in which each aggregate is a NULL of its type. Date arithmetic translates to `DATE_ADD` and
+  are not function calls. The calls of the Redshift catalog in a probe pass are function calls too, so an operand with
+  an aggregate is passed as a copy in which each aggregate is a NULL of its type, once the type is known. Date arithmetic translates to `DATE_ADD` and
   `DATE_DIFF` calls, so `MIN(d) + 1` is unsupported too, and so is a subquery as an operand of date arithmetic or an
   argument of `DATEADD`, `DATEDIFF`, or `EXTRACT`.
 - `EXCEPT` returns duplicate rows of the left query. The translation adds DISTINCT to a left query that is a simple

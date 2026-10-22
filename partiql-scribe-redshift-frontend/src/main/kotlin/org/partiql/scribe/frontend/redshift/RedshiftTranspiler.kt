@@ -35,7 +35,9 @@ import org.partiql.spi.errors.Severity as PSeverity
  *
  * The translation has four steps:
  *  1. Parse the Redshift text with the Redshift grammar.
- *  2. Build a PartiQL AST from the parse tree. Dialect differences are rewritten here.
+ *  2. Build a PartiQL AST from the parse tree. Dialect differences are rewritten here. A rule that depends on the
+ *     static types of its operands reads them from a probe plan, in which the rule is a call of the Redshift catalog
+ *     with the result type of its translation; see [org.partiql.scribe.frontend.redshift.internal.OperandTypes].
  *  3. Plan the AST with the PartiQL planner against [Session]. This resolves names and types.
  *  4. Print the plan as PartiQL with [PartiQLOutputTarget], then parse and plan the output to verify it.
  *
@@ -139,8 +141,9 @@ public class RedshiftTranspiler(
     /**
      * Parses [sql] and returns the PartiQL AST, before planning.
      *
-     * The rules whose translation depends on the static types of their operands get the types from probe passes,
-     * which plan the AST against [session]; see [OperandTypes].
+     * The rules whose translation depends on the static types of their operands get the types from a probe pass, which
+     * plans the AST against [session] and the Redshift catalog; see [OperandTypes]. A rule with an aggregate in an
+     * operand, and a rule without a typing, can need another pass.
      *
      * The first pass also finds the FROM aliases that the later passes rename; see [NameAnalysis].
      *

@@ -67,7 +67,10 @@ internal class RedshiftConditionalFunctions(
         functions.scalar(name, setq)
         if (args.isEmpty()) throw UnsupportedConstructException.at(name, "`${name.text}` with no arguments")
         if (nvl) functions.note(name, "Redshift `NVL` was replaced by PartiQL `COALESCE`")
-        return functions.resolve(args, typing = name.text.lowercase()) { exprs, types -> exprCoalesce(unify(name, Values(args, exprs, types))) }
+        return functions.resolve(
+            args,
+            typing = name.text.lowercase(),
+        ) { exprs, types -> exprCoalesce(unify(name, Values(args, exprs, types))) }
     }
 
     /**

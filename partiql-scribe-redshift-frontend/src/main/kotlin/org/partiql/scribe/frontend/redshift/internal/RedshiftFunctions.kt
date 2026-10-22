@@ -465,7 +465,11 @@ internal class RedshiftFunctions(
         setq: SetQuantifier?,
         rule: (List<Expr>, List<PType>) -> Expr,
     ): Expr =
-        types.resolveAggregate(typing, operands.map { it.ctx to it.expr }, setq) { exprs, known -> rule(exprs, resolvedTypes(operands, known)) }
+        types.resolveAggregate(
+            typing,
+            operands.map { it.ctx to it.expr },
+            setq,
+        ) { exprs, known -> rule(exprs, resolvedTypes(operands, known)) }
 
     /*
      * Expressions
