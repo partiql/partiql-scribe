@@ -26,14 +26,16 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 /**
  * Builds PartiQL expressions, literals, and data types from a Redshift parse tree; see [RedshiftAstBuilder].
  *
- * The rules for comparisons and the other conditions, pattern matching, the operators, casts and data types, and
- * datetime constructs follow; this version reports them as unsupported.
+ * Datetime constructs are in [RedshiftDatetime]. The rules for comparisons and the other conditions, pattern matching,
+ * the operators, and casts and data types follow; this version reports them as unsupported.
  */
 internal class RedshiftExpressions(
     private val builder: RedshiftAstBuilder,
     private val functions: RedshiftFunctions,
     private val types: OperandTypes,
 ) {
+    private val datetime = RedshiftDatetime(builder, this, types)
+
     /*
      * Boolean expressions and predicates
      */
@@ -120,10 +122,11 @@ internal class RedshiftExpressions(
     internal fun valueExpr(ctx: P.ValueExprContext): Expr =
         when (ctx) {
             is P.ValuePrimaryContext -> primaryExpr(ctx.primaryExpr())
-            // Operators, casts, and AT TIME ZONE follow.
+            is P.ValueAtTimeZoneContext -> datetime.atTimeZone(ctx)
+            // Operators and casts follow.
             is P.ValueCastShorthandContext, is P.ValueSignedContext, is P.ValueExponentContext,
             is P.ValueMultiplicativeContext, is P.ValueAdditiveContext, is P.ValuePrefixOperatorContext,
-            is P.ValueAtTimeZoneContext, is P.ValueOperatorContext,
+            is P.ValueOperatorContext,
             -> unsupported(ctx.start, "operator in `${ctx.text}`")
             else -> builder.unexpected(ctx)
         }
@@ -267,14 +270,14 @@ internal class RedshiftExpressions(
     private fun atom(ctx: P.AtomContext): Expr =
         when (ctx) {
             is P.AtomLiteralContext -> literal(ctx.literal())
-            // Casts, CASE, and the datetime functions follow.
+            // Casts and CASE follow.
             is P.AtomCastContext -> unsupported(ctx.CAST().symbol, "CAST")
             is P.AtomTryCastContext -> unsupported(ctx.start, "TRY_CAST")
             is P.AtomConvertContext -> unsupported(ctx.start, "CONVERT")
             is P.AtomCaseContext -> unsupported(ctx.CASE().symbol, "CASE")
             is P.AtomExistsContext -> exists(ctx)
-            is P.AtomDateFunctionContext -> unsupported(ctx.start, "function `${ctx.start.text}`")
-            is P.AtomExtractContext -> unsupported(ctx.start, "EXTRACT")
+            is P.AtomDateFunctionContext -> datetime.dateFunction(ctx)
+            is P.AtomExtractContext -> datetime.extract(ctx)
             is P.AtomPositionContext ->
                 functions.position(ctx.POSITION().symbol, Operand(ctx.sub, valueExpr(ctx.sub)), Operand(ctx.str, valueExpr(ctx.str)))
             is P.AtomSubstringFromContext ->
@@ -320,8 +323,9 @@ internal class RedshiftExpressions(
                         functions.call(ctx.name.start, args, builder.setQuantifier(ctx.setQuantifier()))
                     }
                 }
-            is P.AtomSysdateContext, is P.AtomCurrentDateContext, is P.AtomCurrentDatetimeContext ->
-                unsupported(ctx.start, "`${ctx.start.text}`")
+            is P.AtomSysdateContext -> datetime.sysdate(ctx.SYSDATE().symbol)
+            is P.AtomCurrentDateContext -> datetime.currentDate(ctx.CURRENT_DATE().symbol)
+            is P.AtomCurrentDatetimeContext -> datetime.currentDatetime(ctx.name)
             is P.AtomSessionUserContext -> sessionUser(ctx.name)
             is P.AtomSubqueryContext -> builder.exprQuerySet(ctx.query())
             is P.AtomParenthesizedContext -> expr(ctx.expr())
@@ -355,14 +359,13 @@ internal class RedshiftExpressions(
             // The Redshift type of a literal with an exponent is not documented; PostgreSQL types `1e3` as NUMERIC.
             is P.LiteralFloatContext -> unsupported(ctx.start, "numeric literal with an exponent")
             is P.LiteralStringContext -> exprLit(Literal.string(stringValue(ctx.STRING_LITERAL().symbol)))
-            // Datetime and interval literals follow.
             is P.LiteralDateContext,
             is P.LiteralTimeContext,
             is P.LiteralTimeTzContext,
             is P.LiteralTimestampContext,
             is P.LiteralTimestampTzContext,
-            is P.LiteralIntervalContext,
-            -> unsupported(ctx.start, "`${ctx.start.text}` literal")
+            -> datetime.literal(ctx)
+            is P.LiteralIntervalContext -> datetime.intervalLiteral(ctx)
             else -> builder.unexpected(ctx)
         }
 
