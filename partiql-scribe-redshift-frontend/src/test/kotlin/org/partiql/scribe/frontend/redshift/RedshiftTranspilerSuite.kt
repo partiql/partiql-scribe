@@ -36,7 +36,8 @@ class RedshiftTranspilerSuite {
                 dynamicContainer(
                     group,
                     tests.sortedBy { it.key.name }.map { expected ->
-                        dynamicTest(expected.key.name) {
+                        // The group is in the name too: a test report does not show the container of a dynamic test.
+                        dynamicTest("$group/${expected.key.name}") {
                             val input = inputs[expected.key] ?: fail("No input for ${expected.key}")
                             check(input.statement, expected.statement)
                         }
