@@ -27,6 +27,23 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Removed
+
+### Security
+
+### Contributors
+Thank you to all who have contributed!
+
+## [2.1.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.0) - 2026-10-20
+
+### Added
 - Adds an experimental DuckDB SQL transpilation target, with the same PartiQL feature coverage as the Redshift, Spark, and Trino targets.
 - Adds the experimental `partiql-scribe-redshift-frontend` module, which translates Amazon Redshift queries to PartiQL. It parses Redshift with its own grammar, plans the query with the PartiQL planner, and prints it with the PartiQL target. A construct without a translation rule gives an `UNSUPPORTED` result with its location. It covers WITH, set operations, joins and SUPER unnesting, window functions, QUALIFY, the Redshift predicates, casts, literals, and intervals, and the string, conditional, math, aggregate, datetime, and SUPER functions that have exact PartiQL translations; rules whose semantics depend on argument types get the types from the planner.
 - DuckDB target: translates `DATE_ADD(<part>, <amount>, <datetime>)` to `date_add(<datetime>, to_<part>s(<amount>))`.
@@ -46,14 +63,18 @@ Thank you to all who have contributed!
 - DuckDB target: `IN` / `NOT IN` keep SQL's NULL result when there is no match and the list or array contains a NULL.
 - `x IN <empty list or array>` is false (and `NOT IN` true) even when `x` is NULL, like PartiQL; an empty literal list no longer renders as invalid `IN ()` (all SQL targets).
 - Redshift target: `IN` / `NOT IN` keep SQL's NULL result for a list with a NULL literal and for SUPER array membership (`array_contains`).
+- Typed NULL or MISSING literals (e.g. the implicit `ELSE NULL` of a `CASE`) no longer throw a `NullPointerException` in the Trino, Spark and Redshift converters.
+- Converters no longer crash on edge inputs (a path with no steps, a non-string bracket key such as `T[1]`, an out-of-range CTE reference); they return a result or a proper error.
 
 ### Removed
 
 ### Security
+- Redshift function extension `contains`: the generated alias is now fixed instead of derived from the field name, so a crafted field name can no longer inject SQL.
 
 ### Contributors
 Thank you to all who have contributed!
 - @xd1313113
+- @XuechunHHH
 
 ## [2.0.2](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.2) - 2026-09-14
 
