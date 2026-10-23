@@ -1,13 +1,13 @@
--- --#[review-aggregate-00] TODO(redshift)
+--#[review-aggregate-00]
 [UNSUPPORTED{message="`datetime +` of an aggregate function (the PartiQL planner does not accept an aggregate in a function argument)"}];
 
--- --#[review-aggregate-01] TODO(redshift)
+--#[review-aggregate-01]
 [UNSUPPORTED{message="DATEADD with an argument of unknown type"}];
 
--- --#[review-subquery-00] TODO(redshift)
+--#[review-subquery-00]
 [UNSUPPORTED{message="DATEDIFF with an argument of unknown type"}];
 
--- --#[review-subquery-01] TODO(redshift)
+--#[review-subquery-01]
 [UNSUPPORTED{message="EXTRACT with an argument of unknown type"}];
 
 --#[review-interval-times-00]

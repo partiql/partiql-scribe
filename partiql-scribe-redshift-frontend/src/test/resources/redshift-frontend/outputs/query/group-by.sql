@@ -58,7 +58,7 @@ SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['
 --#[group-by-alias-and-column]
 [UNSUPPORTED{message="`c` in GROUP BY, which is both a column and a select-list alias"}];
 
--- --#[having-alias] TODO(redshift)
+--#[having-alias]
 SELECT "t"['c'] AS "c", sum("t"['b']) AS "pp" FROM "default"."T" AS "t" GROUP BY "t"['c'] HAVING sum("t"['b']) > CAST(10 AS BIGINT);
 
 --#[having-without-group-by]
@@ -67,7 +67,7 @@ SELECT count(1) AS "n" FROM "default"."T" AS "t" HAVING count(1) > CAST(1 AS BIG
 --#[group-by-all]
 SELECT "t"['c'] AS "c", "t"['z'] AS "z", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['c'], "t"['z'];
 
--- --#[group-by-all-expression] TODO(redshift)
+--#[group-by-all-expression]
 SELECT "t"['c'] AS "c", "t"['b'] + 1 AS "x", sum("t"['b']) AS "s" FROM "default"."T" AS "t" GROUP BY "t"['c'], "t"['b'] + 1;
 
 --#[group-by-all-constant]
@@ -76,11 +76,11 @@ SELECT "t"['c'] AS "c", "t"['b'] + 1 AS "x", sum("t"['b']) AS "s" FROM "default"
 --#[select-star-group-by]
 SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" GROUP BY "simple_t"['b'], "simple_t"['a'], "simple_t"['c'];
 
--- --#[group-by-rollup] TODO(redshift)
+--#[group-by-rollup]
 [UNSUPPORTED{message="GROUP BY ROLLUP"}];
 
--- --#[group-by-cube] TODO(redshift)
+--#[group-by-cube]
 [UNSUPPORTED{message="GROUP BY CUBE"}];
 
--- --#[group-by-grouping-sets] TODO(redshift)
+--#[group-by-grouping-sets]
 [UNSUPPORTED{message="GROUP BY GROUPING SETS"}];
