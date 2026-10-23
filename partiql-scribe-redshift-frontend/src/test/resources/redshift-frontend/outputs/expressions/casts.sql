@@ -146,5 +146,5 @@ SELECT CAST(NULL AS DATE) AS "v1", CAST(NULL AS STRING) AS "v2", CAST(NULL AS IN
 -- --#[convert-00] TODO(redshift)
 SELECT CAST("t"['b'] AS INT) AS "v1", CAST("t"['b'] AS VARCHAR(30)) AS "v2" FROM "default"."T" AS "t";
 
--- --#[try-cast-00] TODO(redshift)
+--#[try-cast-00]
 [UNSUPPORTED{message="TRY_CAST"}];

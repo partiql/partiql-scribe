@@ -10,10 +10,10 @@ SELECT (SELECT "$s"['m'] AS "m" FROM ((SELECT max("s"['b']) AS "m" FROM "default
 -- --#[review-set-operation-any-00] TODO(redshift)
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] IN (SELECT "$s"['b'] AS "b" FROM ((SELECT "s"['b'] AS "b" FROM "default"."SIMPLE_T" AS "s") INTERSECT DISTINCT (SELECT "u"['b'] AS "b" FROM "default"."T" AS "u")) AS "$s");
 
--- --#[review-set-operation-order-by-00] TODO(redshift)
+--#[review-set-operation-order-by-00]
 SELECT "$s"['t'] AS "t" FROM ((SELECT "t"['b'] AS "t" FROM "default"."T" AS "t") UNION DISTINCT (SELECT "s"['b'] AS "t" FROM "default"."SIMPLE_T" AS "s")) AS "$s" ORDER BY "$s"['t'] DESC NULLS FIRST LIMIT 2;
 
--- --#[review-set-operation-order-by-01] TODO(redshift)
+--#[review-set-operation-order-by-01]
 SELECT "$s"['x'] AS "x" FROM ((SELECT "t"['b'] AS "x" FROM "default"."T" AS "t") UNION ALL (SELECT "s"['b'] AS "x" FROM "default"."SIMPLE_T" AS "s")) AS "$s" ORDER BY "$s"['x'] DESC NULLS FIRST;
 
 -- --#[review-default-name-00] TODO(redshift)

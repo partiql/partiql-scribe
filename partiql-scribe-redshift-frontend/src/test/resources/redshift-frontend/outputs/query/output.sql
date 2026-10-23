@@ -7,19 +7,19 @@ SELECT CAST(count(1) AS INT) AS "count" FROM "default"."T" AS "t";
 -- --#[default-name-function-and-path] TODO(redshift)
 SELECT "upper"("t"['c']) AS "upper", "t"['d']['e'] AS "e", CAST("t"['b'] AS BIGINT) AS "b" FROM "default"."T" AS "t";
 
--- --#[default-name-window] TODO(redshift)
+--#[default-name-window]
 SELECT ROW_NUMBER() OVER (ORDER BY "t"['b'] ASC NULLS LAST) AS "row_number" FROM "default"."T" AS "t";
 
 -- --#[default-name-expression] TODO(redshift)
 SELECT "t"['b'] + 1 AS "_1" FROM "default"."T" AS "t";
 
--- --#[default-name-set-operation] TODO(redshift)
+--#[default-name-set-operation]
 (SELECT count(1) AS "count" FROM "default"."T" AS "t") UNION ALL (SELECT count(1) AS "count" FROM "default"."SIMPLE_T" AS "simple_t");
 
--- --#[super-navigation-coalesce] TODO(redshift)
+--#[super-navigation-coalesce]
 SELECT COALESCE("t"['x']['y']) AS "v", "t"['x'] AS "w" FROM "default"."T" AS "t";
 
--- --#[super-navigation-coalesce-grouped] TODO(redshift)
+--#[super-navigation-coalesce-grouped]
 SELECT COALESCE("t"['x']['y']) AS "v", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['x']['y'];
 
 -- --#[group-key-correlated] TODO(redshift)

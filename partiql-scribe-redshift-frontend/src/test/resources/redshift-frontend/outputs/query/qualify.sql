@@ -28,8 +28,8 @@ SELECT "$d"['c'] AS "c" FROM (SELECT DISTINCT "$q"['c'] AS "c" FROM (SELECT "t"[
 -- --#[qualify-repeated-names] TODO(redshift)
 SELECT "$q"['$c1'] AS "b", "$q"['$c2'] AS "b" FROM (SELECT "t1"['b'] AS "$c1", "t2"['b'] AS "$c2", ROW_NUMBER() OVER (ORDER BY "t1"['b'] ASC NULLS LAST) = 1 AS "$qualify" FROM "default"."T" AS "t1" INNER JOIN "default"."SIMPLE_T" AS "t2" ON "t1"['c'] = "t2"['c']) AS "$q" WHERE "$q"['$qualify'];
 
--- --#[qualify-without-alias] TODO(redshift)
+--#[qualify-without-alias]
 [INVALID_INPUT{message="the FROM item before QUALIFY needs an alias; Redshift reads QUALIFY as its alias"}];
 
--- --#[qualify-as-name] TODO(redshift)
+--#[qualify-as-name]
 SELECT "qualify"['b'] AS "b" FROM "default"."T" AS "qualify";

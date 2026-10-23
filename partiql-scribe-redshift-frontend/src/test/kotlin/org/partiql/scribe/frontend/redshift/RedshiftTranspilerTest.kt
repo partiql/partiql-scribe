@@ -3,9 +3,13 @@ package org.partiql.scribe.frontend.redshift
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.partiql.scribe.frontend.redshift.internal.RedshiftSyntaxException
+import org.partiql.scribe.utils.SessionProvider
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RedshiftTranspilerTest {
+    private val session = SessionProvider().getSession()
+
     @Test
     fun tablesListsTheTablesAQueryReads() {
         val sql =
@@ -37,5 +41,40 @@ class RedshiftTranspilerTest {
         val ex = assertThrows<RedshiftSyntaxException> { RedshiftTranspiler().tables("SELECT a FROM t WHERE") }
         assertEquals(1, ex.line)
         assertEquals(22, ex.column)
+    }
+
+    @Test
+    fun quotedIdentifiersFoldToLowerCaseByDefault() {
+        val result = RedshiftTranspiler().transpile("SELECT \"C\" FROM T", session)
+        assertEquals(RedshiftTranspileResult.Status.VALID, result.status, result.toString())
+    }
+
+    @Test
+    fun quotedIdentifiersAreCaseSensitiveWhenEnabled() {
+        val transpiler = RedshiftTranspiler(caseSensitiveIdentifiers = true)
+        val exact = transpiler.transpile("SELECT \"c\" FROM \"T\"", session)
+        assertEquals(RedshiftTranspileResult.Status.VALID, exact.status, exact.toString())
+        val wrongCase = transpiler.transpile("SELECT \"C\" FROM \"T\"", session)
+        assertEquals(RedshiftTranspileResult.Status.INVALID_INPUT, wrongCase.status, wrongCase.toString())
+    }
+
+    @Test
+    fun unquotedIdentifiersMatchExactlyWhenCaseSensitive() {
+        val transpiler = RedshiftTranspiler(caseSensitiveIdentifiers = true)
+        val result = transpiler.transpile("SELECT c FROM (SELECT 2 AS \"C\", 1 AS \"c\") AS t", session)
+        assertEquals(RedshiftTranspileResult.Status.VALID, result.status, result.toString())
+        assertTrue(result.partiql!!.startsWith("SELECT \"t\"['c'] AS \"c\""), result.toString())
+        val star = transpiler.transpile("SELECT * FROM (SELECT 2 AS \"C\", 1 AS \"c\") AS t", session)
+        assertTrue(star.partiql!!.startsWith("SELECT \"t\"['C'] AS \"C\", \"t\"['c'] AS \"c\""), star.toString())
+    }
+
+    @Test
+    fun unsupportedConstructHasLocation() {
+        val result = RedshiftTranspiler().transpile("SELECT b\nFROM T\nNATURAL JOIN SIMPLE_T", session)
+        assertEquals(RedshiftTranspileResult.Status.UNSUPPORTED, result.status)
+        val problem = result.problems.single()
+        assertEquals(3, problem.line)
+        assertEquals(1, problem.column)
+        assertTrue(problem.message.contains("NATURAL JOIN"))
     }
 }
