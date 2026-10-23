@@ -1,10 +1,10 @@
--- --#[review-cte-column-00] TODO(redshift)
+--#[review-cte-column-00]
 SELECT CHAR_LENGTH(CAST("x"['n'] AS STRING)) AS "l" FROM (SELECT "t"['b'] * 2 AS "n" FROM "default"."T" AS "t") AS "x";
 
--- --#[review-cte-column-01] TODO(redshift)
+--#[review-cte-column-01]
 SELECT SUBSTRING(CAST("s"['d'] AS STRING) FROM 1 FOR 7) AS "ym" FROM (SELECT CAST("t"['timestamp_1'] AS DATE) AS "d" FROM "default"."T" AS "t") AS "s";
 
--- --#[review-cte-column-02] TODO(redshift)
+--#[review-cte-column-02]
 SELECT CAST("s"['y'] AS STRING) || '-Q' AS "l" FROM (SELECT EXTRACT(YEAR FROM "t"['timestamp_1']) AS "y" FROM "default"."T" AS "t") AS "s";
 
 -- --#[review-array-subscript-00] TODO(redshift)

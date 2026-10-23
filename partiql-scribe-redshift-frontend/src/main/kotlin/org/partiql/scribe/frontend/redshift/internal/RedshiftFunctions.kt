@@ -57,8 +57,9 @@ internal class Operand private constructor(
  *
  * A function that is not in [rules] is unsupported. The translator does not pass unknown functions through by name,
  * because a function with the same name can have different semantics in the two languages. The rules of each function
- * category are in their own class; this version has [RedshiftDatetimeFunctions] and the system information functions,
- * which have no translation, and the other categories follow.
+ * category are in their own class: [RedshiftStringFunctions], [RedshiftConditionalFunctions], [RedshiftMathFunctions],
+ * [RedshiftDatetimeFunctions], and the system information functions, which have no translation; the aggregate and
+ * SUPER functions follow.
  */
 internal class RedshiftFunctions(
     private val notes: MutableList<RedshiftProblem>,
@@ -73,8 +74,11 @@ internal class RedshiftFunctions(
     }
 
     internal val datetime = RedshiftDatetimeFunctions(this)
+    internal val strings = RedshiftStringFunctions(this)
+    internal val conditional = RedshiftConditionalFunctions(this)
+    internal val math = RedshiftMathFunctions(this)
 
-    private val rules: Map<String, Rule> = datetime.rules + systemFunctions()
+    private val rules: Map<String, Rule> = datetime.rules + strings.rules + conditional.rules + math.rules + systemFunctions()
 
     /**
      * The calls of conditional functions (NVL, COALESCE, DECODE, ...) whose translation removed the padding of CHAR(n)
@@ -85,35 +89,35 @@ internal class RedshiftFunctions(
     internal val charBranches: MutableSet<ParserRuleContext> = HashSet()
 
     /**
-     * `POSITION(sub IN str)`; the string functions follow.
+     * `POSITION(sub IN str)`; see [RedshiftStringFunctions.position].
      */
     fun position(
         name: Token,
         sub: Operand,
         str: Operand,
-    ): Expr = throw UnsupportedConstructException.at(name, "function `POSITION`")
+    ): Expr = strings.position(name, sub, str)
 
     /**
      * `SUBSTRING(value FROM start [FOR length])` and `SUBSTRING(value FOR length)`; [start] is null for the second form.
-     * The string functions follow.
+     * See [RedshiftStringFunctions.substring].
      */
     fun substring(
         name: Token,
         value: Operand,
         start: Operand?,
         length: Operand?,
-    ): Expr = throw UnsupportedConstructException.at(name, "function `SUBSTRING`")
+    ): Expr = strings.substring(name, value, start, length)
 
     /**
      * `TRIM([BOTH | LEADING | TRAILING] [chars] FROM value)`; [spec] is the BOTH, LEADING, or TRAILING token, if any.
-     * The string functions follow.
+     * See [RedshiftStringFunctions.trim].
      */
     fun trim(
         name: Token,
         spec: Token?,
         chars: Operand?,
         value: Operand,
-    ): Expr = throw UnsupportedConstructException.at(name, "function `TRIM`")
+    ): Expr = strings.trim(name, spec, chars, value)
 
     private val nonMissing: MutableSet<Expr> = Collections.newSetFromMap(IdentityHashMap())
 
