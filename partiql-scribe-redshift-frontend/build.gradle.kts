@@ -102,3 +102,8 @@ kotlin {
         freeCompilerArgs.add("-jvm-default=enable")
     }
 }
+
+// Prints the runtime classpath of the module, for tools that run the front end outside Gradle.
+tasks.register("printRuntimeClasspath") {
+    doLast { println((configurations.runtimeClasspath.get().files + tasks.jar.get().archiveFile.get().asFile).joinToString(":")) }
+}
