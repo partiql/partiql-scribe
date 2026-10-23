@@ -37,7 +37,7 @@ internal class RedshiftWindows(private val builder: RedshiftAstBuilder) {
         }
 
     private fun call(ctx: P.AtomFunctionCallContext): Expr {
-        val name = RedshiftAstBuilder.foldAscii(ctx.name.text)
+        val name = foldAscii(ctx.name.text)
         val treatment = ctx.nullTreatment()
         treatment?.IGNORE()?.let { throw UnsupportedConstructException.at(it.symbol, "IGNORE NULLS") }
         val over = ctx.overClause() ?: throw InvalidQueryException.at(treatment!!, "${treatment.text.uppercase()} without OVER")

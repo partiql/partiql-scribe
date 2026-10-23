@@ -84,8 +84,8 @@ internal class TableReferences(private val caseSensitiveIdentifiers: Boolean) {
         when (ctx) {
             is P.IdentifierQuotedContext -> {
                 val text = ctx.text.removePrefix("\"").removeSuffix("\"").replace("\"\"", "\"")
-                if (caseSensitiveIdentifiers) text else RedshiftAstBuilder.foldAscii(text)
+                if (caseSensitiveIdentifiers) text else foldAscii(text)
             }
-            else -> RedshiftAstBuilder.foldAscii(ctx.text)
+            else -> foldAscii(ctx.text)
         }
 }

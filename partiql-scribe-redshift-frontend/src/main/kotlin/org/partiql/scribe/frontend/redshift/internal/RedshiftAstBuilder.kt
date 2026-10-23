@@ -1652,12 +1652,6 @@ internal class RedshiftAstBuilder(
     internal fun unexpected(ctx: ParserRuleContext): Nothing = throw UnsupportedConstructException.at(ctx, "`${ctx.text}`")
 
     internal companion object {
-        /** Folds the ASCII letters to lower case, as Redshift folds identifiers. */
-        fun foldAscii(text: String): String =
-            buildString(text.length) {
-                for (c in text) append(if (c in 'A'..'Z') c + ('a' - 'A') else c)
-            }
-
         /** Redshift aggregate functions: an item with one of them is not a GROUP BY key. */
         val AGGREGATES =
             setOf(

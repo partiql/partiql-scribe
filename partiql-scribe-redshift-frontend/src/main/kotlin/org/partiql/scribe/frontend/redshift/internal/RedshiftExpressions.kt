@@ -266,8 +266,6 @@ internal class RedshiftExpressions(
         return Identifier.Simple.delimited(text)
     }
 
-    private fun foldAscii(text: String): String = text.map { if (it in 'A'..'Z') it + ('a' - 'A') else it }.joinToString("")
-
     /**
      * An array subscript `x[n]`, 0-based in both languages. Redshift documents `[]` for array indexes only, so a
      * character string key is unsupported.
