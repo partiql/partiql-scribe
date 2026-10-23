@@ -34,7 +34,7 @@ SELECT ROW_NUMBER() OVER (PARTITION BY "t"."d"."e" ORDER BY "t"['b'] ASC NULLS L
 --#[partition-by-columns]
 SELECT "t"['b'] AS "b", LEAD("t"['b'], 1, NULL) RESPECT NULLS OVER (PARTITION BY "t"."c", "t"."z" ORDER BY "t"['timestamp_1'] ASC NULLS LAST, "t"['b'] DESC NULLS FIRST) AS "nxt" FROM "default"."T" AS "t";
 
--- --#[partition-by-expression] TODO(redshift)
+--#[partition-by-expression]
 [UNSUPPORTED{message="PARTITION BY expression"}];
 
 --#[order-by-nulls]

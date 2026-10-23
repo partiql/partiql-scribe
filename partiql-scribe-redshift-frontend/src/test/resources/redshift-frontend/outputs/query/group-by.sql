@@ -13,13 +13,13 @@ SELECT "t"['c'] AS "c", "t"['z'] AS "z", count(1) AS "n" FROM "default"."T" AS "
 --#[group-key-super-path]
 SELECT "t"['d']['e'] AS "e", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['d']['e'] AS "$k0" ORDER BY "$k0" ASC NULLS LAST;
 
--- --#[group-key-expression-order-by] TODO(redshift)
+--#[group-key-expression-order-by]
 SELECT "upper"("t"['c']) AS "v", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "upper"("t"['c']) AS "$k0" ORDER BY "$k0" ASC NULLS LAST;
 
--- --#[group-key-expression-having] TODO(redshift)
+--#[group-key-expression-having]
 SELECT "upper"("t"['c']) AS "v", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "upper"("t"['c']) AS "$k0" HAVING "$k0" <> 'X';
 
--- --#[group-key-qualification] TODO(redshift)
+--#[group-key-qualification]
 SELECT "upper"("t"['c']) AS "u", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "upper"("t"['c']);
 
 --#[group-key-subquery]
@@ -34,7 +34,7 @@ SELECT "t"['c'] AS "c" FROM "default"."T" AS "t" GROUP BY "t"['c'] AS "$k0" ORDE
 --#[group-by-position]
 SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['c'];
 
--- --#[group-by-position-expression] TODO(redshift)
+--#[group-by-position-expression]
 SELECT "upper"("t"['c']) AS "u", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "upper"("t"['c']);
 
 --#[group-by-position-out-of-range]
@@ -55,7 +55,7 @@ SELECT "t"['c'] AS "k", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['
 --#[group-by-alias-of-the-same-column]
 SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['c'];
 
--- --#[group-by-alias-and-column] TODO(redshift)
+--#[group-by-alias-and-column]
 [UNSUPPORTED{message="`c` in GROUP BY, which is both a column and a select-list alias"}];
 
 -- --#[having-alias] TODO(redshift)

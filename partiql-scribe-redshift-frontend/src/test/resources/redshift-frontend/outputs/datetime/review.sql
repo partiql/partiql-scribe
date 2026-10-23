@@ -37,7 +37,7 @@ SELECT "t"['col_timestamp'] + "t"['col_d2s'] AS "v" FROM "default"."T_INTERVALS"
 --#[review-timetz-case-00]
 [UNSUPPORTED{message="comparison with a TIMETZ literal whose offset is not UTC"}];
 
--- --#[review-timetz-nullif-00] TODO(redshift)
+--#[review-timetz-nullif-00]
 [UNSUPPORTED{message="comparison with a TIMETZ literal whose offset is not UTC"}];
 
 --#[review-order-by-00]
