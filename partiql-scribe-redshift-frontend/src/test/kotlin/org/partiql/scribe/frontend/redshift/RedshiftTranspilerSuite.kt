@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.partiql.scribe.frontend.redshift.internal.OperandTypes
+import org.partiql.scribe.frontend.redshift.internal.RedshiftSyntaxException
 import org.partiql.scribe.utils.ScribeTestProvider
 import org.partiql.scribe.utils.SessionProvider
 import org.partiql.scribe.utils.SqlEqualsNaive
@@ -15,17 +16,44 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Runs each Redshift input in `redshift-frontend/inputs` and compares the result with the test of the same name in
- * `redshift-frontend/outputs`.
+ * The conformance suite of the Redshift frontend. Each case is a Redshift input in `redshift-frontend/inputs` and the
+ * expected result of the same name in `redshift-frontend/outputs`.
  *
  * An expected output is either PartiQL text, or a status in brackets for a failed translation, optionally with a
  * substring of the first problem message: `[UNSUPPORTED{message="QUALIFY"}];`
+ *
+ * A case whose marker is `-- --#[name] TODO(redshift)` waits for the change that translates its construct; that change
+ * enables it. Whatever its marker, every input is parsed by [grammar], so the grammar covers the whole suite.
  */
 class RedshiftTranspilerSuite {
     private val inputs = load("/redshift-frontend/inputs")
     private val outputs = load("/redshift-frontend/outputs")
     private val session = SessionProvider().getSession()
     private val transpiler = RedshiftTranspiler()
+
+    /** Every input parses, except an input whose expected output is the syntax error. */
+    @TestFactory
+    fun grammar(): List<DynamicNode> =
+        inputs.iterator().asSequence()
+            .groupBy { it.key.group }
+            .toSortedMap()
+            .map { (group, tests) ->
+                dynamicContainer(
+                    group,
+                    tests.sortedBy { it.key.name }.map { input ->
+                        dynamicTest("$group/${input.key.name}") {
+                            val expectedFailure = outputs[input.key]?.let { FAILURE.matchEntire(body(it.statement)) }
+                            try {
+                                transpiler.tables(input.statement)
+                            } catch (ex: RedshiftSyntaxException) {
+                                val (status, message) = expectedFailure?.destructured ?: fail("Input: ${input.statement}\n$ex")
+                                assertEquals(RedshiftTranspileResult.Status.INVALID_INPUT.name, status, "Input: ${input.statement}\n$ex")
+                                assertTrue(ex.message.contains(message), "Expected message to contain '$message'; got: $ex")
+                            }
+                        }
+                    },
+                )
+            }
 
     @TestFactory
     fun suite(): List<DynamicNode> =
