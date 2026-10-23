@@ -1,71 +1,71 @@
--- --#[offset-without-limit] TODO(redshift)
+--#[offset-without-limit]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" ORDER BY "t"['b'] ASC NULLS LAST OFFSET 5;
 
--- --#[limit-all] TODO(redshift)
+--#[limit-all]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" ORDER BY "t"['b'] ASC NULLS LAST;
 
--- --#[offset-before-limit] TODO(redshift)
+--#[offset-before-limit]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" ORDER BY "t"['b'] ASC NULLS LAST LIMIT 10 OFFSET 5;
 
--- --#[limit-zero] TODO(redshift)
+--#[limit-zero]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" LIMIT 0;
 
--- --#[limit-column] TODO(redshift)
+--#[limit-column]
 [INVALID_INPUT{message="LIMIT must not refer to a column"}];
 
--- --#[limit-negative] TODO(redshift)
+--#[limit-negative]
 [INVALID_INPUT{message="LIMIT must not be negative"}];
 
--- --#[limit-expression] TODO(redshift)
+--#[limit-expression]
 [UNSUPPORTED{message="LIMIT expression"}];
 
--- --#[limit-null] TODO(redshift)
+--#[limit-null]
 [UNSUPPORTED{message="LIMIT expression"}];
 
--- --#[limit-too-large] TODO(redshift)
+--#[limit-too-large]
 [INVALID_INPUT{message="LIMIT 2147483648 is greater than 2147483647"}];
 
--- --#[offset-column] TODO(redshift)
+--#[offset-column]
 [INVALID_INPUT{message="OFFSET must not refer to a column"}];
 
--- --#[distinct-limit] TODO(redshift)
+--#[distinct-limit]
 SELECT "$d"['b'] AS "b" FROM (SELECT DISTINCT "t"['b'] AS "b" FROM "default"."T" AS "t") AS "$d" ORDER BY "$d"['b'] ASC NULLS LAST LIMIT 2;
 
--- --#[distinct-top] TODO(redshift)
+--#[distinct-top]
 SELECT "$d"['c'] AS "c" FROM (SELECT DISTINCT "t"['c'] AS "c" FROM "default"."T" AS "t") AS "$d" LIMIT 5;
 
--- --#[distinct-order-by-position-offset] TODO(redshift)
+--#[distinct-order-by-position-offset]
 SELECT "$d"['b'] AS "b", "$d"['c'] AS "c" FROM (SELECT DISTINCT "t"['b'] AS "b", "t"['c'] AS "c" FROM "default"."T" AS "t") AS "$d" ORDER BY "$d"['c'] DESC NULLS FIRST LIMIT 10 OFFSET 5;
 
--- --#[distinct-order-by-name] TODO(redshift)
+--#[distinct-order-by-name]
 SELECT "$d"['x'] AS "x" FROM (SELECT DISTINCT "t"['b'] AS "x" FROM "default"."T" AS "t") AS "$d" ORDER BY "$d"['x'] ASC NULLS LAST LIMIT 3;
 
--- --#[distinct-order-by-not-selected] TODO(redshift)
+--#[distinct-order-by-not-selected]
 [INVALID_INPUT{message="for SELECT DISTINCT, ORDER BY expressions must appear in the select list"}];
 
--- --#[distinct-star-limit] TODO(redshift)
+--#[distinct-star-limit]
 SELECT "$d"['a'] AS "a", "$d"['b'] AS "b", "$d"['c'] AS "c" FROM (SELECT DISTINCT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t") AS "$d" LIMIT 5;
 
 -- --#[distinct-repeated-names-limit] TODO(redshift)
 SELECT "$d"['$c1'] AS "b", "$d"['$c2'] AS "b" FROM (SELECT DISTINCT "t1"['b'] AS "$c1", "t2"['b'] AS "$c2" FROM "default"."T" AS "t1" INNER JOIN "default"."SIMPLE_T" AS "t2" ON "t1"['c'] = "t2"['c']) AS "$d" ORDER BY "$d"['$c1'] ASC NULLS LAST LIMIT 3;
 
--- --#[distinct-without-limit] TODO(redshift)
+--#[distinct-without-limit]
 SELECT DISTINCT "t"['b'] AS "b" FROM "default"."T" AS "t" ORDER BY "t"['b'] ASC NULLS LAST;
 
--- --#[top] TODO(redshift)
+--#[top]
 SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY "simple_t"['b'] ASC NULLS LAST LIMIT 2;
 
--- --#[select-without-from] TODO(redshift)
+--#[select-without-from]
 SELECT 1 AS "v" FROM <<1>> AS "$no_from";
 
 -- --#[select-without-from-subquery] TODO(redshift)
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] = (SELECT 1 AS "one" FROM <<1>> AS "$no_from");
 
--- --#[select-star-without-from] TODO(redshift)
+--#[select-star-without-from]
 [INVALID_INPUT{message="SELECT * with no tables specified is not valid"}];
 
--- --#[trailing-semicolons] TODO(redshift)
+--#[trailing-semicolons]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t";
 
--- --#[multiple-statements] TODO(redshift)
+--#[multiple-statements]
 [UNSUPPORTED{message="multiple statements"}];

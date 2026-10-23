@@ -115,17 +115,17 @@ SELECT CAST(TIMESTAMP '2008-06-17 09:44:54' AS TIMESTAMP (6) WITH TIME ZONE) AS 
 -- --#[timezone-02] TODO(redshift)
 [UNSUPPORTED{message="TIMEZONE('PST', ...)"}];
 
--- --#[months-between-00] TODO(redshift)
+--#[months-between-00]
 [UNSUPPORTED{message="function `MONTHS_BETWEEN`"}];
 
--- --#[to-timestamp-00] TODO(redshift)
+--#[to-timestamp-00]
 [UNSUPPORTED{message="function `TO_TIMESTAMP`"}];
 
--- --#[to-char-00] TODO(redshift)
+--#[to-char-00]
 [UNSUPPORTED{message="function `TO_CHAR`"}];
 
--- --#[to-date-00] TODO(redshift)
+--#[to-date-00]
 [UNSUPPORTED{message="function `TO_DATE`"}];
 
--- --#[interval-cmp-00] TODO(redshift)
+--#[interval-cmp-00]
 [UNSUPPORTED{message="function `INTERVAL_CMP`"}];

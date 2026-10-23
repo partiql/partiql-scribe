@@ -67,5 +67,5 @@ SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE "t"['timestamp_1'] > DATE
 -- --#[dateadd-time-day-00] TODO(redshift)
 [UNSUPPORTED{message="DATEADD datepart `day` of a TIME value"}];
 
--- --#[dateadd-synonym-00] TODO(redshift)
+--#[dateadd-synonym-00]
 [UNSUPPORTED{message="function `DATE_ADD`"}];

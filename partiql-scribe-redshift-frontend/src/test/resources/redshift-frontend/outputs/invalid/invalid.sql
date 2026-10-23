@@ -7,14 +7,14 @@
 --#[syntax-02]
 [INVALID_INPUT{message="extraneous input '@'"}];
 
--- --#[unknown-table] TODO(redshift)
+--#[unknown-table]
 [INVALID_INPUT{message="VAR_REF_NOT_FOUND"}];
 
--- --#[unknown-column] TODO(redshift)
+--#[unknown-column]
 [INVALID_INPUT{message="column `nope` does not exist"}];
 
--- --#[top-and-limit] TODO(redshift)
+--#[top-and-limit]
 [INVALID_INPUT{message="TOP and LIMIT can't be used in the same query"}];
 
--- --#[qualify-without-alias] TODO(redshift)
+--#[qualify-without-alias]
 [INVALID_INPUT{message="the FROM item before QUALIFY needs an alias"}];

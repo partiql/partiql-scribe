@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import org.partiql.scribe.frontend.redshift.internal.OperandTypes
 import org.partiql.scribe.frontend.redshift.internal.RedshiftSyntaxException
 import org.partiql.scribe.utils.ScribeTestProvider
 import org.partiql.scribe.utils.SessionProvider
@@ -86,6 +87,24 @@ class RedshiftTranspilerSuite {
                 assertTrue(repeated.isEmpty(), "Repeated test names in $dir/${group.name}: $repeated")
             }
         }
+    }
+
+    /**
+     * The probe passes that the fixtures need. The typed rules of the Redshift catalog resolve the operand types in one
+     * pass; see [org.partiql.scribe.frontend.redshift.internal.OperandTypes]. The histogram is printed for diagnostics.
+     */
+    @Test
+    fun probePasses() {
+        val passes = sortedMapOf<Int, Int>()
+        var most: Pair<Int, String> = 0 to ""
+        for ((key, input) in inputs.iterator().asSequence().map { it.key to it.statement }) {
+            transpiler.transpile(input, session)
+            val n = transpiler.lastProbePasses
+            passes.merge(n, 1, Int::plus)
+            if (n > most.first) most = n to "${key.group}/${key.name}"
+        }
+        println("Probe passes: $passes; most: ${most.second} (${most.first})")
+        assertTrue(most.first <= OperandTypes.MAX_PASSES, "A fixture needs more than ${OperandTypes.MAX_PASSES} probe passes: $most")
     }
 
     private fun check(

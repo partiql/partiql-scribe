@@ -25,8 +25,8 @@ SELECT DATE_ADD(DAY, -1, CAST("utcnow"() AS DATE)) AS "v" FROM "default"."T" AS 
 -- --#[localtime-00] TODO(redshift)
 [UNSUPPORTED{message="LOCALTIME (Redshift leader node-only function)"}];
 
--- --#[now-00] TODO(redshift)
+--#[now-00]
 [UNSUPPORTED{message="function `NOW`"}];
 
--- --#[timeofday-00] TODO(redshift)
+--#[timeofday-00]
 [UNSUPPORTED{message="function `TIMEOFDAY`"}];

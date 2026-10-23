@@ -61,7 +61,7 @@ SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE NOT(("t"['b'] = 1) AND ("
 -- --#[row-in-02] TODO(redshift)
 [INVALID_INPUT{message="row value with 3 values in IN"}];
 
--- --#[row-in-03] TODO(redshift)
+--#[row-in-03]
 [UNSUPPORTED{message="row value IN subquery"}];
 
 -- --#[between-00] TODO(redshift)
@@ -112,17 +112,17 @@ SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['a'] IS NULL OR "t"['
 -- --#[is-distinct-00] TODO(redshift)
 [UNSUPPORTED{message="IS DISTINCT FROM (not supported by Redshift)"}];
 
--- --#[condition-00] TODO(redshift)
+--#[condition-00]
 [UNSUPPORTED{message="non-boolean condition"}];
 
--- --#[condition-01] TODO(redshift)
+--#[condition-01]
 [UNSUPPORTED{message="non-boolean condition"}];
 
--- --#[condition-02] TODO(redshift)
+--#[condition-02]
 [UNSUPPORTED{message="non-boolean condition"}];
 
--- --#[condition-03] TODO(redshift)
+--#[condition-03]
 [UNSUPPORTED{message="non-boolean condition"}];
 
--- --#[condition-04] TODO(redshift)
+--#[condition-04]
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE (NULL OR "t"['x']) OR "t"['a'];
