@@ -1,13 +1,13 @@
--- --#[review-set-operation-in-00] TODO(redshift)
+--#[review-set-operation-in-00]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] IN (SELECT "$s"['b'] AS "b" FROM ((SELECT "s"['b'] AS "b" FROM "default"."SIMPLE_T" AS "s") UNION DISTINCT (SELECT "u"['b'] AS "b" FROM "default"."T" AS "u")) AS "$s");
 
--- --#[review-set-operation-in-01] TODO(redshift)
+--#[review-set-operation-in-01]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] NOT IN (SELECT "$s"['b'] AS "b" FROM ((SELECT DISTINCT "s"['b'] AS "b" FROM "default"."SIMPLE_T" AS "s") EXCEPT DISTINCT (SELECT "u"['b'] AS "b" FROM "default"."T" AS "u")) AS "$s");
 
 -- --#[review-set-operation-scalar-00] TODO(redshift)
 SELECT (SELECT "$s"['m'] AS "m" FROM ((SELECT max("s"['b']) AS "m" FROM "default"."SIMPLE_T" AS "s") UNION DISTINCT (SELECT max("u"['b']) AS "m" FROM "default"."SIMPLE_T" AS "u")) AS "$s") AS "v" FROM "default"."T" AS "t";
 
--- --#[review-set-operation-any-00] TODO(redshift)
+--#[review-set-operation-any-00]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] IN (SELECT "$s"['b'] AS "b" FROM ((SELECT "s"['b'] AS "b" FROM "default"."SIMPLE_T" AS "s") INTERSECT DISTINCT (SELECT "u"['b'] AS "b" FROM "default"."T" AS "u")) AS "$s");
 
 --#[review-set-operation-order-by-00]

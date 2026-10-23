@@ -1,7 +1,7 @@
--- --#[time-cast-00] TODO(redshift)
+--#[time-cast-00]
 [UNSUPPORTED{message="CAST of a character string to TIME"}];
 
--- --#[timestamp-cast-00] TODO(redshift)
+--#[timestamp-cast-00]
 [UNSUPPORTED{message="CAST of a character string to TIMESTAMPTZ"}];
 
 --#[time-literal-00]
@@ -10,7 +10,7 @@ SELECT TIME '12:30:45' AS "v1", TIME '12:30:45.123456' AS "v2", TIME WITH TIME Z
 --#[timestamp-literal-00]
 SELECT TIMESTAMP WITH TIME ZONE '2026-10-19 04:30:45+00:00' AS "v1", TIMESTAMP WITH TIME ZONE '2026-10-19 19:30:45+00:00' AS "v2" FROM "default"."T" AS "t";
 
--- --#[time-compare-00] TODO(redshift)
+--#[time-compare-00]
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE TIME '12:30:45' > TIME '10:15:30';
 
 --#[extract-00]

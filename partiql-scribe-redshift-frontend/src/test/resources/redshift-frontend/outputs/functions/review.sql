@@ -10,7 +10,7 @@ SELECT CAST("s"['y'] AS STRING) || '-Q' AS "l" FROM (SELECT EXTRACT(YEAR FROM "t
 -- --#[review-array-subscript-00] TODO(redshift)
 SELECT [COALESCE("t"['col_list'][5]), COALESCE("t"['col_list'][0])] AS "a" FROM "default"."T_ALL_TYPES" AS "t";
 
--- --#[review-array-subscript-01] TODO(redshift)
+--#[review-array-subscript-01]
 SELECT COALESCE("t"['col_list'][5] + 1) AS "a" FROM "default"."T_ALL_TYPES" AS "t";
 
 -- --#[review-real-aggregate-00] TODO(redshift)

@@ -46,7 +46,7 @@ SELECT DATE_ADD(MONTH, 18, TIMESTAMP '2008-02-28 00:00:00') AS "v" FROM "default
 --#[dateadd-string-01]
 [UNSUPPORTED{message="special datetime value 'today'"}];
 
--- --#[dateadd-getdate-00] TODO(redshift)
+--#[dateadd-getdate-00]
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE "t"['timestamp_1'] > DATE_ADD(DAY, -30, DATE_ADD(SECOND, DATE_DIFF(SECOND, CAST(TIMESTAMP '0001-01-01 00:00:00' AS TIMESTAMP WITH TIME ZONE), "utcnow"()), TIMESTAMP '0001-01-01 00:00:00'));
 
 --#[dateadd-quarter-00]
@@ -58,7 +58,7 @@ SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE "t"['timestamp_1'] > DATE
 --#[dateadd-dow-00]
 [UNSUPPORTED{message="datepart `dow` in DATEADD"}];
 
--- --#[dateadd-timestamptz-00] TODO(redshift)
+--#[dateadd-timestamptz-00]
 [UNSUPPORTED{message="DATEADD with a TIMESTAMPTZ argument"}];
 
 --#[dateadd-interval-00]

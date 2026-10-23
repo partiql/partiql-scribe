@@ -19,7 +19,7 @@ SELECT "q""r"['b'] AS "b" FROM "default"."T" AS "q""r";
 --#[niladic-user]
 [UNSUPPORTED{message="`USER`"}];
 
--- --#[niladic-current-user] TODO(redshift)
+--#[niladic-current-user]
 [UNSUPPORTED{message="`CURRENT_USER`"}];
 
 --#[reserved-word-quoted]
