@@ -22,5 +22,5 @@ SELECT "t"['c'] || "t"['z'] AS "v" FROM "default"."T" AS "t";
 -- --#[arith-00] TODO(redshift)
 SELECT ("t"['b'] * 2) + 1 AS "v1", -1 AS "v2", "t"['b'] % 3 AS "v3", ("t"['b'] + 1) * 2 AS "v4" FROM "default"."T" AS "t";
 
--- --#[literal-00] TODO(redshift)
+--#[literal-00]
 SELECT DATE '2026-10-19' AS "d", TIMESTAMP '2026-10-19 12:30:00' AS "ts", 1.5 AS "n", true AS "t", NULL AS "z" FROM "default"."T" AS "t";
