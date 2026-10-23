@@ -1,4 +1,4 @@
--- --#[default-name-aggregates] TODO(redshift)
+--#[default-name-aggregates]
 SELECT count(1) AS "count", sum("t"['b']) AS "sum", max("t"['c']) AS "max" FROM "default"."T" AS "t";
 
 --#[default-name-cast-of-aggregate]

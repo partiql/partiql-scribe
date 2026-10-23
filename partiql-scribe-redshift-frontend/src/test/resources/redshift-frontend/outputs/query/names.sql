@@ -4,7 +4,7 @@ SELECT "t"['b'] + 1 AS "q", ("t"['b'] + 1) * 2 AS "y" FROM "default"."T" AS "t";
 --#[lateral-alias-column-wins]
 SELECT "t"['b'] + 1 AS "c", "t"['c'] AS "y" FROM "default"."T" AS "t";
 
--- --#[lateral-alias-aggregate] TODO(redshift)
+--#[lateral-alias-aggregate]
 SELECT sum("t"['b']) AS "s", sum("t"['b']) * CAST(2 AS BIGINT) AS "d" FROM "default"."T" AS "t";
 
 --#[where-alias]
@@ -49,7 +49,7 @@ SELECT "b"['c'] AS "c" FROM "default"."T" AS "b" WHERE "b"['b'] IN (SELECT "simp
 --#[column-named-like-earlier-from-item]
 SELECT "q"['v'] AS "v" FROM "default"."T" AS "b" INNER JOIN (SELECT "simple_t"['b'] AS "v" FROM "default"."SIMPLE_T" AS "simple_t") AS "q" ON true;
 
--- --#[correlated-reference-repeated-alias] TODO(redshift)
+--#[correlated-reference-repeated-alias]
 SELECT "t$1"['b'] AS "b", (SELECT max("t"['b']) AS "max" FROM "default"."SIMPLE_T" AS "t" WHERE "t"['c'] = "t$1"['z']) AS "m" FROM "default"."T" AS "t$1";
 
 --#[unknown-qualified-column]

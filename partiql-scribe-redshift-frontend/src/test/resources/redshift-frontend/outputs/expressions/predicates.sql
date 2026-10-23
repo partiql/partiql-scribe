@@ -19,7 +19,7 @@ SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS
 --#[in-list-06]
 SELECT "t_all_types"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t_all_types" WHERE (CAST("t_all_types"['col_float32'] AS DOUBLE PRECISION) = CAST(0.1 AS DOUBLE PRECISION)) OR ("t_all_types"['col_float32'] = "t_all_types"['col_float32']);
 
--- --#[in-list-07] TODO(redshift)
+--#[in-list-07]
 [UNSUPPORTED{message="subquery as a value of an IN list"}];
 
 --#[in-query-00]
@@ -91,7 +91,7 @@ SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE EXISTS(SELECT 1 AS "_1" F
 --#[exists-01]
 SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" WHERE NOT (EXISTS(SELECT 1 AS "_1" FROM "default"."T" AS "s" WHERE "s"['b'] = "t"['b']));
 
--- --#[exists-02] TODO(redshift)
+--#[exists-02]
 SELECT EXISTS(SELECT max("s"['b']) AS "max" FROM "default"."T" AS "s" WHERE "s"['b'] > 100) AS "e" FROM "default"."T" AS "t";
 
 --#[is-true-00]
