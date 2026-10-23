@@ -136,6 +136,22 @@ The most useful interfaces to implement for an SQL target are
   * `RexConverter` — Ruleset for `Rex` plan to AST `Expr` conversion
 * `AstToSql` — Ruleset for AST to SQL conversion
 
+=== Redshift to PartiQL (experimental)
+
+The `partiql-scribe-redshift-frontend` module translates in the other direction: from Amazon Redshift to PartiQL.
+
+[source,kotlin]
+----
+val result = RedshiftTranspiler().transpile("SELECT TOP 5 c AS v FROM t", session)
+result.status   // VALID
+result.partiql  // SELECT "t"['c'] AS "v" FROM "default"."T" AS "t" LIMIT 5
+----
+
+The module parses the Redshift text with its own grammar and builds a PartiQL AST. The PartiQL planner then resolves
+the AST against the `Session`, and the PartiQL target prints the plan. A construct without a translation rule gives
+an `UNSUPPORTED` result with the construct and its location. See
+xref:partiql-scribe-redshift-frontend/README.md[the module README] for the supported subset and the test sets.
+
 == Development
 
 Let's work through an example of developing our own SQL target using SQLite as the target.
