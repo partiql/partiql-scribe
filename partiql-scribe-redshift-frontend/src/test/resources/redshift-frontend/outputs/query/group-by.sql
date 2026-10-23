@@ -4,7 +4,7 @@ SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['
 --#[group-key-order-by-desc]
 SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['c'] AS "$k0" ORDER BY "$k0" DESC NULLS FIRST, count(1) ASC NULLS LAST;
 
--- --#[group-key-having] TODO(redshift)
+--#[group-key-having]
 SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['c'] AS "$k0" HAVING "$k0" <> 'x';
 
 --#[group-key-having-and-order-by]
@@ -22,7 +22,7 @@ SELECT "upper"("t"['c']) AS "v", count(1) AS "n" FROM "default"."T" AS "t" GROUP
 -- --#[group-key-qualification] TODO(redshift)
 SELECT "upper"("t"['c']) AS "u", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "upper"("t"['c']);
 
--- --#[group-key-subquery] TODO(redshift)
+--#[group-key-subquery]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] IN (SELECT "t"['b'] AS "b" FROM "default"."SIMPLE_T" AS "t" GROUP BY "t"['b'] AS "$k0" HAVING "$k0" > 1);
 
 --#[group-key-window-partition]
@@ -46,7 +46,7 @@ SELECT "upper"("t"['c']) AS "u", count(1) AS "n" FROM "default"."T" AS "t" GROUP
 --#[order-by-position-aggregate]
 SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['c'] ORDER BY count(1) DESC NULLS FIRST;
 
--- --#[group-by-alias] TODO(redshift)
+--#[group-by-alias]
 SELECT "t"['b'] + 1 AS "q", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['b'] + 1;
 
 --#[group-by-alias-order-by]
@@ -61,7 +61,7 @@ SELECT "t"['c'] AS "c", count(1) AS "n" FROM "default"."T" AS "t" GROUP BY "t"['
 -- --#[having-alias] TODO(redshift)
 SELECT "t"['c'] AS "c", sum("t"['b']) AS "pp" FROM "default"."T" AS "t" GROUP BY "t"['c'] HAVING sum("t"['b']) > CAST(10 AS BIGINT);
 
--- --#[having-without-group-by] TODO(redshift)
+--#[having-without-group-by]
 SELECT count(1) AS "n" FROM "default"."T" AS "t" HAVING count(1) > CAST(1 AS BIGINT);
 
 --#[group-by-all]

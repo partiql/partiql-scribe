@@ -82,10 +82,10 @@ SELECT "$w"['b'] AS "b", "$w"['rn'] AS "rn" FROM (SELECT "t"['b'] AS "b", ROW_NU
 --#[order-by-window-alias-limit]
 SELECT "$w"['b'] AS "b", "$w"['rn'] AS "rn" FROM (SELECT "t"['b'] AS "b", ROW_NUMBER() OVER (ORDER BY "t"['b'] ASC NULLS LAST) AS "rn" FROM "default"."T" AS "t") AS "$w" ORDER BY "$w"['rn'] DESC NULLS FIRST LIMIT 2;
 
--- --#[order-by-window-alias-expression] TODO(redshift)
+--#[order-by-window-alias-expression]
 [UNSUPPORTED{message="ORDER BY expression with the alias `rn` of a window function"}];
 
--- --#[window-in-expression] TODO(redshift)
+--#[window-in-expression]
 SELECT "t"['b'] AS "b", ROW_NUMBER() OVER (ORDER BY "t"['b'] ASC NULLS LAST) - CAST(1 AS BIGINT) AS "r0", CASE WHEN ROW_NUMBER() OVER (PARTITION BY "t"."c" ORDER BY "t"['b'] ASC NULLS LAST) = 1 THEN 'first' ELSE 'other' END AS "f" FROM "default"."T" AS "t";
 
 --#[window-over-grouped-query]
@@ -94,10 +94,10 @@ SELECT "t"['c'] AS "c", count(1) AS "n", RANK() OVER (ORDER BY count(1) DESC NUL
 --#[window-over-group-key]
 SELECT "t"['c'] AS "c", RANK() OVER (ORDER BY "t"['c'] ASC NULLS LAST) AS "r" FROM "default"."T" AS "t" GROUP BY "t"['c'];
 
--- --#[window-lateral-alias] TODO(redshift)
+--#[window-lateral-alias]
 [UNSUPPORTED{message="reference to the alias `rn` of a window function in the select list"}];
 
--- --#[window-in-where] TODO(redshift)
+--#[window-in-where]
 [INVALID_INPUT{message="window function in WHERE"}];
 
 --#[named-window]

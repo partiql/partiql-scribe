@@ -46,22 +46,22 @@ SELECT INTERVAL '25:0' HOUR (9) TO MINUTE AS "v1", INTERVAL '5' DAY (9) AS "v2" 
 --#[interval-unqualified-00]
 SELECT INTERVAL '7' DAY (9) AS "v" FROM "default"."T" AS "t";
 
--- --#[interval-unqualified-01] TODO(redshift)
+--#[interval-unqualified-01]
 SELECT "t"['timestamp_1'] + INTERVAL '7 1:1:1.000000' DAY (9) TO SECOND (6) AS "v" FROM "default"."T" AS "t";
 
--- --#[interval-unqualified-02] TODO(redshift)
+--#[interval-unqualified-02]
 SELECT "t"['timestamp_1'] - INTERVAL '4' MONTH (9) AS "v" FROM "default"."T" AS "t";
 
 --#[interval-unqualified-03]
 SELECT INTERVAL '2' YEAR (9) AS "v", INTERVAL '14' MONTH (9) AS "w" FROM "default"."T" AS "t";
 
--- --#[interval-unqualified-04] TODO(redshift)
+--#[interval-unqualified-04]
 SELECT "t"['timestamp_1'] + INTERVAL '-30' MINUTE (9) AS "v" FROM "default"."T" AS "t";
 
--- --#[interval-unqualified-05] TODO(redshift)
+--#[interval-unqualified-05]
 SELECT CAST("t"['col_date'] AS TIMESTAMP) + INTERVAL '12' HOUR (9) AS "v" FROM "default"."T_ALL_TYPES" AS "t";
 
--- --#[interval-unqualified-06] TODO(redshift)
+--#[interval-unqualified-06]
 SELECT "t"['timestamp_1'] + INTERVAL '1 12' DAY (9) TO HOUR AS "v" FROM "default"."T" AS "t";
 
 --#[interval-unqualified-07]
@@ -70,8 +70,8 @@ SELECT "t"['timestamp_1'] + INTERVAL '1 12' DAY (9) TO HOUR AS "v" FROM "default
 --#[interval-unqualified-08]
 [UNSUPPORTED{message="INTERVAL literal '1 month 2 days'"}];
 
--- --#[interval-type-00] TODO(redshift)
+--#[interval-type-00]
 [UNSUPPORTED{message="data type `interval day to second`"}];
 
--- --#[interval-type-01] TODO(redshift)
+--#[interval-type-01]
 [UNSUPPORTED{message="data type `INTERVAL`"}];

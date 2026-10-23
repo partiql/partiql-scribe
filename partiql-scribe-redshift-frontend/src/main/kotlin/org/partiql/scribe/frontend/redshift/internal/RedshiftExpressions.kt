@@ -26,8 +26,8 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 /**
  * Builds PartiQL expressions, literals, and data types from a Redshift parse tree; see [RedshiftAstBuilder].
  *
- * Datetime constructs are in [RedshiftDatetime]. The rules for comparisons and the other conditions, pattern matching,
- * the operators, and casts and data types follow; this version reports them as unsupported.
+ * The rules for comparisons and the other conditions are in [RedshiftConditions], pattern matching is in
+ * [RedshiftPatterns], the operators are in [RedshiftOperators], and casts and data types are in [RedshiftCasts].
  */
 internal class RedshiftExpressions(
     private val builder: RedshiftAstBuilder,
@@ -35,6 +35,10 @@ internal class RedshiftExpressions(
     private val types: OperandTypes,
 ) {
     private val datetime = RedshiftDatetime(builder, this, types)
+    private val conditions = RedshiftConditions(builder, this, datetime, types)
+    private val patterns = RedshiftPatterns(builder, this, types)
+    private val operators = RedshiftOperators(builder, this, datetime, types)
+    private val casts = RedshiftCasts(builder, this, datetime, types)
 
     /*
      * Boolean expressions and predicates
@@ -103,15 +107,21 @@ internal class RedshiftExpressions(
 
     private fun predicate(ctx: P.PredicateContext): Expr =
         when (ctx) {
+            is P.PredicateQuantifiedContext -> conditions.quantified(ctx)
+            is P.PredicateComparisonContext -> conditions.comparison(ctx)
             is P.PredicateNullContext -> exprNullPredicate(valueExpr(ctx.lhs), ctx.NOT() != null)
+            is P.PredicateTruthContext -> conditions.truth(ctx)
+            is P.PredicateDistinctContext -> conditions.distinct(ctx)
+            is P.PredicateBetweenContext -> conditions.between(ctx)
+            is P.PredicateInQueryContext -> conditions.inQuery(ctx.IN().symbol, ctx.lhs, ctx.query(), ctx.NOT() != null)
+            is P.PredicateInListContext -> conditions.inList(ctx)
             is P.PredicateRowInQueryContext -> unsupported(ctx.IN().symbol, "row value IN subquery")
+            is P.PredicateRowInListContext -> conditions.rowInList(ctx)
+            is P.PredicateLikeContext -> patterns.like(ctx)
+            is P.PredicateSimilarToContext -> patterns.similarTo(ctx)
+            is P.PredicateLikeOperatorContext -> patterns.likeOperator(ctx)
+            is P.PredicatePosixContext -> patterns.posix(ctx)
             is P.PredicateBaseContext -> valueExpr(ctx.valueExpr())
-            // Comparisons, IN, BETWEEN, truth tests, and pattern matching follow.
-            is P.PredicateQuantifiedContext, is P.PredicateComparisonContext, is P.PredicateTruthContext,
-            is P.PredicateDistinctContext, is P.PredicateBetweenContext, is P.PredicateInQueryContext,
-            is P.PredicateInListContext, is P.PredicateRowInListContext, is P.PredicateLikeContext,
-            is P.PredicateSimilarToContext, is P.PredicateLikeOperatorContext, is P.PredicatePosixContext,
-            -> unsupported(ctx.start, "predicate `${ctx.text}`")
             else -> builder.unexpected(ctx)
         }
 
@@ -122,12 +132,15 @@ internal class RedshiftExpressions(
     internal fun valueExpr(ctx: P.ValueExprContext): Expr =
         when (ctx) {
             is P.ValuePrimaryContext -> primaryExpr(ctx.primaryExpr())
+            is P.ValueCastShorthandContext ->
+                casts.cast(ctx.DOUBLE_COLON().symbol, ctx, Operand(ctx.valueExpr(), valueExpr(ctx.valueExpr())), ctx.dataType())
+            is P.ValueSignedContext -> operators.signed(ctx)
+            is P.ValueExponentContext -> operators.exponent(ctx)
+            is P.ValueMultiplicativeContext -> operators.multiplicative(ctx)
+            is P.ValueAdditiveContext -> operators.additive(ctx)
+            is P.ValuePrefixOperatorContext -> operators.prefix(ctx)
             is P.ValueAtTimeZoneContext -> datetime.atTimeZone(ctx)
-            // Operators and casts follow.
-            is P.ValueCastShorthandContext, is P.ValueSignedContext, is P.ValueExponentContext,
-            is P.ValueMultiplicativeContext, is P.ValueAdditiveContext, is P.ValuePrefixOperatorContext,
-            is P.ValueOperatorContext,
-            -> unsupported(ctx.start, "operator in `${ctx.text}`")
+            is P.ValueOperatorContext -> operators.operator(ctx)
             else -> builder.unexpected(ctx)
         }
 
@@ -270,11 +283,10 @@ internal class RedshiftExpressions(
     private fun atom(ctx: P.AtomContext): Expr =
         when (ctx) {
             is P.AtomLiteralContext -> literal(ctx.literal())
-            // Casts and CASE follow.
-            is P.AtomCastContext -> unsupported(ctx.CAST().symbol, "CAST")
-            is P.AtomTryCastContext -> unsupported(ctx.start, "TRY_CAST")
-            is P.AtomConvertContext -> unsupported(ctx.start, "CONVERT")
-            is P.AtomCaseContext -> unsupported(ctx.CASE().symbol, "CASE")
+            is P.AtomCastContext -> casts.cast(ctx.CAST().symbol, ctx, Operand(ctx.expr(), expr(ctx.expr())), ctx.dataType())
+            is P.AtomTryCastContext -> casts.tryCast(ctx)
+            is P.AtomConvertContext -> casts.convert(ctx)
+            is P.AtomCaseContext -> conditions.case(ctx)
             is P.AtomExistsContext -> exists(ctx)
             is P.AtomDateFunctionContext -> datetime.dateFunction(ctx)
             is P.AtomExtractContext -> datetime.extract(ctx)
@@ -368,6 +380,13 @@ internal class RedshiftExpressions(
             is P.LiteralIntervalContext -> datetime.intervalLiteral(ctx)
             else -> builder.unexpected(ctx)
         }
+
+    /*
+     * Data types
+     */
+
+    /** The PartiQL type of a Redshift data type; see [RedshiftCasts.target]. */
+    internal fun dataType(ctx: P.DataTypeContext): DataType = casts.dataType(ctx)
 
     /**
      * The value of a string literal token. Two quotes are a quote. A backslash is an escape character in Redshift string
