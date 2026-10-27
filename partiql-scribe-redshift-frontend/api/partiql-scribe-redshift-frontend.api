@@ -1,0 +1,45 @@
+public final class org/partiql/scribe/frontend/redshift/RedshiftProblem {
+	public final fun getCode ()Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+	public final fun getColumn ()Ljava/lang/Integer;
+	public final fun getLine ()Ljava/lang/Integer;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/partiql/scribe/frontend/redshift/RedshiftProblem$Code : java/lang/Enum {
+	public static final field INTERNAL_ERROR Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+	public static final field SEMANTIC_ERROR Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+	public static final field SYNTAX_ERROR Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+	public static final field TRANSLATION_INFO Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+	public static final field UNSUPPORTED Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun isError ()Z
+	public static fun valueOf (Ljava/lang/String;)Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+	public static fun values ()[Lorg/partiql/scribe/frontend/redshift/RedshiftProblem$Code;
+}
+
+public final class org/partiql/scribe/frontend/redshift/RedshiftTranspileResult {
+	public final fun getPartiql ()Ljava/lang/String;
+	public final fun getProblems ()Ljava/util/List;
+	public final fun getStatus ()Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status : java/lang/Enum {
+	public static final field INTERNAL_ERROR Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status;
+	public static final field INVALID_INPUT Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status;
+	public static final field UNSUPPORTED Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status;
+	public static final field VALID Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status;
+	public static fun values ()[Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult$Status;
+}
+
+public final class org/partiql/scribe/frontend/redshift/RedshiftTranspiler {
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun tables (Ljava/lang/String;)Ljava/util/List;
+	public final fun transpile (Ljava/lang/String;Lorg/partiql/spi/catalog/Session;)Lorg/partiql/scribe/frontend/redshift/RedshiftTranspileResult;
+}
+
