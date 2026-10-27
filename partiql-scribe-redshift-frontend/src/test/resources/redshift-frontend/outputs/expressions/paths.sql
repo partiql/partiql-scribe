@@ -19,7 +19,7 @@ SELECT COALESCE("t"['x']['y']) AS "v1", COALESCE(COALESCE("t"['x'], "t"['x'])['y
 --#[attribute-06]
 SELECT COALESCE("s"['y']['z']) AS "v" FROM (SELECT "t"['x'] AS "y" FROM "default"."T" AS "t") AS "s";
 
--- --#[index-00] TODO(redshift)
+--#[index-00]
 SELECT COALESCE("t"['x'][0]['y']) AS "v1", COALESCE("t"['array']["t"['b'] + 1]) AS "v2" FROM "default"."T" AS "t";
 
 --#[index-01]

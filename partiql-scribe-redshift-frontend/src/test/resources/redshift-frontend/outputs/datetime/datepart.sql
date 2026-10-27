@@ -37,7 +37,7 @@ SELECT CAST(EXTRACT(YEAR FROM CAST(TIMESTAMP WITH TIME ZONE '2025-12-31 18:30:45
 --#[extract-timetz-00]
 SELECT EXTRACT(HOUR FROM CAST("t"['col_timez'] AS TIME (6))) AS "h" FROM "default"."T_ALL_TYPES" AS "t";
 
--- --#[extract-interval-00] TODO(redshift)
+--#[extract-interval-00]
 SELECT EXTRACT(DAY FROM "t"['timestamp_2'] - "t"['timestamp_1']) AS "d" FROM "default"."T" AS "t";
 
 --#[extract-interval-01]

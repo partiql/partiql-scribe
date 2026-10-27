@@ -1,31 +1,31 @@
--- --#[lateral-alias] TODO(redshift)
+--#[lateral-alias]
 SELECT "t"['b'] + 1 AS "q", ("t"['b'] + 1) * 2 AS "y" FROM "default"."T" AS "t";
 
--- --#[lateral-alias-column-wins] TODO(redshift)
+--#[lateral-alias-column-wins]
 SELECT "t"['b'] + 1 AS "c", "t"['c'] AS "y" FROM "default"."T" AS "t";
 
 -- --#[lateral-alias-aggregate] TODO(redshift)
 SELECT sum("t"['b']) AS "s", sum("t"['b']) * CAST(2 AS BIGINT) AS "d" FROM "default"."T" AS "t";
 
--- --#[where-alias] TODO(redshift)
+--#[where-alias]
 SELECT "t"['b'] + 1 AS "q" FROM "default"."T" AS "t" WHERE ("t"['b'] + 1) > 2;
 
--- --#[where-alias-and-column] TODO(redshift)
+--#[where-alias-and-column]
 [UNSUPPORTED{message="`b` in WHERE, which is both a column and a select-list alias"}];
 
--- --#[where-alias-aggregate] TODO(redshift)
+--#[where-alias-aggregate]
 [INVALID_INPUT{message="aggregate or window function of the alias `n` in WHERE"}];
 
--- --#[order-by-alias] TODO(redshift)
+--#[order-by-alias]
 SELECT "t"['b'] + 1 AS "c" FROM "default"."T" AS "t" ORDER BY "t"['b'] + 1 ASC NULLS LAST;
 
--- --#[order-by-alias-expression] TODO(redshift)
+--#[order-by-alias-expression]
 SELECT "t"['b'] + 1 AS "q" FROM "default"."T" AS "t" ORDER BY ("t"['b'] + 1) * 2 ASC NULLS LAST;
 
 --#[order-by-position]
 SELECT "t"['b'] AS "b", "t"['c'] AS "c" FROM "default"."T" AS "t" ORDER BY "t"['c'] ASC NULLS LAST, "t"['b'] DESC NULLS FIRST;
 
--- --#[order-by-position-expression] TODO(redshift)
+--#[order-by-position-expression]
 SELECT "t"['b'] + 1 AS "x" FROM "default"."T" AS "t" ORDER BY "t"['b'] + 1 DESC NULLS FIRST;
 
 --#[order-by-position-star]
@@ -43,7 +43,7 @@ SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" ORDER BY "t"['c'] DESC NULLS LA
 --#[column-named-like-alias]
 SELECT "b"['b'] AS "b" FROM "default"."T" AS "b";
 
--- --#[column-named-like-outer-alias] TODO(redshift)
+--#[column-named-like-outer-alias]
 SELECT "b"['c'] AS "c" FROM "default"."T" AS "b" WHERE "b"['b'] IN (SELECT "simple_t"['b'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t");
 
 --#[column-named-like-earlier-from-item]
@@ -70,7 +70,7 @@ SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c", "
 --#[item-and-star]
 SELECT "simple_t"['b'] AS "b2", "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t";
 
--- --#[star-join] TODO(redshift)
+--#[star-join]
 SELECT "s1"['a'] AS "a", "s1"['b'] AS "b", "s1"['c'] AS "c", "s2"['a'] AS "a", "s2"['b'] AS "b", "s2"['c'] AS "c" FROM "default"."SIMPLE_T" AS "s1" INNER JOIN "default"."SIMPLE_T" AS "s2" ON "s1"['b'] = "s2"['b'];
 
 --#[qualified-star]

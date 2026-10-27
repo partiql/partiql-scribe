@@ -34,7 +34,7 @@ SELECT DATE_ADD(DAY, -1, DATE_ADD(MONTH, DATE_DIFF(MONTH, TIMESTAMP '0001-01-01 
 --#[add-months-00]
 SELECT CASE WHEN EXTRACT(DAY FROM DATE_ADD(DAY, 1, CAST("t"['col_date'] AS TIMESTAMP))) = 1 THEN DATE_ADD(DAY, -1, DATE_ADD(MONTH, 1, DATE_ADD(DAY, 1, CAST("t"['col_date'] AS TIMESTAMP)))) ELSE DATE_ADD(MONTH, 1, CAST("t"['col_date'] AS TIMESTAMP)) END AS "v" FROM "default"."T_ALL_TYPES" AS "t";
 
--- --#[add-months-01] TODO(redshift)
+--#[add-months-01]
 SELECT CASE WHEN EXTRACT(DAY FROM DATE_ADD(DAY, 1, "t"['timestamp_1'])) = 1 THEN DATE_ADD(DAY, -1, DATE_ADD(MONTH, -2, DATE_ADD(DAY, 1, "t"['timestamp_1']))) ELSE DATE_ADD(MONTH, -2, "t"['timestamp_1']) END AS "v" FROM "default"."T" AS "t";
 
 --#[add-months-02]
