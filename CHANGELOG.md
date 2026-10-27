@@ -33,6 +33,7 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
+- DuckDB target: lambdas (`EXCLUDE` on a field inside a collection, rendered with `list_transform`) use the `lambda x: expr` syntax instead of `x -> expr`, which DuckDB 2.0 rejects by default. This needs DuckDB 1.3 or later.
 
 ### Removed
 
