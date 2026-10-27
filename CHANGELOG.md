@@ -33,6 +33,23 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
+
+### Removed
+
+### Security
+
+### Contributors
+Thank you to all who have contributed!
+
+## [2.1.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.1) - 2026-10-27
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Fixed
 - DuckDB target: lambdas (`EXCLUDE` on a field inside a collection, rendered with `list_transform`) use the `lambda x: expr` syntax instead of `x -> expr`, which DuckDB 2.0 rejects by default. This needs DuckDB 1.3 or later.
 
 ### Removed
@@ -41,6 +58,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @XuechunHHH
 
 ## [2.1.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.0) - 2026-10-20
 
