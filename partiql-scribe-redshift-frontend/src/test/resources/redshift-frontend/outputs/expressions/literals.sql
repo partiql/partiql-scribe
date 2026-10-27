@@ -20,7 +20,7 @@ b' AS "v" FROM "default"."T" AS "t";
 --#[string-backslash-06]
 [INVALID_INPUT{message="extraneous input '''"}];
 
--- --#[string-backslash-07] TODO(redshift)
+--#[string-backslash-07]
 SELECT CHAR_LENGTH('a\b') AS "v" FROM "default"."T" AS "t";
 
 --#[exponent-00]

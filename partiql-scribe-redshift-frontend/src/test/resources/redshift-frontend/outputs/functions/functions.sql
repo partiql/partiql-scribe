@@ -1,16 +1,16 @@
--- --#[nvl-00] TODO(redshift)
+--#[nvl-00]
 SELECT COALESCE("t"['c'], 'none') AS "v" FROM "default"."T" AS "t";
 
--- --#[coalesce-00] TODO(redshift)
+--#[coalesce-00]
 SELECT COALESCE("t"['c'], "t"['z'], 'none') AS "v" FROM "default"."T" AS "t";
 
--- --#[nullif-00] TODO(redshift)
+--#[nullif-00]
 SELECT NULLIF("t"['b'], 0) AS "v" FROM "default"."T" AS "t";
 
--- --#[len-00] TODO(redshift)
+--#[len-00]
 SELECT CHAR_LENGTH("t"['c']) AS "v" FROM "default"."T" AS "t";
 
--- --#[upper-00] TODO(redshift)
+--#[upper-00]
 SELECT "upper"("t"['c']) AS "v1", "lower"("t"['z']) AS "v2" FROM "default"."T" AS "t";
 
 --#[dateadd-00]

@@ -13,7 +13,7 @@ SELECT COALESCE("t"['x']['Äb']) AS "v" FROM "default"."T" AS "t";
 --#[attribute-04]
 SELECT "t"['d']['e'] AS "v" FROM "default"."T" AS "t";
 
--- --#[attribute-05] TODO(redshift)
+--#[attribute-05]
 SELECT COALESCE("t"['x']['y']) AS "v1", COALESCE(COALESCE("t"['x'], "t"['x'])['y']) AS "v2" FROM "default"."T" AS "t";
 
 --#[attribute-06]
