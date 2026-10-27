@@ -322,6 +322,10 @@ construct as unsupported:
 
 ## Tests
 
+- `RedshiftGrammarTest` runs the grammar fixtures in `src/test/resources/grammar`: `accept/*.sql` are statements the
+  grammar parses, `reject/*.sql` are statements it refuses, each with the expected `line:column` of the first syntax
+  error. `RedshiftParseTreeTest` checks the parse tree where the grammar has to choose (precedence, keywords that are
+  also identifiers, literal prefixes). These test the grammar only, not the translation.
 - `RedshiftTranspilerSuite` runs the fixtures in `src/test/resources/redshift-frontend/inputs` against the expected
   output of the same name in `outputs`. An expected output is PartiQL text, or a status with a message for a failed
   translation.

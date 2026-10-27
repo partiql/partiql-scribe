@@ -29,6 +29,7 @@ dependencies {
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.21")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.3.21")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
 }
 
 // The antlr plugin adds the full ANTLR tool to the api configuration; only the runtime is needed at run time.
