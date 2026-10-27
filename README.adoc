@@ -142,9 +142,9 @@ The `partiql-scribe-redshift-frontend` module translates in the other direction:
 
 [source,kotlin]
 ----
-val result = RedshiftTranspiler().transpile("SELECT TOP 5 c AS v FROM t", session)
+val result = RedshiftTranspiler().transpile("SELECT TOP 5 NVL(c, 'none') AS v FROM t", session)
 result.status   // VALID
-result.partiql  // SELECT "t"['c'] AS "v" FROM "default"."T" AS "t" LIMIT 5
+result.partiql  // SELECT COALESCE("t"['c'], 'none') AS "v" FROM "default"."T" AS "t" LIMIT 5
 ----
 
 The module parses the Redshift text with its own grammar and builds a PartiQL AST. The PartiQL planner then resolves

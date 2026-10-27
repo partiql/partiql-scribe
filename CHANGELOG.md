@@ -45,6 +45,7 @@ Thank you to all who have contributed!
 
 ### Added
 - Adds an experimental DuckDB SQL transpilation target, with the same PartiQL feature coverage as the Redshift, Spark, and Trino targets.
+- Adds the experimental `partiql-scribe-redshift-frontend` module, which translates Amazon Redshift queries to PartiQL. It parses Redshift with its own grammar, plans the query with the PartiQL planner, and prints it with the PartiQL target. A construct without a translation rule gives an `UNSUPPORTED` result with its location. It covers WITH, set operations, joins and SUPER unnesting, window functions, QUALIFY, the Redshift predicates, casts, literals, and intervals, and the string, conditional, math, aggregate, datetime, and SUPER functions that have exact PartiQL translations; rules whose semantics depend on argument types get the types from the planner.
 - DuckDB target: translates `DATE_ADD(<part>, <amount>, <datetime>)` to `date_add(<datetime>, to_<part>s(<amount>))`.
 - Adds experimental DuckDB translations to `partiql-scribe-function-extensions` (`DuckDBFunctionExtensionTarget` / `DuckDBFunctionExtensionCalls`): `contains`, `to_unixtime`, `hex_to_bigint`, `pow`, `utcnow`, and `date_add`.
 

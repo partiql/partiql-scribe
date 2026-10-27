@@ -1,7 +1,7 @@
 --#[cond-coalesce-00]
 SELECT COALESCE("t_all_types"['col_decimal'], CAST(0 AS DECIMAL(38,0))) + CAST(1 AS DECIMAL(10,0)) AS "v" FROM "default"."T_ALL_TYPES" AS "t_all_types";
 
--- --#[cond-coalesce-01] TODO(redshift)
+--#[cond-coalesce-01]
 SELECT CAST(sum(COALESCE("t_all_types"['col_decimal'], CAST(0 AS DECIMAL(38,0)))) AS DECIMAL(38,0)) AS "v" FROM "default"."T_ALL_TYPES" AS "t_all_types";
 
 --#[cond-coalesce-02]
@@ -97,17 +97,17 @@ SELECT CASE WHEN "t_all_types"['col_int32'] IS NOT NULL THEN 5 ELSE 7 END AS "v1
 --#[cond-nvl2-03]
 [UNSUPPORTED{message="`NVL2` with result values of different types (VARCHAR(16) and VARCHAR)"}];
 
--- --#[cond-subquery-00] TODO(redshift)
+--#[cond-subquery-00]
 [UNSUPPORTED{message="subquery as an argument of `NVL` (the Scribe PartiQL target prints it without parentheses)"}];
 
--- --#[cond-subquery-01] TODO(redshift)
+--#[cond-subquery-01]
 SELECT CASE WHEN (SELECT max("t"['b']) AS "max" FROM "default"."T" AS "t") >= 0 THEN (SELECT max("t"['b']) AS "max" FROM "default"."T" AS "t") ELSE 0 END AS "v" FROM "default"."T" AS "t";
 
--- --#[cond-nested-00] TODO(redshift)
+--#[cond-nested-00]
 SELECT COALESCE(sum("t"['b']), CAST(0 AS BIGINT)) AS "v" FROM "default"."T" AS "t";
 
 --#[cond-nested-01]
 SELECT CASE WHEN count(1) = 0 THEN 'none' ELSE 'some' END AS "v" FROM "default"."T" AS "t";
 
--- --#[cond-nested-02] TODO(redshift)
+--#[cond-nested-02]
 SELECT "t"['c'] AS "c" FROM "default"."T" AS "t" GROUP BY "t"['c'] HAVING COALESCE(sum("t"['b']), CAST(0 AS BIGINT)) > CAST(10 AS BIGINT);

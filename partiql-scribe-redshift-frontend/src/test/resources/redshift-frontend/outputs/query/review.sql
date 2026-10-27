@@ -4,7 +4,7 @@ SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] IN (SELECT "$s"[
 --#[review-set-operation-in-01]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] NOT IN (SELECT "$s"['b'] AS "b" FROM ((SELECT DISTINCT "s"['b'] AS "b" FROM "default"."SIMPLE_T" AS "s") EXCEPT DISTINCT (SELECT "u"['b'] AS "b" FROM "default"."T" AS "u")) AS "$s");
 
--- --#[review-set-operation-scalar-00] TODO(redshift)
+--#[review-set-operation-scalar-00]
 SELECT (SELECT "$s"['m'] AS "m" FROM ((SELECT max("s"['b']) AS "m" FROM "default"."SIMPLE_T" AS "s") UNION DISTINCT (SELECT max("u"['b']) AS "m" FROM "default"."SIMPLE_T" AS "u")) AS "$s") AS "v" FROM "default"."T" AS "t";
 
 --#[review-set-operation-any-00]
