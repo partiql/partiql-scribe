@@ -29,25 +29,25 @@ SELECT CHAR_LENGTH('a\b') AS "v" FROM "default"."T" AS "t";
 --#[exponent-01]
 [UNSUPPORTED{message="numeric literal with an exponent"}];
 
--- --#[exponent-02] TODO(redshift)
+--#[exponent-02]
 [UNSUPPORTED{message="numeric literal with an exponent"}];
 
 --#[exponent-03]
 [UNSUPPORTED{message="numeric literal with an exponent"}];
 
--- --#[sign-00] TODO(redshift)
+--#[sign-00]
 SELECT 1 AS "v1", 1.5 AS "v2", -1 AS "v3", 5 AS "v4" FROM "default"."T" AS "t";
 
--- --#[sign-01] TODO(redshift)
+--#[sign-01]
 SELECT -NULL AS "v" FROM "default"."T" AS "t";
 
--- --#[sign-02] TODO(redshift)
+--#[sign-02]
 [UNSUPPORTED{message="sign on a character string literal"}];
 
--- --#[literal-decimal-00] TODO(redshift)
+--#[literal-decimal-00]
 SELECT 0.5 AS "v1", 5. AS "v2", 1.50 AS "v3", -37. AS "v4" FROM "default"."T" AS "t";
 
--- --#[literal-integer-00] TODO(redshift)
+--#[literal-integer-00]
 SELECT 2147483648 AS "v1", 9223372036854775808 AS "v2", -2147483648 AS "v3" FROM "default"."T" AS "t";
 
 --#[boolean-null-00]

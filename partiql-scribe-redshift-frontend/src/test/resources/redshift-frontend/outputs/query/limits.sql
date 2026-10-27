@@ -46,7 +46,7 @@ SELECT "$d"['x'] AS "x" FROM (SELECT DISTINCT "t"['b'] AS "x" FROM "default"."T"
 --#[distinct-star-limit]
 SELECT "$d"['a'] AS "a", "$d"['b'] AS "b", "$d"['c'] AS "c" FROM (SELECT DISTINCT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t") AS "$d" LIMIT 5;
 
--- --#[distinct-repeated-names-limit] TODO(redshift)
+--#[distinct-repeated-names-limit]
 SELECT "$d"['$c1'] AS "b", "$d"['$c2'] AS "b" FROM (SELECT DISTINCT "t1"['b'] AS "$c1", "t2"['b'] AS "$c2" FROM "default"."T" AS "t1" INNER JOIN "default"."SIMPLE_T" AS "t2" ON "t1"['c'] = "t2"['c']) AS "$d" ORDER BY "$d"['$c1'] ASC NULLS LAST LIMIT 3;
 
 --#[distinct-without-limit]
@@ -58,7 +58,7 @@ SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FR
 --#[select-without-from]
 SELECT 1 AS "v" FROM <<1>> AS "$no_from";
 
--- --#[select-without-from-subquery] TODO(redshift)
+--#[select-without-from-subquery]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] = (SELECT 1 AS "one" FROM <<1>> AS "$no_from");
 
 --#[select-star-without-from]

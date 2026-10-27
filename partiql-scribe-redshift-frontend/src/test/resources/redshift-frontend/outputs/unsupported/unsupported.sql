@@ -7,7 +7,7 @@
 --#[datepart-week]
 SELECT DATE_ADD(DAY, 7 * 1, "t"['timestamp_1']) AS "v" FROM "default"."T" AS "t";
 
--- --#[super-type] TODO(redshift)
+--#[super-type]
 [UNSUPPORTED{message="data type `super`"}];
 
 --#[extract-week]

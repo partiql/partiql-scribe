@@ -10,7 +10,7 @@ SELECT EXTRACT(HOUR FROM CAST("utcnow"() AS TIMESTAMP)) AS "v" FROM "default"."T
 --#[current-date-00]
 SELECT CAST("utcnow"() AS DATE) AS "v" FROM "default"."T" AS "t";
 
--- --#[current-date-01] TODO(redshift)
+--#[current-date-01]
 SELECT DATE_ADD(DAY, -1, CAST("utcnow"() AS DATE)) AS "v" FROM "default"."T" AS "t";
 
 --#[current-timestamp-00]

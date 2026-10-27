@@ -67,8 +67,8 @@ SELECT TIME WITH TIME ZONE '12:30:45+08:00' AS "v1", TIME WITH TIME ZONE '12:30:
 --#[timetz-literal-01]
 SELECT TIME WITH TIME ZONE '12:30:45+00:00' AS "v" FROM "default"."T" AS "t";
 
--- --#[timetz-literal-02] TODO(redshift)
+--#[timetz-literal-02]
 [UNSUPPORTED{message="comparison with a TIMETZ literal whose offset is not UTC"}];
 
--- --#[timetz-literal-03] TODO(redshift)
+--#[timetz-literal-03]
 SELECT "t"['col_int32'] AS "col_int32" FROM "default"."T_ALL_TYPES" AS "t" WHERE "t"['col_timez'] IN (TIME WITH TIME ZONE '04:30:45+00:00', TIME WITH TIME ZONE '05:30:45+00:00');

@@ -1,19 +1,19 @@
--- --#[comma-join] TODO(redshift)
+--#[comma-join]
 SELECT "t"['b'] AS "b", "s"['a'] AS "a" FROM "default"."T" AS "t" INNER JOIN "default"."SIMPLE_T" AS "s" ON true WHERE "t"['b'] = "s"['b'];
 
--- --#[full-outer-join] TODO(redshift)
+--#[full-outer-join]
 SELECT "t1"['b'] AS "b", "t2"['c'] AS "c" FROM "default"."T" AS "t1" FULL JOIN "default"."SIMPLE_T" AS "t2" ON "t1"['b'] = "t2"['b'];
 
 --#[cross-join]
 SELECT "t1"['b'] AS "b", "t2"['c'] AS "c" FROM "default"."T" AS "t1" INNER JOIN "default"."SIMPLE_T" AS "t2" ON true;
 
--- --#[right-join] TODO(redshift)
+--#[right-join]
 SELECT "t1"['b'] AS "b", "t2"['c'] AS "c" FROM "default"."T" AS "t1" RIGHT JOIN "default"."SIMPLE_T" AS "t2" ON "t1"['b'] = "t2"['b'];
 
 --#[join-without-condition]
 [INVALID_INPUT{message="JOIN without ON or USING"}];
 
--- --#[parenthesized-join] TODO(redshift)
+--#[parenthesized-join]
 SELECT "t"['b'] AS "b", "u"['col_int32'] AS "col_int32" FROM "default"."T" AS "t" LEFT JOIN "default"."SIMPLE_T" AS "s" INNER JOIN "default"."T_ALL_TYPES" AS "u" ON "s"['b'] = "u"['col_int32'] ON "t"['b'] = "s"['b'];
 
 --#[join-using]
@@ -97,7 +97,7 @@ SELECT "t"['b'] AS "b", "e" AS "e" FROM "default"."T" AS "t" LEFT JOIN CASE WHEN
 --#[unnest-join-without-condition]
 SELECT "t"['b'] AS "b", "e" AS "e" FROM "default"."T" AS "t" INNER JOIN CASE WHEN @"t"['x'] IS LIST THEN @"t"['x'] ELSE [] END AS "e" ON true;
 
--- --#[unnest-in-subquery] TODO(redshift)
+--#[unnest-in-subquery]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] IN (SELECT "e" AS "e" FROM CASE WHEN @"t"['x'] IS LIST THEN @"t"['x'] ELSE [] END AS "e");
 
 --#[unnest-function]

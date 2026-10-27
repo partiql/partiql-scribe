@@ -52,10 +52,10 @@ SELECT "$s"['x'] AS "x" FROM ((SELECT "t"['b'] AS "x" FROM "default"."T" AS "t")
 --#[set-operation-top]
 [UNSUPPORTED{message="TOP in a set operation operand"}];
 
--- --#[set-operation-repeated-names] TODO(redshift)
+--#[set-operation-repeated-names]
 SELECT "$s"['$c1'] AS "b", "$s"['$c2'] AS "b" FROM ((SELECT "t"['b'] AS "$c1", "s"['b'] AS "$c2" FROM "default"."T" AS "t" INNER JOIN "default"."SIMPLE_T" AS "s" ON "t"['c'] = "s"['c']) UNION DISTINCT (SELECT "t"['b'] AS "$c1", "t"['b'] AS "$c2" FROM "default"."T" AS "t")) AS "$s";
 
--- --#[set-operation-repeated-names-order-by] TODO(redshift)
+--#[set-operation-repeated-names-order-by]
 SELECT "$s"['$c1'] AS "b", "$s"['$c2'] AS "b" FROM ((SELECT "t"['b'] AS "$c1", "s"['b'] AS "$c2" FROM "default"."T" AS "t" INNER JOIN "default"."SIMPLE_T" AS "s" ON "t"['c'] = "s"['c']) UNION ALL (SELECT "t"['b'] AS "$c1", "t"['b'] AS "$c2" FROM "default"."T" AS "t")) AS "$s" ORDER BY "$s"['$c2'] DESC NULLS FIRST;
 
 --#[set-operation-star]
