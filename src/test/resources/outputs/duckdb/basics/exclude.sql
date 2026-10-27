@@ -24,10 +24,10 @@ SELECT {'a': "t"."flds"."a", 'b': "t"."flds"."b", 'c': {'field_x': "t"."flds"."c
 
 -- START OF EXCLUDE with COLLECTION WILDCARD
 --#[exclude-07]
-SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_y': ___coll_wildcard___."field_y"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
+SELECT list_transform("t"."a", lambda ___coll_wildcard___: {'field_y': ___coll_wildcard___."field_y"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
 --#[exclude-08]
-SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
+SELECT list_transform("t"."a", lambda ___coll_wildcard___: {'field_x': ___coll_wildcard___."field_x"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_COLL_WILDCARD" AS "t";
 
 --#[exclude-09]
 SELECT "t1"."flds" AS "flds", {'a': "t2"."flds"."a", 'c': {'field_y': "t2"."flds"."c"."field_y"}} AS "flds", "t2"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t1" INNER JOIN "default"."EXCLUDE_T" AS "t2" ON true WHERE "t1"."foo" = "t2"."foo";
@@ -185,16 +185,16 @@ WHERE "t1"."a" AND "t2"."a";
 SELECT {'a': "t"."flds"."a", 'c': {'field_y': "t"."flds"."c"."field_y"}} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T" AS "t";
 
 --#[exclude-50]
-SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_y': ___coll_wildcard___."field_y", 'field_z': ___coll_wildcard___."field_z", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", lambda ___coll_wildcard___: {'field_y': ___coll_wildcard___."field_y", 'field_z': ___coll_wildcard___."field_z", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-51]
-SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x", 'field_z': ___coll_wildcard___."field_z", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", lambda ___coll_wildcard___: {'field_x': ___coll_wildcard___."field_x", 'field_z': ___coll_wildcard___."field_z", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-52]
-SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x", 'field_y': ___coll_wildcard___."field_y", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", lambda ___coll_wildcard___: {'field_x': ___coll_wildcard___."field_x", 'field_y': ___coll_wildcard___."field_y", 'nested_list': ___coll_wildcard___."nested_list"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-53]
-SELECT list_transform("t"."a", ___coll_wildcard___ -> {'field_x': ___coll_wildcard___."field_x", 'field_y': ___coll_wildcard___."field_y", 'field_z': ___coll_wildcard___."field_z"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+SELECT list_transform("t"."a", lambda ___coll_wildcard___: {'field_x': ___coll_wildcard___."field_x", 'field_y': ___coll_wildcard___."field_y", 'field_z': ___coll_wildcard___."field_z"}) AS "a", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
 
 --#[exclude-54]
 SELECT {'select': {'field_y': "t"."flds"."select"."field_y"}, 'order': "t"."flds"."order"} AS "flds", "t"."foo" AS "foo" FROM "default"."EXCLUDE_T_RESERVED_KEYWORDS" AS "t";

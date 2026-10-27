@@ -359,14 +359,15 @@ public open class DuckDBAstToSql(context: ScribeContext) : AstToSql(context) {
         }
         return when {
             node.function.identifier.text == "transform" -> {
-                // DuckDB's list-transform function is `list_transform` (Trino calls it `transform`); it uses
-                // `->` to separate the element variable and the element expr.
+                // DuckDB's list-transform function is `list_transform` (Trino calls it `transform`). The lambda uses
+                // DuckDB's `lambda <var>: <expr>` syntax (DuckDB 1.3+). DuckDB 2.0 rejects the older `<var> -> <expr>`
+                // form at bind time by default: https://duckdb.org/docs/current/sql/functions/lambda
                 val arrayExpr = node.args[0].sql(dialect = this)
                 val elementVar = node.args[1].sql(dialect = this)
                 val elementExpr = node.args[2].sql(dialect = this)
                 var h = tail
                 h = h concat "list_transform"
-                h = h concat "($arrayExpr, $elementVar -> $elementExpr)"
+                h = h concat "($arrayExpr, lambda $elementVar: $elementExpr)"
                 h
             }
             else -> super.visitExprCall(node, tail)
