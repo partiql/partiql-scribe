@@ -4,7 +4,7 @@ SELECT "x"['b'] AS "b" FROM (SELECT "t"['b'] AS "b" FROM "default"."T" AS "t") A
 --#[with-shadows-table]
 SELECT "simple_t"['b'] AS "b" FROM (SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" WHERE "t"['b'] > 1) AS "simple_t";
 
--- --#[with-subquery-reference] TODO(redshift)
+--#[with-subquery-reference]
 SELECT "x"['b'] AS "b" FROM (SELECT "t"['b'] AS "b" FROM "default"."T" AS "t") AS "x" WHERE "x"['b'] = (SELECT max("x"['b']) AS "max" FROM (SELECT "t"['b'] AS "b" FROM "default"."T" AS "t") AS "x");
 
 --#[with-sibling-and-join]

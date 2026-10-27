@@ -46,10 +46,10 @@ SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" ORDER BY "t"['b'] DESC NULLS LA
 --#[top-00]
 SELECT "t"['b'] AS "b" FROM "default"."T" AS "t" LIMIT 5;
 
--- --#[group-00] TODO(redshift)
+--#[group-00]
 SELECT "t"['c'] AS "c", count(1) AS "n", sum("t"['b']) AS "total" FROM "default"."T" AS "t" GROUP BY "t"['c'] HAVING count(1) > CAST(1 AS BIGINT);
 
--- --#[group-01] TODO(redshift)
+--#[group-01]
 SELECT count(DISTINCT "t"['c']) AS "n" FROM "default"."T" AS "t";
 
 --#[join-00]
