@@ -4,7 +4,7 @@ SELECT count(1) AS "count", sum("t"['b']) AS "sum", max("t"['c']) AS "max" FROM 
 --#[default-name-cast-of-aggregate]
 SELECT CAST(count(1) AS INT) AS "count" FROM "default"."T" AS "t";
 
--- --#[default-name-function-and-path] TODO(redshift)
+--#[default-name-function-and-path]
 SELECT "upper"("t"['c']) AS "upper", "t"['d']['e'] AS "e", CAST("t"['b'] AS BIGINT) AS "b" FROM "default"."T" AS "t";
 
 --#[default-name-window]

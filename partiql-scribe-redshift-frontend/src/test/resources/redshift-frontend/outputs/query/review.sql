@@ -16,7 +16,7 @@ SELECT "$s"['t'] AS "t" FROM ((SELECT "t"['b'] AS "t" FROM "default"."T" AS "t")
 --#[review-set-operation-order-by-01]
 SELECT "$s"['x'] AS "x" FROM ((SELECT "t"['b'] AS "x" FROM "default"."T" AS "t") UNION ALL (SELECT "s"['b'] AS "x" FROM "default"."SIMPLE_T" AS "s")) AS "$s" ORDER BY "$s"['x'] DESC NULLS FIRST;
 
--- --#[review-default-name-00] TODO(redshift)
+--#[review-default-name-00]
 SELECT "d"['coalesce'] AS "coalesce", "d"['case'] AS "case", "d"['pgdate_part'] AS "pgdate_part" FROM (SELECT COALESCE("t"['b'], 0) AS "coalesce", CASE WHEN "t"['b'] = 1 THEN 'x' ELSE 'y' END AS "case", CAST(EXTRACT(YEAR FROM "t"['timestamp_1']) AS DOUBLE PRECISION) AS "pgdate_part" FROM "default"."T" AS "t") AS "d";
 
 --#[review-default-name-01]
