@@ -82,6 +82,9 @@ SELECT EXTRACT(EPOCH FROM ts), EXTRACT(epoch FROM d) FROM t;
 --#[power]
 SELECT POWER(a, 2), POWER(2, a), POWER(a, b + 1) FROM t;
 
+--#[pow]
+SELECT POW(2, 3), POW(a, 0.5), pow(2, 3 - 1) FROM t;
+
 --#[concat]
 SELECT CONCAT(a, b), CONCAT(a, ' '), CONCAT(CONCAT(a, b), c) FROM t;
 

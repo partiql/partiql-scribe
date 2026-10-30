@@ -46,6 +46,12 @@ SELECT * EXCLUDE (a, b) FROM t;
 --#[select-exclude-qualified-star]
 SELECT t.* EXCLUDE (a) FROM t;
 
+--#[select-exclude-qualified-columns]
+SELECT a.col1, b.* EXCLUDE (b.col2, b.col3) FROM table1 AS a, table2 AS b;
+
+--#[select-exclude-qualified-column-bare]
+SELECT * EXCLUDE t.a FROM t;
+
 --#[with]
 WITH c AS (SELECT a FROM t) SELECT a FROM c;
 

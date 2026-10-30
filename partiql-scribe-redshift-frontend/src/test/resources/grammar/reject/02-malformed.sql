@@ -153,8 +153,11 @@ SELECT select FROM t;
 --#[reserved-word-as-table] 1:15
 SELECT a FROM where;
 
---#[reserved-word-as-alias] 1:13
-SELECT a AS from FROM t;
+--#[reserved-word-as-bare-alias] 1:15
+SELECT a from FROM t;
+
+--#[reserved-word-as-table-alias] 1:20
+SELECT a FROM t AS from;
 
 --#[alias-numeric] 1:10
 SELECT a 1 FROM t;

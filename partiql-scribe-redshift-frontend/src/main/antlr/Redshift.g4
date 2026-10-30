@@ -111,14 +111,25 @@ selectList
 selectItem
     : ASTERISK                                  # selectItemAll
     | qualifiedName DOT ASTERISK                # selectItemStar
-    | expr (AS alias=identifier | {!intervalQualifierFollows()}? alias=identifier)?  # selectItemExpr
+    | expr (AS alias=columnLabel | {!intervalQualifierFollows()}? bareAlias=identifier)?  # selectItemExpr
     ;
 
 /*
+ * The alias after an explicit AS in the select list. As in PostgreSQL, any keyword can follow AS there, reserved or
+ * not (`CAST(x AS TIMESTAMP) AS timestamp`); a bare alias has to be an identifier.
+ * https://docs.aws.amazon.com/redshift/latest/dg/automatic-recognition.html
+ */
+columnLabel
+    : identifier
+    | reserved
+    ;
+
+/*
+ * The excluded columns may be qualified by their relation (`EXCLUDE (b.col2)`).
  * https://docs.aws.amazon.com/redshift/latest/dg/r_EXCLUDE_list.html
  */
 excludeClause
-    : EXCLUDE (identifier (COMMA identifier)* | PAREN_LEFT identifier (COMMA identifier)* PAREN_RIGHT)
+    : EXCLUDE (qualifiedName (COMMA qualifiedName)* | PAREN_LEFT qualifiedName (COMMA qualifiedName)* PAREN_RIGHT)
     ;
 
 fromClause
@@ -280,7 +291,7 @@ aggregateName
     ;
 
 scalarFunctionName
-    : COALESCE | CONCAT_FUNCTION | DECODE | GREATEST | LEAST | LOWER | NULLIF | NVL | NVL2 | POWER | UPPER
+    : COALESCE | CONCAT_FUNCTION | DECODE | GREATEST | LEAST | LOWER | NULLIF | NVL | NVL2 | POW | POWER | UPPER
     ;
 
 /*
@@ -360,8 +371,21 @@ nonReserved
     : AVG | BIGINT | BOOL | BOOLEAN | BPCHAR | CHAR | CHARACTER | COALESCE | CONCAT_FUNCTION | CONVERT | COUNT | DATE
     | DATEADD | DATEDIFF | DECIMAL | DECODE | DOUBLE | EPOCH | ESCAPE | EXCLUDE | EXTRACT | FIRST | FLOAT | FLOAT4
     | FLOAT8 | GETDATE | GREATEST | INT | INT2 | INT4 | INT8 | INTEGER | INTERVAL | LAST | LEAST | LOWER | MAX | MIN
-    | NCHAR | NULLIF | NUMERIC | NVARCHAR | NVL | NVL2 | POWER | PRECISION | REAL | SMALLINT | SUM | TEXT | TIME
+    | NCHAR | NULLIF | NUMERIC | NVARCHAR | NVL | NVL2 | POW | POWER | PRECISION | REAL | SMALLINT | SUM | TEXT | TIME
     | UNKNOWN | UPPER | VARCHAR | VARYING | ZONE
+    ;
+
+/*
+ * Every keyword of this grammar that Redshift reserves, usable only as the alias after AS in the select list.
+ */
+reserved
+    : ALL | AND | AS | ASC | BETWEEN | BY | CASE | CAST | CROSS | CURRENT_DATE | DESC | DISTINCT | ELSE | END
+    | FALSE | FROM | FULL | GROUP | HAVING | ILIKE | IN | INNER | IS | ISNULL | JOIN | LEFT | LIKE | LIMIT | NOT
+    | NOTNULL | NULL | NULLS | OFFSET | ON | OR | ORDER | OUTER | RIGHT | SELECT | SYSDATE | THEN | TIMESTAMP | TOP
+    | TRUE | UNION | WHEN | WHERE | WITH | WITHOUT | ANY | ARRAY | BINARY | BOTH | COLLATE | CURRENT_TIME
+    | CURRENT_TIMESTAMP | CURRENT_USER | CURRENT_USER_ID | EXCEPT | FOR | IGNORE | INTERSECT | INTO | LEADING
+    | LOCALTIME | LOCALTIMESTAMP | MINUS_KEYWORD | NATURAL | OVERLAPS | PARTITION | PIVOT | RESPECT | SESSION_USER
+    | SIMILAR | SOME | TABLE | TRAILING | UNNEST | UNPIVOT | USER | USING
     ;
 
 /*
@@ -449,6 +473,7 @@ ON: 'ON';
 OR: 'OR';
 ORDER: 'ORDER';
 OUTER: 'OUTER';
+POW: 'POW';
 POWER: 'POWER';
 PRECISION: 'PRECISION';
 REAL: 'REAL';

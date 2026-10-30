@@ -85,6 +85,9 @@ SELECT a FROM date, time, year, count;
 --#[nonreserved-as-alias]
 SELECT a AS date, b AS year, c count FROM t;
 
+--#[reserved-as-alias-after-as]
+SELECT CAST(test AS TIMESTAMP) AS timestamp, CAST(test AS DATE) AS date, a AS from, b AS select, c AS "group" FROM formattest;
+
 --#[trailing-semicolon]
 SELECT a FROM t;
 
