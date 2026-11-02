@@ -32,22 +32,23 @@ E.g. `SELECT 1 AS x, 2e0 AS y` — equivalent but has edge cases (a single field
 inside a lambda), so it is not used.
 
 The struct literal `{'name': value}` is verified to preserve names/types and to work inside a `list_transform`
-lambda on DuckDB v1.5.6, which is why the rewrite uses it.
+lambda on DuckDB v1.5.6 and v2.0.0, which is why the rewrite uses it.
 
 #### DuckDB LIST
 DuckDB supports a list type similar to PartiQL's array/list data type. The
 [`list_transform`](https://duckdb.org/docs/current/sql/functions/lambda#list_transformlist-lambda) function (DuckDB's
 name for the higher-order map; SparkSQL calls it `transform`) lets us reconstruct lists whose elements are structs with
-excluded fields:
+excluded fields. Scribe emits the `lambda <var>: <expr>` syntax (DuckDB 1.3+); DuckDB 2.0 rejects the older
+`<var> -> <expr>` form by default:
 
 ```sql
-SELECT list_transform([], x -> x + 1);
+SELECT list_transform([], lambda x: x + 1);
 -- []
 
-SELECT list_transform([5, 6], x -> x + 1);
+SELECT list_transform([5, 6], lambda x: x + 1);
 -- [6, 7]
 
-SELECT list_transform([{'a': 1, 'b': 2}], x -> {'a': x.a});
+SELECT list_transform([{'a': 1, 'b': 2}], lambda x: {'a': x.a});
 -- [{'a': 1}]
 ```
 
