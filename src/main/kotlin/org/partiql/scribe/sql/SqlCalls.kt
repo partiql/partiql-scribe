@@ -1,6 +1,7 @@
 package org.partiql.scribe.sql
 
 import org.partiql.ast.Ast.exprBetween
+import org.partiql.ast.Ast.exprBoolTest
 import org.partiql.ast.Ast.exprCall
 import org.partiql.ast.Ast.exprExtract
 import org.partiql.ast.Ast.exprInCollection
@@ -34,6 +35,7 @@ import org.partiql.ast.expr.ExprOperator
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.SessionAttribute
 import org.partiql.ast.expr.TrimSpec
+import org.partiql.ast.expr.TruthValue
 import org.partiql.plan.RoutineRef
 import org.partiql.scribe.MARKER_EXISTS
 import org.partiql.scribe.ScribeContext
@@ -135,6 +137,9 @@ public abstract class SqlCalls(context: ScribeContext) {
             "like_escape" to { args -> like(args, escape = true) },
             // IS NULL/MISSING
             "is_null" to { args -> exprNullPredicate(args[0].expr, not = false) },
+            "is_true" to { args -> exprBoolTest(args[0].expr, not = false, TruthValue.TRUE()) },
+            "is_false" to { args -> exprBoolTest(args[0].expr, not = false, TruthValue.FALSE()) },
+            "is_unknown" to { args -> exprBoolTest(args[0].expr, not = false, TruthValue.UNKNOWN()) },
             "is_missing" to { args -> exprMissingPredicate(args[0].expr, not = false) },
             // TODO look at types supported here. we may need to add more or modify
             // IS <type>

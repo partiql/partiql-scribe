@@ -1,7 +1,26 @@
 # PartiQL Scribe Redshift front end
 
-A front end that reads Amazon Redshift SQL for translation to PartiQL. This module currently contains the Redshift
-grammar and its tests; the translation follows in later changes.
+Converts an Amazon Redshift query to a PartiQL AST. The caller plans the AST with the PartiQL planner against its own
+session and compiles the plan with `Scribe.compile` and any target (`PartiQLTarget`, `RedshiftTarget`, `SparkTarget`,
+`TrinoTarget`, `DuckDBTarget`). The front end needs no session and no planner, and nothing Redshift-specific reaches the
+targets.
+
+```kotlin
+val context = ScribeContext.standard()
+val frontend = RedshiftFrontend(context)
+val tables = frontend.tables(sql)                                   // the tables the query reads, to build the Session
+val ast = frontend.toAst(sql)                                       // the PartiQL AST
+val plan = PartiQLPlanner.standard().plan(ast, session).plan
+val output = Scribe(context).compile(plan, session, PartiQLTarget).output.value
+```
+
+A problem found while converting is reported to the context's problem listener as a `ScribeProblem` with the `LINE`
+and `COLUMN` of its position in the Redshift text, and the one that stops the conversion is thrown as
+`ScribeException`. It is an `UNSUPPORTED_OPERATION` whose message says which kind: a syntax error (the grammar accepts
+exactly what the front end converts, so a construct it does not know fails to parse), a construct without a conversion,
+or a form Redshift rejects, such as an ordinal out of range. A rewrite that changes the form of the query is reported
+as `TRANSLATION_INFO`. An unknown name, or an operation PartiQL does not define on the operand types, is found by the
+planner, not by the front end.
 
 ## Grammar
 
@@ -26,22 +45,56 @@ What parses:
   `DATE`, `TIMESTAMP`, `BOOLEAN`, each with its Redshift aliases.
 - Functions, each with its own argument form: `AVG`, `COUNT`, `COUNT(*)`, `MAX`, `MIN`, `SUM` (with `DISTINCT`);
   `DECODE`, `GREATEST`, `LEAST`, `NVL`, `COALESCE`, `NVL2`, `NULLIF`; `CAST`, `CONVERT`; `CURRENT_DATE`, `DATEADD`,
-  `DATEDIFF`, `GETDATE()`, `SYSDATE`, `EXTRACT(EPOCH FROM ...)`; `POWER`; `CONCAT`, `LOWER`, `UPPER`. Any other
+  `DATEDIFF`, `GETDATE()`, `SYSDATE`, `EXTRACT(EPOCH FROM ...)`; `POWER`, `POW`; `CONCAT`, `LOWER`, `UPPER`. Any other
   function call is a syntax error at its opening parenthesis.
 
 The grammar's header comment lists what is deliberately not parsed. The generated parser is in the package
 `org.partiql.scribe.frontend.redshift.antlr`; it is an implementation detail and not part of the module's API.
 
+## Translation
+
+Each rule rewrites a form of the Redshift query into a form of PartiQL; the planner then resolves names and types. A
+query the planner cannot type (an operation Redshift defines on types PartiQL does not, for example `'a' || 1`) fails
+at the planner with its reason. The rewrites that change the form of the query, each reported as a `TRANSLATION_INFO`
+note when it matters to a reviewer:
+
+| Redshift | PartiQL |
+|---|---|
+| `TOP n` | `LIMIT n` |
+| `LIMIT ALL` | no limit |
+| `DISTINCT` with `LIMIT` or `OFFSET` | a `DISTINCT` subquery with `ORDER BY`, `LIMIT`, and `OFFSET` outside, because PartiQL evaluates `DISTINCT` after `LIMIT` |
+| `GROUP BY 1`, `ORDER BY 1` | the select-list expression |
+| `ORDER BY alias` | the aliased expression, when the key is only the alias (an output name wins in `ORDER BY`); an alias inside an `ORDER BY` expression stays an input column |
+| `* EXCLUDE (c)` | `EXCLUDE t.c`, qualified with the single FROM item or the relation the query names |
+| `x::t`, `CONVERT(t, x)` | `CAST(x AS t)`; `VARCHAR` is `VARCHAR(256)`, `CHAR` is `CHAR(1)`, `DECIMAL` is `DECIMAL(18, 0)`, `TEXT` and `VARCHAR(MAX)` are `STRING` |
+| `ILIKE` | `LOWER(a) LIKE LOWER(b)` |
+| `ISNULL`, `NOTNULL`, `!=` | `IS NULL`, `IS NOT NULL`, `<>` |
+| `ORDER BY x` | `ORDER BY x ASC NULLS LAST` (Redshift's default order, written explicitly) |
+| `t1, t2` | `t1 CROSS JOIN t2` |
+| `WITH` | kept as `WITH`; a common table expression is referenced as a local variable, so a table of the same name does not capture it |
+
+Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: every scalar and datetime function (`NVL`,
+`DATEADD`, `UPPER`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a column list on a
+derived table or a common table expression, `*` with other select items, `EXCLUDE` with an unqualified column and
+several FROM items, and a subquery inside an `IN` list. A select-list alias used in `WHERE`, `GROUP BY`, `HAVING`, or a
+later select item (a lateral column alias) is left as a name: Redshift reads it as the alias only when no FROM column
+has the name, which needs the schema and is a later change; for now the planner reports it as unknown. The aggregates `AVG`, `COUNT`, `MAX`, `MIN`, and `SUM` are
+translated directly; `AVG` of an integer, which Redshift truncates, is not yet rewritten.
+
 ## Tests
 
-- `src/test/resources/grammar/accept/*.sql`: statements the grammar parses, one file per area of the grammar, each
-  statement under a `--#[name]` marker.
-- `src/test/resources/grammar/reject/*.sql`: statements the grammar refuses, each marker carrying the expected
-  `line:column` of the first syntax error: `--#[name] 1:17`. The files group them by reason: other statements,
-  malformed queries, other dialects, constructs the target views do not support yet, constructs with no counterpart,
-  constructs that cannot be in a view query, and the refused parts of accepted constructs.
-- `RedshiftParseTreeTest`: the shape of the parse tree where the grammar has to choose (operator precedence, `UNION`
-  and join associativity, keywords that are also identifiers, literal prefixes).
+- `src/test/resources/grammar/accept/*.sql` and `reject/*.sql`: the grammar fixtures, statements that must parse and
+  statements that must fail with the expected `line:column`, grouped by reason. `RedshiftParseTreeTest` checks the
+  shape of the parse tree where the grammar has to choose.
+- `src/test/resources/redshift-frontend/inputs/<group>/*.sql` and `outputs/<group>/*.sql`: the conformance suite, one
+  Redshift input and one expected result per case: the input is converted, planned against the Scribe test catalogs
+  (`src/test/resources/catalogs` of the root project), and compiled with the PartiQL target. An expected result is
+  PartiQL text, compared up to whitespace, the front end's problem code with a message fragment
+  (`[UNSUPPORTED_OPERATION{message="function NVL"}];`), or the planner's (`[PLANNER{message="VAR_REF_NOT_FOUND"}];`).
+  `RedshiftTranspilerSuite` runs them, parses and plans every valid output again as a check, and parses every input
+  with the grammar.
+- `RedshiftTranspilerTest`: the public contract: problem codes, positions, notes, determinism, and the AST planned and
+  compiled by `RedshiftTarget`.
 
 ```
 ./gradlew :partiql-scribe-redshift-frontend:test
