@@ -95,3 +95,24 @@ SELECT t.d.e FROM T AS t;
 
 --#[parenthesized]
 SELECT ((b)), (b + (1 * 2)) FROM SIMPLE_T;
+
+--#[cast-type-aliases]
+SELECT CAST(b AS INT2), CAST(b AS INT4), CAST(b AS INT8), CAST(b AS FLOAT4), CAST(b AS FLOAT8), CAST(c AS BPCHAR), CAST(c AS NVARCHAR(5)), CAST(c AS CHARACTER VARYING(6)), CAST(c AS TIMESTAMP WITHOUT TIME ZONE) FROM SIMPLE_T;
+
+--#[cast-type-bounds]
+SELECT CAST(c AS VARCHAR(65535)), CAST(c AS CHAR(4096)), CAST(b AS DECIMAL(38, 37)) FROM SIMPLE_T;
+
+--#[cast-varchar-too-long]
+SELECT CAST(c AS VARCHAR(65536)) FROM SIMPLE_T;
+
+--#[cast-varchar-zero]
+SELECT CAST(c AS VARCHAR(0)) FROM SIMPLE_T;
+
+--#[cast-decimal-scale-over-precision]
+SELECT CAST(b AS DECIMAL(5, 6)) FROM SIMPLE_T;
+
+--#[cast-length-not-an-int]
+SELECT CAST(c AS VARCHAR(99999999999)) FROM SIMPLE_T;
+
+--#[case-sensitive-identifiers-off]
+SELECT "C" AS "Mixed" FROM SIMPLE_T;

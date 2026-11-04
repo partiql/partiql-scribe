@@ -104,7 +104,7 @@ SELECT "$distinct"['a'] AS "a", "$distinct"['b'] AS "b" FROM (SELECT DISTINCT "s
 SELECT "$distinct"['a'] AS "a", "$distinct"['b'] AS "b", "$distinct"['c'] AS "c" FROM (SELECT DISTINCT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" ORDER BY "$distinct"['c'] ASC NULLS LAST LIMIT 5;
 
 --#[distinct-limit-order-by-expression]
-[UNSUPPORTED_OPERATION{message="ORDER BY expression with DISTINCT and LIMIT or OFFSET"}];
+[UNSUPPORTED_OPERATION{message="ORDER BY key that is not a select item, with DISTINCT and LIMIT or OFFSET"}];
 
 --#[parenthesized-query-order-by]
 [UNSUPPORTED_OPERATION{message="ORDER BY, LIMIT, or OFFSET on a parenthesized query that has its own"}];
@@ -146,3 +146,24 @@ SELECT "t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "t" WHERE "t"['b'] IN (SELEC
 
 --#[order-by-alias-in-expression-column-wins]
 SELECT "simple_t"['b'] + 1 AS "c" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY "simple_t"['c'] || 'x' ASC NULLS LAST;
+
+--#[distinct-limit-order-by-qualified-column]
+SELECT "$distinct"['b'] AS "b", "$distinct"['yb'] AS "yb" FROM (SELECT DISTINCT "x"['b'] AS "b", "y"['b'] AS "yb" FROM "default"."T" AS "x" INNER JOIN "default"."T" AS "y" ON "x"['a'] = "y"['a']) AS "$distinct" ORDER BY "$distinct"['yb'] ASC NULLS LAST LIMIT 5;
+
+--#[distinct-limit-order-by-item-expression]
+SELECT "$distinct"['x'] AS "x" FROM (SELECT DISTINCT "simple_t"['b'] + 1 AS "x" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" ORDER BY "$distinct"['x'] ASC NULLS LAST LIMIT 5;
+
+--#[distinct-limit-order-by-ambiguous-name]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: ORDER BY `b` is ambiguous"}];
+
+--#[order-by-ambiguous-alias]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: ORDER BY `x` is ambiguous"}];
+
+--#[order-by-ordinal-of-star]
+[UNSUPPORTED_OPERATION{message="Unsupported Redshift construct: ordinal 1 refers to `*`"}];
+
+--#[order-by-ordinal-not-an-int]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: ordinal 99999999999 is out of range of the select list"}];
+
+--#[limit-too-large]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: LIMIT value 99999999999999999999 is out of range"}];

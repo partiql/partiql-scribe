@@ -82,7 +82,6 @@ java {
 
 tasks.test {
     useJUnitPlatform()
-    // `-PupdateRoundTrip` classifies the Scribe fixtures again and writes the round-trip sets; see RoundTripSuite.
     testLogging {
         events.add(TestLogEvent.FAILED)
         exceptionFormat = TestExceptionFormat.FULL
@@ -98,9 +97,4 @@ kotlin {
         languageVersion.set(KotlinVersion.KOTLIN_2_3)
         freeCompilerArgs.add("-jvm-default=enable")
     }
-}
-
-// Prints the runtime classpath of the module, for tools that run the front end outside Gradle.
-tasks.register("printRuntimeClasspath") {
-    doLast { println((configurations.runtimeClasspath.get().files + tasks.jar.get().archiveFile.get().asFile).joinToString(":")) }
 }

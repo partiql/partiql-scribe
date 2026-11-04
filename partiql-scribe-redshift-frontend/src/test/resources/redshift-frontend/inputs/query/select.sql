@@ -36,9 +36,6 @@ SELECT ALL a FROM SIMPLE_T;
 --#[select-top]
 SELECT TOP 5 a FROM SIMPLE_T ORDER BY a;
 
---#[select-top-and-limit]
-SELECT TOP 5 a FROM SIMPLE_T LIMIT 5;
-
 --#[select-exclude-single-table]
 SELECT * EXCLUDE a FROM SIMPLE_T;
 

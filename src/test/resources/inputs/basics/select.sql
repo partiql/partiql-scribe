@@ -99,3 +99,7 @@ SELECT T.b / 2 AS q, -T.b / 2 AS nq, CAST(T.b AS BIGINT) / 2 AS bq FROM T;
 --#[select-div-01]
 -- Non-integer division keeps `/` (#200)
 SELECT T.b / 2.0 AS q FROM T;
+
+--#[select-truth-test]
+-- IS [NOT] TRUE | FALSE | UNKNOWN
+SELECT T.a IS TRUE AS t, T.a IS NOT FALSE AS nf, T.a IS UNKNOWN AS u, T.a IS NOT UNKNOWN AS nu FROM T;

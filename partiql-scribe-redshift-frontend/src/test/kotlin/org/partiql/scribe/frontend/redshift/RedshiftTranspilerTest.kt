@@ -51,6 +51,8 @@ class RedshiftTranspilerTest {
 
     private fun ScribeProblem.message() = getOrNull("MESSAGE", String::class.java)!!
 
+    private fun ScribeProblem.kind() = getOrNull("KIND", String::class.java)
+
     private fun ScribeProblem.position() = getOrNull("LINE", Int::class.javaObjectType) to getOrNull("COLUMN", Int::class.javaObjectType)
 
     @Test
@@ -77,6 +79,58 @@ class RedshiftTranspilerTest {
         val ex = assertThrows<ScribeException> { frontend().tables("SELECT a FROM T WHERE") }
         assertEquals("UNSUPPORTED_OPERATION", ex.error.name())
         assertEquals(1 to 22, ex.error.position())
+    }
+
+    @Test
+    fun tablesSeesTheCommonTableExpressionsThatTheAstSees() {
+        // A common table expression sees the ones before it, so SIMPLE_T in the first body is the table.
+        val sql = "WITH x AS (SELECT * FROM simple_t), simple_t AS (SELECT a FROM T) SELECT * FROM x"
+        assertEquals(listOf(listOf("simple_t"), listOf("t")), frontend().tables(sql))
+        // The query that the common table expression shadows reads the table of the same name.
+        assertEquals(listOf(listOf("t")), frontend().tables("WITH t AS (SELECT a FROM t) SELECT a FROM t"))
+    }
+
+    @Test
+    fun tablesRefusesWhatToAstRefusesAndReportsNoNotes() {
+        val context = Recording()
+        val ex = assertThrows<ScribeException> { RedshiftFrontend(context).tables("SELECT NVL(a, 0) FROM T") }
+        assertEquals("UNSUPPORTED", ex.error.kind())
+        val notes = Recording()
+        RedshiftFrontend(notes).tables("SELECT DISTINCT c FROM SIMPLE_T ORDER BY c LIMIT 5")
+        assertTrue(notes.problems.isEmpty(), notes.problems.toString())
+    }
+
+    @Test
+    fun caseSensitiveIdentifiersKeepTheirCaseInTheAst() {
+        val sql = "SELECT c AS \"Mixed\" FROM T"
+        val folded = transpile(sql)
+        assertTrue(folded.contains("AS \"mixed\""), folded)
+        val context = Recording()
+        val caseSensitive = RedshiftFrontend(context, caseSensitiveIdentifiers = true)
+        val plan = planner.plan(caseSensitive.toAst(sql), session).plan
+        val kept = Scribe(context).compile(plan, session, PartiQLTarget).output.value
+        assertTrue(kept.contains("AS \"Mixed\""), kept)
+    }
+
+    @Test
+    fun problemsCarryTheirKind() {
+        assertEquals("SYNTAX", failure("SELECT a FROM SIMPLE_T WHERE b >").kind())
+        assertEquals("UNSUPPORTED", failure("SELECT a FROM SIMPLE_T WHERE UPPER(c) = 'X'").kind())
+        assertEquals("INVALID", failure("SELECT a FROM SIMPLE_T ORDER BY 2").kind())
+    }
+
+    @Test
+    fun deepNestingIsRefusedNotAnError() {
+        val depth = RedshiftFrontend.MAX_NESTING + 1
+        val sql = "SELECT " + "(".repeat(depth) + "1" + ")".repeat(depth) + " FROM SIMPLE_T"
+        val problem = failure(sql)
+        assertEquals("UNSUPPORTED", problem.kind())
+        assertTrue(problem.message().contains("nested"), problem.message())
+        assertEquals(1 to 8 + RedshiftFrontend.MAX_NESTING, problem.position())
+        assertThrows<ScribeException> { frontend().tables(sql) }
+        // The limit is high enough for a query of ordinary depth, and that depth converts.
+        val fine = "SELECT " + "(".repeat(RedshiftFrontend.MAX_NESTING) + "1" + ")".repeat(RedshiftFrontend.MAX_NESTING) + " FROM SIMPLE_T"
+        frontend().toAst(fine)
     }
 
     @Test

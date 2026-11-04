@@ -156,3 +156,25 @@ SELECT b + 1 AS x FROM SIMPLE_T ORDER BY x * 2;
 
 --#[order-by-alias-in-expression-column-wins]
 SELECT b + 1 AS c FROM SIMPLE_T ORDER BY c || 'x';
+
+-- The key is an item's expression, so the outer query sorts by that item's output name.
+--#[distinct-limit-order-by-qualified-column]
+SELECT DISTINCT x.b, y.b AS yb FROM T AS x JOIN T AS y ON x.a = y.a ORDER BY y.b LIMIT 5;
+
+--#[distinct-limit-order-by-item-expression]
+SELECT DISTINCT b + 1 AS x FROM SIMPLE_T ORDER BY b + 1 LIMIT 5;
+
+--#[distinct-limit-order-by-ambiguous-name]
+SELECT DISTINCT x.b, y.b FROM T AS x JOIN T AS y ON x.a = y.a ORDER BY b LIMIT 5;
+
+--#[order-by-ambiguous-alias]
+SELECT b AS x, c AS x FROM SIMPLE_T ORDER BY x;
+
+--#[order-by-ordinal-of-star]
+SELECT * FROM SIMPLE_T ORDER BY 1;
+
+--#[order-by-ordinal-not-an-int]
+SELECT a FROM SIMPLE_T ORDER BY 99999999999;
+
+--#[limit-too-large]
+SELECT a FROM SIMPLE_T LIMIT 99999999999999999999;

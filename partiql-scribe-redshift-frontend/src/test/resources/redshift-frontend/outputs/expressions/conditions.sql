@@ -35,7 +35,7 @@ SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "low
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE '100!%' ESCAPE '!';
 
 --#[like-expression-pattern]
-SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE "simple_t"['c'] || '%';
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE "simple_t"['c'] || '%' ESCAPE '\';
 
 --#[between]
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['b'] BETWEEN 1 AND 10 AND "simple_t"['c'] NOT BETWEEN 'a' AND 'm';
@@ -69,3 +69,21 @@ SELECT "simple_t"['b'] = 1 AS "_1", "simple_t"['c'] IS NULL AS "_2", "simple_t"[
 
 --#[condition-in-case]
 SELECT CASE WHEN "simple_t"['b'] BETWEEN 1 AND 5 AND "simple_t"['c'] IS NOT NULL THEN 1 ELSE 0 END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[like-default-escape]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE '%start\_%' ESCAPE '\';
+
+--#[ilike-default-escape]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE "lower"('A\%B%') ESCAPE '\';
+
+--#[ilike-escape-letter]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE "lower"('aX%b') ESCAPE 'x';
+
+--#[ilike-escape-expression]
+[UNSUPPORTED_OPERATION{message="ILIKE with an escape character that is not a string literal"}];
+
+--#[null-operands]
+SELECT NULL LIKE 'a%' AS "_1", NULL IS TRUE AS "_2", "simple_t"['b'] IN (1, NULL) AS "_3" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[null-between]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];

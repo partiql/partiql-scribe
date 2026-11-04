@@ -21,6 +21,7 @@ SELECT a FROM nope;
 --#[unknown-qualifier]
 SELECT u.a FROM SIMPLE_T AS t;
 
+-- Redshift rejects the column as ambiguous; the planner reports it as not found.
 --#[ambiguous-column]
 SELECT b FROM SIMPLE_T, T;
 

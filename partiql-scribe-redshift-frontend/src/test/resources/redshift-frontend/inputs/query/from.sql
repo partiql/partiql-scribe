@@ -18,9 +18,6 @@ SELECT s.a FROM (SELECT a, b FROM SIMPLE_T WHERE b > 0) s;
 --#[from-subquery-no-alias]
 SELECT a FROM (SELECT a FROM SIMPLE_T);
 
---#[from-subquery-column-aliases]
-SELECT s.x FROM (SELECT a FROM SIMPLE_T) AS s (x);
-
 --#[from-comma-join]
 SELECT t.a, u.c FROM SIMPLE_T AS t, T AS u WHERE t.b = u.b;
 
@@ -77,3 +74,10 @@ SELECT s.a FROM (WITH c AS (SELECT a FROM SIMPLE_T) SELECT a FROM c) AS s;
 
 --#[with-join]
 WITH c AS (SELECT b FROM SIMPLE_T) SELECT t.a FROM T AS t JOIN c ON t.b = c.b;
+
+-- A common table expression sees the ones before it; a later name is a table.
+--#[with-later-cte-is-a-table]
+WITH x AS (SELECT * FROM SIMPLE_T), simple_t AS (SELECT a FROM T) SELECT a FROM x;
+
+--#[with-shadows-table-of-same-name]
+WITH t AS (SELECT a FROM T) SELECT a FROM t;

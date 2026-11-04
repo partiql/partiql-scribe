@@ -27,6 +27,7 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+- `IS [NOT] TRUE | FALSE | UNKNOWN` is rendered as that predicate on every SQL target. Trino parses it from release 482.
 
 ### Changed
 

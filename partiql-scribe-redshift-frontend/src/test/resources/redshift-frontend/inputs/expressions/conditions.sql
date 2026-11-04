@@ -71,3 +71,24 @@ SELECT b = 1, c IS NULL, b IN (1, 2), c LIKE 'x%', NOT a FROM SIMPLE_T;
 
 --#[condition-in-case]
 SELECT CASE WHEN b BETWEEN 1 AND 5 AND c IS NOT NULL THEN 1 ELSE 0 END FROM SIMPLE_T;
+
+-- Redshift escapes with a backslash when there is no ESCAPE clause; PartiQL is told so.
+--#[like-default-escape]
+SELECT a FROM SIMPLE_T WHERE c LIKE '%start\\_%';
+
+--#[ilike-default-escape]
+SELECT a FROM SIMPLE_T WHERE c ILIKE 'A\\%B%';
+
+-- The escape character is lowered with the pattern.
+--#[ilike-escape-letter]
+SELECT a FROM SIMPLE_T WHERE c ILIKE 'aX%b' ESCAPE 'X';
+
+--#[ilike-escape-expression]
+SELECT a FROM SIMPLE_T WHERE c ILIKE 'a%' ESCAPE c;
+
+--#[null-operands]
+SELECT NULL LIKE 'a%', NULL IS TRUE, b IN (1, NULL) FROM SIMPLE_T;
+
+-- The planner does not type BETWEEN on NULL.
+--#[null-between]
+SELECT a FROM SIMPLE_T WHERE NULL BETWEEN 1 AND 2;

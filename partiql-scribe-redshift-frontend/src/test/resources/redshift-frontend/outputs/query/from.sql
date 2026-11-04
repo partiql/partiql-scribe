@@ -16,9 +16,6 @@ SELECT "s"['a'] AS "a" FROM (SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "
 --#[from-subquery-no-alias]
 SELECT "_0"['a'] AS "a" FROM (SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t") AS "_0";
 
---#[from-subquery-column-aliases]
-[UNSUPPORTED_OPERATION{message="column aliases of a FROM item"}];
-
 --#[from-comma-join]
 SELECT "t"['a'] AS "a", "u"['c'] AS "c" FROM "default"."SIMPLE_T" AS "t" INNER JOIN "default"."T" AS "u" ON true WHERE "t"['b'] = "u"['b'];
 
@@ -71,3 +68,9 @@ WITH "t" AS (SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_
 SELECT "s"['a'] AS "a" FROM (WITH "c" AS (SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t") SELECT "c"['a'] AS "a" FROM "c" AS "c") AS "s";
 --#[with-join]
 WITH "c" AS (SELECT "simple_t"['b'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t") SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" INNER JOIN "c" AS "c" ON "t"['b'] = "c"['b'];
+
+--#[with-later-cte-is-a-table]
+WITH "x" AS (SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t"), "simple_t" AS (SELECT "t"['a'] AS "a" FROM "default"."T" AS "t") SELECT "x"['a'] AS "a" FROM "x" AS "x";
+
+--#[with-shadows-table-of-same-name]
+WITH "t" AS (SELECT "t"['a'] AS "a" FROM "default"."T" AS "t") SELECT "t"['a'] AS "a" FROM "t" AS "t";

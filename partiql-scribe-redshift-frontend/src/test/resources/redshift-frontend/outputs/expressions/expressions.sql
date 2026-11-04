@@ -44,7 +44,7 @@ SELECT CAST(CAST("simple_t"['b'] AS INT) AS VARCHAR(256)) AS "b" FROM "default".
 SELECT -CAST("simple_t"['b'] AS INT) AS "_1", "simple_t"['b'] + CAST(1 AS INT) AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[cast-types]
-SELECT CAST("simple_t"['c'] AS STRING) AS "c", CAST("simple_t"['c'] AS STRING) AS "c", CAST("simple_t"['c'] AS CHAR(1)) AS "c", CAST("simple_t"['c'] AS CHAR(3)) AS "c", CAST("simple_t"['b'] AS DECIMAL(18,0)) AS "b", CAST("simple_t"['b'] AS REAL) AS "b", CAST("simple_t"['b'] AS DOUBLE PRECISION) AS "b", CAST("simple_t"['b'] AS BOOL) AS "b" FROM "default"."SIMPLE_T" AS "simple_t";
+SELECT CAST("simple_t"['c'] AS VARCHAR(256)) AS "c", CAST("simple_t"['c'] AS STRING) AS "c", CAST("simple_t"['c'] AS CHAR(1)) AS "c", CAST("simple_t"['c'] AS CHAR(3)) AS "c", CAST("simple_t"['b'] AS DECIMAL(18,0)) AS "b", CAST("simple_t"['b'] AS REAL) AS "b", CAST("simple_t"['b'] AS DOUBLE PRECISION) AS "b", CAST("simple_t"['b'] AS BOOL) AS "b" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[cast-datetime]
 SELECT CAST("simple_t"['c'] AS DATE) AS "c", CAST("simple_t"['c'] AS TIMESTAMP) AS "c" FROM "default"."SIMPLE_T" AS "simple_t";
@@ -94,3 +94,24 @@ SELECT "t"['d']['e'] AS "e" FROM "default"."T" AS "t";
 
 --#[parenthesized]
 SELECT "simple_t"['b'] AS "b", "simple_t"['b'] + (1 * 2) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[cast-type-aliases]
+SELECT CAST("simple_t"['b'] AS SMALLINT) AS "b", CAST("simple_t"['b'] AS INT) AS "b", CAST("simple_t"['b'] AS BIGINT) AS "b", CAST("simple_t"['b'] AS REAL) AS "b", CAST("simple_t"['b'] AS DOUBLE PRECISION) AS "b", CAST("simple_t"['c'] AS CHAR(256)) AS "c", CAST("simple_t"['c'] AS VARCHAR(5)) AS "c", CAST("simple_t"['c'] AS VARCHAR(6)) AS "c", CAST("simple_t"['c'] AS TIMESTAMP) AS "c" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[cast-type-bounds]
+SELECT CAST("simple_t"['c'] AS VARCHAR(65535)) AS "c", CAST("simple_t"['c'] AS CHAR(4096)) AS "c", CAST("simple_t"['b'] AS DECIMAL(38,37)) AS "b" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[cast-varchar-too-long]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: VARCHAR length 65536 is out of range (1 to 65535)"}];
+
+--#[cast-varchar-zero]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: VARCHAR length 0 is out of range (1 to 65535)"}];
+
+--#[cast-decimal-scale-over-precision]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: DECIMAL scale 6 is out of range (0 to 5)"}];
+
+--#[cast-length-not-an-int]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: VARCHAR length 99999999999 is out of range (1 to 65535)"}];
+
+--#[case-sensitive-identifiers-off]
+SELECT "simple_t"['c'] AS "mixed" FROM "default"."SIMPLE_T" AS "simple_t";

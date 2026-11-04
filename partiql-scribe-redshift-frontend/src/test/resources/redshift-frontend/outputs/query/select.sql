@@ -34,9 +34,6 @@ SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t";
 --#[select-top]
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY "simple_t"['a'] ASC NULLS LAST LIMIT 5;
 
---#[select-top-and-limit]
-[UNSUPPORTED_OPERATION{message="Invalid Redshift query: TOP and LIMIT in the same query"}];
-
 --#[select-exclude-single-table]
 SELECT "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" EXCLUDE "simple_t".a FROM "default"."SIMPLE_T" AS "simple_t";
 

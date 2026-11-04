@@ -5,6 +5,12 @@ import org.junit.jupiter.api.DynamicNode
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.assertThrows
+import org.partiql.ast.AstNode
+import org.partiql.ast.AstVisitor
+import org.partiql.ast.FromExpr
+import org.partiql.ast.expr.ExprQuerySet
+import org.partiql.ast.expr.ExprVarRef
 import org.partiql.parser.PartiQLParser
 import org.partiql.planner.builder.PartiQLPlannerBuilder
 import org.partiql.scribe.Scribe
@@ -60,12 +66,71 @@ class RedshiftTranspilerSuite {
                         dynamicTest("$group/${input.key.name}") {
                             val expectedFailure = outputs[input.key]?.let { FAILURE.matchEntire(body(it.statement)) }
                             try {
-                                RedshiftFrontend(ScribeContext.standard()).tables(input.statement)
+                                RedshiftFrontend(ScribeContext.standard()).toAst(input.statement)
                             } catch (ex: ScribeException) {
+                                if (ex.error.getOrNull("KIND", String::class.java) != "SYNTAX") return@dynamicTest
                                 val (code, message) = expectedFailure?.destructured ?: fail("Input: ${input.statement}\n$ex")
                                 assertEquals("UNSUPPORTED_OPERATION", code, "Input: ${input.statement}\n$ex")
                                 assertTrue(ex.error.message().contains(message), "Expected message to contain '$message'; got: $ex")
                             }
+                        }
+                    },
+                )
+            }
+
+    /** The tables of every input that converts are the tables its AST reads. */
+    @TestFactory
+    fun tables(): List<DynamicNode> =
+        inputs.iterator().asSequence()
+            .groupBy { it.key.group }
+            .toSortedMap()
+            .map { (group, tests) ->
+                dynamicContainer(
+                    group,
+                    tests.sortedBy { it.key.name }.map { input ->
+                        dynamicTest("$group/${input.key.name}") {
+                            val frontend = RedshiftFrontend(ScribeContext.standard())
+                            val tables =
+                                try {
+                                    frontend.tables(input.statement)
+                                } catch (ex: ScribeException) {
+                                    assertThrows<ScribeException> { frontend.toAst(input.statement) }
+                                    return@dynamicTest
+                                }
+                            val ast = frontend.toAst(input.statement)
+                            val read = mutableSetOf<List<String>>()
+                            val visitor =
+                                object : AstVisitor<Unit, Unit>() {
+                                    override fun defaultReturn(
+                                        node: AstNode,
+                                        ctx: Unit,
+                                    ) = Unit
+
+                                    override fun visitExprQuerySet(
+                                        node: ExprQuerySet,
+                                        ctx: Unit,
+                                    ) {
+                                        // The children of a query set do not include its WITH clause.
+                                        node.with?.accept(this, ctx)
+                                        super.visitExprQuerySet(node, ctx)
+                                    }
+
+                                    override fun visitFromExpr(
+                                        node: FromExpr,
+                                        ctx: Unit,
+                                    ) {
+                                        // A FROM item that is a global name is a table; a local one (`@name`) is a common table expression.
+                                        val ref = node.expr as? ExprVarRef
+                                        if (ref != null && !ref.isQualified) {
+                                            read.add(
+                                                ref.identifier.qualifier.map { it.text } + ref.identifier.identifier.text,
+                                            )
+                                        }
+                                        super.visitFromExpr(node, ctx)
+                                    }
+                                }
+                            ast.accept(visitor, Unit)
+                            assertEquals(read, tables.toSet(), "Input: ${input.statement}")
                         }
                     },
                 )

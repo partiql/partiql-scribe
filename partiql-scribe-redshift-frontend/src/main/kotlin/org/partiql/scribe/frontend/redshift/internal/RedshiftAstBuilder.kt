@@ -62,6 +62,7 @@ import org.partiql.ast.Sort
 import org.partiql.ast.Statement
 import org.partiql.ast.With
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.TruthValue
 import org.partiql.scribe.problems.ScribeProblem
@@ -88,6 +89,7 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  * Redshift), which a later change decides.
  *  - `* EXCLUDE (c)` qualifies each excluded column with the single FROM item, or with the relation the query names.
  *  - `x::t` and `CONVERT(t, x)` are `CAST(x AS t)`; the Redshift type aliases map to the PartiQL type names.
+ *  - `LIKE` without `ESCAPE` gets Redshift's default escape character, `ESCAPE '\'`, when the pattern may hold one.
  *  - `ILIKE` is `LOWER(a) LIKE LOWER(b)`; `ISNULL` and `NOTNULL` are `IS [NOT] NULL`; `!=` is `<>`.
  *  - A comma join is a `CROSS JOIN`.
  *  - A common table expression is referenced as a local variable (`@name`), so that a table of the same name does
@@ -95,7 +97,8 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  *
  * @param caseSensitiveIdentifiers The Redshift `enable_case_sensitive_identifier` setting: when false, delimited
  * identifiers fold to lower case as unquoted ones do.
- * @param listener Receives a [ScribeProblem.TRANSLATION_INFO] note for each rewrite a reviewer should know of.
+ * @param listener Receives a [ScribeProblem.TRANSLATION_INFO] note for a rewrite that changes the shape of the query: the
+ * `DISTINCT` subquery. The other rewrites are one-to-one and keep the shape, so they are not reported.
  */
 internal class RedshiftAstBuilder(
     private val caseSensitiveIdentifiers: Boolean,
@@ -104,9 +107,23 @@ internal class RedshiftAstBuilder(
     /** The common table expressions in scope, innermost last. */
     private val commonTables = ArrayList<String>()
 
-    /** The select-list aliases of a query block, by folded name, for the block's ORDER BY. */
+    /**
+     * The tables the query reads, as the qualified names it writes, folded, without duplicates, in order of first
+     * appearance. A name that a common table expression in scope defines is not a table.
+     */
+    val tables = LinkedHashSet<List<String>>()
+
+    /** The select list of a query block, for the block's ORDER BY: each item's output name and expression. */
     private class Block {
+        /** The items in order: the output name (the alias, or the column the item selects) and the expression. */
+        val items = ArrayList<Pair<Identifier.Simple?, Expr>>()
+
+        /** The aliases by folded name; an alias given twice is in [ambiguous], a reference to it is ambiguous. */
         val aliases = LinkedHashMap<String, Expr>()
+        val ambiguous = HashSet<String>()
+
+        /** The number of items whose output name is [name]. */
+        fun named(name: Identifier.Simple): Int = items.count { it.first?.text == name.text }
     }
 
     fun root(ctx: P.RootContext): Statement = query(querySet(ctx.query()))
@@ -182,10 +199,10 @@ internal class RedshiftAstBuilder(
         }
         val items = spec?.selectList()?.selectItem()
         var limit = limitCtx?.limit?.let(::limitValue)
-        val offset = limitCtx?.offset?.let { exprLit(Literal.intNum(it.text)) }
+        val offset = limitCtx?.offset?.let { integer(it, "OFFSET") }
         if (top != null) {
             if (limitCtx?.limit != null) throw TranslationStop.invalid(top, "TOP and LIMIT in the same query")
-            limit = exprLit(Literal.intNum(top.INTEGER_LITERAL().text))
+            limit = integer(top.INTEGER_LITERAL().symbol, "TOP")
         }
         val body = inner.body
         if (isDistinct(body) && (limit != null || offset != null)) {
@@ -193,7 +210,7 @@ internal class RedshiftAstBuilder(
             // subquery, and the outer query sorts its rows by their output names and limits them.
             note(ctx, "DISTINCT with LIMIT or OFFSET was wrapped in a subquery, because PartiQL evaluates DISTINCT after LIMIT")
             val alias = Identifier.Simple.delimited("\$distinct")
-            val sorts = orderByCtx?.sortItem()?.map { wrappedSortItem(it, items.orEmpty(), alias) }
+            val sorts = orderByCtx?.sortItem()?.map { wrappedSortItem(it, items.orEmpty(), block ?: Block(), alias) }
             val outer = queryBodySFW(selectStar(null), from(listOf(fromExpr(exprQuerySet(body), FromType.SCAN(), alias, null))))
             return exprQuerySet(outer, sorts?.let(::orderBy), limit, offset, with)
         }
@@ -202,28 +219,47 @@ internal class RedshiftAstBuilder(
     }
 
     /**
-     * A sort of the query that wraps a DISTINCT subquery: the key must be an output column of the subquery, named by
-     * its alias, its column name, or its ordinal; the outer query has no other names.
+     * A sort of the query that wraps a DISTINCT subquery. The outer query sees only the output columns of the subquery,
+     * so the key must be one of them: an ordinal, an output name (an alias or the column an item selects), or the
+     * expression of a select item, which Redshift requires of an `ORDER BY` key under `DISTINCT`. A name that several
+     * items have is ambiguous, as in Redshift.
      */
     private fun wrappedSortItem(
         ctx: P.SortItemContext,
         items: List<P.SelectItemContext>,
+        block: Block,
         subquery: Identifier.Simple,
     ): Sort {
         val expr = ctx.expr()
         val hasStar = items.any { it !is P.SelectItemExprContext }
+        val name = bareName(expr)?.identifier()
+        val single = name?.singleOrNull()?.let(::simple)
         val column: Identifier.Simple =
-            if (INTEGER.matches(expr.text)) {
-                val item =
-                    items.getOrNull(expr.text.toInt() - 1)
-                        ?: throw TranslationStop.invalid(expr, "ordinal ${'$'}{expr.text} is out of range of the select list")
-                outputName(item) ?: throw TranslationStop.unsupported(expr, "ORDER BY ordinal of an unnamed expression with $WRAPPED")
-            } else {
-                val name = bareName(expr)?.identifier()?.last()?.let(::simple)
-                if (name != null && (hasStar || items.any { outputName(it)?.text == name.text })) {
-                    name
-                } else {
-                    throw TranslationStop.unsupported(expr, "ORDER BY expression with $WRAPPED")
+            when {
+                INTEGER.matches(expr.text) -> {
+                    val ordinal = ordinal(expr, items)
+                    val item = items[ordinal - 1]
+                    outputName(item) ?: throw TranslationStop.unsupported(expr, "ORDER BY ordinal of an unnamed expression with $WRAPPED")
+                }
+                // An output name wins when the key stands alone.
+                single != null && single.text in block.aliases -> {
+                    if (single.text in block.ambiguous) throw TranslationStop.invalid(expr, "ORDER BY `${single.text}` is ambiguous")
+                    single
+                }
+                single != null && block.named(single) > 0 -> {
+                    if (block.named(single) > 1) throw TranslationStop.invalid(expr, "ORDER BY `${single.text}` is ambiguous")
+                    single
+                }
+                else -> {
+                    // Otherwise the key is an input expression, and it is one of the select items.
+                    val key = expr(expr)
+                    val item = block.items.firstOrNull { it.second == key }
+                    when {
+                        item != null ->
+                            item.first ?: throw TranslationStop.unsupported(expr, "ORDER BY an unnamed select item with $WRAPPED")
+                        hasStar && name != null -> simple(name.last())
+                        else -> throw TranslationStop.unsupported(expr, "ORDER BY key that is not a select item, with $WRAPPED")
+                    }
                 }
             }
         val key = exprPath(exprVarRef(Identifier.of(subquery), false), listOf(exprPathStepField(column)))
@@ -258,7 +294,16 @@ internal class RedshiftAstBuilder(
 
     /** `LIMIT ALL` is the absence of a limit. */
     private fun limitValue(ctx: P.LimitValueContext): Expr? =
-        if (ctx.ALL() != null) null else exprLit(Literal.intNum(ctx.INTEGER_LITERAL().text))
+        if (ctx.ALL() != null) null else integer(ctx.INTEGER_LITERAL().symbol, "LIMIT")
+
+    /** An integer literal of a clause; Redshift takes a BIGINT, so a larger value is invalid. */
+    private fun integer(
+        token: Token,
+        clause: String,
+    ): Expr {
+        token.text.toLongOrNull() ?: throw TranslationStop.invalid(token, "$clause value ${token.text} is out of range")
+        return exprLit(Literal.intNum(token.text))
+    }
 
     /** Translates a `SELECT ... FROM ... WHERE ... GROUP BY ... HAVING` block; returns it with the block of its aliases. */
     private fun specification(ctx: P.QuerySpecificationContext): Pair<ExprQuerySet, Block> {
@@ -295,7 +340,8 @@ internal class RedshiftAstBuilder(
             is P.SelectItemExprContext -> {
                 val expr = expr(ctx.expr())
                 val alias = ctx.alias?.let(::label) ?: ctx.bareAlias?.let(::simple)
-                if (alias != null) block.aliases[alias.text] = expr
+                if (alias != null && block.aliases.put(alias.text, expr) != null) block.ambiguous.add(alias.text)
+                block.items.add(outputName(ctx) to expr)
                 selectItemExpr(expr, alias)
             }
             else -> unexpected(ctx)
@@ -337,27 +383,45 @@ internal class RedshiftAstBuilder(
         items: List<P.SelectItemContext>?,
     ): Expr {
         if (!INTEGER.matches(ctx.text)) return expr(ctx)
-        val ordinal = ctx.text.toInt()
         if (items == null) throw TranslationStop.unsupported(ctx, "ordinal after a set operation or a parenthesized query")
-        val item =
-            items.getOrNull(ordinal - 1) ?: throw TranslationStop.invalid(ctx, "ordinal $ordinal is out of range of the select list")
-        return when (item) {
+        val ordinal = ordinal(ctx, items)
+        return when (val item = items[ordinal - 1]) {
             is P.SelectItemExprContext -> expr(item.expr())
-            else -> throw TranslationStop.invalid(ctx, "ordinal $ordinal refers to `*`")
+            // The columns behind `*` are known after planning, not here.
+            else -> throw TranslationStop.unsupported(ctx, "ordinal $ordinal refers to `*`")
         }
+    }
+
+    /** The 1-based ordinal [ctx] holds, which must point into [items]. */
+    private fun ordinal(
+        ctx: P.ExprContext,
+        items: List<P.SelectItemContext>,
+    ): Int {
+        val ordinal = ctx.text.toIntOrNull()
+        if (ordinal == null || ordinal !in 1..items.size) {
+            throw TranslationStop.invalid(ctx, "ordinal ${ctx.text} is out of range of the select list")
+        }
+        return ordinal
     }
 
     /**
      * A sort key. A key that is only the alias of a select item is that item's expression: an output name wins in
-     * ORDER BY, but only when it stands alone. Inside an expression a name is an input column, as in Redshift.
+     * ORDER BY, but only when it stands alone. Inside an expression a name is an input column, as in Redshift. An alias
+     * that several items have is ambiguous, as in Redshift.
      */
     private fun sortItem(
         ctx: P.SortItemContext,
         items: List<P.SelectItemContext>?,
         block: Block?,
     ): Sort {
-        val alias = bareName(ctx.expr())?.identifier()?.singleOrNull()?.let { block?.aliases?.get(simple(it).text) }
-        return sort(alias ?: ordinalOrExpr(ctx.expr(), items), ctx.dir, ctx.nulls)
+        val name = bareName(ctx.expr())?.identifier()?.singleOrNull()?.let(::simple)
+        if (name != null && block != null) {
+            block.aliases[name.text]?.let { alias ->
+                if (name.text in block.ambiguous) throw TranslationStop.invalid(ctx.expr(), "ORDER BY `${name.text}` is ambiguous")
+                return sort(alias, ctx.dir, ctx.nulls)
+            }
+        }
+        return sort(ordinalOrExpr(ctx.expr(), items), ctx.dir, ctx.nulls)
     }
 
     /** Redshift sorts NULL last in ascending order and first in descending order; PartiQL is told so explicitly. */
@@ -425,6 +489,7 @@ internal class RedshiftAstBuilder(
                 val parts = ctx.qualifiedName().identifier().map(::simple)
                 val alias = ctx.tableAlias()?.let(::tableAlias)
                 val isCommonTable = parts.size == 1 && parts[0].text in commonTables
+                if (!isCommonTable) tables.add(parts.map { it.text })
                 Ref(fromExpr(exprVarRef(Identifier.of(parts), isCommonTable), FromType.SCAN(), alias, null), listOf(alias ?: parts.last()))
             }
             else -> unexpected(ctx)
@@ -493,18 +558,38 @@ internal class RedshiftAstBuilder(
                 }
                 exprInCollection(valueExpr(ctx.lhs), exprArray(ctx.expr().map(::expr)), ctx.NOT() != null)
             }
-            is P.PredicateLikeContext -> {
-                val not = ctx.NOT() != null
-                val escape = ctx.escape?.let(::valueExpr)
-                if (ctx.op.type == P.ILIKE) {
-                    exprLike(lower(valueExpr(ctx.lhs)), lower(valueExpr(ctx.rhs)), escape, not)
-                } else {
-                    exprLike(valueExpr(ctx.lhs), valueExpr(ctx.rhs), escape, not)
-                }
-            }
+            is P.PredicateLikeContext -> like(ctx)
             is P.PredicateBaseContext -> valueExpr(ctx.valueExpr())
             else -> unexpected(ctx)
         }
+
+    /**
+     * `LIKE` and `ILIKE`. Redshift escapes with a backslash when there is no `ESCAPE` clause and PartiQL escapes with
+     * nothing, so the translation writes `ESCAPE '\'` unless the pattern is a literal without a backslash, for which
+     * the two agree. `ILIKE` is `LOWER(a) LIKE LOWER(b)`, and the escape character is lowered with the pattern.
+     */
+    private fun like(ctx: P.PredicateLikeContext): Expr {
+        val not = ctx.NOT() != null
+        val insensitive = ctx.op.type == P.ILIKE
+        val pattern = valueExpr(ctx.rhs)
+        var escape: Expr? =
+            when {
+                ctx.escape != null -> valueExpr(ctx.escape)
+                pattern is ExprLit && pattern.lit.code() == Literal.STRING && '\\' !in pattern.lit.stringValue() -> null
+                else -> exprLit(Literal.string("\\"))
+            }
+        if (insensitive && escape != null) {
+            val literal =
+                (escape as? ExprLit)?.lit?.takeIf { it.code() == Literal.STRING }
+                    ?: throw TranslationStop.unsupported(ctx.escape, "ILIKE with an escape character that is not a string literal")
+            escape = exprLit(Literal.string(foldAscii(literal.stringValue())))
+        }
+        return if (insensitive) {
+            exprLike(lower(valueExpr(ctx.lhs)), lower(pattern), escape, not)
+        } else {
+            exprLike(valueExpr(ctx.lhs), pattern, escape, not)
+        }
+    }
 
     private fun lower(expr: Expr): Expr = exprCall(Identifier.regular("lower"), listOf(expr), null)
 
@@ -625,8 +710,10 @@ internal class RedshiftAstBuilder(
      */
 
     /**
-     * The PartiQL type of a Redshift type. Redshift defaults: `VARCHAR` is `VARCHAR(256)`, `CHAR` is `CHAR(1)`,
-     * `DECIMAL` is `DECIMAL(18, 0)`. `VARCHAR(MAX)` and `TEXT` are the unbounded string.
+     * The PartiQL type of a Redshift type, with the Redshift defaults and bounds: `VARCHAR` is `VARCHAR(256)` and `TEXT`
+     * is the same; `CHAR` is `CHAR(1)` and `BPCHAR` is `CHAR(256)`; `VARCHAR(MAX)` is the unbounded string and
+     * `CHAR(MAX)` is `CHAR(4096)`; `DECIMAL` is `DECIMAL(18, 0)`. A length or precision outside Redshift's range is
+     * invalid. Redshift measures a character length in bytes and PartiQL in characters; the number is kept.
      * https://docs.aws.amazon.com/redshift/latest/dg/c_Supported_data_types.html
      */
     private fun dataType(ctx: P.DataTypeContext): DataType =
@@ -634,22 +721,26 @@ internal class RedshiftAstBuilder(
             is P.TypeVarcharContext -> {
                 val length = ctx.length
                 when {
-                    length == null -> if (ctx.TEXT() != null) DataType.STRING() else DataType.VARCHAR(256)
+                    length == null -> DataType.VARCHAR(256)
                     length.MAX() != null -> DataType.STRING()
-                    else -> DataType.VARCHAR(length.INTEGER_LITERAL().text.toInt())
+                    else -> DataType.VARCHAR(bounded(length.INTEGER_LITERAL().symbol, 1..65535, "VARCHAR length"))
                 }
             }
             is P.TypeCharContext -> {
                 val length = ctx.length
                 when {
-                    length == null -> DataType.CHAR(1)
+                    length == null -> DataType.CHAR(if (ctx.name.type == P.BPCHAR) 256 else 1)
                     length.MAX() != null -> DataType.CHAR(4096)
-                    else -> DataType.CHAR(length.INTEGER_LITERAL().text.toInt())
+                    else -> DataType.CHAR(bounded(length.INTEGER_LITERAL().symbol, 1..4096, "CHAR length"))
                 }
             }
             is P.TypeDoubleContext -> DataType.DOUBLE_PRECISION()
             is P.TypeRealContext -> DataType.REAL()
-            is P.TypeDecimalContext -> DataType.DECIMAL(ctx.precision?.text?.toInt() ?: 18, ctx.scale?.text?.toInt() ?: 0)
+            is P.TypeDecimalContext -> {
+                val precision = ctx.precision?.let { bounded(it, 1..38, "DECIMAL precision") } ?: 18
+                val scale = ctx.scale?.let { bounded(it, 0..minOf(precision, 37), "DECIMAL scale") } ?: 0
+                DataType.DECIMAL(precision, scale)
+            }
             is P.TypeIntegerContext ->
                 when (ctx.name.type) {
                     P.SMALLINT, P.INT2 -> DataType.SMALLINT()
@@ -693,7 +784,22 @@ internal class RedshiftAstBuilder(
         listener.report(TranslationStop.info(ctx.start.line, ctx.start.charPositionInLine + 1, message))
     }
 
-    private fun unexpected(ctx: ParserRuleContext): Nothing = error("Unexpected parse tree node ${ctx::class.simpleName}: ${ctx.text}")
+    /** The value of an integer token that Redshift bounds. */
+    private fun bounded(
+        token: Token,
+        range: IntRange,
+        what: String,
+    ): Int {
+        val value = token.text.toIntOrNull()
+        if (value == null || value !in range) {
+            throw TranslationStop.invalid(token, "$what ${token.text} is out of range (${range.first} to ${range.last})")
+        }
+        return value
+    }
+
+    /** A parse tree node the builder has no rule for; the grammar and the builder have drifted apart. */
+    private fun unexpected(ctx: ParserRuleContext): Nothing =
+        throw TranslationStop.unsupported(ctx, "${ctx.text} (no conversion rule for ${ctx::class.simpleName})")
 
     private companion object {
         const val WRAPPED = "DISTINCT and LIMIT or OFFSET"

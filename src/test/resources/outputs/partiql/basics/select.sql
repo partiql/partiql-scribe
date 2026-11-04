@@ -139,3 +139,6 @@ SELECT "T"['b'] / 2 AS "q", (-"T"['b']) / 2 AS "nq", CAST("T"['b'] AS BIGINT) / 
 
 --#[select-div-01]
 SELECT CAST("T"['b'] AS DECIMAL(10,0)) / 2.0 AS "q" FROM "default"."T" AS "T";
+
+--#[select-truth-test]
+SELECT "T"['a'] IS TRUE AS "t", NOT ("T"['a'] IS FALSE) AS "nf", "T"['a'] IS UNKNOWN AS "u", NOT ("T"['a'] IS UNKNOWN) AS "nu" FROM "default"."T" AS "T";
