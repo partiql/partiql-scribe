@@ -54,3 +54,15 @@ SELECT "t"['b'] AS "b", "t"['c'] AS "c" EXCLUDE "t".a FROM "default"."SIMPLE_T" 
 
 --#[select-star-and-items]
 [UNSUPPORTED_OPERATION{message="`*` with other select items"}];
+
+--#[select-exclude-unknown-qualifier]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: EXCLUDE t.c: `t` is not a FROM item"}];
+
+--#[select-exclude-other-relation-than-star]
+[UNSUPPORTED_OPERATION{message="EXCLUDE y.c of another relation than the `*`"}];
+
+--#[select-exclude-own-relation-of-star]
+SELECT "x"['a'] AS "a", "x"['b'] AS "b" EXCLUDE "x".c FROM "default"."SIMPLE_T" AS "x" INNER JOIN "default"."T" AS "y" ON "x"['b'] = "y"['b'];
+
+--#[select-exclude-three-part-name]
+SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b" EXCLUDE "simple_t".c FROM "default"."SIMPLE_T" AS "simple_t";

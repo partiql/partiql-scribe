@@ -68,7 +68,8 @@ class RedshiftTranspilerSuite {
                             try {
                                 RedshiftFrontend(ScribeContext.standard()).toAst(input.statement)
                             } catch (ex: ScribeException) {
-                                if (ex.error.getOrNull("KIND", String::class.java) != "SYNTAX") return@dynamicTest
+                                val kind = ex.error.getOrNull(RedshiftFrontend.KIND, String::class.java)
+                                if (kind != RedshiftFrontend.KIND_SYNTAX) return@dynamicTest
                                 val (code, message) = expectedFailure?.destructured ?: fail("Input: ${input.statement}\n$ex")
                                 assertEquals("UNSUPPORTED_OPERATION", code, "Input: ${input.statement}\n$ex")
                                 assertTrue(ex.error.message().contains(message), "Expected message to contain '$message'; got: $ex")

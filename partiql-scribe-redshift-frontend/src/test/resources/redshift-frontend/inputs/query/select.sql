@@ -56,3 +56,16 @@ SELECT a, b EXCLUDE a FROM SIMPLE_T;
 
 --#[select-star-and-items]
 SELECT *, a FROM SIMPLE_T;
+
+-- An EXCLUDE qualifier must be a FROM item, and the relation behind a `t.*`.
+--#[select-exclude-unknown-qualifier]
+SELECT * EXCLUDE t.c FROM SIMPLE_T AS x;
+
+--#[select-exclude-other-relation-than-star]
+SELECT x.* EXCLUDE y.c FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b;
+
+--#[select-exclude-own-relation-of-star]
+SELECT x.* EXCLUDE x.c FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b;
+
+--#[select-exclude-three-part-name]
+SELECT * EXCLUDE default.SIMPLE_T.c FROM default.SIMPLE_T;

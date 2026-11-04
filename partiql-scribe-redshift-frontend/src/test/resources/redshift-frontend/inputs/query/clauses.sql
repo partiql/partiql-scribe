@@ -216,3 +216,55 @@ SELECT b AS x, b AS x FROM SIMPLE_T ORDER BY x;
 
 --#[order-by-cast-output-name]
 SELECT CAST(b AS INT) FROM SIMPLE_T ORDER BY b;
+
+-- A parenthesized SELECT keeps its select list in view of the clauses around it.
+--#[parenthesized-distinct-limit]
+(SELECT DISTINCT c FROM SIMPLE_T) LIMIT 5;
+
+--#[parenthesized-distinct-star-limit]
+(SELECT DISTINCT * FROM SIMPLE_T) LIMIT 5;
+
+--#[parenthesized-distinct-order-by-limit]
+(SELECT DISTINCT c FROM SIMPLE_T) ORDER BY c LIMIT 5;
+
+--#[parenthesized-order-by-ordinal]
+(SELECT a, b FROM SIMPLE_T) ORDER BY 2;
+
+--#[parenthesized-order-by-alias]
+(SELECT b AS x FROM SIMPLE_T) ORDER BY x;
+
+--#[parenthesized-top]
+(SELECT TOP 5 c FROM SIMPLE_T);
+
+--#[parenthesized-top-and-limit]
+(SELECT TOP 5 c FROM SIMPLE_T) LIMIT 3;
+
+--#[union-order-by-ordinal]
+SELECT a FROM SIMPLE_T UNION SELECT a FROM T ORDER BY 1;
+
+-- Under `*` the columns are not known here, so a qualified key must name the relation behind the `*`.
+--#[distinct-limit-qualified-star-order-by-own-relation]
+SELECT DISTINCT x.* FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b ORDER BY x.a LIMIT 5;
+
+--#[distinct-limit-qualified-star-order-by-other-relation]
+SELECT DISTINCT x.* FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b ORDER BY y.a LIMIT 5;
+
+--#[distinct-limit-star-order-by-outer-column]
+SELECT a FROM T AS o WHERE o.b IN (SELECT DISTINCT * FROM SIMPLE_T ORDER BY o.a LIMIT 1);
+
+-- The planner's `_n` for an unnamed item is not a name ORDER BY can use; here `_1` is an input column.
+--#[order-by-planner-name]
+SELECT b + 1 FROM SIMPLE_T ORDER BY _1;
+
+--#[distinct-limit-planner-name-collision]
+SELECT DISTINCT b + 1, c AS _1 FROM SIMPLE_T LIMIT 5;
+
+-- Two spellings of one column are the same item; a column of another FROM item is not.
+--#[order-by-qualified-and-unqualified-column]
+SELECT x.b, b FROM SIMPLE_T AS x ORDER BY b;
+
+--#[order-by-quoted-and-unquoted-alias]
+SELECT b AS x, "b" AS x FROM SIMPLE_T ORDER BY x;
+
+--#[order-by-name-of-two-relations]
+SELECT x.b, b FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b ORDER BY b;

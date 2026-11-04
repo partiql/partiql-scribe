@@ -16,20 +16,25 @@ val output = Scribe(context).compile(plan, session, PartiQLTarget).output.value
 
 A problem found while converting is reported to the context's problem listener as a `ScribeProblem` with the `LINE`
 and `COLUMN` of its position in the Redshift text, and the one that stops the conversion is thrown as
-`ScribeException`. It is an `UNSUPPORTED_OPERATION` whose `KIND` property says which: `SYNTAX` (the text is not in the
-grammar), `UNSUPPORTED` (a construct that parses but has no conversion yet), or `INVALID` (a form Redshift rejects, such
-as an ordinal out of range); the message starts with the kind in words. A rewrite that changes the shape of the query (a
+`ScribeException`. It is an `UNSUPPORTED_OPERATION` whose `RedshiftFrontend.KIND` property says which:
+`KIND_SYNTAX` (the text is not in the grammar), `KIND_UNSUPPORTED` (a construct that parses but has no conversion yet),
+or `KIND_INVALID` (a form Redshift rejects, such as an ordinal out of range); the message starts with the kind in words. A rewrite that changes the shape of the query (a
 `DISTINCT` query with `LIMIT` becomes a subquery) is reported as `TRANSLATION_INFO`. An unknown name, or an operation
 PartiQL does not define on the operand types, is found by the planner, not by the front end.
 
 `tables(sql)` lists the tables the query reads, from the same conversion as `toAst`, so a common table expression counts
-as a table exactly where the AST reads it as one. A query nested more than `RedshiftFrontend.MAX_NESTING` (200)
-parentheses deep is refused before parsing.
+as a table exactly where the AST reads it as one.
+
+A query that nests deeper than `RedshiftFrontend.MAX_NESTING` (200) is refused: parentheses or `CASE` expressions open
+at once, prefix operators (`NOT`, `-`) in a row, and levels of the AST, where each subquery, `CASE`, join, `UNION`, and
+each operator of a chain is a level (`a AND b AND c` is two deep). The bound on the text keeps the parser's recursion
+bounded, and the bound on the AST keeps the planner's and the targets' recursion bounded. The parser runs with SLL
+prediction first and full LL only when SLL finds an error, which keeps its decision cache small.
 
 ## Grammar
 
 `src/main/antlr/Redshift.g4` is an ANTLR 4 grammar of the subset of the Redshift *query* language that the front end
-translates: the constructs with a PartiQL counterpart that the target views accept, directly or by an exact rewrite.
+translates: the constructs with a PartiQL counterpart that Scribe's targets accept, directly or by an exact rewrite.
 What parses either translates or is refused at its position; everything else is a syntax error with a line and column. It is case-insensitive and
 follows PostgreSQL operator precedence, from which Redshift derives.
 
@@ -67,31 +72,38 @@ at the planner with its reason. The rewrites:
 | `LIMIT ALL` | no limit |
 | `DISTINCT` with `LIMIT` or `OFFSET` | a `DISTINCT` subquery with `ORDER BY`, `LIMIT`, and `OFFSET` outside, because PartiQL evaluates `DISTINCT` after `LIMIT`; items that share an output name get their own names inside (`$1`) and the shared name back outside |
 | `GROUP BY 1`, `ORDER BY 1` | the select-list expression; an ordinal that points at `*` is refused, as the columns behind `*` are known only after planning |
-| `ORDER BY name` | the select item of that output name (its alias, or the column it selects), when the key is only the name (an output name wins in `ORDER BY`); a name inside an `ORDER BY` expression stays an input column; a name that several items have is ambiguous and refused unless they are the same expression |
-| `ORDER BY` under `DISTINCT` with `LIMIT` | the key is matched to the select item it names or repeats, and the outer query sorts by that item's column |
-| `* EXCLUDE (c)` | `EXCLUDE t.c`, qualified with the single FROM item or the relation the query names |
+| `ORDER BY name` | the select item of that output name (its alias, or the column it selects), when the key is only the name (an output name wins in `ORDER BY`); a name inside an `ORDER BY` expression stays an input column; a name that several items have is ambiguous and refused unless they are the same expression (`x.b` and `b` over one FROM item are) |
+| `ORDER BY` under `DISTINCT` with `LIMIT` | the key is matched to the select item it names or repeats, and the outer query sorts by that item's column; under `*` it must be a column of the relation behind the `*` |
+| `* EXCLUDE (c)` | `EXCLUDE t.c`, qualified with the single FROM item or the relation the query names; a qualifier the query writes must be a FROM item, and the relation behind a `t.*` |
 | `x::t`, `CONVERT(t, x)` | `CAST(x AS t)`; `VARCHAR` and `TEXT` are `VARCHAR(256)`, `CHAR` is `CHAR(1)`, `BPCHAR` is `CHAR(256)`, `DECIMAL` is `DECIMAL(18, 0)`, `VARCHAR(MAX)` is `STRING`, `CHAR(MAX)` is `CHAR(4096)`; a length or precision outside Redshift's range is refused |
-| `LIKE` without `ESCAPE` | `LIKE ... ESCAPE '\'`, Redshift's default escape character, unless the pattern is a literal without a backslash |
-| `ILIKE` | `LOWER(a) LIKE b` with a literal pattern lowered and rewritten to escape with `\`, so lowering cannot turn a letter into the escape character; `LOWER(a) LIKE LOWER(b)` for another pattern, whose escape character must not be a letter |
+| `LIKE` | a literal pattern is rewritten to the form PartiQL takes: Redshift escapes with `\` by default, takes an escaped character of any kind literally, and takes `ESCAPE ''` as no escape; PartiQL takes an escape only before `%`, `_`, and the escape character, so `'a\\b'` is `'ab'` and `'%start\\_%'` is `'%start\_%' ESCAPE '\'`. A pattern that is not a literal keeps Redshift's escape character |
+| `ILIKE` | `LOWER(a) LIKE b` with a literal pattern lowered in that form, which cannot turn a letter into the escape character; `LOWER(a) LIKE LOWER(b)` for another pattern, whose escape character must not be a letter |
 | `ISNULL`, `NOTNULL`, `!=` | `IS NULL`, `IS NOT NULL`, `<>` |
 | `ORDER BY x` | `ORDER BY x ASC NULLS LAST` (Redshift's default order, written explicitly) |
 | `t1, t2` | `t1 CROSS JOIN t2` |
 | `WITH` | kept as `WITH`; a common table expression is referenced as a local variable, so a table of the same name does not capture it |
 
 Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: every scalar and datetime function (`NVL`,
-`DATEADD`, `UPPER`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a column list on a
-derived table or a common table expression, `*` with other select items, `EXCLUDE` with select items other than `*` or
-with an unqualified column and several FROM items, a subquery inside an `IN` list, an `ORDER BY` or `GROUP BY` ordinal
-that points at `*` or follows a set operation or a parenthesized query, and under `DISTINCT` with `LIMIT` an `ORDER BY`
-key that is not a select item, `*` over several FROM items, and `t.*` next to other items (a column name may repeat
-there, which the outer query cannot tell apart without the schema). A select-list alias used in `WHERE`, `GROUP BY`, `HAVING`, or a
+`DATEADD`, `UPPER`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a `DATE` or
+`TIMESTAMP` literal in a form other than `YYYY-MM-DD` and `YYYY-MM-DD HH:MM:SS[.ffffff]`, a backslash escape in a string
+literal other than `\\`, `\'`, `\b`, `\f`, `\n`, `\r`, `\t`, a numeric literal of more than 38 digits, a column list
+on a derived table or a common table expression, `*` with other select items, `EXCLUDE` with select items other than `*`
+or of an unqualified column with several FROM items, a subquery inside an `IN` list, `ORDER BY`, `LIMIT`, or `OFFSET` on
+a parenthesized query that has its own, an `ORDER BY` or `GROUP BY` ordinal that points at `*` or follows a set
+operation, `ILIKE` with an escape character that is not a literal, or a letter when the pattern is not a literal, an
+`ORDER BY` name that several select items have when they may be different columns (`b` and `y.b` over several FROM
+items), and under `DISTINCT` with `LIMIT` an `ORDER BY` key that is not a select item, `*` over several FROM items,
+`t.*` next to other items (a column name may repeat there, which the outer query cannot tell apart without the schema),
+and a qualified key of another relation than the `*`. A select-list alias used in `WHERE`, `GROUP BY`, `HAVING`, or a
 later select item (a lateral column alias) is left as a name: Redshift reads it as the alias only when no FROM column
-has the name, which needs the schema and is a later change; for now the planner reports it as unknown. The aggregates `AVG`, `COUNT`, `MAX`, `MIN`, and `SUM` are
-translated directly; `AVG` of an integer, which Redshift truncates, is not yet rewritten.
+has the name, which needs the schema and is a later change; for now the planner reports it as unknown.
 
-Known differences that are not refused: `ILIKE` folds the case of every letter through `LOWER`, where Redshift folds
-only single-byte characters; a `CHAR` or `VARCHAR` length is a number of bytes in Redshift and of characters in PartiQL,
-and the number is kept.
+Known differences that are not refused: the aggregates `AVG`, `COUNT`, `MAX`, `MIN`, and `SUM` are translated directly,
+and `AVG` of an integer, which Redshift truncates, is not yet rewritten; `ILIKE` folds the case of every letter through
+`LOWER`, where Redshift folds only single-byte characters; a `CHAR` or `VARCHAR` length is a number of bytes in Redshift
+and of characters in PartiQL, and the number is kept; a `LIKE` pattern that is not a literal keeps Redshift's escape
+character, and PartiQL rejects at run time an escape before a character other than `%`, `_`, or the escape itself, which
+Redshift takes literally.
 
 ## Tests
 
@@ -105,8 +117,8 @@ and the number is kept.
   (`[UNSUPPORTED_OPERATION{message="function NVL"}];`), or the planner's (`[PLANNER{message="VAR_REF_NOT_FOUND"}];`).
   `RedshiftTranspilerSuite` runs them, parses and plans every valid output again as a check, parses every input with
   the grammar, and checks that `tables` names the tables the AST reads.
-- `RedshiftTranspilerTest`: the public contract: problem codes, positions, notes, determinism, and the AST planned and
-  compiled by `RedshiftTarget`.
+- `RedshiftTranspilerTest`: the public contract: problem codes and kinds, positions, notes, determinism, the nesting
+  limit, and the AST planned and compiled by `RedshiftTarget`.
 
 ```
 ./gradlew :partiql-scribe-redshift-frontend:test

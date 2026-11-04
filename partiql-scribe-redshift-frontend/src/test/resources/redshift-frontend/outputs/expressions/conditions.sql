@@ -32,7 +32,7 @@ SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "sim
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE 'abc%' AND "lower"("simple_t"['c']) NOT LIKE 'x%';
 
 --#[like-escape]
-SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE '100!%' ESCAPE '!';
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE '100\%' ESCAPE '\';
 
 --#[like-expression-pattern]
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE "simple_t"['c'] || '%' ESCAPE '\';
@@ -108,3 +108,21 @@ SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "low
 
 --#[like-escape-two-characters]
 [UNSUPPORTED_OPERATION{message="Invalid Redshift query: ESCAPE must be a single character"}];
+
+--#[like-escaped-letter]
+SELECT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE 'ab';
+
+--#[like-escaped-letter-with-escape-clause]
+SELECT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE 'ab';
+
+--#[like-no-escape-character]
+SELECT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE 'a%';
+
+--#[like-no-escape-character-with-backslash]
+SELECT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE 'a\\%' ESCAPE '\';
+
+--#[like-expression-pattern-no-escape-character]
+SELECT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE "simple_t"['c'];
+
+--#[like-expression-escape]
+SELECT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE 'a%' ESCAPE "simple_t"['c'];

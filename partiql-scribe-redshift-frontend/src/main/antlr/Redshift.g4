@@ -1,7 +1,7 @@
 /*
  * Amazon Redshift query grammar for the Redshift-to-PartiQL frontend.
  *
- * Scope: the Redshift constructs that map to a PartiQL construct the target view engine supports, directly or by an
+ * Scope: the Redshift constructs that map to a PartiQL construct that Scribe's targets accept, directly or by an
  * exact rewrite. The query that defines a view is what the frontend translates, so the grammar accepts what the
  * translation is for and nothing more: what parses either translates or is refused at its position. Everything else
  * is a syntax error, including

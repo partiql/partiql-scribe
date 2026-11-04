@@ -116,3 +116,13 @@ SELECT CAST(c AS VARCHAR(99999999999)) FROM SIMPLE_T;
 
 --#[case-sensitive-identifiers-off]
 SELECT "C" AS "Mixed" FROM SIMPLE_T;
+
+-- Redshift's widest number is DECIMAL(38); the planner would round a longer literal.
+--#[numeric-literal-38-digits]
+SELECT 1.0000000000000000000000000000000000001 AS v FROM SIMPLE_T;
+
+--#[numeric-literal-39-digits]
+SELECT 1.000000000000000000000000000000000000001 AS v FROM SIMPLE_T;
+
+--#[integer-literal-39-digits]
+SELECT 100000000000000000000000000000000000000 AS v FROM SIMPLE_T;

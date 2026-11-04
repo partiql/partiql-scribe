@@ -114,3 +114,22 @@ SELECT a FROM SIMPLE_T WHERE c ILIKE c || '%' ESCAPE '!';
 
 --#[like-escape-two-characters]
 SELECT a FROM SIMPLE_T WHERE c LIKE 'a' ESCAPE 'ab';
+
+-- A literal pattern is written as PartiQL takes it: an escape only before %, _, and the escape character.
+--#[like-escaped-letter]
+SELECT c FROM SIMPLE_T WHERE c LIKE 'a\\b';
+
+--#[like-escaped-letter-with-escape-clause]
+SELECT c FROM SIMPLE_T WHERE c LIKE 'aXb' ESCAPE 'X';
+
+--#[like-no-escape-character]
+SELECT c FROM SIMPLE_T WHERE c LIKE 'a%' ESCAPE '';
+
+--#[like-no-escape-character-with-backslash]
+SELECT c FROM SIMPLE_T WHERE c LIKE 'a\\%' ESCAPE '';
+
+--#[like-expression-pattern-no-escape-character]
+SELECT c FROM SIMPLE_T WHERE c LIKE c ESCAPE '';
+
+--#[like-expression-escape]
+SELECT c FROM SIMPLE_T WHERE c LIKE 'a%' ESCAPE c;

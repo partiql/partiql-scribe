@@ -51,7 +51,7 @@ class RedshiftTranspilerTest {
 
     private fun ScribeProblem.message() = getOrNull("MESSAGE", String::class.java)!!
 
-    private fun ScribeProblem.kind() = getOrNull("KIND", String::class.java)
+    private fun ScribeProblem.kind() = getOrNull(RedshiftFrontend.KIND, String::class.java)
 
     private fun ScribeProblem.position() = getOrNull("LINE", Int::class.javaObjectType) to getOrNull("COLUMN", Int::class.javaObjectType)
 
@@ -94,7 +94,7 @@ class RedshiftTranspilerTest {
     fun tablesRefusesWhatToAstRefusesAndReportsNoNotes() {
         val context = Recording()
         val ex = assertThrows<ScribeException> { RedshiftFrontend(context).tables("SELECT NVL(a, 0) FROM T") }
-        assertEquals("UNSUPPORTED", ex.error.kind())
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, ex.error.kind())
         val notes = Recording()
         RedshiftFrontend(notes).tables("SELECT DISTINCT c FROM SIMPLE_T ORDER BY c LIMIT 5")
         assertTrue(notes.problems.isEmpty(), notes.problems.toString())
@@ -114,32 +114,81 @@ class RedshiftTranspilerTest {
 
     @Test
     fun problemsCarryTheirKind() {
-        assertEquals("SYNTAX", failure("SELECT a FROM SIMPLE_T WHERE b >").kind())
-        assertEquals("UNSUPPORTED", failure("SELECT a FROM SIMPLE_T WHERE UPPER(c) = 'X'").kind())
-        assertEquals("INVALID", failure("SELECT a FROM SIMPLE_T ORDER BY 2").kind())
+        assertEquals(RedshiftFrontend.KIND_SYNTAX, failure("SELECT a FROM SIMPLE_T WHERE b >").kind())
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, failure("SELECT a FROM SIMPLE_T WHERE UPPER(c) = 'X'").kind())
+        assertEquals(RedshiftFrontend.KIND_INVALID, failure("SELECT a FROM SIMPLE_T ORDER BY 2").kind())
     }
 
     @Test
-    fun deepNestingIsRefusedNotAnError() {
+    fun deepParenthesesAreRefused() {
         val depth = RedshiftFrontend.MAX_NESTING + 1
         val sql = "SELECT " + "(".repeat(depth) + "1" + ")".repeat(depth) + " FROM SIMPLE_T"
         val problem = failure(sql)
-        assertEquals("UNSUPPORTED", problem.kind())
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, problem.kind())
         assertTrue(problem.message().contains("nested"), problem.message())
         assertEquals(1 to 8 + RedshiftFrontend.MAX_NESTING, problem.position())
         assertThrows<ScribeException> { frontend().tables(sql) }
-        // The limit is high enough for a query of ordinary depth, and that depth converts.
+        // The limit is high enough for a query of ordinary depth, and that depth converts, plans, and compiles.
         val fine = "SELECT " + "(".repeat(RedshiftFrontend.MAX_NESTING) + "1" + ")".repeat(RedshiftFrontend.MAX_NESTING) + " FROM SIMPLE_T"
-        frontend().toAst(fine)
+        assertTrue(transpile(fine).startsWith("SELECT 1 AS"), fine)
     }
 
     @Test
-    fun deepExpressionChainIsRefusedNotAnError() {
-        // No parentheses, so the nesting limit does not apply; the builder's recursion over the chain runs out of stack.
-        val sql = "SELECT a FROM SIMPLE_T WHERE " + (1..20000).joinToString(" AND ") { "b = $it" }
+    fun deepCaseExpressionsAreRefused() {
+        fun nested(depth: Int) = "SELECT " + "CASE WHEN a THEN 1 ELSE ".repeat(depth) + "1" + " END".repeat(depth) + " AS v FROM T"
+        val problem = failure(nested(RedshiftFrontend.MAX_NESTING + 1))
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, problem.kind())
+        assertTrue(problem.message().contains("CASE"), problem.message())
+        assertTrue(transpile(nested(RedshiftFrontend.MAX_NESTING)).contains("CASE WHEN"))
+        // Far deeper than the parser's stack would take; refused before parsing.
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, failure(nested(5000)).kind())
+    }
+
+    @Test
+    fun longPrefixRunsAreRefused() {
+        val nots = failure("SELECT a FROM T WHERE " + "NOT ".repeat(RedshiftFrontend.MAX_NESTING + 1) + "a")
+        assertTrue(nots.message().contains("prefix operators"), nots.message())
+        val signs = failure("SELECT " + "- ".repeat(5000) + "b FROM T")
+        assertTrue(signs.message().contains("prefix operators"), signs.message())
+        assertTrue(transpile("SELECT a FROM T WHERE " + "NOT ".repeat(RedshiftFrontend.MAX_NESTING) + "a").contains("NOT"))
+    }
+
+    @Test
+    fun deepOperatorChainsAreRefusedAtTheirToken() {
+        // No parentheses: each AND is a level of the AST, and the AST is bounded so the planner's recursion is too.
+        val terms = RedshiftFrontend.MAX_NESTING + 2
+        val sql = "SELECT a FROM SIMPLE_T WHERE " + (1..terms).joinToString(" AND ") { "b = $it" }
         val problem = failure(sql)
-        assertEquals("UNSUPPORTED", problem.kind())
-        assertTrue(problem.message().contains("nested"), problem.message())
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, problem.kind())
+        assertTrue(problem.message().contains("levels deep"), problem.message())
+        val (line, column) = problem.position()
+        assertEquals(1, line)
+        assertEquals("AND", sql.substring(column!! - 1, column + 2))
+        val fine = "SELECT a FROM SIMPLE_T WHERE " + (1..RedshiftFrontend.MAX_NESTING).joinToString(" AND ") { "b = $it" }
+        assertTrue(transpile(fine).contains(" AND "))
+        for (chain in listOf(" || ", " + ", " UNION ALL ")) {
+            val deep =
+                if (chain == " UNION ALL ") {
+                    (1..5000).joinToString(chain) { "SELECT a FROM T" }
+                } else {
+                    "SELECT " + (1..5000).joinToString(chain) { "b" } + " FROM T"
+                }
+            assertTrue(failure(deep).message().contains("levels deep"), chain)
+        }
+        val joins = "SELECT t0.a FROM T AS t0 " + (1..5000).joinToString(" ") { "JOIN T AS t$it ON t0.a = t$it.a" }
+        assertTrue(failure(joins).message().contains("levels deep"))
+        val commas = "SELECT t0.a FROM " + (0..5000).joinToString(", ") { "T AS t$it" }
+        assertTrue(failure(commas).message().contains("levels deep"))
+    }
+
+    @Test
+    fun caseSensitiveNamesAreKeptApartInTheDistinctWrap() {
+        val context = Recording()
+        val frontend = RedshiftFrontend(context, caseSensitiveIdentifiers = true)
+        val plan = planner.plan(frontend.toAst("SELECT DISTINCT b AS \"X\", c AS x FROM T ORDER BY x LIMIT 5"), session).plan
+        val output = Scribe(context).compile(plan, session, PartiQLTarget).output.value
+        assertTrue(output.contains("AS \"X\"") && output.contains("AS \"x\""), output)
+        assertTrue(output.contains("ORDER BY \"\$distinct\"['x']"), output)
     }
 
     @Test

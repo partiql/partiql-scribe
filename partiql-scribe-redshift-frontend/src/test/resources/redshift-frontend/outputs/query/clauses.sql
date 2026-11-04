@@ -203,3 +203,51 @@ SELECT "simple_t"['b'] AS "x", "simple_t"['b'] AS "x" FROM "default"."SIMPLE_T" 
 
 --#[order-by-cast-output-name]
 SELECT CAST("simple_t"['b'] AS INT) AS "b" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY CAST("simple_t"['b'] AS INT) ASC NULLS LAST;
+
+--#[parenthesized-distinct-limit]
+SELECT "$distinct"['c'] AS "c" FROM (SELECT DISTINCT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" LIMIT 5;
+
+--#[parenthesized-distinct-star-limit]
+SELECT "$distinct"['a'] AS "a", "$distinct"['b'] AS "b", "$distinct"['c'] AS "c" FROM (SELECT DISTINCT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" LIMIT 5;
+
+--#[parenthesized-distinct-order-by-limit]
+SELECT "$distinct"['c'] AS "c" FROM (SELECT DISTINCT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" ORDER BY "$distinct"['c'] ASC NULLS LAST LIMIT 5;
+
+--#[parenthesized-order-by-ordinal]
+SELECT "simple_t"['a'] AS "a", "simple_t"['b'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY "simple_t"['b'] ASC NULLS LAST;
+
+--#[parenthesized-order-by-alias]
+SELECT "simple_t"['b'] AS "x" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY "simple_t"['b'] ASC NULLS LAST;
+
+--#[parenthesized-top]
+SELECT "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t" LIMIT 5;
+
+--#[parenthesized-top-and-limit]
+[UNSUPPORTED_OPERATION{message="ORDER BY, LIMIT, or OFFSET on a parenthesized query that has its own"}];
+
+--#[union-order-by-ordinal]
+[UNSUPPORTED_OPERATION{message="ordinal after a set operation"}];
+
+--#[distinct-limit-qualified-star-order-by-own-relation]
+SELECT "$distinct"['a'] AS "a", "$distinct"['b'] AS "b", "$distinct"['c'] AS "c" FROM (SELECT DISTINCT "x"['a'] AS "a", "x"['b'] AS "b", "x"['c'] AS "c" FROM "default"."SIMPLE_T" AS "x" INNER JOIN "default"."T" AS "y" ON "x"['b'] = "y"['b']) AS "$distinct" ORDER BY "$distinct"['a'] ASC NULLS LAST LIMIT 5;
+
+--#[distinct-limit-qualified-star-order-by-other-relation]
+[UNSUPPORTED_OPERATION{message="ORDER BY a column of another relation than the `*`"}];
+
+--#[distinct-limit-star-order-by-outer-column]
+[UNSUPPORTED_OPERATION{message="ORDER BY a column of another relation than the `*`"}];
+
+--#[order-by-planner-name]
+[PLANNER{message="VAR_REF_NOT_FOUND"}];
+
+--#[distinct-limit-planner-name-collision]
+SELECT "$distinct"['$1'] AS "_1", "$distinct"['$2'] AS "_1" FROM (SELECT DISTINCT "simple_t"['b'] + 1 AS "$1", "simple_t"['c'] AS "$2" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" LIMIT 5;
+
+--#[order-by-qualified-and-unqualified-column]
+SELECT "x"['b'] AS "b", "x"['b'] AS "b" FROM "default"."SIMPLE_T" AS "x" ORDER BY "x"['b'] ASC NULLS LAST;
+
+--#[order-by-quoted-and-unquoted-alias]
+SELECT "simple_t"['b'] AS "x", "simple_t"['b'] AS "x" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY "simple_t"['b'] ASC NULLS LAST;
+
+--#[order-by-name-of-two-relations]
+[UNSUPPORTED_OPERATION{message="ORDER BY `b` names several select items that may be different columns"}];

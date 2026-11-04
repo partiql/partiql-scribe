@@ -8,10 +8,10 @@ SELECT -"simple_t"['b'] AS "_1", +"simple_t"['b'] AS "_2", -("simple_t"['b'] + 1
 SELECT ("simple_t"['b'] + (1 * 2)) - (3 / 4) AS "_1", ("simple_t"['b'] + 1) * 2 AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[arith-exponent]
-[UNSUPPORTED_OPERATION{message="operator `^` (POW) is not translated yet"}];
+[UNSUPPORTED_OPERATION{message="operator `^` is not translated yet"}];
 
 --#[bitwise-and]
-[UNSUPPORTED_OPERATION{message="operator `&` (BITWISE_AND) is not translated yet"}];
+[UNSUPPORTED_OPERATION{message="operator `&` is not translated yet"}];
 
 --#[concat]
 SELECT "simple_t"['c'] || 'x' AS "_1", ("simple_t"['c'] || "simple_t"['c']) || 'y' AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
@@ -115,3 +115,12 @@ SELECT CAST("simple_t"['c'] AS VARCHAR(65535)) AS "c", CAST("simple_t"['c'] AS C
 
 --#[case-sensitive-identifiers-off]
 SELECT "simple_t"['c'] AS "mixed" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[numeric-literal-38-digits]
+SELECT 1.0000000000000000000000000000000000001 AS "v" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[numeric-literal-39-digits]
+[UNSUPPORTED_OPERATION{message="numeric literal with more than 38 digits"}];
+
+--#[integer-literal-39-digits]
+[UNSUPPORTED_OPERATION{message="numeric literal with more than 38 digits"}];
