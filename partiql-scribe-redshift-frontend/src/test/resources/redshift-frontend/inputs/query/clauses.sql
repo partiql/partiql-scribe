@@ -178,3 +178,41 @@ SELECT a FROM SIMPLE_T ORDER BY 99999999999;
 
 --#[limit-too-large]
 SELECT a FROM SIMPLE_T LIMIT 99999999999999999999;
+
+-- Items that share an output name get their own names in the DISTINCT subquery and the shared name back outside.
+--#[distinct-limit-duplicate-aliases]
+SELECT DISTINCT b AS x, c AS x FROM SIMPLE_T LIMIT 5;
+
+--#[distinct-limit-duplicate-column-and-alias]
+SELECT DISTINCT c AS b, b FROM SIMPLE_T LIMIT 5;
+
+--#[distinct-limit-duplicate-cast-and-column]
+SELECT DISTINCT CAST(b AS INT), b FROM SIMPLE_T LIMIT 5;
+
+--#[distinct-limit-order-by-duplicate-ordinal]
+SELECT DISTINCT b AS x, c AS x FROM SIMPLE_T ORDER BY 2 DESC LIMIT 5;
+
+--#[distinct-limit-order-by-same-expression-twice]
+SELECT DISTINCT b AS x, b AS x FROM SIMPLE_T ORDER BY x LIMIT 5;
+
+--#[distinct-limit-order-by-unnamed-ordinal]
+SELECT DISTINCT b + 1, c FROM SIMPLE_T ORDER BY 1 LIMIT 5;
+
+--#[distinct-limit-qualified-star-alone]
+SELECT DISTINCT x.* FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b ORDER BY x.c LIMIT 5;
+
+--#[distinct-limit-star-over-join]
+SELECT DISTINCT * FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b LIMIT 5;
+
+--#[distinct-limit-qualified-star-with-item]
+SELECT DISTINCT x.*, y.c FROM SIMPLE_T AS x JOIN T AS y ON x.b = y.b LIMIT 5;
+
+-- An ORDER BY name matches every item of that output name; it is ambiguous when they are different expressions.
+--#[order-by-duplicate-output-name]
+SELECT c AS b, b FROM SIMPLE_T ORDER BY b;
+
+--#[order-by-same-expression-twice]
+SELECT b AS x, b AS x FROM SIMPLE_T ORDER BY x;
+
+--#[order-by-cast-output-name]
+SELECT CAST(b AS INT) FROM SIMPLE_T ORDER BY b;

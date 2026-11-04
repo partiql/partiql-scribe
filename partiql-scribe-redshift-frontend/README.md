@@ -65,14 +65,14 @@ at the planner with its reason. The rewrites:
 |---|---|
 | `TOP n` | `LIMIT n` |
 | `LIMIT ALL` | no limit |
-| `DISTINCT` with `LIMIT` or `OFFSET` | a `DISTINCT` subquery with `ORDER BY`, `LIMIT`, and `OFFSET` outside, because PartiQL evaluates `DISTINCT` after `LIMIT` |
+| `DISTINCT` with `LIMIT` or `OFFSET` | a `DISTINCT` subquery with `ORDER BY`, `LIMIT`, and `OFFSET` outside, because PartiQL evaluates `DISTINCT` after `LIMIT`; items that share an output name get their own names inside (`$1`) and the shared name back outside |
 | `GROUP BY 1`, `ORDER BY 1` | the select-list expression; an ordinal that points at `*` is refused, as the columns behind `*` are known only after planning |
-| `ORDER BY alias` | the aliased expression, when the key is only the alias (an output name wins in `ORDER BY`); an alias inside an `ORDER BY` expression stays an input column; an alias given to two items is ambiguous and refused |
-| `ORDER BY` under `DISTINCT` with `LIMIT` | the key is matched to the select item it names or repeats, and the outer query sorts by that item's output name |
+| `ORDER BY name` | the select item of that output name (its alias, or the column it selects), when the key is only the name (an output name wins in `ORDER BY`); a name inside an `ORDER BY` expression stays an input column; a name that several items have is ambiguous and refused unless they are the same expression |
+| `ORDER BY` under `DISTINCT` with `LIMIT` | the key is matched to the select item it names or repeats, and the outer query sorts by that item's column |
 | `* EXCLUDE (c)` | `EXCLUDE t.c`, qualified with the single FROM item or the relation the query names |
 | `x::t`, `CONVERT(t, x)` | `CAST(x AS t)`; `VARCHAR` and `TEXT` are `VARCHAR(256)`, `CHAR` is `CHAR(1)`, `BPCHAR` is `CHAR(256)`, `DECIMAL` is `DECIMAL(18, 0)`, `VARCHAR(MAX)` is `STRING`, `CHAR(MAX)` is `CHAR(4096)`; a length or precision outside Redshift's range is refused |
 | `LIKE` without `ESCAPE` | `LIKE ... ESCAPE '\'`, Redshift's default escape character, unless the pattern is a literal without a backslash |
-| `ILIKE` | `LOWER(a) LIKE LOWER(b)`, with a literal escape character lowered too |
+| `ILIKE` | `LOWER(a) LIKE b` with a literal pattern lowered and rewritten to escape with `\`, so lowering cannot turn a letter into the escape character; `LOWER(a) LIKE LOWER(b)` for another pattern, whose escape character must not be a letter |
 | `ISNULL`, `NOTNULL`, `!=` | `IS NULL`, `IS NOT NULL`, `<>` |
 | `ORDER BY x` | `ORDER BY x ASC NULLS LAST` (Redshift's default order, written explicitly) |
 | `t1, t2` | `t1 CROSS JOIN t2` |
@@ -83,7 +83,8 @@ Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: e
 derived table or a common table expression, `*` with other select items, `EXCLUDE` with select items other than `*` or
 with an unqualified column and several FROM items, a subquery inside an `IN` list, an `ORDER BY` or `GROUP BY` ordinal
 that points at `*` or follows a set operation or a parenthesized query, and under `DISTINCT` with `LIMIT` an `ORDER BY`
-key that is not a select item. A select-list alias used in `WHERE`, `GROUP BY`, `HAVING`, or a
+key that is not a select item, `*` over several FROM items, and `t.*` next to other items (a column name may repeat
+there, which the outer query cannot tell apart without the schema). A select-list alias used in `WHERE`, `GROUP BY`, `HAVING`, or a
 later select item (a lateral column alias) is left as a name: Redshift reads it as the alias only when no FROM column
 has the name, which needs the schema and is a later change; for now the planner reports it as unknown. The aggregates `AVG`, `COUNT`, `MAX`, `MIN`, and `SUM` are
 translated directly; `AVG` of an integer, which Redshift truncates, is not yet rewritten.

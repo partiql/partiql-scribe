@@ -92,3 +92,25 @@ SELECT NULL LIKE 'a%', NULL IS TRUE, b IN (1, NULL) FROM SIMPLE_T;
 -- The planner does not type BETWEEN on NULL.
 --#[null-between]
 SELECT a FROM SIMPLE_T WHERE NULL BETWEEN 1 AND 2;
+
+-- The pattern is lowered here, so a letter that is the escape character cannot become one once lowered.
+--#[ilike-escape-letter-in-pattern]
+SELECT a FROM SIMPLE_T WHERE c ILIKE 'x%X%' ESCAPE 'X';
+
+--#[ilike-escaped-escape]
+SELECT a FROM SIMPLE_T WHERE c ILIKE 'XX%' ESCAPE 'X';
+
+--#[ilike-no-escape-character]
+SELECT a FROM SIMPLE_T WHERE c ILIKE 'a\\%' ESCAPE '';
+
+--#[ilike-pattern-ends-with-escape]
+SELECT a FROM SIMPLE_T WHERE c ILIKE 'a%X' ESCAPE 'X';
+
+--#[ilike-letter-escape-with-expression-pattern]
+SELECT a FROM SIMPLE_T WHERE c ILIKE c ESCAPE 'X';
+
+--#[ilike-expression-pattern]
+SELECT a FROM SIMPLE_T WHERE c ILIKE c || '%' ESCAPE '!';
+
+--#[like-escape-two-characters]
+SELECT a FROM SIMPLE_T WHERE c LIKE 'a' ESCAPE 'ab';

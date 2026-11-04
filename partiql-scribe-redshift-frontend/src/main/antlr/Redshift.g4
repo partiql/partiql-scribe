@@ -3,8 +3,8 @@
  *
  * Scope: the Redshift constructs that map to a PartiQL construct the target view engine supports, directly or by an
  * exact rewrite. The query that defines a view is what the frontend translates, so the grammar accepts what the
- * translation can produce and nothing more: what parses is what translates. Everything else is a syntax error,
- * including
+ * translation is for and nothing more: what parses either translates or is refused at its position. Everything else
+ * is a syntax error, including
  *
  *  - every statement other than a single SELECT query (and a second statement after it);
  *  - the constructs the target does not accept yet: window functions, EXISTS, INTERSECT and EXCEPT, PIVOT and

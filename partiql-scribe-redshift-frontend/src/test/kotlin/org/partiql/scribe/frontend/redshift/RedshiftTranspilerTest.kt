@@ -134,6 +134,15 @@ class RedshiftTranspilerTest {
     }
 
     @Test
+    fun deepExpressionChainIsRefusedNotAnError() {
+        // No parentheses, so the nesting limit does not apply; the builder's recursion over the chain runs out of stack.
+        val sql = "SELECT a FROM SIMPLE_T WHERE " + (1..20000).joinToString(" AND ") { "b = $it" }
+        val problem = failure(sql)
+        assertEquals("UNSUPPORTED", problem.kind())
+        assertTrue(problem.message().contains("nested"), problem.message())
+    }
+
+    @Test
     fun astPlansAndCompilesWithoutErrors() {
         val context = Recording()
         val partiql = transpile("SELECT a FROM SIMPLE_T WHERE b > 0", context)

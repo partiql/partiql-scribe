@@ -167,3 +167,39 @@ SELECT "$distinct"['x'] AS "x" FROM (SELECT DISTINCT "simple_t"['b'] + 1 AS "x" 
 
 --#[limit-too-large]
 [UNSUPPORTED_OPERATION{message="Invalid Redshift query: LIMIT value 99999999999999999999 is out of range"}];
+
+--#[distinct-limit-duplicate-aliases]
+SELECT "$distinct"['$1'] AS "x", "$distinct"['$2'] AS "x" FROM (SELECT DISTINCT "simple_t"['b'] AS "$1", "simple_t"['c'] AS "$2" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" LIMIT 5;
+
+--#[distinct-limit-duplicate-column-and-alias]
+SELECT "$distinct"['$1'] AS "b", "$distinct"['$2'] AS "b" FROM (SELECT DISTINCT "simple_t"['c'] AS "$1", "simple_t"['b'] AS "$2" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" LIMIT 5;
+
+--#[distinct-limit-duplicate-cast-and-column]
+SELECT "$distinct"['$1'] AS "b", "$distinct"['$2'] AS "b" FROM (SELECT DISTINCT CAST("simple_t"['b'] AS INT) AS "$1", "simple_t"['b'] AS "$2" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" LIMIT 5;
+
+--#[distinct-limit-order-by-duplicate-ordinal]
+SELECT "$distinct"['$1'] AS "x", "$distinct"['$2'] AS "x" FROM (SELECT DISTINCT "simple_t"['b'] AS "$1", "simple_t"['c'] AS "$2" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" ORDER BY "$distinct"['$2'] DESC NULLS FIRST LIMIT 5;
+
+--#[distinct-limit-order-by-same-expression-twice]
+SELECT "$distinct"['$1'] AS "x", "$distinct"['$2'] AS "x" FROM (SELECT DISTINCT "simple_t"['b'] AS "$1", "simple_t"['b'] AS "$2" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" ORDER BY "$distinct"['$1'] ASC NULLS LAST LIMIT 5;
+
+--#[distinct-limit-order-by-unnamed-ordinal]
+SELECT "$distinct"['_1'] AS "_1", "$distinct"['c'] AS "c" FROM (SELECT DISTINCT "simple_t"['b'] + 1 AS "_1", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t") AS "$distinct" ORDER BY "$distinct"['_1'] ASC NULLS LAST LIMIT 5;
+
+--#[distinct-limit-qualified-star-alone]
+SELECT "$distinct"['a'] AS "a", "$distinct"['b'] AS "b", "$distinct"['c'] AS "c" FROM (SELECT DISTINCT "x"['a'] AS "a", "x"['b'] AS "b", "x"['c'] AS "c" FROM "default"."SIMPLE_T" AS "x" INNER JOIN "default"."T" AS "y" ON "x"['b'] = "y"['b']) AS "$distinct" ORDER BY "$distinct"['c'] ASC NULLS LAST LIMIT 5;
+
+--#[distinct-limit-star-over-join]
+[UNSUPPORTED_OPERATION{message="`*` over several FROM items with DISTINCT and LIMIT or OFFSET"}];
+
+--#[distinct-limit-qualified-star-with-item]
+[UNSUPPORTED_OPERATION{message="`t.*` with other select items and DISTINCT and LIMIT or OFFSET"}];
+
+--#[order-by-duplicate-output-name]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: ORDER BY `b` is ambiguous"}];
+
+--#[order-by-same-expression-twice]
+SELECT "simple_t"['b'] AS "x", "simple_t"['b'] AS "x" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY "simple_t"['b'] ASC NULLS LAST;
+
+--#[order-by-cast-output-name]
+SELECT CAST("simple_t"['b'] AS INT) AS "b" FROM "default"."SIMPLE_T" AS "simple_t" ORDER BY CAST("simple_t"['b'] AS INT) ASC NULLS LAST;

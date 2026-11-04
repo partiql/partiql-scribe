@@ -29,7 +29,7 @@ SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE (NOT
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE 'abc%' AND "simple_t"['c'] NOT LIKE '_x_';
 
 --#[ilike]
-SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE "lower"('ABC%') AND "lower"("simple_t"['c']) NOT LIKE "lower"('x%');
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE 'abc%' AND "lower"("simple_t"['c']) NOT LIKE 'x%';
 
 --#[like-escape]
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE '100!%' ESCAPE '!';
@@ -74,10 +74,10 @@ SELECT CASE WHEN "simple_t"['b'] BETWEEN 1 AND 5 AND "simple_t"['c'] IS NOT NULL
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['c'] LIKE '%start\_%' ESCAPE '\';
 
 --#[ilike-default-escape]
-SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE "lower"('A\%B%') ESCAPE '\';
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE 'a\%b%' ESCAPE '\';
 
 --#[ilike-escape-letter]
-SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE "lower"('aX%b') ESCAPE 'x';
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE 'a\%b' ESCAPE '\';
 
 --#[ilike-escape-expression]
 [UNSUPPORTED_OPERATION{message="ILIKE with an escape character that is not a string literal"}];
@@ -87,3 +87,24 @@ SELECT NULL LIKE 'a%' AS "_1", NULL IS TRUE AS "_2", "simple_t"['b'] IN (1, NULL
 
 --#[null-between]
 [PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[ilike-escape-letter-in-pattern]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE 'x%\%' ESCAPE '\';
+
+--#[ilike-escaped-escape]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE 'x%';
+
+--#[ilike-no-escape-character]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE 'a\\%' ESCAPE '\';
+
+--#[ilike-pattern-ends-with-escape]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: LIKE pattern must not end with the escape character"}];
+
+--#[ilike-letter-escape-with-expression-pattern]
+[UNSUPPORTED_OPERATION{message="ILIKE with a letter as the escape character and a pattern that is not a literal"}];
+
+--#[ilike-expression-pattern]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "lower"("simple_t"['c']) LIKE "lower"("simple_t"['c'] || '%') ESCAPE '!';
+
+--#[like-escape-two-characters]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: ESCAPE must be a single character"}];
