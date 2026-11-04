@@ -11,6 +11,8 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
 }
 
+val partiqlVersion: String by project
+
 repositories {
     mavenCentral()
     mavenLocal()
@@ -18,6 +20,11 @@ repositories {
 
 dependencies {
     antlr("org.antlr:antlr4:4.10.1")
+    api(project(":"))
+    api("org.partiql:partiql-ast:$partiqlVersion")
+    api("org.partiql:partiql-spi:$partiqlVersion")
+    testImplementation("org.partiql:partiql-parser:$partiqlVersion")
+    testImplementation("org.partiql:partiql-planner:$partiqlVersion")
     implementation("org.antlr:antlr4-runtime:4.10.1")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.21")
@@ -56,6 +63,15 @@ tasks.named("runKtlintCheckOverTestSourceSet") {
 ktlint {
     filter {
         exclude { it.file.path.contains("generated-src") }
+    }
+}
+
+// Reuse the Scribe test utilities (catalog loading, fixture loading) and the Scribe test resources (catalogs and
+// fixtures) from the root project.
+sourceSets {
+    test {
+        kotlin.srcDir(rootProject.file("src/test/kotlin/org/partiql/scribe/utils"))
+        resources.srcDir(rootProject.file("src/test/resources"))
     }
 }
 
