@@ -46,6 +46,7 @@ public open class DuckDBFunctionExtensionCalls(
                     CONTAINS to ::contains,
                     TO_UNIXTIME to ::toUnixTime,
                     HEX_TO_BIGINT to ::hexToBigInt,
+                    TO_CHAR to { args -> toChar(context.getProblemListener(), args, "strftime", TO_CHAR_STRFTIME) },
                 ),
         )
 
