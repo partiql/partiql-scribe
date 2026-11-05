@@ -84,19 +84,6 @@ SELECT DECODE(a, TRUE, 'yes', FALSE, 'no', 'unknown') FROM SIMPLE_T;
 --#[greatest-signed-literal]
 SELECT GREATEST(b, -1) FROM SIMPLE_T;
 
--- A subquery argument is parenthesized in the output.
---#[nvl-subquery]
-SELECT NVL((SELECT MAX(b) FROM T), 0) FROM SIMPLE_T;
-
---#[nullif-subquery]
-SELECT NULLIF(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;
-
---#[greatest-subquery]
-SELECT GREATEST(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;
-
---#[decode-subquery-search-value]
-SELECT DECODE(b, (SELECT MAX(b) FROM T), 'max', 'other') FROM SIMPLE_T;
-
 --#[conditional-in-having-and-join]
 SELECT t.c, COUNT(*) FROM SIMPLE_T AS t JOIN T AS u ON NVL(t.b, 0) = NVL(u.b, 0) GROUP BY t.c HAVING NVL(MAX(t.b), 0) > 1;
 

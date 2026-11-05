@@ -114,12 +114,6 @@ public abstract class org/partiql/scribe/sql/AstToSql : org/partiql/ast/sql/SqlD
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
 	public synthetic fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
-	public synthetic fun visitExprCoalesce (Lorg/partiql/ast/expr/ExprCoalesce;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitExprCoalesce (Lorg/partiql/ast/expr/ExprCoalesce;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
-	public synthetic fun visitExprNullIf (Lorg/partiql/ast/expr/ExprNullIf;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitExprNullIf (Lorg/partiql/ast/expr/ExprNullIf;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
-	public synthetic fun visitExprRowValue (Lorg/partiql/ast/expr/ExprRowValue;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitExprRowValue (Lorg/partiql/ast/expr/ExprRowValue;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }
 
 public final class org/partiql/scribe/sql/ExprQuerySetFactory {

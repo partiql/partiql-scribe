@@ -807,7 +807,7 @@ internal class RedshiftAstBuilder(
             is P.PredicateBetweenContext -> exprBetween(valueExpr(ctx.lhs), valueExpr(ctx.lower), valueExpr(ctx.upper), ctx.NOT() != null)
             is P.PredicateInQueryContext -> exprInCollection(valueExpr(ctx.lhs), querySet(ctx.query()), ctx.NOT() != null)
             is P.PredicateInListContext -> {
-                // A scalar subquery as an element of a list is not translated yet.
+                // A scalar subquery as an element of a list is not translated yet; see [argument].
                 ctx.expr().forEach {
                     if (bareAtom(
                             it,
@@ -943,7 +943,11 @@ internal class RedshiftAstBuilder(
                 }
             is P.AtomCountStarContext -> exprCall(Identifier.regular("count"), emptyList(), null)
             is P.AtomAggregateContext ->
-                exprCall(Identifier.regular(foldAscii(ctx.name.text)), listOf(expr(ctx.expr())), ctx.setQuantifier()?.let(::setQuantifier))
+                exprCall(
+                    Identifier.regular(foldAscii(ctx.name.text)),
+                    listOf(argument(ctx.expr())),
+                    ctx.setQuantifier()?.let(::setQuantifier),
+                )
             is P.AtomFunctionCallContext -> function(ctx.name.start, ctx.expr())
             // The datetime functions are translated by a later change, each with its own rule.
             is P.AtomDateFunctionContext -> notYet(ctx.name)
@@ -965,6 +969,16 @@ internal class RedshiftAstBuilder(
         name: Token,
         args: List<P.ExprContext>,
     ): Expr = conditional.translate(name, args) ?: notYet(name)
+
+    /**
+     * An argument of a function. A scalar subquery is not translated there yet: the PartiQL printer writes a subquery
+     * inside an argument list without its parentheses (as inside an `IN` list), which no engine parses.
+     */
+    fun argument(ctx: P.ExprContext): Expr {
+        val expr = expr(ctx)
+        if (expr is ExprQuerySet) throw TranslationStop.unsupported(ctx, "subquery as a function argument")
+        return expr
+    }
 
     private fun notYet(name: Token): Nothing =
         throw TranslationStop.unsupported(

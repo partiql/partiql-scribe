@@ -10,7 +10,6 @@ import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprCast
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprPath
-import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprVarRef
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
@@ -149,10 +148,7 @@ internal fun list(
     val h = SqlBlock.none()
     var t = h
     kids.forEachIndexed { i, child ->
-        // A subquery in a list is parenthesized, as SqlDialect.visitExprWrapped does for a subquery operand.
-        if (child is ExprQuerySet) t = t concat "("
         t = child.accept(visitor, t)
-        if (child is ExprQuerySet) t = t concat ")"
         t = if (delimiter != null && (i + 1) < kids.size) t concat delimiter else t
     }
     return SqlBlock.Nest(

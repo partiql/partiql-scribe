@@ -36,3 +36,21 @@
 
 --#[type-mismatch-arith]
 [PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[subquery-as-nvl-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-nullif-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-greatest-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-decode-search-value]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-parenthesized-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-aggregate-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];

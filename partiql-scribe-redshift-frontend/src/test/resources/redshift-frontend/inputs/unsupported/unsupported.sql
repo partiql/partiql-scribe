@@ -40,3 +40,22 @@ SELECT s.x FROM (SELECT a FROM SIMPLE_T) AS s (x);
 --#[type-mismatch-arith]
 SELECT c + 1 FROM SIMPLE_T;
 
+
+-- A scalar subquery as a function argument is not translated yet, as inside an IN list.
+--#[subquery-as-nvl-argument]
+SELECT NVL((SELECT MAX(b) FROM T), 0) FROM SIMPLE_T;
+
+--#[subquery-as-nullif-argument]
+SELECT NULLIF(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;
+
+--#[subquery-as-greatest-argument]
+SELECT GREATEST(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;
+
+--#[subquery-as-decode-search-value]
+SELECT DECODE(b, (SELECT MAX(b) FROM T), 'max', 'other') FROM SIMPLE_T;
+
+--#[subquery-as-parenthesized-argument]
+SELECT NVL(((SELECT MAX(b) FROM T)), 0) FROM SIMPLE_T;
+
+--#[subquery-as-aggregate-argument]
+SELECT MAX((SELECT MAX(b) FROM T)) FROM SIMPLE_T;

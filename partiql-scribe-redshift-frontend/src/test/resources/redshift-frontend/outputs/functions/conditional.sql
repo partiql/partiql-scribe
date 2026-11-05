@@ -79,18 +79,6 @@ SELECT CASE WHEN "simple_t"['a'] = true THEN 'yes' WHEN "simple_t"['a'] = false 
 --#[greatest-signed-literal]
 SELECT CASE WHEN "simple_t"['b'] >= (-1) THEN "simple_t"['b'] ELSE -1 END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
 
---#[nvl-subquery]
-SELECT COALESCE((SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t"), 0) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
-
---#[nullif-subquery]
-SELECT NULLIF("simple_t"['b'], (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t")) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
-
---#[greatest-subquery]
-SELECT CASE WHEN "simple_t"['b'] >= COALESCE((SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t"), "simple_t"['b']) THEN "simple_t"['b'] ELSE (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
-
---#[decode-subquery-search-value]
-SELECT CASE WHEN ("simple_t"['b'] = (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t")) OR ("simple_t"['b'] IS NULL AND (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") IS NULL) THEN 'max' ELSE 'other' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
-
 --#[conditional-in-having-and-join]
 SELECT "t"['c'] AS "c", count(1) AS "_1" FROM "default"."SIMPLE_T" AS "t" INNER JOIN "default"."T" AS "u" ON COALESCE("t"['b'], 0) = COALESCE("u"['b'], 0) GROUP BY "t"['c'] HAVING COALESCE(max("t"['b']), 0) > 1;
 

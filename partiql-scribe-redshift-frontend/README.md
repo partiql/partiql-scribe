@@ -105,7 +105,8 @@ Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: t
 `TIMESTAMP` literal in a form other than `YYYY-MM-DD` and `YYYY-MM-DD HH:MM:SS[.ffffff]`, a backslash escape in a string
 literal other than `\\`, `\'`, `\b`, `\f`, `\n`, `\r`, `\t`, a numeric literal of more than 38 digits, a column list
 on a derived table or a common table expression, `*` with other select items, `EXCLUDE` with select items other than `*`
-or of an unqualified column with several FROM items, a subquery inside an `IN` list, `ORDER BY`, `LIMIT`, or `OFFSET` on
+or of an unqualified column with several FROM items, a subquery inside an `IN` list or as a function argument (the
+PartiQL printer writes it there without its parentheses), `ORDER BY`, `LIMIT`, or `OFFSET` on
 a parenthesized query that has its own, an `ORDER BY` or `GROUP BY` ordinal that points at `*` or follows a set
 operation, `ILIKE` with an escape character that is not a literal, or a letter when the pattern is not a literal, an
 `ORDER BY` name that several select items have when they may be different columns (`b` and `y.b` over several FROM

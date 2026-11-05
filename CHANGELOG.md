@@ -33,7 +33,6 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
-- A subquery as an argument of a function call, `COALESCE`, or `NULLIF`, or as an element of an `IN` list, is parenthesized on every target: `COALESCE((SELECT ...), 0)`. It was printed without parentheses, which no engine parses.
 - Redshift target: an argument that is a cast to `DYNAMIC` was converted twice, once before the cast was dropped and once after, so a `CASE` nested n deep took 2^n conversions. It is converted once.
 - `a IS [NOT] TRUE | FALSE | UNKNOWN` is rendered as that predicate on every SQL target. It was rendered as a call to a function named `is_true`, `is_false`, or `is_unknown`, which no target defines. Trino parses the predicate from release 482.
 

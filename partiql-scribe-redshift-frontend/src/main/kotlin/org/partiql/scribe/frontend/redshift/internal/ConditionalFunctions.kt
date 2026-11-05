@@ -51,7 +51,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
     private fun coalesce(
         name: Token,
         args: List<P.ExprContext>,
-    ): Expr = builder.nested(name) { exprCoalesce(args.map(builder::expr)) }
+    ): Expr = builder.nested(name) { exprCoalesce(args.map(builder::argument)) }
 
     /**
      * `NULLIF(a, b)` is NULL when `a` equals `b`, and `a` otherwise, as PartiQL's `NULLIF` is.
@@ -62,7 +62,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
         args: List<P.ExprContext>,
     ): Expr {
         arity(name, args, 2, 2)
-        return builder.nested(name) { exprNullIf(builder.expr(args[0]), builder.expr(args[1])) }
+        return builder.nested(name) { exprNullIf(builder.argument(args[0]), builder.argument(args[1])) }
     }
 
     /**
@@ -75,7 +75,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
     ): Expr {
         arity(name, args, 3, 3)
         return builder.nested(name) {
-            val (e, a, b) = args.map(builder::expr)
+            val (e, a, b) = args.map(builder::argument)
             exprCase(null, listOf(exprCaseBranch(exprNullPredicate(e, true), a)), b)
         }
     }
@@ -94,7 +94,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
     ): Expr {
         arity(name, args, 3, null)
         return builder.nested(name) {
-            val exprs = args.map(builder::expr)
+            val exprs = args.map(builder::argument)
             val e = exprs[0]
             val pairs = (args.size - 1) / 2
             val branches =
@@ -137,7 +137,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
         args: List<P.ExprContext>,
         greatest: Boolean,
     ): Expr {
-        val values = args.map(builder::expr).filterNot { it.isNullLiteral() }
+        val values = args.map(builder::argument).filterNot { it.isNullLiteral() }
         if (values.isEmpty()) return exprLit(Literal.nul())
         if (values.size == 1) return values[0]
         // The result has a comparison for each pair of arguments; too many pairs is known before they are built.
