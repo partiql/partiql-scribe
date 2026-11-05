@@ -83,8 +83,23 @@ at the planner with its reason. The rewrites:
 | `t1, t2` | `t1 CROSS JOIN t2` |
 | `WITH` | kept as `WITH`; a common table expression is referenced as a local variable, so a table of the same name does not capture it |
 
-Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: every scalar and datetime function (`NVL`,
-`DATEADD`, `UPPER`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a `DATE` or
+The conditional functions, each rewritten to the PartiQL expression with the same value; the planner types the result
+as it types any expression:
+
+| Redshift | PartiQL |
+|---|---|
+| `NVL(e1, ..., en)`, `COALESCE(e1, ..., en)` | `COALESCE(e1, ..., en)` |
+| `NULLIF(a, b)` | `NULLIF(a, b)` |
+| `NVL2(e, a, b)` | `CASE WHEN e IS NOT NULL THEN a ELSE b END` |
+| `DECODE(e, s1, r1, ..., sk, rk [, d])` | `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`, where the match `mi` is `e IS NULL` for a NULL search value, `e = si` for another literal, and `e = si OR (e IS NULL AND si IS NULL)` for a search value that may be NULL, since a NULL search value matches a NULL `e` |
+| `GREATEST(v1, ..., vn)`, `LEAST(v1, ..., vn)` | NULL literals left out, then `CASE WHEN c1 THEN v1 ... WHEN c(n-1) THEN v(n-1) ELSE vn END`, where `ci` is the conjunction over `j > i` of `vi >= COALESCE(vj, vi)` (`<=` for `LEAST`): a NULL `vi` fails its branch, a NULL `vj` does not stop `vi`; one argument is itself, all NULL is NULL |
+
+A wrong number of arguments (`NULLIF(a)`, `NVL2(e, a)`, `DECODE(e, s)`) is refused as invalid. `DECODE`, `GREATEST`,
+and `LEAST` repeat their arguments in the rewrite, so a call whose result would have more than 100,000 nodes (a
+`GREATEST` of some 450 arguments, or `DECODE` calls nested 70 deep) is refused.
+
+Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: the string, math, and datetime functions
+(`UPPER`, `CONCAT`, `POWER`, `DATEADD`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a `DATE` or
 `TIMESTAMP` literal in a form other than `YYYY-MM-DD` and `YYYY-MM-DD HH:MM:SS[.ffffff]`, a backslash escape in a string
 literal other than `\\`, `\'`, `\b`, `\f`, `\n`, `\r`, `\t`, a numeric literal of more than 38 digits, a column list
 on a derived table or a common table expression, `*` with other select items, `EXCLUDE` with select items other than `*`
@@ -99,7 +114,9 @@ later select item (a lateral column alias) is left as a name: Redshift reads it 
 has the name, which needs the schema and is a later change; for now the planner reports it as unknown.
 
 Known differences that are not refused: the aggregates `AVG`, `COUNT`, `MAX`, `MIN`, and `SUM` are translated directly,
-and `AVG` of an integer, which Redshift truncates, is not yet rewritten; `ILIKE` folds the case of every letter through
+and `AVG` of an integer, which Redshift truncates, is not yet rewritten; `NULLIF`, `DECODE`, `GREATEST`, and `LEAST`
+compare `CHAR(n)` values with their padding, which Redshift disregards, and compare values of different types as PartiQL
+does, where Redshift converts one to the type of the other; `ILIKE` folds the case of every letter through
 `LOWER`, where Redshift folds only single-byte characters; a `CHAR` or `VARCHAR` length is a number of bytes in Redshift
 and of characters in PartiQL, and the number is kept; a `LIKE` pattern that is not a literal keeps Redshift's escape
 character, and PartiQL rejects at run time an escape before a character other than `%`, `_`, or the escape itself, which
@@ -114,7 +131,7 @@ Redshift takes literally.
   Redshift input and one expected result per case: the input is converted, planned against the Scribe test catalogs
   (`src/test/resources/catalogs` of the root project), and compiled with the PartiQL target. An expected result is
   PartiQL text, compared up to whitespace, the front end's problem code with a message fragment
-  (`[UNSUPPORTED_OPERATION{message="function NVL"}];`), or the planner's (`[PLANNER{message="VAR_REF_NOT_FOUND"}];`).
+  (`[UNSUPPORTED_OPERATION{message="function UPPER"}];`), or the planner's (`[PLANNER{message="VAR_REF_NOT_FOUND"}];`).
   `RedshiftTranspilerSuite` runs them, parses and plans every valid output again as a check, parses every input with
   the grammar, and checks that `tables` names the tables the AST reads.
 - `RedshiftTranspilerTest`: the public contract: problem codes and kinds, positions, notes, determinism, the nesting

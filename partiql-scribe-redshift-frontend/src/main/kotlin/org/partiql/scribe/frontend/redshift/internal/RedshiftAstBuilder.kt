@@ -80,8 +80,9 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  * Builds the PartiQL AST of a Redshift parse tree.
  *
  * Each rule rewrites a form of the Redshift query into a form of PartiQL. The planner then resolves the names and types
- * of the result. A construct that has no conversion yet stops the build with [TranslationStop] at its position; every
- * scalar and datetime function is in that set for now, and so are the `INTERVAL` literal and the operators `^` and `&`.
+ * of the result. A construct that has no conversion yet stops the build with [TranslationStop] at its position; the
+ * string, math, and datetime functions are in that set for now, and so are the `INTERVAL` literal and the operators `^`
+ * and `&`. The conditional functions are translated by [ConditionalFunctions].
  * The depth of the AST is bounded by [RedshiftFrontend.MAX_NESTING]; see [nested].
  *
  * The rewrites that change the form of the query:
@@ -130,6 +131,8 @@ internal class RedshiftAstBuilder(
 
     /** The current depth of the AST under construction; see [nested]. */
     private var depth = 0
+
+    private val conditional = ConditionalFunctions(this)
 
     /**
      * The select list of a query block, for the block's ORDER BY and for the DISTINCT subquery: the expression items in
@@ -245,7 +248,7 @@ internal class RedshiftAstBuilder(
      * Converts [body] one level deeper in the AST. The depth is bounded by [RedshiftFrontend.MAX_NESTING], so that the
      * recursion of this builder, and of the planner and the targets over the AST, is bounded by the text.
      */
-    private inline fun <T> nested(
+    fun <T> nested(
         at: Token,
         body: () -> T,
     ): T {
@@ -941,8 +944,8 @@ internal class RedshiftAstBuilder(
             is P.AtomCountStarContext -> exprCall(Identifier.regular("count"), emptyList(), null)
             is P.AtomAggregateContext ->
                 exprCall(Identifier.regular(foldAscii(ctx.name.text)), listOf(expr(ctx.expr())), ctx.setQuantifier()?.let(::setQuantifier))
-            // The scalar and datetime functions are translated by later changes, each with its own rule.
-            is P.AtomFunctionCallContext -> notYet(ctx.name.start)
+            is P.AtomFunctionCallContext -> function(ctx.name.start, ctx.expr())
+            // The datetime functions are translated by a later change, each with its own rule.
             is P.AtomDateFunctionContext -> notYet(ctx.name)
             is P.AtomExtractEpochContext -> notYet(ctx.EXTRACT().symbol)
             is P.AtomGetdateContext -> notYet(ctx.GETDATE().symbol)
@@ -953,6 +956,15 @@ internal class RedshiftAstBuilder(
             is P.AtomNameContext -> name(ctx.qualifiedName())
             else -> unexpected(ctx)
         }
+
+    /**
+     * A scalar function call. Each family of functions has its own rules: the conditional functions in
+     * [ConditionalFunctions]; the string, math, and datetime functions are translated by later changes.
+     */
+    private fun function(
+        name: Token,
+        args: List<P.ExprContext>,
+    ): Expr = conditional.translate(name, args) ?: notYet(name)
 
     private fun notYet(name: Token): Nothing =
         throw TranslationStop.unsupported(

@@ -38,7 +38,7 @@ import kotlin.test.fail
  * against the Scribe test catalogs, and compiled with the PartiQL target.
  *
  * An expected output is either PartiQL text, or the problem that stops the translation, as its code and a substring of
- * its message: `[UNSUPPORTED_OPERATION{message="function NVL"}];`. A problem the planner reports (an unknown name, an
+ * its message: `[UNSUPPORTED_OPERATION{message="function UPPER"}];`. A problem the planner reports (an unknown name, an
  * operation PartiQL does not define on the operand types) is `[PLANNER{message="..."}];`, with the planner's own code
  * in the message. A valid output is also parsed and planned again, as a check that the translation produced the query
  * it meant to.

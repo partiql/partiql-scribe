@@ -1,0 +1,69 @@
+-- The conditional functions: NVL, COALESCE, NULLIF, NVL2, DECODE, GREATEST, and LEAST.
+
+--#[nvl]
+SELECT NVL(c, 'none') FROM SIMPLE_T;
+
+--#[nvl-several-arguments]
+SELECT NVL(c, z, 'none') FROM T;
+
+--#[coalesce]
+SELECT COALESCE(c, 'none') FROM SIMPLE_T;
+
+--#[coalesce-of-aggregate]
+SELECT COALESCE(MAX(b), 0), SUM(NVL(b, 0)) FROM SIMPLE_T;
+
+--#[nullif]
+SELECT NULLIF(b, 0), NULLIF(c, '') FROM SIMPLE_T;
+
+--#[nvl2]
+SELECT NVL2(c, 'set', 'unset'), NVL2(b, b + 1, 0) FROM SIMPLE_T;
+
+--#[decode]
+SELECT DECODE(b, 1, 'one', 2, 'two', 'other') FROM SIMPLE_T;
+
+--#[decode-without-default]
+SELECT DECODE(b, 1, 'one') FROM SIMPLE_T;
+
+-- A NULL search value matches a NULL expression.
+--#[decode-null-search-value]
+SELECT DECODE(c, NULL, 'none', 'some') FROM SIMPLE_T;
+
+--#[decode-column-search-value]
+SELECT DECODE(t.b, u.b, 'same', 'different') FROM SIMPLE_T AS t, T AS u;
+
+--#[greatest-least]
+SELECT GREATEST(b, 1), LEAST(b, 1) FROM SIMPLE_T;
+
+--#[greatest-three-arguments]
+SELECT GREATEST(b, b + 1, 10) FROM SIMPLE_T;
+
+--#[greatest-columns]
+SELECT GREATEST(t.b, u.b) FROM SIMPLE_T AS t, T AS u;
+
+--#[greatest-one-argument]
+SELECT GREATEST(b), LEAST(c) FROM SIMPLE_T;
+
+-- NULL arguments are left out; all NULL is NULL.
+--#[greatest-null-arguments]
+SELECT GREATEST(b, NULL), GREATEST(NULL, NULL) FROM SIMPLE_T;
+
+--#[greatest-timestamps]
+SELECT GREATEST(timestamp_1, timestamp_2) FROM T;
+
+--#[least-string]
+SELECT LEAST(c, 'm') FROM SIMPLE_T;
+
+--#[conditional-in-where]
+SELECT a FROM SIMPLE_T WHERE NVL(b, 0) > 0 AND NULLIF(c, '') IS NOT NULL;
+
+--#[conditional-nested]
+SELECT NVL(NULLIF(c, ''), 'empty'), DECODE(NVL2(c, 1, 0), 1, 'set', 'unset') FROM SIMPLE_T;
+
+--#[conditional-order-by-alias]
+SELECT NVL(b, 0) AS n FROM SIMPLE_T ORDER BY n;
+
+--#[conditional-distinct-limit]
+SELECT DISTINCT NVL(b, 0) AS n FROM SIMPLE_T ORDER BY n LIMIT 5;
+
+--#[decode-group-by]
+SELECT DECODE(b, 1, 'one', 'other') AS k, COUNT(*) FROM SIMPLE_T GROUP BY DECODE(b, 1, 'one', 'other');

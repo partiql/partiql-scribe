@@ -93,7 +93,7 @@ class RedshiftTranspilerTest {
     @Test
     fun tablesRefusesWhatToAstRefusesAndReportsNoNotes() {
         val context = Recording()
-        val ex = assertThrows<ScribeException> { RedshiftFrontend(context).tables("SELECT NVL(a, 0) FROM T") }
+        val ex = assertThrows<ScribeException> { RedshiftFrontend(context).tables("SELECT UPPER(c) FROM T") }
         assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, ex.error.kind())
         val notes = Recording()
         RedshiftFrontend(notes).tables("SELECT DISTINCT c FROM SIMPLE_T ORDER BY c LIMIT 5")
@@ -179,6 +179,31 @@ class RedshiftTranspilerTest {
         assertTrue(failure(joins).message().contains("levels deep"))
         val commas = "SELECT t0.a FROM " + (0..5000).joinToString(", ") { "T AS t$it" }
         assertTrue(failure(commas).message().contains("levels deep"))
+    }
+
+    @Test
+    fun repeatingRewritesAreBoundedBySize() {
+        // GREATEST compares every pair of arguments, and a nested DECODE repeats its expression at each level.
+        val wide = failure("SELECT GREATEST(" + (1..450).joinToString(", ") { "b" } + ") FROM SIMPLE_T")
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, wide.kind())
+        assertTrue(wide.message().contains("nodes"), wide.message())
+        val deep = failure("SELECT " + "DECODE(".repeat(70) + "b" + ", b, 1, 0)".repeat(70) + " FROM SIMPLE_T")
+        assertTrue(deep.message().contains("nodes"), deep.message())
+        // Within the bound, far above a call written by hand.
+        assertTrue(transpile("SELECT GREATEST(" + (1..100).joinToString(", ") { "b" } + ") FROM SIMPLE_T").contains("CASE WHEN"))
+        assertTrue(transpile("SELECT DECODE(b, " + (1..300).joinToString(", ") { "$it, 'v$it'" } + ") FROM SIMPLE_T").contains("WHEN"))
+    }
+
+    @Test
+    fun deeplyNestedCaseCompilesOnEveryTarget() {
+        // The Redshift target normalizes each CASE branch once; it used to convert a dropped cast's operand twice per level.
+        val depth = RedshiftFrontend.MAX_NESTING
+        val sql = "SELECT " + "NVL2(".repeat(depth) + "b" + ", b, 0)".repeat(depth) + " FROM SIMPLE_T"
+        val plan = planner.plan(frontend().toAst(sql), session).plan
+        for (target in listOf(PartiQLTarget, RedshiftTarget.STANDARD)) {
+            val output = Scribe(ScribeContext.standard()).compile(plan, session, target).output.value
+            assertEquals(depth, output.windowed(9).count { it == "CASE WHEN" }, target.toString())
+        }
     }
 
     @Test

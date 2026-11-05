@@ -1,24 +1,6 @@
 -- Inputs the grammar accepts and the translation refuses: the functions that later changes translate, the forms with
 -- no PartiQL counterpart yet, and operations PartiQL does not define on the operand types.
 
---#[function-nvl]
-SELECT NVL(c, 'none') FROM SIMPLE_T;
-
---#[function-coalesce]
-SELECT COALESCE(c, 'none') FROM SIMPLE_T;
-
---#[function-decode]
-SELECT DECODE(b, 1, 'one', 'other') FROM SIMPLE_T;
-
---#[function-greatest]
-SELECT GREATEST(b, 1), LEAST(b, 1) FROM SIMPLE_T;
-
---#[function-nvl2]
-SELECT NVL2(c, 'set', 'unset') FROM SIMPLE_T;
-
---#[function-nullif]
-SELECT NULLIF(b, 0) FROM SIMPLE_T;
-
 --#[function-power]
 SELECT POWER(b, 2), POW(b, 2) FROM SIMPLE_T;
 

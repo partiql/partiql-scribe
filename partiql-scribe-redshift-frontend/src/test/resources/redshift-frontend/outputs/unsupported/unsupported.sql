@@ -1,21 +1,3 @@
---#[function-nvl]
-[UNSUPPORTED_OPERATION{message="function NVL is not translated yet"}];
-
---#[function-coalesce]
-[UNSUPPORTED_OPERATION{message="function COALESCE is not translated yet"}];
-
---#[function-decode]
-[UNSUPPORTED_OPERATION{message="function DECODE is not translated yet"}];
-
---#[function-greatest]
-[UNSUPPORTED_OPERATION{message="function GREATEST is not translated yet"}];
-
---#[function-nvl2]
-[UNSUPPORTED_OPERATION{message="function NVL2 is not translated yet"}];
-
---#[function-nullif]
-[UNSUPPORTED_OPERATION{message="function NULLIF is not translated yet"}];
-
 --#[function-power]
 [UNSUPPORTED_OPERATION{message="function POWER is not translated yet"}];
 
