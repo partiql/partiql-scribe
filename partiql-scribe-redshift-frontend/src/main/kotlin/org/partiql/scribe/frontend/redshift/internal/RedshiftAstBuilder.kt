@@ -74,6 +74,7 @@ import org.partiql.ast.expr.TruthValue
 import org.partiql.scribe.frontend.redshift.RedshiftFrontend
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
+import java.util.IdentityHashMap
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 
 /**
@@ -248,7 +249,7 @@ internal class RedshiftAstBuilder(
      * Converts [body] one level deeper in the AST. The depth is bounded by [RedshiftFrontend.MAX_NESTING], so that the
      * recursion of this builder, and of the planner and the targets over the AST, is bounded by the text.
      */
-    fun <T> nested(
+    internal inline fun <T> nested(
         at: Token,
         body: () -> T,
     ): T {
@@ -263,7 +264,61 @@ internal class RedshiftAstBuilder(
         }
     }
 
-    fun root(ctx: P.RootContext): Statement = query(query(ctx.query()).query)
+    /*
+     * Size
+     *
+     * A rewrite that repeats its arguments (DECODE repeats the expression, GREATEST and LEAST every argument) produces an
+     * AST larger than the call, and a call nested in a repeated position is repeated too, so a few such calls can give
+     * the planner and the targets a tree they cannot walk. The depth bound does not see this: the result is as deep as
+     * the call. The AST is therefore bounded in size, over the whole statement: at most MAX_SIZE nodes as the planner
+     * walks them, a shared node counted at each use and a string literal weighted by its length. The bound is checked
+     * as each repeating rewrite is built, on the running total of their results (at least the share of the final size
+     * that they are), so that no oversized tree is built, and on the finished statement, which also covers an alias
+     * that repeats a large expression in GROUP BY or ORDER BY.
+     */
+
+    /** The sizes of the nodes seen so far, by identity: a shared node is one object, and its size is computed once. */
+    private val sizes = IdentityHashMap<AstNode, Long>()
+
+    /** The running total of the sizes of the repeating rewrites built so far. */
+    private var expansion = 0L
+
+    /** The size of [node]: its nodes as a tree, a string literal weighted by its length. */
+    fun size(node: AstNode): Long =
+        sizes.getOrPut(node) {
+            val self = if (node is ExprLit && node.lit.code() == Literal.STRING) 1 + node.lit.stringValue().length / 16L else 1L
+            val children = node.children + listOfNotNull((node as? ExprQuerySet)?.with)
+            self + children.sumOf(::size)
+        }
+
+    /** Adds [result], the rewrite of a call of [name] that repeats its arguments, to the running total; see [size]. */
+    fun expanded(
+        name: Token,
+        result: Expr,
+    ): Expr {
+        expansion += size(result)
+        if (expansion > MAX_SIZE) throw tooLarge(name)
+        return result
+    }
+
+    /** The call of [name] has too many arguments, or is nested too deeply, for its rewrite to stay within [MAX_SIZE]. */
+    fun tooLarge(name: Token): TranslationStop =
+        TranslationStop.unsupported(
+            name,
+            "${name.text.uppercase()} has too many arguments, or is nested too deeply, to translate " +
+                "(the query would have more than $SIZE_TEXT nodes)",
+        )
+
+    fun root(ctx: P.RootContext): Statement {
+        val statement = query(query(ctx.query()).query)
+        if (size(statement) > MAX_SIZE) {
+            throw TranslationStop.unsupported(
+                ctx.start,
+                "the query is too large to translate (more than $SIZE_TEXT nodes, with its functions rewritten)",
+            )
+        }
+        return statement
+    }
 
     /*
      * Queries
@@ -1151,8 +1206,11 @@ internal class RedshiftAstBuilder(
     private fun unexpected(ctx: ParserRuleContext): Nothing =
         throw TranslationStop.unsupported(ctx, "${ctx.text} (no conversion rule for ${ctx::class.simpleName})")
 
-    private companion object {
-        const val WRAPPED = "DISTINCT and LIMIT or OFFSET"
+    internal companion object {
+        /** The most nodes the AST of a statement may have, counted as [size] counts them. */
+        const val MAX_SIZE = 100_000L
+        const val SIZE_TEXT = "100,000"
+        private const val WRAPPED = "DISTINCT and LIMIT or OFFSET"
         val BACKSLASH: Expr = exprLit(Literal.string("\\"))
         val INTEGER = Regex("""\d+""")
         val DATE = Regex("""\d{4}-\d{2}-\d{2}""")

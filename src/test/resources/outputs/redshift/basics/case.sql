@@ -80,3 +80,6 @@ CASE WHEN false THEN 0 WHEN false THEN 1 ELSE 2 END;
 --#[case-11]
 -- CASE without ELSE branch; Scribe emits an explicit `ELSE NULL`
 SELECT CASE WHEN "T"."a" = true THEN 'a IS TRUE' ELSE NULL END AS "result" FROM "default"."T" AS "T";
+
+--#[case-nested-00]
+SELECT CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE CASE WHEN "T"."a" THEN "T"."b" ELSE 0 END END END END END END END END END END END END END END END END END END END END AS "v" FROM "default"."T" AS "T";

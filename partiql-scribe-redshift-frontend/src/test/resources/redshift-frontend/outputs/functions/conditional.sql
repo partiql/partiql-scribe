@@ -38,10 +38,10 @@ SELECT CASE WHEN ("simple_t"['b'] >= COALESCE("simple_t"['b'] + 1, "simple_t"['b
 SELECT CASE WHEN "t"['b'] >= COALESCE("u"['b'], "t"['b']) THEN "t"['b'] ELSE "u"['b'] END AS "_1" FROM "default"."SIMPLE_T" AS "t" INNER JOIN "default"."T" AS "u" ON true;
 
 --#[greatest-one-argument]
-SELECT "simple_t"['b'] AS "b", "simple_t"['c'] AS "c" FROM "default"."SIMPLE_T" AS "simple_t";
+SELECT COALESCE("simple_t"['b']) AS "_1", COALESCE("simple_t"['c']) AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[greatest-null-arguments]
-SELECT "simple_t"['b'] AS "b", NULL AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+SELECT COALESCE("simple_t"['b']) AS "_1", NULL AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[greatest-timestamps]
 SELECT CASE WHEN "t"['timestamp_1'] >= COALESCE("t"['timestamp_2'], "t"['timestamp_1']) THEN "t"['timestamp_1'] ELSE "t"['timestamp_2'] END AS "_1" FROM "default"."T" AS "t";
@@ -87,3 +87,9 @@ SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "sim
 
 --#[conditional-mixed-case-names]
 SELECT COALESCE("simple_t"['c'], 'x') AS "_1", CASE WHEN "simple_t"['b'] = 1 THEN 'a' ELSE NULL END AS "_2", CASE WHEN "simple_t"['b'] >= 1 THEN "simple_t"['b'] ELSE 1 END AS "_3" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[decode-date-string-search-value]
+SELECT CASE WHEN "t"['timestamp_1'] = '2008-06-01 00:00:00' THEN 'June 1st, 2008' ELSE NULL END AS "_1" FROM "default"."T" AS "t";
+
+--#[greatest-single-value-name]
+SELECT "s"['b'] AS "b" FROM (SELECT COALESCE("simple_t"['b']) AS "_1", "simple_t"['a'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t") AS "s";

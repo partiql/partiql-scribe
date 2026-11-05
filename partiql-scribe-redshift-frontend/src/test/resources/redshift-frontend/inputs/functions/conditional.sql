@@ -92,3 +92,11 @@ SELECT a FROM SIMPLE_T WHERE b BETWEEN LEAST(1, 2) AND GREATEST(1, 2) AND NVL(c,
 
 --#[conditional-mixed-case-names]
 SELECT Nvl(c, 'x'), dEcOdE(b, 1, 'a'), Greatest(b, 1) FROM SIMPLE_T;
+
+-- Redshift's DECODE example compares a date to a string, which it converts; PartiQL does not (a known difference).
+--#[decode-date-string-search-value]
+SELECT DECODE(timestamp_1, '2008-06-01 00:00:00', 'June 1st, 2008') FROM T;
+
+-- One value left keeps the item's own name, not the column's.
+--#[greatest-single-value-name]
+SELECT s.b FROM (SELECT GREATEST(b, NULL), a AS b FROM SIMPLE_T) AS s;
