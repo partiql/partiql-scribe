@@ -91,3 +91,13 @@ SELECT b FROM T WHERE EXISTS (SELECT 1 FROM T AS t2 WHERE t2.b = T.b + 1);
 -- EXISTS on a collection keeps the collection-size check (#179)
 --#[subquery-exists-01]
 SELECT b FROM T WHERE EXISTS (T."array");
+
+-- A subquery in an argument list or an IN list is parenthesized
+--#[subquery-in-list-00]
+SELECT COALESCE((SELECT MAX(T.b) FROM T), 0) AS m FROM SIMPLE_T;
+
+--#[subquery-in-list-01]
+SELECT ABS((SELECT MAX(T.b) FROM T)) AS m FROM SIMPLE_T;
+
+--#[subquery-in-list-02]
+SELECT SIMPLE_T.a FROM SIMPLE_T WHERE SIMPLE_T.b IN ((SELECT MAX(T.b) FROM T), 2);

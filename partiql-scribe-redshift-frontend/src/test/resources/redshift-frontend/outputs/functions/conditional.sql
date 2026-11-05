@@ -63,3 +63,39 @@ SELECT "$distinct"['n'] AS "n" FROM (SELECT DISTINCT COALESCE("simple_t"['b'], 0
 
 --#[decode-group-by]
 SELECT CASE WHEN "simple_t"['b'] = 1 THEN 'one' ELSE 'other' END AS "k", count(1) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t" GROUP BY CASE WHEN "simple_t"['b'] = 1 THEN 'one' ELSE 'other' END;
+
+--#[decode-signed-search-value]
+SELECT CASE WHEN "simple_t"['b'] = (-1) THEN 'neg' ELSE 'other' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[decode-null-expression]
+SELECT CASE WHEN "simple_t"['b'] IS NULL THEN 'match' ELSE 'no' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[decode-literal-expression]
+SELECT CASE WHEN 1 = "simple_t"['b'] THEN 'match' ELSE 'no' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[decode-boolean]
+SELECT CASE WHEN "simple_t"['a'] = true THEN 'yes' WHEN "simple_t"['a'] = false THEN 'no' ELSE 'unknown' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[greatest-signed-literal]
+SELECT CASE WHEN "simple_t"['b'] >= (-1) THEN "simple_t"['b'] ELSE -1 END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[nvl-subquery]
+SELECT COALESCE((SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t"), 0) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[nullif-subquery]
+SELECT NULLIF("simple_t"['b'], (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t")) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[greatest-subquery]
+SELECT CASE WHEN "simple_t"['b'] >= COALESCE((SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t"), "simple_t"['b']) THEN "simple_t"['b'] ELSE (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[decode-subquery-search-value]
+SELECT CASE WHEN ("simple_t"['b'] = (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t")) OR ("simple_t"['b'] IS NULL AND (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") IS NULL) THEN 'max' ELSE 'other' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[conditional-in-having-and-join]
+SELECT "t"['c'] AS "c", count(1) AS "_1" FROM "default"."SIMPLE_T" AS "t" INNER JOIN "default"."T" AS "u" ON COALESCE("t"['b'], 0) = COALESCE("u"['b'], 0) GROUP BY "t"['c'] HAVING COALESCE(max("t"['b']), 0) > 1;
+
+--#[conditional-in-between-and-like]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "simple_t"['b'] BETWEEN CASE WHEN 1 <= 2 THEN 1 ELSE 2 END AND CASE WHEN 1 >= 2 THEN 1 ELSE 2 END AND COALESCE("simple_t"['c'], '') LIKE 'a%';
+
+--#[conditional-mixed-case-names]
+SELECT COALESCE("simple_t"['c'], 'x') AS "_1", CASE WHEN "simple_t"['b'] = 1 THEN 'a' ELSE NULL END AS "_2", CASE WHEN "simple_t"['b'] >= 1 THEN "simple_t"['b'] ELSE 1 END AS "_3" FROM "default"."SIMPLE_T" AS "simple_t";

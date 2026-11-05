@@ -91,12 +91,14 @@ as it types any expression:
 | `NVL(e1, ..., en)`, `COALESCE(e1, ..., en)` | `COALESCE(e1, ..., en)` |
 | `NULLIF(a, b)` | `NULLIF(a, b)` |
 | `NVL2(e, a, b)` | `CASE WHEN e IS NOT NULL THEN a ELSE b END` |
-| `DECODE(e, s1, r1, ..., sk, rk [, d])` | `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`, where the match `mi` is `e IS NULL` for a NULL search value, `e = si` for another literal, and `e = si OR (e IS NULL AND si IS NULL)` for a search value that may be NULL, since a NULL search value matches a NULL `e` |
+| `DECODE(e, s1, r1, ..., sk, rk [, d])` | `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`, where the match `mi` is `e IS NULL` when `si` is the NULL literal (`si IS NULL` when `e` is), `e = si` when either is another literal, and `e = si OR (e IS NULL AND si IS NULL)` when both may be NULL, since a NULL search value matches a NULL `e` |
 | `GREATEST(v1, ..., vn)`, `LEAST(v1, ..., vn)` | NULL literals left out, then `CASE WHEN c1 THEN v1 ... WHEN c(n-1) THEN v(n-1) ELSE vn END`, where `ci` is the conjunction over `j > i` of `vi >= COALESCE(vj, vi)` (`<=` for `LEAST`): a NULL `vi` fails its branch, a NULL `vj` does not stop `vi`; one argument is itself, all NULL is NULL |
 
 A wrong number of arguments (`NULLIF(a)`, `NVL2(e, a)`, `DECODE(e, s)`) is refused as invalid. `DECODE`, `GREATEST`,
-and `LEAST` repeat their arguments in the rewrite, so a call whose result would have more than 100,000 nodes (a
-`GREATEST` of some 450 arguments, or `DECODE` calls nested 70 deep) is refused.
+and `LEAST` repeat their arguments in the rewrite, and a call nested in the repeated position repeats the repetition,
+so a call whose result would have more than 100,000 nodes is refused: a `GREATEST` of some 130 columns or 180 literals,
+`DECODE` calls nested 12 deep in the expression with column search values (200 deep with literal ones), `GREATEST`
+calls nested 8 deep. `DECODE` with 10,000 search/result pairs converts.
 
 Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: the string, math, and datetime functions
 (`UPPER`, `CONCAT`, `POWER`, `DATEADD`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a `DATE` or
@@ -115,8 +117,11 @@ has the name, which needs the schema and is a later change; for now the planner 
 
 Known differences that are not refused: the aggregates `AVG`, `COUNT`, `MAX`, `MIN`, and `SUM` are translated directly,
 and `AVG` of an integer, which Redshift truncates, is not yet rewritten; `NULLIF`, `DECODE`, `GREATEST`, and `LEAST`
-compare `CHAR(n)` values with their padding, which Redshift disregards, and compare values of different types as PartiQL
-does, where Redshift converts one to the type of the other; `ILIKE` folds the case of every letter through
+compare `CHAR(n)` values with their padding, which Redshift disregards, compare values of different types as PartiQL
+does, where Redshift converts one to the type of the other, and return a value of either branch's type where Redshift
+converts to a common type (`GREATEST(ts, DATE '2020-01-01')` is a `TIMESTAMP` in Redshift); an unnamed select item is
+named `_n` by the planner where Redshift names it after the function (`coalesce`, `case`, `greatest`), so
+`SELECT NVL(b, 0) FROM t ORDER BY coalesce` does not resolve; `ILIKE` folds the case of every letter through
 `LOWER`, where Redshift folds only single-byte characters; a `CHAR` or `VARCHAR` length is a number of bytes in Redshift
 and of characters in PartiQL, and the number is kept; a `LIKE` pattern that is not a literal keeps Redshift's escape
 character, and PartiQL rejects at run time an escape before a character other than `%`, `_`, or the escape itself, which

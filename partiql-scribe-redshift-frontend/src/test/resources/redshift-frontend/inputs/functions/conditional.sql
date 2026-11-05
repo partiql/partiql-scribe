@@ -67,3 +67,41 @@ SELECT DISTINCT NVL(b, 0) AS n FROM SIMPLE_T ORDER BY n LIMIT 5;
 
 --#[decode-group-by]
 SELECT DECODE(b, 1, 'one', 'other') AS k, COUNT(*) FROM SIMPLE_T GROUP BY DECODE(b, 1, 'one', 'other');
+
+-- When a side of a DECODE match is a literal, the both-NULL clause is dead and left out; a signed number is a literal.
+--#[decode-signed-search-value]
+SELECT DECODE(b, -1, 'neg', 'other') FROM SIMPLE_T;
+
+--#[decode-null-expression]
+SELECT DECODE(NULL, b, 'match', 'no') FROM SIMPLE_T;
+
+--#[decode-literal-expression]
+SELECT DECODE(1, b, 'match', 'no') FROM SIMPLE_T;
+
+--#[decode-boolean]
+SELECT DECODE(a, TRUE, 'yes', FALSE, 'no', 'unknown') FROM SIMPLE_T;
+
+--#[greatest-signed-literal]
+SELECT GREATEST(b, -1) FROM SIMPLE_T;
+
+-- A subquery argument is parenthesized in the output.
+--#[nvl-subquery]
+SELECT NVL((SELECT MAX(b) FROM T), 0) FROM SIMPLE_T;
+
+--#[nullif-subquery]
+SELECT NULLIF(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;
+
+--#[greatest-subquery]
+SELECT GREATEST(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;
+
+--#[decode-subquery-search-value]
+SELECT DECODE(b, (SELECT MAX(b) FROM T), 'max', 'other') FROM SIMPLE_T;
+
+--#[conditional-in-having-and-join]
+SELECT t.c, COUNT(*) FROM SIMPLE_T AS t JOIN T AS u ON NVL(t.b, 0) = NVL(u.b, 0) GROUP BY t.c HAVING NVL(MAX(t.b), 0) > 1;
+
+--#[conditional-in-between-and-like]
+SELECT a FROM SIMPLE_T WHERE b BETWEEN LEAST(1, 2) AND GREATEST(1, 2) AND NVL(c, '') LIKE 'a%';
+
+--#[conditional-mixed-case-names]
+SELECT Nvl(c, 'x'), dEcOdE(b, 1, 'a'), Greatest(b, 1) FROM SIMPLE_T;

@@ -807,7 +807,7 @@ internal class RedshiftAstBuilder(
             is P.PredicateBetweenContext -> exprBetween(valueExpr(ctx.lhs), valueExpr(ctx.lower), valueExpr(ctx.upper), ctx.NOT() != null)
             is P.PredicateInQueryContext -> exprInCollection(valueExpr(ctx.lhs), querySet(ctx.query()), ctx.NOT() != null)
             is P.PredicateInListContext -> {
-                // The PartiQL printer does not print a subquery inside a list.
+                // A scalar subquery as an element of a list is not translated yet.
                 ctx.expr().forEach {
                     if (bareAtom(
                             it,

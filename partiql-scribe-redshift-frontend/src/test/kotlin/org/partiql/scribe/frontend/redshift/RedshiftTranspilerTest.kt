@@ -189,9 +189,10 @@ class RedshiftTranspilerTest {
         assertTrue(wide.message().contains("nodes"), wide.message())
         val deep = failure("SELECT " + "DECODE(".repeat(70) + "b" + ", b, 1, 0)".repeat(70) + " FROM SIMPLE_T")
         assertTrue(deep.message().contains("nodes"), deep.message())
-        // Within the bound, far above a call written by hand.
+        // Within the bound, far above a call written by hand; DECODE's size is linear in its pairs.
         assertTrue(transpile("SELECT GREATEST(" + (1..100).joinToString(", ") { "b" } + ") FROM SIMPLE_T").contains("CASE WHEN"))
-        assertTrue(transpile("SELECT DECODE(b, " + (1..300).joinToString(", ") { "$it, 'v$it'" } + ") FROM SIMPLE_T").contains("WHEN"))
+        assertTrue(transpile("SELECT DECODE(b, " + (1..2000).joinToString(", ") { "$it, 'v$it'" } + ") FROM SIMPLE_T").contains("WHEN"))
+        assertTrue(transpile("SELECT " + "DECODE(".repeat(100) + "b" + ", 1, 1, 0)".repeat(100) + " FROM SIMPLE_T").contains("WHEN"))
     }
 
     @Test

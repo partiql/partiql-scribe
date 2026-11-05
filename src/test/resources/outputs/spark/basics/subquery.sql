@@ -79,3 +79,12 @@ SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T` WHERE EXISTS (SELECT 1 AS `_1` F
 
 --#[subquery-exists-01]
 SELECT `T`.`b` AS `b` FROM `default`.`T` AS `T` WHERE `size`(`T`.`array`) > 0;
+
+--#[subquery-in-list-00]
+SELECT COALESCE((SELECT `max`(`T`.`b`) AS `_1` FROM `default`.`T` AS `T`), 0) AS `m` FROM `default`.`SIMPLE_T` AS `SIMPLE_T`;
+
+--#[subquery-in-list-01]
+SELECT `ABS`((SELECT `max`(`T`.`b`) AS `_1` FROM `default`.`T` AS `T`)) AS `m` FROM `default`.`SIMPLE_T` AS `SIMPLE_T`;
+
+--#[subquery-in-list-02]
+SELECT `SIMPLE_T`.`a` AS `a` FROM `default`.`SIMPLE_T` AS `SIMPLE_T` WHERE `SIMPLE_T`.`b` IN ((SELECT `max`(`T`.`b`) AS `_1` FROM `default`.`T` AS `T`), 2);

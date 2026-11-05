@@ -14,6 +14,7 @@ import org.partiql.ast.AstNode
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprOperator
 import org.partiql.ast.expr.ExprQuerySet
 import java.util.IdentityHashMap
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
@@ -81,9 +82,10 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
 
     /**
      * `DECODE(e, s1, r1, ..., sk, rk [, d])` is the result of the first search value that matches `e`, else `d`, else
-     * NULL. A NULL search value matches a NULL `e`, which `=` does not, so the match is `e IS NULL` for the NULL literal,
-     * `e = s` for another literal, and `e = s OR (e IS NULL AND s IS NULL)` for a search value that may be NULL:
-     * `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`. The rewrite repeats `e`; see [bounded].
+     * NULL. A NULL search value matches a NULL `e`, which `=` does not, so the match `mi` is `e IS NULL` when `si` is the
+     * NULL literal (`si IS NULL` when `e` is), `e = si` when either is another literal, and
+     * `e = si OR (e IS NULL AND si IS NULL)` when both may be NULL: `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`.
+     * The rewrite repeats `e`; see [bounded].
      * https://docs.aws.amazon.com/redshift/latest/dg/r_DECODE_expression.html
      */
     private fun decode(
@@ -100,8 +102,11 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
                     val s = exprs[1 + 2 * i]
                     val match =
                         when {
+                            // One side is the NULL literal: the match is whether the other side is NULL.
                             s.isNullLiteral() -> exprNullPredicate(e, false)
-                            s is ExprLit -> exprOperator("=", e, s)
+                            e.isNullLiteral() -> exprNullPredicate(s, false)
+                            // One side is a literal that is not NULL: the sides cannot both be NULL.
+                            s.isLiteral() || e.isLiteral() -> exprOperator("=", e, s)
                             else ->
                                 builder.nested(name) {
                                     val bothNull =
@@ -143,7 +148,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
                 (0 until values.lastIndex).map { i ->
                     val conditions =
                         (i + 1..values.lastIndex).map { j ->
-                            val other = if (values[j] is ExprLit) values[j] else exprCoalesce(listOf(values[j], values[i]))
+                            val other = if (values[j].isLiteral()) values[j] else exprCoalesce(listOf(values[j], values[i]))
                             exprOperator(op, values[i], other)
                         }
                     exprCaseBranch(conjunction(name, conditions), values[i])
@@ -192,6 +197,14 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
     }
 
     private fun Expr.isNullLiteral(): Boolean = this is ExprLit && lit.code() == Literal.NULL
+
+    /** A literal that is not NULL, with or without a sign: a value that is known not to be NULL. */
+    private fun Expr.isLiteral(): Boolean =
+        when (this) {
+            is ExprLit -> lit.code() != Literal.NULL
+            is ExprOperator -> lhs == null && (symbol == "-" || symbol == "+") && rhs.isLiteral()
+            else -> false
+        }
 
     companion object {
         /**
