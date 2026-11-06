@@ -74,16 +74,17 @@ SELECT a, b, RANK() OVER (PARTITION BY a ORDER BY b ASC, c DESC) FROM T;
 SELECT t.a AS _id, t.b AS _name, RANK() OVER _w1 AS _rank_1, RANK() OVER _w2 AS _rank_2, DENSE_RANK() OVER _w1 AS _dense_rank_1, DENSE_RANK() OVER _w2 AS _dense_rank_2, ROW_NUMBER() OVER _w1 as _row_number_1, ROW_NUMBER() OVER _w2 as _row_number_2, LAG(t.b, 1, -1) OVER _w1 AS _lag_1, LAG(t.b, 1, -1) OVER _w2 AS _lag_2, LEAD(t.b, 1, -1) OVER _w1 AS _lead_1, LEAD(t.b, 1, -1) OVER _w2 AS _lead_2 FROM T AS t WINDOW _w1 AS (PARTITION BY t.a ORDER BY t.b, t.c), _w2 AS (PARTITION BY t.a ORDER BY t.b DESC, t.c DESC);
 
 
--- PartiQL does not support the feature, aggregation, window frame etc
 -- Aggregate functions as window functions
--- --#[window-23]
--- SELECT a, SUM(b) OVER (PARTITION BY a) FROM T;
+--#[window-23]
+SELECT a, SUM(b) OVER (PARTITION BY a) FROM T;
 
--- --#[window-24]
--- SELECT a, AVG(b) OVER (PARTITION BY a ORDER BY c) FROM T;
+--#[window-24]
+SELECT a, AVG(b) OVER (PARTITION BY a ORDER BY c) FROM T;
 
--- --#[window-25]
--- SELECT a, COUNT(*) OVER (PARTITION BY a) FROM T;
+--#[window-25]
+SELECT a, COUNT(*) OVER (PARTITION BY a) FROM T;
+
+-- PartiQL does not support window frames yet (https://github.com/partiql/partiql-lang-kotlin/issues/1837)
 
 -- --#[window-26]
 -- SELECT a, MAX(b) OVER (ORDER BY a ROWS UNBOUNDED PRECEDING) FROM T;
@@ -114,3 +115,19 @@ SELECT t.a AS _id, t.b AS _name, RANK() OVER _w1 AS _rank_1, RANK() OVER _w2 AS 
 -- Window function with GROUP BY
 --#[window-34]
 SELECT a, COUNT(*), ROW_NUMBER() OVER (ORDER BY COUNT(*)) FROM T GROUP BY a;
+
+-- More aggregate functions as window functions
+--#[window-35]
+SELECT a, MAX(b) OVER (PARTITION BY a ORDER BY c) FROM T;
+
+--#[window-36]
+SELECT a, MIN(b) OVER w FROM T WINDOW w AS (PARTITION BY a ORDER BY c);
+
+--#[window-37]
+SELECT a, COUNT(DISTINCT b) OVER (PARTITION BY a) FROM T;
+
+--#[window-38]
+SELECT a, SUM(b) OVER () FROM T;
+
+--#[window-39]
+SELECT a, COUNT(b) OVER (ORDER BY c), MAX(b) OVER (ORDER BY c) FROM T;

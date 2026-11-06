@@ -85,6 +85,29 @@ public open class RedshiftRelConverter(
         return super.visitCorrelate(rel, ctx)
     }
 
+    /**
+     * Redshift aggregate window functions do not support DISTINCT, and require an explicit frame clause when the window
+     * has an ORDER BY. Redshift only supports ROWS frames, which cannot express the SQL default frame used by PartiQL
+     * (through the current row's peers), so only an aggregate window function without an ORDER BY can be transpiled.
+     * See https://docs.aws.amazon.com/redshift/latest/dg/c_Window_functions.html.
+     */
+    override fun checkAggregateWindowFunction(
+        windowFunction: WindowFunctionNode,
+        rel: RelWindow,
+    ) {
+        if (windowFunction.isDistinct) {
+            unsupportedAggregateWindowFunction(windowFunction, "Redshift does not support DISTINCT in aggregate window functions")
+        }
+        if (rel.collations.isNotEmpty()) {
+            unsupportedAggregateWindowFunction(
+                windowFunction,
+                "Redshift requires a ROWS frame clause for an aggregate window function with ORDER BY, which cannot " +
+                    "express the default frame (the current row's peers); window frame clauses are not supported yet " +
+                    "(https://github.com/partiql/partiql-lang-kotlin/issues/1837)",
+            )
+        }
+    }
+
     // Redshift does not support the SQL window clause. So we convert window clauses to inline window specifications.
     override fun visitWindow(
         rel: RelWindow,
@@ -119,7 +142,7 @@ public open class RedshiftRelConverter(
         rel: RelWindow,
         rexConverter: RexConverter,
     ): Expr {
-        val windowType = createWindowFunctionType(windowFunction, rexConverter)
+        val windowType = createWindowFunctionType(windowFunction, rel, rexConverter)
         val windowSpec = createInlineWindowSpecification(rel, rexConverter)
         return exprWindowFunction(windowType, windowSpec)
     }

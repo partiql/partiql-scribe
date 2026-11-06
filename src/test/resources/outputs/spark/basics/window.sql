@@ -77,3 +77,26 @@ SELECT `t`.`a` AS `_id`, `t`.`b` AS `_name`, RANK() OVER `_w1` AS `_rank_1`, RAN
 
 --#[window-34]
 SELECT `T`.`a` AS `a`, `count`(1) AS `_1`, ROW_NUMBER() OVER (ORDER BY `count`(1) ASC NULLS LAST) AS `_2` FROM `default`.`T` AS `T` GROUP BY `T`.`a`;
+--#[window-23]
+SELECT `T`.`a` AS `a`, SUM(`T`.`b`) OVER (PARTITION BY `T`.`a`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[window-24]
+SELECT `T`.`a` AS `a`, AVG(`T`.`b`) OVER (PARTITION BY `T`.`a` ORDER BY `T`.`c` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[window-25]
+SELECT `T`.`a` AS `a`, COUNT(1) OVER (PARTITION BY `T`.`a`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[window-35]
+SELECT `T`.`a` AS `a`, MAX(`T`.`b`) OVER (PARTITION BY `T`.`a` ORDER BY `T`.`c` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[window-36]
+SELECT `T`.`a` AS `a`, MIN(`T`.`b`) OVER `w` AS `_1` FROM `default`.`T` AS `T` WINDOW `w` AS (PARTITION BY `T`.`a` ORDER BY `T`.`c` ASC NULLS LAST);
+
+--#[window-37]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-38]
+SELECT `T`.`a` AS `a`, SUM(`T`.`b`) OVER () AS `_1` FROM `default`.`T` AS `T`;
+
+--#[window-39]
+SELECT `T`.`a` AS `a`, COUNT(`T`.`b`) OVER (ORDER BY `T`.`c` ASC NULLS LAST) AS `_1`, MAX(`T`.`b`) OVER (ORDER BY `T`.`c` ASC NULLS LAST) AS `_2` FROM `default`.`T` AS `T`;

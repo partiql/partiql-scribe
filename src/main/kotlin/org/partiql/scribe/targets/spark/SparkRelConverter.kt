@@ -4,9 +4,11 @@ import org.partiql.ast.Ast.from
 import org.partiql.ast.Ast.fromExpr
 import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
+import org.partiql.plan.WindowFunctionNode
 import org.partiql.plan.rel.RelCorrelate
 import org.partiql.plan.rel.RelFilter
 import org.partiql.plan.rel.RelScan
+import org.partiql.plan.rel.RelWindow
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.ExprQuerySetFactory
@@ -22,6 +24,18 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
     outer,
 ) {
     override val selectValueSupported: Boolean = false
+
+    /**
+     * Spark does not support DISTINCT in window functions (DISTINCT_WINDOW_FUNCTION_UNSUPPORTED).
+     */
+    override fun checkAggregateWindowFunction(
+        windowFunction: WindowFunctionNode,
+        rel: RelWindow,
+    ) {
+        if (windowFunction.isDistinct) {
+            unsupportedAggregateWindowFunction(windowFunction, "Spark does not support DISTINCT in window functions")
+        }
+    }
 
     internal companion object {
         val MARKER_EXPLODE = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}EXPLODE"
