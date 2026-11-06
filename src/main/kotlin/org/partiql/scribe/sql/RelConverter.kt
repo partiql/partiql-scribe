@@ -51,6 +51,7 @@ import org.partiql.ast.WindowFunctionType
 import org.partiql.ast.WindowSpecification
 import org.partiql.ast.With
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprCall
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprStruct
@@ -879,7 +880,7 @@ public open class RelConverter(
         rel: RelWindow,
         rexConverter: RexConverter,
     ): Expr {
-        val windowType = createWindowFunctionType(windowFunction, rexConverter)
+        val windowType = createWindowFunctionType(windowFunction, rel, rexConverter)
 
         val windowSpec =
             if (rel.name != null) {
@@ -899,8 +900,13 @@ public open class RelConverter(
 
     internal fun createWindowFunctionType(
         windowFunction: WindowFunctionNode,
+        rel: RelWindow,
         rexConverter: RexConverter,
     ): WindowFunctionType {
+        if (windowFunction.aggregate != null) {
+            checkAggregateWindowFunction(windowFunction, rel)
+            return createAggregateWindowFunctionType(windowFunction, rexConverter)
+        }
         val functionName = windowFunction.signature.name
         val arguments = windowFunction.arguments
 
@@ -957,6 +963,60 @@ public open class RelConverter(
                 )
             }
         }
+    }
+
+    /**
+     * Checks that this target can express the aggregate window function [windowFunction] of [rel]; reports and throws a
+     * [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] otherwise. PartiQL does not support window frame clauses yet,
+     * so an aggregate window function uses the SQL default frame: with an ORDER BY, from the start of the partition
+     * through the current row's peers; without one, the whole partition.
+     */
+    protected open fun checkAggregateWindowFunction(
+        windowFunction: WindowFunctionNode,
+        rel: RelWindow,
+    ) {}
+
+    /**
+     * Reports and throws that this target does not support an aggregate window function, for [reason].
+     */
+    protected fun unsupportedAggregateWindowFunction(
+        windowFunction: WindowFunctionNode,
+        reason: String,
+    ): Nothing =
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = "Unsupported aggregate window function ${windowFunction.aggregate!!.signature.name.uppercase()}: $reason",
+            ),
+        )
+
+    /**
+     * Converts an aggregate window function, e.g. `SUM(x) OVER (...)`, to a [WindowFunctionType.Aggregate]. The aggregate
+     * is converted exactly like a GROUP BY aggregate (see [visitAggregate]), so a target's aggregate rules apply to both.
+     */
+    private fun createAggregateWindowFunctionType(
+        windowFunction: WindowFunctionNode,
+        rexConverter: RexConverter,
+    ): WindowFunctionType {
+        val aggregate = windowFunction.aggregate!!
+        val name = aggregate.signature.name
+        val args = windowFunction.arguments.map { SqlArg(rexConverter.apply(it), it.type.pType) }
+        val call =
+            transform.getAggregate(
+                routineRef = windowFunction.routineRef,
+                name = name,
+                args = args,
+                distinct = windowFunction.isDistinct,
+            )
+        if (call !is ExprCall) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                    message = "Aggregate $name cannot be used as a window function for this target",
+                ),
+            )
+        }
+        return WindowFunctionType.Aggregate(call.function, call.args, call.setq)
     }
 
     private fun createNamedWindowDefinition(

@@ -27,6 +27,7 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+- Added transpilation of the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX` (e.g. `MAX(x) OVER (PARTITION BY k ORDER BY t)`) to all targets. Redshift supports them only without a window `ORDER BY` (Redshift requires a `ROWS` frame, which cannot express the default frame) and without `DISTINCT`; Spark does not support `DISTINCT`.
 
 ### Changed
 

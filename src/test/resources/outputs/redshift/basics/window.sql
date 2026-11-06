@@ -77,3 +77,26 @@ SELECT "t"."a" AS "_id", "t"."b" AS "_name", RANK() OVER (PARTITION BY "t"."a" O
 
 --#[window-34]
 SELECT "T"."a", count(1) AS "_1", ROW_NUMBER() OVER (ORDER BY count(1) ASC NULLS LAST) AS "_2" FROM "default"."T" AS "T" GROUP BY "T"."a";
+--#[window-23]
+SELECT "T"."a", SUM("T"."b") OVER (PARTITION BY "T"."a") AS "_1" FROM "default"."T" AS "T";
+
+--#[window-24]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-25]
+SELECT "T"."a", COUNT(1) OVER (PARTITION BY "T"."a") AS "_1" FROM "default"."T" AS "T";
+
+--#[window-35]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-36]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-37]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-38]
+SELECT "T"."a", SUM("T"."b") OVER () AS "_1" FROM "default"."T" AS "T";
+
+--#[window-39]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
