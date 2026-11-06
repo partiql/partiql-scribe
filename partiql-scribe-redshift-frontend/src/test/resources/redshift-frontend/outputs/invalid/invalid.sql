@@ -42,3 +42,15 @@
 
 --#[identifier-longer-than-127-bytes]
 [UNSUPPORTED_OPERATION{message="Invalid Redshift query: identifier longer than 127 bytes"}];
+
+--#[upper-two-arguments]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: UPPER takes 1 argument, not 2"}];
+
+--#[concat-one-argument]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: CONCAT takes 2 arguments, not 1"}];
+
+--#[concat-three-arguments]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: CONCAT takes 2 arguments, not 3"}];
+
+--#[power-one-argument]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: POWER takes 2 arguments, not 1"}];

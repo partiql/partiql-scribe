@@ -12,8 +12,15 @@ SELECT b + 1 * 2 - 3 / 4, (b + 1) * 2 FROM SIMPLE_T;
 --#[arith-exponent]
 SELECT b ^ 2 FROM SIMPLE_T;
 
+-- `&` has the precedence of `||`, below `+`: b & b + 1 is b & (b + 1).
 --#[bitwise-and]
 SELECT b & 1 FROM SIMPLE_T;
+
+--#[bitwise-and-precedence]
+SELECT b & b + 1, (b & b) + 1, b & b * 2 FROM SIMPLE_T;
+
+--#[bitwise-and-in-where]
+SELECT a FROM SIMPLE_T WHERE b & 1 = 1;
 
 --#[concat]
 SELECT c || 'x', c || c || 'y' FROM SIMPLE_T;

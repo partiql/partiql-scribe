@@ -94,7 +94,17 @@ as it types any expression:
 | `DECODE(e, s1, r1, ..., sk, rk [, d])` | `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`, where the match `mi` is `e IS NULL` when `si` is the NULL literal (`si IS NULL` when `e` is), `e = si` when either is another literal, and `e = si OR (e IS NULL AND si IS NULL)` when both may be NULL, since a NULL search value matches a NULL `e` |
 | `GREATEST(v1, ..., vn)`, `LEAST(v1, ..., vn)` | NULL literals left out, then `CASE WHEN c1 THEN v1 ... WHEN c(n-1) THEN v(n-1) ELSE vn END`, where `ci` is the conjunction over `j > i` of `vi >= COALESCE(vj, vi)` (`<=` for `LEAST`): a NULL `vi` fails its branch, a NULL `vj` does not stop `vi`; one argument left is `COALESCE(v, NULL)` (so the item keeps its own name), all NULL is NULL |
 
-A wrong number of arguments (`NULLIF(a)`, `NVL2(e, a)`, `DECODE(e, s)`) is refused as invalid.
+The string and math functions, and the operators that go with them:
+
+| Redshift | PartiQL |
+|---|---|
+| `UPPER(s)`, `LOWER(s)` | `UPPER(s)`, `LOWER(s)`: the result has the argument's type, and a `CHAR(n)` keeps its padding, in both languages |
+| `CONCAT(a, b)`, `a \|\| b` | `a \|\| b`, NULL when either side is NULL in both languages. Redshift converts an operand that is not a character string to `VARCHAR`; the conversion depends on the operand's type, which the front end does not see, except for a numeric literal, which is written as the string it converts to: `c \|\| 007` is `c \|\| '7'`, `CONCAT('v', 1.50)` is `'v' \|\| '1.50'`, `c \|\| -1` is `c \|\| '-1'`. Another non-string operand (a column, `NVL(seats, 0)`) is left to the planner, which reports the type mismatch |
+| `a & b` | `a & b`, PartiQL's bitwise AND |
+| `POWER(a, b)`, `POW(a, b)`, `a ^ b` | the call `pow(a, b)`. PartiQL's built-in functions define no power, so the call resolves only against a catalog that defines `pow` over two `DOUBLE PRECISION` arguments with a `DOUBLE PRECISION` result, which is what Redshift's `POWER` computes (it converts its arguments to `DOUBLE PRECISION`; the planner inserts the same casts). Against a catalog without `pow`, the planner reports the function as not found. `^` is left-associative, binds tighter than `*` and looser than a sign, as in Redshift: `2 ^ 3 ^ 2` is `pow(pow(2, 3), 2)` and `-2 ^ 2` is `pow(-2, 2)` |
+
+A wrong number of arguments (`NULLIF(a)`, `NVL2(e, a)`, `DECODE(e, s)`, `UPPER(a, b)`, `CONCAT(a)`, `POWER(a)`) is
+refused as invalid.
 
 `DECODE`, `GREATEST`, and `LEAST` repeat their arguments in the rewrite, and a call nested in a repeated position repeats
 the repetition, so the size of the AST of a statement is bounded: at most 100,000 nodes as the planner walks them, where
@@ -113,14 +123,14 @@ a common table expression of `GREATEST` over 120 columns converts referenced onc
 
 A Redshift identifier is at most 127 bytes; a longer one is refused as invalid, before the planner sees it.
 
-Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: the string, math, and datetime functions
-(`UPPER`, `CONCAT`, `POWER`, `DATEADD`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a `DATE` or
+Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: the datetime functions (`DATEADD`,
+`DATEDIFF`, `GETDATE`, `SYSDATE`, `CURRENT_DATE`, `EXTRACT(EPOCH ...)`), the `INTERVAL` literal and datetime arithmetic, a `DATE` or
 `TIMESTAMP` literal in a form other than `YYYY-MM-DD` and `YYYY-MM-DD HH:MM:SS[.ffffff]`, a backslash escape in a string
 literal other than `\\`, `\'`, `\b`, `\f`, `\n`, `\r`, `\t`, a numeric literal of more than 38 digits, a column list
 on a derived table or a common table expression, `*` with other select items, `EXCLUDE` with select items other than `*`
-or of an unqualified column with several FROM items, a subquery inside an `IN` list or as a function argument (the
-PartiQL printer writes it there without its parentheses; a subquery inside an argument expression, `GREATEST(b, (SELECT
-...) + 1)`, is allowed, and repeated like any other argument), a comparison or a boolean connective as the operand of
+or of an unqualified column with several FROM items, a subquery inside an `IN` list or as a function argument, which an
+operand of `^` becomes (the PartiQL printer writes it there without its parentheses; a subquery inside an argument
+expression, `GREATEST(b, (SELECT ...) + 1)`, is allowed, and repeated like any other argument), a comparison or a boolean connective as the operand of
 `IS [NOT] NULL`, `ISNULL`, `NOTNULL`, or `IS [NOT] TRUE | FALSE | UNKNOWN`, written by the user or by the rewrite of
 `NVL2` and of a `DECODE` match on NULL (the printers write `a AND b IS NULL`, which reads as `a AND (b IS NULL)`;
 `DECODE(a AND b, TRUE, ...)` is fine, its match is `=`), `ORDER BY`, `LIMIT`, or `OFFSET` on
@@ -140,8 +150,12 @@ PartiQL does, where Redshift converts one to the type of the other: `DECODE(cald
 own example converts the string to a `DATE` in Redshift and is never equal in PartiQL (refusing it needs the column's
 type, which the planner has and this front end does not); `NVL2`, `DECODE`, `GREATEST`, and `LEAST` return a value of
 either branch's type where Redshift converts to a common type (`NVL2(x, '2345', 1234)` is a `VARCHAR` in Redshift,
-`GREATEST(ts, DATE '2020-01-01')` a `TIMESTAMP`); an unnamed select item is
-named `_n` by the planner where Redshift names it after the function (`coalesce`, `case`, `greatest`), so
+`GREATEST(ts, DATE '2020-01-01')` a `TIMESTAMP`); `UPPER`, `LOWER`, `CONCAT`, and `||` take a value that is not a
+character string in Redshift, which converts it to `VARCHAR`, and the planner reports a type mismatch in PartiQL (the
+numeric literal operand of `||` and `CONCAT` is the one conversion the front end writes, since it needs no type); `||`
+and `CONCAT` of a `CHAR(n)` value keep its padding, which Redshift drops when it converts the operand to `VARCHAR`; `&`
+of a `DECIMAL` or floating-point value is an error in Redshift, where PartiQL casts the operand to `BIGINT`; an unnamed select item is
+named `_n` by the planner where Redshift names it after the function (`coalesce`, `case`, `greatest`, `upper`, `pow`), so
 `SELECT NVL(b, 0) FROM t ORDER BY coalesce` does not resolve; `ILIKE` folds the case of every letter through
 `LOWER`, where Redshift folds only single-byte characters; a `CHAR` or `VARCHAR` length is a number of bytes in Redshift
 and of characters in PartiQL, and the number is kept; a `LIKE` pattern that is not a literal keeps Redshift's escape
@@ -155,9 +169,10 @@ Redshift takes literally.
   shape of the parse tree where the grammar has to choose.
 - `src/test/resources/redshift-frontend/inputs/<group>/*.sql` and `outputs/<group>/*.sql`: the conformance suite, one
   Redshift input and one expected result per case: the input is converted, planned against the Scribe test catalogs
-  (`src/test/resources/catalogs` of the root project), and compiled with the PartiQL target. An expected result is
+  (`src/test/resources/catalogs` of the root project, with the scalar function `pow` over two `DOUBLE PRECISION`
+  arguments added by `RedshiftTestSession`), and compiled with the PartiQL target. An expected result is
   PartiQL text, compared up to whitespace, the front end's problem code with a message fragment
-  (`[UNSUPPORTED_OPERATION{message="function UPPER"}];`), or the planner's (`[PLANNER{message="VAR_REF_NOT_FOUND"}];`).
+  (`[UNSUPPORTED_OPERATION{message="function DATEADD"}];`), or the planner's (`[PLANNER{message="VAR_REF_NOT_FOUND"}];`).
   `RedshiftTranspilerSuite` runs them, parses and plans every valid output again as a check, parses every input with
   the grammar, and checks that `tables` names the tables the AST reads.
 - `RedshiftTranspilerTest`: the public contract: problem codes and kinds, positions, notes, determinism, the nesting
