@@ -7,12 +7,6 @@ SELECT -"simple_t"['b'] AS "_1", +"simple_t"['b'] AS "_2", -("simple_t"['b'] + 1
 --#[arith-precedence]
 SELECT ("simple_t"['b'] + (1 * 2)) - (3 / 4) AS "_1", ("simple_t"['b'] + 1) * 2 AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
---#[arith-exponent]
-[UNSUPPORTED_OPERATION{message="operator `^` is not translated yet"}];
-
---#[bitwise-and]
-[UNSUPPORTED_OPERATION{message="operator `&` is not translated yet"}];
-
 --#[concat]
 SELECT "simple_t"['c'] || 'x' AS "_1", ("simple_t"['c'] || "simple_t"['c']) || 'y' AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
@@ -124,3 +118,12 @@ SELECT 1.0000000000000000000000000000000000001 AS "v" FROM "default"."SIMPLE_T" 
 
 --#[integer-literal-39-digits]
 [UNSUPPORTED_OPERATION{message="numeric literal with more than 38 digits"}];
+
+--#[bitwise-and]
+SELECT "simple_t"['b'] & 1 AS "_1", "simple_t"['b'] & "simple_t"['b'] AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[bitwise-and-precedence]
+SELECT "simple_t"['b'] & ("simple_t"['b'] + 1) AS "_1", ("simple_t"['b'] & "simple_t"['b']) + 1 AS "_2", "simple_t"['b'] & ("simple_t"['b'] * 2) AS "_3" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[bitwise-and-in-where]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE ("simple_t"['b'] & 1) = 1;

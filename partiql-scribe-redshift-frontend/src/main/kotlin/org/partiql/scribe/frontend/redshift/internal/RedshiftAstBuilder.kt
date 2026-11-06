@@ -92,8 +92,8 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  *
  * Each rule rewrites a form of the Redshift query into a form of PartiQL. The planner then resolves the names and types
  * of the result. A construct that has no conversion yet stops the build with [TranslationStop] at its position; the
- * string, math, and datetime functions are in that set for now, and so are the `INTERVAL` literal and the operators `^`
- * and `&`. The conditional functions are translated by [ConditionalFunctions].
+ * datetime functions are in that set for now, and so is the `INTERVAL` literal. The functions are translated by family:
+ * [ConditionalFunctions], [StringFunctions] (with the operator `||`), and [MathFunctions] (with the operator `^`).
  * The depth of the AST is bounded by [RedshiftFrontend.MAX_NESTING]; see [nested].
  *
  * The rewrites that change the form of the query:
@@ -144,6 +144,8 @@ internal class RedshiftAstBuilder(
     private var depth = 0
 
     private val conditional = ConditionalFunctions(this)
+    private val strings = StringFunctions(this)
+    private val math = MathFunctions(this)
 
     /**
      * The select list of a query block, for the block's ORDER BY and for the DISTINCT subquery: the expression items in
@@ -1029,15 +1031,16 @@ internal class RedshiftAstBuilder(
                     ctx.DOUBLE_COLON().symbol,
                 ) { exprCast(valueExpr(ctx.valueExpr()), dataType(ctx.dataType())) }
             is P.ValueSignedContext -> nested(ctx.sign) { exprOperator(ctx.sign.text, null, valueExpr(ctx.valueExpr())) }
-            // PartiQL has no counterpart of `^` and `&` yet; the operators are translated with the functions, by a later change.
-            is P.ValueExponentContext -> throw TranslationStop.unsupported(ctx.op, "operator `^` is not translated yet")
+            // `a ^ b` is the call `pow(a, b)`, so its operands are function arguments; see [argument].
+            is P.ValueExponentContext ->
+                nested(ctx.op) { math.power(argument(valueExpr(ctx.lhs), ctx.lhs), argument(valueExpr(ctx.rhs), ctx.rhs)) }
             is P.ValueMultiplicativeContext -> nested(ctx.op) { exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
             is P.ValueAdditiveContext -> nested(ctx.op) { exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
             is P.ValueOperatorContext ->
-                if (ctx.op.type == P.CONCAT) {
-                    nested(ctx.op) { exprOperator("||", valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
-                } else {
-                    throw TranslationStop.unsupported(ctx.op, "operator `&` is not translated yet")
+                when (ctx.op.type) {
+                    P.CONCAT -> nested(ctx.op) { strings.concatenation(valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
+                    // `a & b` on integers is PartiQL's `&`; PartiQL also takes other numbers, with their integer part.
+                    else -> nested(ctx.op) { exprOperator("&", valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
                 }
             else -> unexpected(ctx)
         }
@@ -1105,22 +1108,49 @@ internal class RedshiftAstBuilder(
     }
 
     /**
-     * A scalar function call. Each family of functions has its own rules: the conditional functions in
-     * [ConditionalFunctions]; the string, math, and datetime functions are translated by later changes.
+     * A scalar function call. Each family of functions has its own rules: [ConditionalFunctions], [StringFunctions],
+     * and [MathFunctions]; the datetime functions are translated by a later change.
      */
     private fun function(
         name: Token,
         args: List<P.ExprContext>,
-    ): Expr = conditional.translate(name, args) ?: notYet(name)
+    ): Expr =
+        conditional.translate(name, args)
+            ?: strings.translate(name, args)
+            ?: math.translate(name, args)
+            ?: notYet(name)
 
     /**
      * An argument of a function. A scalar subquery is not translated there yet: the PartiQL printer writes a subquery
      * inside an argument list without its parentheses (as inside an `IN` list), which no engine parses.
      */
-    fun argument(ctx: P.ExprContext): Expr {
-        val expr = expr(ctx)
-        if (expr is ExprQuerySet) throw TranslationStop.unsupported(ctx, "subquery as a function argument")
+    fun argument(ctx: P.ExprContext): Expr = argument(expr(ctx), ctx)
+
+    /** [expr], built from [at], as an argument of a function; see [argument]. */
+    fun argument(
+        expr: Expr,
+        at: ParserRuleContext,
+    ): Expr {
+        if (expr is ExprQuerySet) throw TranslationStop.unsupported(at, "subquery as a function argument")
         return expr
+    }
+
+    /** Stops when the number of [args] of the function [name] is not between [min] and [max]: Redshift has no such function. */
+    fun arity(
+        name: Token,
+        args: List<P.ExprContext>,
+        min: Int,
+        max: Int?,
+    ) {
+        if (args.size < min || (max != null && args.size > max)) {
+            val takes =
+                when {
+                    max == null -> "at least $min arguments"
+                    min == max -> "$min ${if (min == 1) "argument" else "arguments"}"
+                    else -> "$min to $max arguments"
+                }
+            throw TranslationStop.invalid(name, "${name.text.uppercase()} takes $takes, not ${args.size}")
+        }
     }
 
     private fun notYet(name: Token): Nothing =
