@@ -33,6 +33,7 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
+- Redshift target: compiling nested `CASE` expressions took time exponential in the depth (20 deep did not finish), because an argument that is a cast to `DYNAMIC` was converted once before the cast was dropped and again after. Each branch is now converted once.
 - `a IS [NOT] TRUE | FALSE | UNKNOWN` is rendered as that predicate on every SQL target. It was rendered as a call to a function named `is_true`, `is_false`, or `is_unknown`, which no target defines. Trino parses the predicate from release 482.
 
 ### Removed
@@ -41,6 +42,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @chatyang
 
 ## [2.1.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.1) - 2026-10-27
 

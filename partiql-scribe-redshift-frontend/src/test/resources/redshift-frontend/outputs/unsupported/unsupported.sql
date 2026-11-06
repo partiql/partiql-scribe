@@ -1,21 +1,3 @@
---#[function-nvl]
-[UNSUPPORTED_OPERATION{message="function NVL is not translated yet"}];
-
---#[function-coalesce]
-[UNSUPPORTED_OPERATION{message="function COALESCE is not translated yet"}];
-
---#[function-decode]
-[UNSUPPORTED_OPERATION{message="function DECODE is not translated yet"}];
-
---#[function-greatest]
-[UNSUPPORTED_OPERATION{message="function GREATEST is not translated yet"}];
-
---#[function-nvl2]
-[UNSUPPORTED_OPERATION{message="function NVL2 is not translated yet"}];
-
---#[function-nullif]
-[UNSUPPORTED_OPERATION{message="function NULLIF is not translated yet"}];
-
 --#[function-power]
 [UNSUPPORTED_OPERATION{message="function POWER is not translated yet"}];
 
@@ -54,3 +36,59 @@
 
 --#[type-mismatch-arith]
 [PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[subquery-as-nvl-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-nullif-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-greatest-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-decode-search-value]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-parenthesized-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-aggregate-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+--#[subquery-as-coalesce-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-nvl2-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-least-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[is-null-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[isnull-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[notnull-of-comparison]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[is-true-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[is-null-of-between]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[nvl2-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[nvl2-of-not]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[nvl2-of-comparison]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[decode-of-boolean-connective-null-search]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[decode-of-boolean-connective-column-search]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];

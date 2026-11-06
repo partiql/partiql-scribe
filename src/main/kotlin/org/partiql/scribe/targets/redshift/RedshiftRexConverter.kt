@@ -158,11 +158,12 @@ public open class RedshiftRexConverter(
      * Wrap the [rex] in an explicit cast if the [rex] is a date time type.
      */
     private fun normalizeArgument(rex: Rex): Expr {
-        val expr = visitRex(rex, Unit)
         val type = rex.type
+        // A cast to DYNAMIC is dropped; its operand is normalized instead, and converted once, not before and after.
         if (rex is RexCast && type.pType.code() == PType.DYNAMIC) {
             return normalizeArgument(rex.operand)
         }
+        val expr = visitRex(rex, Unit)
         return when (rex) {
             is RexPathKey, is RexPathIndex, is RexPathSymbol, is RexVar -> {
                 return when (type.pType.code()) {

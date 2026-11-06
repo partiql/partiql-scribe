@@ -64,8 +64,17 @@ import org.partiql.ast.Sort
 import org.partiql.ast.Statement
 import org.partiql.ast.With
 import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprAnd
+import org.partiql.ast.expr.ExprBetween
+import org.partiql.ast.expr.ExprBoolTest
 import org.partiql.ast.expr.ExprCast
+import org.partiql.ast.expr.ExprInCollection
+import org.partiql.ast.expr.ExprLike
 import org.partiql.ast.expr.ExprLit
+import org.partiql.ast.expr.ExprNot
+import org.partiql.ast.expr.ExprNullPredicate
+import org.partiql.ast.expr.ExprOperator
+import org.partiql.ast.expr.ExprOr
 import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprVarRef
@@ -74,14 +83,17 @@ import org.partiql.ast.expr.TruthValue
 import org.partiql.scribe.frontend.redshift.RedshiftFrontend
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
+import java.util.IdentityHashMap
+import java.util.Locale
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 
 /**
  * Builds the PartiQL AST of a Redshift parse tree.
  *
  * Each rule rewrites a form of the Redshift query into a form of PartiQL. The planner then resolves the names and types
- * of the result. A construct that has no conversion yet stops the build with [TranslationStop] at its position; every
- * scalar and datetime function is in that set for now, and so are the `INTERVAL` literal and the operators `^` and `&`.
+ * of the result. A construct that has no conversion yet stops the build with [TranslationStop] at its position; the
+ * string, math, and datetime functions are in that set for now, and so are the `INTERVAL` literal and the operators `^`
+ * and `&`. The conditional functions are translated by [ConditionalFunctions].
  * The depth of the AST is bounded by [RedshiftFrontend.MAX_NESTING]; see [nested].
  *
  * The rewrites that change the form of the query:
@@ -125,11 +137,13 @@ internal class RedshiftAstBuilder(
      */
     val tables = LinkedHashSet<List<String>>()
 
-    /** How many times each common table expression name in scope is defined, for the lookup. */
-    private val commonTableCounts = HashMap<String, Int>()
+    /** The definitions in scope of each common table expression name, for the lookup and for [size]. */
+    private val commonTableScopes = HashMap<String, CommonTable>()
 
     /** The current depth of the AST under construction; see [nested]. */
     private var depth = 0
+
+    private val conditional = ConditionalFunctions(this)
 
     /**
      * The select list of a query block, for the block's ORDER BY and for the DISTINCT subquery: the expression items in
@@ -245,7 +259,7 @@ internal class RedshiftAstBuilder(
      * Converts [body] one level deeper in the AST. The depth is bounded by [RedshiftFrontend.MAX_NESTING], so that the
      * recursion of this builder, and of the planner and the targets over the AST, is bounded by the text.
      */
-    private inline fun <T> nested(
+    internal inline fun <T> nested(
         at: Token,
         body: () -> T,
     ): T {
@@ -260,7 +274,84 @@ internal class RedshiftAstBuilder(
         }
     }
 
-    fun root(ctx: P.RootContext): Statement = query(query(ctx.query()).query)
+    /*
+     * Size
+     *
+     * A rewrite that repeats its arguments (DECODE repeats the expression, GREATEST and LEAST every argument) produces an
+     * AST larger than the call, and a call nested in a repeated position is repeated too, so a few such calls can give
+     * the planner and the targets a tree they cannot walk. The depth bound does not see this: the result is as deep as
+     * the call. The growth is therefore bounded, over the whole statement: the AST may have at most MAX_SIZE nodes as the
+     * planner walks them, a shared node counted at each use, a string literal weighted by its length, and a common table
+     * expression's body counted at each reference rather than in the WITH clause (the planner inlines it there). The
+     * bound is checked as each repeating rewrite is built, on the running total of their results, so that no oversized
+     * tree is built, and on the finished statement, which also covers an alias repeated in GROUP BY or ORDER BY and a
+     * CTE referenced many times. A statement that repeats nothing is not measured: its AST is the size of its text.
+     */
+
+    /** The sizes of the nodes seen so far, by identity: a shared node is one object, and its size is computed once. */
+    private val sizes = IdentityHashMap<AstNode, Long>()
+
+    /** The size of the body behind each reference to a common table expression, by the reference node. */
+    private val referenceSizes = IdentityHashMap<AstNode, Long>()
+
+    /** The running total of the sizes of the repeating rewrites built so far, each counted once; see [expanded]. */
+    private var expansion = 0L
+
+    /** Whether anything was repeated: a rewrite, or a common table expression referenced more than once. */
+    private var repeated = false
+
+    /**
+     * The size of [node]: its nodes as a tree, a string literal weighted by its length, a reference to a common table
+     * expression weighted by the body it inlines. The body in the `WITH` clause itself is not counted, since the planner
+     * replaces the clause by the inlined references (a body without references costs nothing).
+     */
+    fun size(node: AstNode): Long =
+        sizes.getOrPut(node) {
+            val self =
+                when {
+                    node is ExprLit && node.lit.code() == Literal.STRING -> 1 + node.lit.stringValue().length / CHARACTERS_PER_NODE
+                    else -> 1 + (referenceSizes[node] ?: 0L)
+                }
+            self + node.children.sumOf(::size)
+        }
+
+    /**
+     * Builds the rewrite of a call of [name] that repeats its arguments, with [body], and adds its size to the running
+     * total. A rewrite nested in the arguments is counted by the outer one, so the total is reset to what it was before
+     * the arguments were built: each node of the statement counts once.
+     */
+    fun expanded(
+        name: Token,
+        body: () -> Expr,
+    ): Expr {
+        val before = expansion
+        val result = body()
+        repeated = true
+        expansion = before + size(result)
+        if (expansion > MAX_SIZE) throw tooLarge(name)
+        return result
+    }
+
+    /** The rewrite of the call of [name], with the rewrites built so far, does not stay within [MAX_SIZE]. */
+    fun tooLarge(name: Token): TranslationStop {
+        val function = name.text.uppercase()
+        return TranslationStop.unsupported(
+            name,
+            "$function makes the query too large to translate (more than $SIZE_TEXT nodes once its arguments are repeated)",
+        )
+    }
+
+    fun root(ctx: P.RootContext): Statement {
+        val statement = query(query(ctx.query()).query)
+        if (repeated && size(statement) > MAX_SIZE) {
+            val repeats = "its functions and common table expressions are repeated"
+            throw TranslationStop.unsupported(
+                ctx.start,
+                "the query is too large to translate (more than $SIZE_TEXT nodes once $repeats)",
+            )
+        }
+        return statement
+    }
 
     /*
      * Queries
@@ -289,9 +380,10 @@ internal class RedshiftAstBuilder(
                     with(
                         clause.commonTableExpression().map { cte ->
                             cte.columnAliases()?.let { throw TranslationStop.unsupported(it, "column list of a common table expression") }
-                            val element = withListElement(simple(cte.name), querySet(cte.query()), null)
+                            val body = querySet(cte.query())
+                            val element = withListElement(simple(cte.name), body, null)
                             // A common table expression sees the ones before it, not itself (that would be RECURSIVE).
-                            defineCommonTable(fold(cte.name))
+                            defineCommonTable(fold(cte.name), size(body))
                             element
                         },
                         false,
@@ -306,17 +398,41 @@ internal class RedshiftAstBuilder(
         }
     }
 
-    private fun defineCommonTable(name: String) {
+    /** The definitions of a common table expression name in scope, innermost last: the size of each body and its references. */
+    private class CommonTable {
+        val sizes = ArrayList<Long>()
+        var references = 0
+    }
+
+    private fun defineCommonTable(
+        name: String,
+        size: Long,
+    ) {
         commonTables.add(name)
-        commonTableCounts.merge(name, 1, Int::plus)
+        commonTableScopes.getOrPut(name) { CommonTable() }.sizes.add(size)
     }
 
     private fun undefineCommonTable() {
         val name = commonTables.removeAt(commonTables.lastIndex)
-        if (commonTableCounts.merge(name, -1, Int::plus) == 0) commonTableCounts.remove(name)
+        val table = commonTableScopes.getValue(name)
+        table.sizes.removeAt(table.sizes.lastIndex)
+        if (table.sizes.isEmpty()) commonTableScopes.remove(name)
     }
 
-    private fun isCommonTable(name: String): Boolean = name in commonTableCounts
+    private fun isCommonTable(name: String): Boolean = name in commonTableScopes
+
+    /**
+     * A reference to the common table expression [name]. The planner inlines the body at each reference, so the
+     * reference weighs the body in [size]; the second reference is a repetition.
+     */
+    private fun referenceCommonTable(
+        name: String,
+        reference: AstNode,
+    ) {
+        val table = commonTableScopes.getValue(name)
+        referenceSizes[reference] = table.sizes.last()
+        if (++table.references > 1) repeated = true
+    }
 
     private fun queryTerm(ctx: P.QueryTermContext): Term =
         when (ctx) {
@@ -744,8 +860,9 @@ internal class RedshiftAstBuilder(
                 val parts = ctx.qualifiedName().identifier().map(::simple)
                 val alias = ctx.tableAlias()?.let(::tableAlias)
                 val isCommonTable = parts.size == 1 && isCommonTable(parts[0].text)
-                if (!isCommonTable) tables.add(parts.map { it.text })
-                Ref(fromExpr(exprVarRef(Identifier.of(parts), isCommonTable), FromType.SCAN(), alias, null), listOf(alias ?: parts.last()))
+                val reference = exprVarRef(Identifier.of(parts), isCommonTable)
+                if (isCommonTable) referenceCommonTable(parts[0].text, reference) else tables.add(parts.map { it.text })
+                Ref(fromExpr(reference, FromType.SCAN(), alias, null), listOf(alias ?: parts.last()))
             }
             else -> unexpected(ctx)
         }
@@ -790,8 +907,8 @@ internal class RedshiftAstBuilder(
                 val op = if (ctx.op.text == "!=") "<>" else ctx.op.text
                 exprOperator(op, valueExpr(ctx.lhs), valueExpr(ctx.rhs))
             }
-            is P.PredicateNullContext -> exprNullPredicate(valueExpr(ctx.lhs), ctx.NOT() != null)
-            is P.PredicateNullPostfixContext -> exprNullPredicate(valueExpr(ctx.lhs), ctx.op.type == P.NOTNULL)
+            is P.PredicateNullContext -> nullPredicate(valueExpr(ctx.lhs), ctx.NOT() != null, ctx.lhs)
+            is P.PredicateNullPostfixContext -> nullPredicate(valueExpr(ctx.lhs), ctx.op.type == P.NOTNULL, ctx.lhs)
             is P.PredicateTruthContext -> {
                 val truth =
                     when (ctx.truth.type) {
@@ -799,12 +916,12 @@ internal class RedshiftAstBuilder(
                         P.FALSE -> TruthValue.FALSE()
                         else -> TruthValue.UNKNOWN()
                     }
-                exprBoolTest(valueExpr(ctx.lhs), ctx.NOT() != null, truth)
+                exprBoolTest(testable(valueExpr(ctx.lhs), ctx.lhs), ctx.NOT() != null, truth)
             }
             is P.PredicateBetweenContext -> exprBetween(valueExpr(ctx.lhs), valueExpr(ctx.lower), valueExpr(ctx.upper), ctx.NOT() != null)
             is P.PredicateInQueryContext -> exprInCollection(valueExpr(ctx.lhs), querySet(ctx.query()), ctx.NOT() != null)
             is P.PredicateInListContext -> {
-                // The PartiQL printer does not print a subquery inside a list.
+                // A scalar subquery as an element of a list is not translated yet; see [argument].
                 ctx.expr().forEach {
                     if (bareAtom(
                             it,
@@ -940,9 +1057,13 @@ internal class RedshiftAstBuilder(
                 }
             is P.AtomCountStarContext -> exprCall(Identifier.regular("count"), emptyList(), null)
             is P.AtomAggregateContext ->
-                exprCall(Identifier.regular(foldAscii(ctx.name.text)), listOf(expr(ctx.expr())), ctx.setQuantifier()?.let(::setQuantifier))
-            // The scalar and datetime functions are translated by later changes, each with its own rule.
-            is P.AtomFunctionCallContext -> notYet(ctx.name.start)
+                exprCall(
+                    Identifier.regular(foldAscii(ctx.name.text)),
+                    listOf(argument(ctx.expr())),
+                    ctx.setQuantifier()?.let(::setQuantifier),
+                )
+            is P.AtomFunctionCallContext -> function(ctx.name.start, ctx.expr())
+            // The datetime functions are translated by a later change, each with its own rule.
             is P.AtomDateFunctionContext -> notYet(ctx.name)
             is P.AtomExtractEpochContext -> notYet(ctx.EXTRACT().symbol)
             is P.AtomGetdateContext -> notYet(ctx.GETDATE().symbol)
@@ -953,6 +1074,54 @@ internal class RedshiftAstBuilder(
             is P.AtomNameContext -> name(ctx.qualifiedName())
             else -> unexpected(ctx)
         }
+
+    /**
+     * `x IS [NOT] NULL`, for the operand [value] written at [at]. A predicate or a boolean connective as the operand is
+     * refused; see [testable].
+     */
+    fun nullPredicate(
+        value: Expr,
+        not: Boolean,
+        at: ParserRuleContext,
+    ): Expr = exprNullPredicate(testable(value, at), not)
+
+    /**
+     * The operand of an `IS` test. A predicate or a boolean connective (`a AND b`, `NOT a`, `b = 1`, `b IN (...)`,
+     * `c LIKE ...`, `b BETWEEN ...`, `x IS NULL`, `a IS TRUE`) is refused there: the PartiQL printer writes such an
+     * operand without the parentheses it needs, on every target, so `(a AND b) IS NULL` would come out as
+     * `a AND b IS NULL`, which is a different expression. The planner removes any parentheses the AST carries, so the
+     * front end cannot write them. Every other operand prints with its own delimiters.
+     */
+    fun testable(
+        value: Expr,
+        at: ParserRuleContext,
+    ): Expr {
+        val isPredicate =
+            value is ExprAnd || value is ExprOr || value is ExprNot || value is ExprBetween || value is ExprLike ||
+                value is ExprInCollection || value is ExprNullPredicate || value is ExprBoolTest ||
+                (value is ExprOperator && value.symbol in COMPARISONS)
+        if (isPredicate) throw TranslationStop.unsupported(at, "a comparison or a boolean connective as the operand of an IS test")
+        return value
+    }
+
+    /**
+     * A scalar function call. Each family of functions has its own rules: the conditional functions in
+     * [ConditionalFunctions]; the string, math, and datetime functions are translated by later changes.
+     */
+    private fun function(
+        name: Token,
+        args: List<P.ExprContext>,
+    ): Expr = conditional.translate(name, args) ?: notYet(name)
+
+    /**
+     * An argument of a function. A scalar subquery is not translated there yet: the PartiQL printer writes a subquery
+     * inside an argument list without its parentheses (as inside an `IN` list), which no engine parses.
+     */
+    fun argument(ctx: P.ExprContext): Expr {
+        val expr = expr(ctx)
+        if (expr is ExprQuerySet) throw TranslationStop.unsupported(ctx, "subquery as a function argument")
+        return expr
+    }
 
     private fun notYet(name: Token): Nothing =
         throw TranslationStop.unsupported(
@@ -1086,14 +1255,21 @@ internal class RedshiftAstBuilder(
      * `enable_case_sensitive_identifier`; otherwise Redshift folds it too.
      * https://docs.aws.amazon.com/redshift/latest/dg/r_names.html
      */
-    fun simple(ctx: P.IdentifierContext): Identifier.Simple =
-        when (ctx) {
-            is P.IdentifierQuotedContext -> {
-                val text = ctx.text.removePrefix("\"").removeSuffix("\"").replace("\"\"", "\"")
-                Identifier.Simple.delimited(if (caseSensitiveIdentifiers) text else foldAscii(text))
+    fun simple(ctx: P.IdentifierContext): Identifier.Simple {
+        val name =
+            when (ctx) {
+                is P.IdentifierQuotedContext -> {
+                    val text = ctx.text.removePrefix("\"").removeSuffix("\"").replace("\"\"", "\"")
+                    Identifier.Simple.delimited(if (caseSensitiveIdentifiers) text else foldAscii(text))
+                }
+                else -> Identifier.Simple.regular(foldAscii(ctx.text))
             }
-            else -> Identifier.Simple.regular(foldAscii(ctx.text))
+        // Redshift's limit; a longer name is also what lets a repeated name grow the output past the size bound.
+        if (name.text.toByteArray(Charsets.UTF_8).size > MAX_IDENTIFIER_BYTES) {
+            throw TranslationStop.invalid(ctx, "identifier longer than $MAX_IDENTIFIER_BYTES bytes")
         }
+        return name
+    }
 
     /** The alias after `AS` in the select list, which may be a reserved word; a reserved word is delimited in PartiQL. */
     private fun label(ctx: P.ColumnLabelContext): Identifier.Simple =
@@ -1125,8 +1301,21 @@ internal class RedshiftAstBuilder(
     private fun unexpected(ctx: ParserRuleContext): Nothing =
         throw TranslationStop.unsupported(ctx, "${ctx.text} (no conversion rule for ${ctx::class.simpleName})")
 
-    private companion object {
-        const val WRAPPED = "DISTINCT and LIMIT or OFFSET"
+    internal companion object {
+        /** The most nodes the AST of a statement may have, counted as [size] counts them. */
+        const val MAX_SIZE = 100_000L
+
+        /** The characters of a string literal that weigh one node in [size]. */
+        const val CHARACTERS_PER_NODE = 16L
+
+        /** The most bytes of a Redshift identifier. https://docs.aws.amazon.com/redshift/latest/dg/r_names.html */
+        const val MAX_IDENTIFIER_BYTES = 127
+
+        /** [MAX_SIZE] as the messages write it. */
+        val SIZE_TEXT: String = "%,d".format(Locale.ROOT, MAX_SIZE)
+
+        private val COMPARISONS = setOf("=", "<>", "!=", "<", ">", "<=", ">=")
+        private const val WRAPPED = "DISTINCT and LIMIT or OFFSET"
         val BACKSLASH: Expr = exprLit(Literal.string("\\"))
         val INTEGER = Regex("""\d+""")
         val DATE = Regex("""\d{4}-\d{2}-\d{2}""")

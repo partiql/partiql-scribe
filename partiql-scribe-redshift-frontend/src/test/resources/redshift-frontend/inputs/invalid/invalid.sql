@@ -33,3 +33,17 @@ SELECT TOP 5 a FROM SIMPLE_T LIMIT 5;
 
 --#[alias-not-visible-in-outer-query]
 SELECT x FROM (SELECT a AS y FROM SIMPLE_T) AS s;
+
+-- Redshift has no such function with this number of arguments.
+--#[nullif-one-argument]
+SELECT NULLIF(b) FROM SIMPLE_T;
+
+--#[nvl2-two-arguments]
+SELECT NVL2(c, 'set') FROM SIMPLE_T;
+
+--#[decode-two-arguments]
+SELECT DECODE(b, 1) FROM SIMPLE_T;
+
+-- Redshift identifiers are at most 127 bytes; a longer one is refused before the planner sees it.
+--#[identifier-longer-than-127-bytes]
+SELECT b AS xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FROM SIMPLE_T;

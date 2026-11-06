@@ -30,3 +30,15 @@
 
 --#[alias-not-visible-in-outer-query]
 [PLANNER{message="VAR_REF_NOT_FOUND"}];
+
+--#[nullif-one-argument]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: NULLIF takes 2 arguments, not 1"}];
+
+--#[nvl2-two-arguments]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: NVL2 takes 3 arguments, not 2"}];
+
+--#[decode-two-arguments]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: DECODE takes at least 3 arguments, not 2"}];
+
+--#[identifier-longer-than-127-bytes]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: identifier longer than 127 bytes"}];
