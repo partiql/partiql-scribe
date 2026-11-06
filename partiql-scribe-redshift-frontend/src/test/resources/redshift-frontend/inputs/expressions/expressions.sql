@@ -9,6 +9,19 @@ SELECT -b, +b, -(b + 1) FROM SIMPLE_T;
 --#[arith-precedence]
 SELECT b + 1 * 2 - 3 / 4, (b + 1) * 2 FROM SIMPLE_T;
 
+--#[arith-exponent]
+SELECT b ^ 2 FROM SIMPLE_T;
+
+-- `&` has the precedence of `||`, below `+`: b & b + 1 is b & (b + 1).
+--#[bitwise-and]
+SELECT b & 1 FROM SIMPLE_T;
+
+--#[bitwise-and-precedence]
+SELECT b & b + 1, (b & b) + 1, b & b * 2 FROM SIMPLE_T;
+
+--#[bitwise-and-in-where]
+SELECT a FROM SIMPLE_T WHERE b & 1 = 1;
+
 --#[concat]
 SELECT c || 'x', c || c || 'y' FROM SIMPLE_T;
 
@@ -120,13 +133,3 @@ SELECT 1.000000000000000000000000000000000000001 AS v FROM SIMPLE_T;
 
 --#[integer-literal-39-digits]
 SELECT 100000000000000000000000000000000000000 AS v FROM SIMPLE_T;
-
--- `&` is PartiQL's bitwise AND. It has the precedence of `||`, below `+`: b & b + 1 is b & (b + 1).
---#[bitwise-and]
-SELECT b & 1, b & b FROM SIMPLE_T;
-
---#[bitwise-and-precedence]
-SELECT b & b + 1, (b & b) + 1, b & b * 2 FROM SIMPLE_T;
-
---#[bitwise-and-in-where]
-SELECT a FROM SIMPLE_T WHERE b & 1 = 1;

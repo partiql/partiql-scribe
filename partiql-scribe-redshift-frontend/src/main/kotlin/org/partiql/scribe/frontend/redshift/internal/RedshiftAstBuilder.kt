@@ -1135,20 +1135,14 @@ internal class RedshiftAstBuilder(
         return expr
     }
 
-    /** Stops when the number of [args] of the function [name] is not between [min] and [max]: Redshift has no such function. */
+    /** Stops when the function [name] does not take exactly [count] of [args]: Redshift has no such function. */
     fun arity(
         name: Token,
         args: List<P.ExprContext>,
-        min: Int,
-        max: Int?,
+        count: Int,
     ) {
-        if (args.size < min || (max != null && args.size > max)) {
-            val takes =
-                when {
-                    max == null -> "at least $min arguments"
-                    min == max -> "$min ${if (min == 1) "argument" else "arguments"}"
-                    else -> "$min to $max arguments"
-                }
+        if (args.size != count) {
+            val takes = if (count == 1) "1 argument" else "$count arguments"
             throw TranslationStop.invalid(name, "${name.text.uppercase()} takes $takes, not ${args.size}")
         }
     }

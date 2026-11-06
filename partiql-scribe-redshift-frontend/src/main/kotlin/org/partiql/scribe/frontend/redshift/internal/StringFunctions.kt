@@ -48,7 +48,7 @@ internal class StringFunctions(private val builder: RedshiftAstBuilder) {
         args: List<P.ExprContext>,
         function: String,
     ): Expr {
-        builder.arity(name, args, 1, 1)
+        builder.arity(name, args, 1)
         return builder.nested(name) { exprCall(Identifier.regular(function), listOf(builder.argument(args[0])), null) }
     }
 
@@ -60,7 +60,7 @@ internal class StringFunctions(private val builder: RedshiftAstBuilder) {
         name: Token,
         args: List<P.ExprContext>,
     ): Expr {
-        builder.arity(name, args, 2, 2)
+        builder.arity(name, args, 2)
         return builder.nested(name) { concatenation(builder.argument(args[0]), builder.argument(args[1])) }
     }
 

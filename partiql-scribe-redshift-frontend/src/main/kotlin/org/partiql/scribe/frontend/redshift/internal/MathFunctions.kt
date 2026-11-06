@@ -35,7 +35,7 @@ internal class MathFunctions(private val builder: RedshiftAstBuilder) {
         name: Token,
         args: List<P.ExprContext>,
     ): Expr {
-        builder.arity(name, args, 2, 2)
+        builder.arity(name, args, 2)
         return builder.nested(name) { power(builder.argument(args[0]), builder.argument(args[1])) }
     }
 

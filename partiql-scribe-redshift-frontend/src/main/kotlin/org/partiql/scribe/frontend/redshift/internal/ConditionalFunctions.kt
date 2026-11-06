@@ -60,7 +60,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
         name: Token,
         args: List<P.ExprContext>,
     ): Expr {
-        builder.arity(name, args, 2, 2)
+        arity(name, args, 2, 2)
         return builder.nested(name) { exprNullIf(builder.argument(args[0]), builder.argument(args[1])) }
     }
 
@@ -73,7 +73,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
         name: Token,
         args: List<P.ExprContext>,
     ): Expr {
-        builder.arity(name, args, 3, 3)
+        arity(name, args, 3, 3)
         return builder.nested(name) {
             val (e, a, b) = args.map(builder::argument)
             exprCase(null, listOf(exprCaseBranch(builder.nullPredicate(e, true, args[0]), a)), b)
@@ -95,7 +95,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
         name: Token,
         args: List<P.ExprContext>,
     ): Expr {
-        builder.arity(name, args, 3, null)
+        arity(name, args, 3, null)
         return builder.nested(name) {
             builder.expanded(name) {
                 val exprs = args.map(builder::argument)
@@ -187,6 +187,24 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
             is ExprOperator -> lhs == null && (symbol == "-" || symbol == "+") && rhs.isLiteral()
             else -> false
         }
+
+    /** Stops when the number of [args] is not between [min] and [max]: Redshift has no such function. */
+    private fun arity(
+        name: Token,
+        args: List<P.ExprContext>,
+        min: Int,
+        max: Int?,
+    ) {
+        if (args.size < min || (max != null && args.size > max)) {
+            val takes =
+                when {
+                    max == null -> "at least $min"
+                    min == max -> "$min"
+                    else -> "$min to $max"
+                }
+            throw TranslationStop.invalid(name, "${name.text.uppercase()} takes $takes arguments, not ${args.size}")
+        }
+    }
 
     private companion object {
         /** The fewest nodes a pair of `GREATEST` arguments adds: a comparison, its `AND`, and two one-node operands. */
