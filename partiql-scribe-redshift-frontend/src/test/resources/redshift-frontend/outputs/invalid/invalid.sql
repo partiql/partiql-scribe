@@ -39,3 +39,6 @@
 
 --#[decode-two-arguments]
 [UNSUPPORTED_OPERATION{message="Invalid Redshift query: DECODE takes at least 3 arguments, not 2"}];
+
+--#[identifier-longer-than-127-bytes]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: identifier longer than 127 bytes"}];

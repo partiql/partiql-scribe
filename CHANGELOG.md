@@ -42,6 +42,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @chatyang
 
 ## [2.1.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.1) - 2026-10-27
 

@@ -54,3 +54,41 @@
 
 --#[subquery-as-aggregate-argument]
 [UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+--#[subquery-as-coalesce-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-nvl2-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-least-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[is-null-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[isnull-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[notnull-of-comparison]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[is-true-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[is-null-of-between]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[nvl2-of-boolean-connective]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[nvl2-of-not]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[nvl2-of-comparison]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[decode-of-boolean-connective-null-search]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];
+
+--#[decode-of-boolean-connective-column-search]
+[UNSUPPORTED_OPERATION{message="a comparison or a boolean connective as the operand of an IS test"}];

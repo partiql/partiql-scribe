@@ -100,3 +100,22 @@ SELECT DECODE(timestamp_1, '2008-06-01 00:00:00', 'June 1st, 2008') FROM T;
 -- One value left keeps the item's own name, not the column's.
 --#[greatest-single-value-name]
 SELECT s.b FROM (SELECT GREATEST(b, NULL), a AS b FROM SIMPLE_T) AS s;
+
+-- The operand of NVL2's IS NOT NULL test may be any value expression: an arithmetic, a CASE.
+--#[nvl2-arithmetic-expression]
+SELECT NVL2(b + 1, 'set', 'unset') FROM SIMPLE_T;
+
+--#[nvl2-case-expression]
+SELECT NVL2(CASE WHEN a THEN b END, b, 0) FROM SIMPLE_T;
+
+-- A boolean connective as the DECODE expression is matched to a literal search value by `=`, with no IS NULL test.
+--#[decode-boolean-connective-literal-search]
+SELECT DECODE(a AND a, TRUE, 'both', 'not') FROM SIMPLE_T;
+
+-- A subquery inside an argument expression (not the argument itself) is repeated like any other expression.
+--#[greatest-subquery-in-argument-expression]
+SELECT GREATEST(b, (SELECT MAX(b) FROM T) + 1) FROM SIMPLE_T;
+
+-- A common table expression with a repeating rewrite, referenced twice.
+--#[conditional-in-cte-referenced-twice]
+WITH c AS (SELECT GREATEST(b, 1) AS g FROM SIMPLE_T) SELECT x.g, y.g FROM c AS x, c AS y;

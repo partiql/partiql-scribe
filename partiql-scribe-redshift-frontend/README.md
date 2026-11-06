@@ -92,18 +92,26 @@ as it types any expression:
 | `NULLIF(a, b)` | `NULLIF(a, b)` |
 | `NVL2(e, a, b)` | `CASE WHEN e IS NOT NULL THEN a ELSE b END` |
 | `DECODE(e, s1, r1, ..., sk, rk [, d])` | `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`, where the match `mi` is `e IS NULL` when `si` is the NULL literal (`si IS NULL` when `e` is), `e = si` when either is another literal, and `e = si OR (e IS NULL AND si IS NULL)` when both may be NULL, since a NULL search value matches a NULL `e` |
-| `GREATEST(v1, ..., vn)`, `LEAST(v1, ..., vn)` | NULL literals left out, then `CASE WHEN c1 THEN v1 ... WHEN c(n-1) THEN v(n-1) ELSE vn END`, where `ci` is the conjunction over `j > i` of `vi >= COALESCE(vj, vi)` (`<=` for `LEAST`): a NULL `vi` fails its branch, a NULL `vj` does not stop `vi`; one argument left is `COALESCE(v)` (so the item keeps its own name), all NULL is NULL |
+| `GREATEST(v1, ..., vn)`, `LEAST(v1, ..., vn)` | NULL literals left out, then `CASE WHEN c1 THEN v1 ... WHEN c(n-1) THEN v(n-1) ELSE vn END`, where `ci` is the conjunction over `j > i` of `vi >= COALESCE(vj, vi)` (`<=` for `LEAST`): a NULL `vi` fails its branch, a NULL `vj` does not stop `vi`; one argument left is `COALESCE(v, NULL)` (so the item keeps its own name), all NULL is NULL |
 
 A wrong number of arguments (`NULLIF(a)`, `NVL2(e, a)`, `DECODE(e, s)`) is refused as invalid.
 
 `DECODE`, `GREATEST`, and `LEAST` repeat their arguments in the rewrite, and a call nested in a repeated position repeats
-the repetition, so the AST of a statement is bounded in size: at most 100,000 nodes as the planner walks them, a shared
-node counted at each use and a string literal weighted by its length (one node per 16 characters). The bound is checked
-on the running total of the repeating rewrites as they are built, so that no oversized tree is built, and on the
-finished statement, which also covers an alias that `GROUP BY` or `ORDER BY` repeats. Measured edges: a `GREATEST` of
-129 columns or 182 literals converts and one more is refused; `DECODE` nested 11 deep in the expression with column
-search values (200 with literal ones), `GREATEST` nested 8 deep; two `GREATEST`s of 120 columns in one statement are
-refused together. A statement without repeating rewrites is bounded only by its own size (20,000 select items).
+the repetition, so the size of the AST of a statement is bounded: at most 100,000 nodes as the planner walks them, where
+a shared node counts at each use, a string literal weighs one node per 16 characters, and a reference to a common table
+expression weighs the body it stands for (the planner inlines it there; the `WITH` clause itself counts nothing). The
+bound is checked as each repeating rewrite is built, on the running total of their results (a rewrite nested in another
+counts once, as part of the outer one), so that no oversized tree is built, and then on the finished statement, which
+also covers an alias that `GROUP BY` or `ORDER BY` repeats and a common table expression referenced several times. The
+refusal names the function when its rewrite crosses the bound, and the query when the finished statement does. A
+statement that repeats nothing is not measured: its AST is the size of its text, and the depth bound keeps it walkable
+(`IN` over 50,000 literals, 30,000 select items, and a 2 MB string literal convert). Measured edges: a `GREATEST` of
+129 columns converts and one of 130 is refused; `DECODE` nested 12 deep in the expression with column search values
+converts and 13 is refused; `GREATEST(x, b, 1)` nested 6 deep converts and 7 is refused; two `GREATEST`s of 120 columns
+in one statement are refused together; `GREATEST` of 91 columns with its alias in `ORDER BY` converts and 92 is refused;
+a common table expression of `GREATEST` over 120 columns converts referenced once and is refused referenced twice.
+
+A Redshift identifier is at most 127 bytes; a longer one is refused as invalid, before the planner sees it.
 
 Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: the string, math, and datetime functions
 (`UPPER`, `CONCAT`, `POWER`, `DATEADD`, ...), the operators `^` and `&`, the `INTERVAL` literal and datetime arithmetic, a `DATE` or
@@ -111,7 +119,11 @@ Not converted yet, and refused with `UNSUPPORTED_OPERATION` at their position: t
 literal other than `\\`, `\'`, `\b`, `\f`, `\n`, `\r`, `\t`, a numeric literal of more than 38 digits, a column list
 on a derived table or a common table expression, `*` with other select items, `EXCLUDE` with select items other than `*`
 or of an unqualified column with several FROM items, a subquery inside an `IN` list or as a function argument (the
-PartiQL printer writes it there without its parentheses), `ORDER BY`, `LIMIT`, or `OFFSET` on
+PartiQL printer writes it there without its parentheses; a subquery inside an argument expression, `GREATEST(b, (SELECT
+...) + 1)`, is allowed, and repeated like any other argument), a comparison or a boolean connective as the operand of
+`IS [NOT] NULL`, `ISNULL`, `NOTNULL`, or `IS [NOT] TRUE | FALSE | UNKNOWN`, written by the user or by the rewrite of
+`NVL2` and of a `DECODE` match on NULL (the printers write `a AND b IS NULL`, which reads as `a AND (b IS NULL)`;
+`DECODE(a AND b, TRUE, ...)` is fine, its match is `=`), `ORDER BY`, `LIMIT`, or `OFFSET` on
 a parenthesized query that has its own, an `ORDER BY` or `GROUP BY` ordinal that points at `*` or follows a set
 operation, `ILIKE` with an escape character that is not a literal, or a letter when the pattern is not a literal, an
 `ORDER BY` name that several select items have when they may be different columns (`b` and `y.b` over several FROM

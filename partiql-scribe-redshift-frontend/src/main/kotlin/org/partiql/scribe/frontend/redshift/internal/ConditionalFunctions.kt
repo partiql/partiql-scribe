@@ -7,7 +7,6 @@ import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCoalesce
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprNullIf
-import org.partiql.ast.Ast.exprNullPredicate
 import org.partiql.ast.Ast.exprOperator
 import org.partiql.ast.Ast.exprOr
 import org.partiql.ast.Literal
@@ -66,7 +65,8 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
     }
 
     /**
-     * `NVL2(e, a, b)` is `a` when `e` is not NULL and `b` otherwise: `CASE WHEN e IS NOT NULL THEN a ELSE b END`.
+     * `NVL2(e, a, b)` is `a` when `e` is not NULL and `b` otherwise: `CASE WHEN e IS NOT NULL THEN a ELSE b END`. An `e`
+     * that is a comparison or a boolean connective is refused; see [RedshiftAstBuilder.testable].
      * https://docs.aws.amazon.com/redshift/latest/dg/r_NVL2.html
      */
     private fun nvl2(
@@ -76,7 +76,7 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
         arity(name, args, 3, 3)
         return builder.nested(name) {
             val (e, a, b) = args.map(builder::argument)
-            exprCase(null, listOf(exprCaseBranch(exprNullPredicate(e, true), a)), b)
+            exprCase(null, listOf(exprCaseBranch(builder.nullPredicate(e, true, args[0]), a)), b)
         }
     }
 
@@ -85,9 +85,10 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
      * NULL. A NULL search value matches a NULL `e`, which `=` does not, so the match `mi` is `e IS NULL` when `si` is the
      * NULL literal (`si IS NULL` when `e` is), `e = si` when either is another literal, and
      * `e = si OR (e IS NULL AND si IS NULL)` when both may be NULL: `CASE WHEN m1 THEN r1 ... WHEN mk THEN rk ELSE d END`.
-     * The rewrite repeats `e`, which [RedshiftAstBuilder.expanded] bounds. The simple `CASE e WHEN s1 ...` would write
-     * `e` once, but the planner expands it to the same `e = si` branches, so the repetition would only leave the bound's
-     * sight.
+     * The rewrite repeats `e`, which [RedshiftAstBuilder.expanded] bounds; an `e` or `si` that is a comparison or a
+     * boolean connective is refused where it would be the operand of `IS NULL`, see [RedshiftAstBuilder.testable]. The
+     * simple `CASE e WHEN s1 ...` would write `e` once, but the planner expands it to the same `e = si` branches, so the
+     * repetition would only leave the bound's sight.
      * https://docs.aws.amazon.com/redshift/latest/dg/r_DECODE_expression.html
      */
     private fun decode(
@@ -96,39 +97,42 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
     ): Expr {
         arity(name, args, 3, null)
         return builder.nested(name) {
-            val exprs = args.map(builder::argument)
-            val e = exprs[0]
-            val pairs = (args.size - 1) / 2
-            val searches = (0 until pairs).map { exprs[1 + 2 * it] }
-            val results = (0 until pairs).map { exprs[2 + 2 * it] }
-            val default = if (args.size % 2 == 0) exprs.last() else null
-            val branches =
-                searches.indices.map { i ->
-                    val s = searches[i]
-                    val match =
-                        when {
-                            s.isNullLiteral() -> exprNullPredicate(e, false)
-                            e.isNullLiteral() -> exprNullPredicate(s, false)
-                            s.isLiteral() || e.isLiteral() -> exprOperator("=", e, s)
-                            else ->
-                                builder.nested(name) {
-                                    val bothNull =
-                                        builder.nested(
-                                            name,
-                                        ) { exprAnd(exprNullPredicate(e, false), exprNullPredicate(s, false)) }
-                                    exprOr(exprOperator("=", e, s), bothNull)
-                                }
-                        }
-                    exprCaseBranch(match, results[i])
-                }
-            builder.expanded(name, exprCase(null, branches, default))
+            builder.expanded(name) {
+                val exprs = args.map(builder::argument)
+                val e = exprs[0]
+                val pairs = (args.size - 1) / 2
+                val searches = (0 until pairs).map { exprs[1 + 2 * it] }
+                val results = (0 until pairs).map { exprs[2 + 2 * it] }
+                val default = if (args.size % 2 == 0) exprs.last() else null
+                val branches =
+                    searches.indices.map { i ->
+                        val s = searches[i]
+                        val sAt = args[1 + 2 * i]
+                        val match =
+                            when {
+                                s.isNullLiteral() -> builder.nullPredicate(e, false, args[0])
+                                e.isNullLiteral() -> builder.nullPredicate(s, false, sAt)
+                                s.isLiteral() || e.isLiteral() -> exprOperator("=", e, s)
+                                else ->
+                                    builder.nested(name) {
+                                        val bothNull =
+                                            builder.nested(name) {
+                                                exprAnd(builder.nullPredicate(e, false, args[0]), builder.nullPredicate(s, false, sAt))
+                                            }
+                                        exprOr(exprOperator("=", e, s), bothNull)
+                                    }
+                            }
+                        exprCaseBranch(match, results[i])
+                    }
+                exprCase(null, branches, default)
+            }
         }
     }
 
     /**
      * `GREATEST(v1, ..., vn)` and `LEAST(v1, ..., vn)` are the largest and the smallest argument, NULL arguments left
-     * out, and NULL when every argument is NULL. A NULL literal is left out here; one value left is `COALESCE(v)`, which
-     * keeps the item's own name (a bare column would lend it the column's); for more,
+     * out, and NULL when every argument is NULL. A NULL literal is left out here; one value left is `COALESCE(v, NULL)`,
+     * which is `v` with a name of its own (a bare column would lend the item the column's); for more,
      * `CASE WHEN c1 THEN v1 ... WHEN c(n-1) THEN v(n-1) ELSE vn END` where `ci` is the conjunction over `j > i` of
      * `vi >= COALESCE(vj, vi)` (`<=` for `LEAST`), which is unknown when `vi` is NULL, so the branch falls through, and
      * true against a NULL `vj`. The comparison with a literal `vj` is written without the `COALESCE`. The rewrite has a
@@ -140,23 +144,27 @@ internal class ConditionalFunctions(private val builder: RedshiftAstBuilder) {
         args: List<P.ExprContext>,
         greatest: Boolean,
     ): Expr {
-        val values = args.map(builder::argument).filterNot { it.isNullLiteral() }
-        if (values.isEmpty()) return exprLit(Literal.nul())
-        if (values.size == 1) return exprCoalesce(values)
-        // Each pair of arguments is a comparison of at least NODES_PER_PAIR nodes; too many pairs is known before they are built.
-        if (values.size.toLong() * (values.size - 1) / 2 * NODES_PER_PAIR > RedshiftAstBuilder.MAX_SIZE) throw builder.tooLarge(name)
         val op = if (greatest) ">=" else "<="
         return builder.nested(name) {
-            val branches =
-                (0 until values.lastIndex).map { i ->
-                    val conditions =
-                        (i + 1..values.lastIndex).map { j ->
-                            val other = if (values[j].isLiteral()) values[j] else exprCoalesce(listOf(values[j], values[i]))
-                            exprOperator(op, values[i], other)
-                        }
-                    exprCaseBranch(conjunction(name, conditions), values[i])
-                }
-            builder.expanded(name, exprCase(null, branches, values.last()))
+            builder.expanded(name) {
+                val values = args.map(builder::argument).filterNot { it.isNullLiteral() }
+                if (values.isEmpty()) return@expanded exprLit(Literal.nul())
+                // COALESCE(v, NULL) is `v` with a name of its own (a bare column would lend the item the column's name).
+                if (values.size == 1) return@expanded exprCoalesce(listOf(values[0], exprLit(Literal.nul())))
+                // Each pair of arguments is a comparison of at least NODES_PER_PAIR nodes: too many pairs is known before they are built.
+                val pairs = values.size.toLong() * (values.size - 1) / 2
+                if (pairs * NODES_PER_PAIR > RedshiftAstBuilder.MAX_SIZE) throw builder.tooLarge(name)
+                val branches =
+                    (0 until values.lastIndex).map { i ->
+                        val conditions =
+                            (i + 1..values.lastIndex).map { j ->
+                                val other = if (values[j].isLiteral()) values[j] else exprCoalesce(listOf(values[j], values[i]))
+                                exprOperator(op, values[i], other)
+                            }
+                        exprCaseBranch(conjunction(name, conditions), values[i])
+                    }
+                exprCase(null, branches, values.last())
+            }
         }
     }
 

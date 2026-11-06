@@ -185,43 +185,104 @@ class RedshiftTranspilerTest {
         assertTrue(failure(commas).message().contains("levels deep"))
     }
 
+    /** The size refusal of a call of [name], or of the statement when [name] is null, as [KIND_UNSUPPORTED]. */
+    private fun tooLarge(
+        sql: String,
+        name: String?,
+    ) {
+        val problem = failure(sql)
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, problem.kind(), problem.message())
+        val expected =
+            if (name == null) {
+                "the query is too large to translate (more than 100,000 nodes once its functions and common table expressions are repeated)"
+            } else {
+                "$name makes the query too large to translate (more than 100,000 nodes once its arguments are repeated)"
+            }
+        assertTrue(problem.message().endsWith(expected), problem.message())
+    }
+
+    private fun bs(n: Int) = (1..n).joinToString(", ") { "b" }
+
     @Test
     fun repeatingRewritesAreBoundedBySize() {
-        // GREATEST compares every pair of arguments, and a nested DECODE repeats its expression at each level. The
-        // numbers are the measured edges of the 100,000-node bound, so that a change to the rewrites or the bound shows.
-        fun greatest(n: Int) = "SELECT GREATEST(" + (1..n).joinToString(", ") { "b" } + ") FROM SIMPLE_T"
-
+        // GREATEST compares every pair of arguments, and a nested DECODE or GREATEST repeats its expression at each
+        // level. The numbers are the measured edges of the 100,000-node bound, so a change to a rewrite or the bound shows.
         fun decode(depth: Int) = "SELECT " + "DECODE(".repeat(depth) + "b" + ", b, 1, 0)".repeat(depth) + " FROM SIMPLE_T"
-        assertTrue(transpile(greatest(129)).contains("CASE WHEN"))
-        val wide = failure(greatest(130))
-        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, wide.kind())
-        assertTrue(wide.message().contains("too many arguments"), wide.message())
-        assertTrue(transpile(decode(11)).contains("CASE WHEN"))
-        assertTrue(failure(decode(12)).message().contains("nested too deeply"))
-        // The bound is over the statement: calls each within it are refused together, and so is a repeated alias.
-        val two = (1..2).joinToString(", ") { "GREATEST(" + (1..120).joinToString(", ") { "b" } + ") AS v$it" }
-        assertTrue(failure("SELECT $two FROM SIMPLE_T").message().contains("too many arguments"))
-        val alias = "SELECT GREATEST(" + (1..110).joinToString(", ") { "b" } + ") AS v FROM SIMPLE_T"
-        assertTrue(transpile(alias).contains("CASE WHEN"))
-        assertTrue(failure("$alias ORDER BY v").message().contains("too large to translate"))
-        // A long literal weighs its length: 10,000 characters repeated 300 times is refused, 150 times is not.
+
+        fun greatest(depth: Int) = "SELECT " + "GREATEST(".repeat(depth) + "b" + ", b, 1)".repeat(depth) + " FROM SIMPLE_T"
+        assertTrue(transpile("SELECT GREATEST(${bs(129)}) FROM SIMPLE_T").contains("CASE WHEN"))
+        tooLarge("SELECT GREATEST(${bs(130)}) FROM SIMPLE_T", "GREATEST")
+        assertTrue(transpile(decode(12)).contains("CASE WHEN"))
+        tooLarge(decode(13), "DECODE")
+        assertTrue(transpile(greatest(6)).contains("CASE WHEN"))
+        tooLarge(greatest(7), "GREATEST")
+        // A rewrite nested in another counts once: the inner GREATEST is part of the outer one's result.
+        assertTrue(transpile("SELECT GREATEST(GREATEST(${bs(80)}), 1) FROM SIMPLE_T").contains("CASE WHEN"))
+        // A long literal weighs its length: 10,000 characters repeated 158 times is refused, 157 times is not.
         val long = "'" + "x".repeat(10_000) + "'"
-        assertTrue(transpile("SELECT DECODE($long, " + (1..150).joinToString(", ") { "'$it', $it" } + ") FROM SIMPLE_T").contains("CASE"))
-        assertTrue(
-            failure(
-                "SELECT DECODE($long, " + (1..300).joinToString(", ") { "'$it', $it" } + ") FROM SIMPLE_T",
-            ).message().contains("DECODE"),
-        )
-        // DECODE's size is linear in its pairs, and a query without repeating rewrites is bounded only by its own size.
+        assertTrue(transpile("SELECT DECODE($long, " + (1..157).joinToString(", ") { "'$it', $it" } + ") FROM SIMPLE_T").contains("CASE"))
+        tooLarge("SELECT DECODE($long, " + (1..158).joinToString(", ") { "'$it', $it" } + ") FROM SIMPLE_T", "DECODE")
+        // DECODE's size is linear in its pairs.
         assertTrue(transpile("SELECT DECODE(b, " + (1..2000).joinToString(", ") { "$it, 'v$it'" } + ") FROM SIMPLE_T").contains("WHEN"))
-        assertTrue(transpile("SELECT " + (1..5000).joinToString(", ") { "b AS x$it" } + " FROM SIMPLE_T").contains("x5000"))
     }
 
     @Test
-    @Timeout(60)
+    fun theSizeBoundIsOverTheStatement() {
+        // Two calls each within the bound are refused together, at the second.
+        tooLarge("SELECT GREATEST(${bs(120)}) AS v1, GREATEST(${bs(120)}) AS v2 FROM SIMPLE_T", "GREATEST")
+        // An alias that ORDER BY repeats doubles the rewrite; the finished statement is measured.
+        assertTrue(transpile("SELECT GREATEST(${bs(91)}) AS v FROM SIMPLE_T ORDER BY v").contains("CASE WHEN"))
+        tooLarge("SELECT GREATEST(${bs(92)}) AS v FROM SIMPLE_T ORDER BY v", null)
+
+        // A common table expression's body counts at each reference, since the planner inlines it there.
+        fun cte(
+            n: Int,
+            references: Int,
+        ): String {
+            val from = (1..references).joinToString(", ") { "c AS c$it" }
+            return "WITH c AS (SELECT GREATEST(${bs(n)}) AS v FROM SIMPLE_T) SELECT c1.v FROM $from"
+        }
+        assertTrue(transpile(cte(120, 1)).contains("CASE WHEN"))
+        tooLarge(cte(120, 2), null)
+        assertTrue(transpile(cte(60, 4)).contains("CASE WHEN"))
+        tooLarge(cte(60, 5), null)
+    }
+
+    @Test
+    fun aStatementThatRepeatsNothingIsNotMeasured() {
+        // No rewrite repeats anything here, and a CTE referenced many times has a body that is not a rewrite: the
+        // AST is the size of the text, which the depth bound already keeps walkable.
+        assertTrue(transpile("SELECT b FROM SIMPLE_T WHERE b IN (" + (1..50_000).joinToString(", ") + ")").contains("IN"))
+        assertTrue(transpile("SELECT " + (1..30_000).joinToString(", ") { "b AS x$it" } + " FROM SIMPLE_T").contains("x30000"))
+        assertTrue(transpile("SELECT '" + "x".repeat(2_000_000) + "' FROM SIMPLE_T").length > 2_000_000)
+        val fifty = "WITH c AS (SELECT b FROM SIMPLE_T) SELECT c1.b FROM " + (1..50).joinToString(", ") { "c AS c$it" }
+        assertTrue(transpile(fifty).contains("c50"))
+    }
+
+    @Test
+    fun longIdentifiersAreInvalid() {
+        assertTrue(transpile("SELECT b AS " + "x".repeat(127) + " FROM SIMPLE_T").contains("x".repeat(127)))
+        // 128 one-byte characters as an alias and as a table name, and 64 two-byte characters quoted: bytes, not characters.
+        val long =
+            listOf(
+                "SELECT b AS ${"x".repeat(128)} FROM SIMPLE_T",
+                "SELECT b FROM ${"x".repeat(128)}",
+                "SELECT b AS \"${"é".repeat(64)}\" FROM SIMPLE_T",
+            )
+        for (sql in long) {
+            val problem = failure(sql)
+            assertEquals(RedshiftFrontend.KIND_INVALID, problem.kind(), problem.message())
+            assertTrue(problem.message().endsWith("identifier longer than 127 bytes"), problem.message())
+        }
+    }
+
+    @Test
+    @Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     fun deeplyNestedCaseCompilesOnEveryTarget() {
-        // The Redshift target normalizes each CASE branch once; it used to convert a dropped cast's operand twice per
-        // level, which took time exponential in the depth. The timeout fails fast if that comes back.
+        // Each NVL2 is a CASE inside the IS NOT NULL operand of the next, which the planner casts to DYNAMIC. The
+        // Redshift target used to convert such an operand twice per level, which took time exponential in the depth;
+        // the timeout, on its own thread so that it can stop the test, fails fast if that comes back. The root
+        // fixture `case-nested-00` covers the same shape on every target.
         val depth = RedshiftFrontend.MAX_NESTING
         val sql = "SELECT " + "NVL2(".repeat(depth) + "b" + ", b, 0)".repeat(depth) + " FROM SIMPLE_T"
         val plan = planner.plan(frontend().toAst(sql), session).plan

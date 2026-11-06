@@ -43,3 +43,7 @@ SELECT NVL2(c, 'set') FROM SIMPLE_T;
 
 --#[decode-two-arguments]
 SELECT DECODE(b, 1) FROM SIMPLE_T;
+
+-- Redshift identifiers are at most 127 bytes; a longer one is refused before the planner sees it.
+--#[identifier-longer-than-127-bytes]
+SELECT b AS xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FROM SIMPLE_T;

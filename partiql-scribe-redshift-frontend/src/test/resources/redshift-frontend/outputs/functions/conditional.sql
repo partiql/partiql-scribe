@@ -38,10 +38,10 @@ SELECT CASE WHEN ("simple_t"['b'] >= COALESCE("simple_t"['b'] + 1, "simple_t"['b
 SELECT CASE WHEN "t"['b'] >= COALESCE("u"['b'], "t"['b']) THEN "t"['b'] ELSE "u"['b'] END AS "_1" FROM "default"."SIMPLE_T" AS "t" INNER JOIN "default"."T" AS "u" ON true;
 
 --#[greatest-one-argument]
-SELECT COALESCE("simple_t"['b']) AS "_1", COALESCE("simple_t"['c']) AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
+SELECT COALESCE("simple_t"['b'], NULL) AS "_1", COALESCE("simple_t"['c'], NULL) AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[greatest-null-arguments]
-SELECT COALESCE("simple_t"['b']) AS "_1", NULL AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
+SELECT COALESCE("simple_t"['b'], NULL) AS "_1", NULL AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[greatest-timestamps]
 SELECT CASE WHEN "t"['timestamp_1'] >= COALESCE("t"['timestamp_2'], "t"['timestamp_1']) THEN "t"['timestamp_1'] ELSE "t"['timestamp_2'] END AS "_1" FROM "default"."T" AS "t";
@@ -92,4 +92,19 @@ SELECT COALESCE("simple_t"['c'], 'x') AS "_1", CASE WHEN "simple_t"['b'] = 1 THE
 SELECT CASE WHEN "t"['timestamp_1'] = '2008-06-01 00:00:00' THEN 'June 1st, 2008' ELSE NULL END AS "_1" FROM "default"."T" AS "t";
 
 --#[greatest-single-value-name]
-SELECT "s"['b'] AS "b" FROM (SELECT COALESCE("simple_t"['b']) AS "_1", "simple_t"['a'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t") AS "s";
+SELECT "s"['b'] AS "b" FROM (SELECT COALESCE("simple_t"['b'], NULL) AS "_1", "simple_t"['a'] AS "b" FROM "default"."SIMPLE_T" AS "simple_t") AS "s";
+
+--#[nvl2-arithmetic-expression]
+SELECT CASE WHEN "simple_t"['b'] + 1 IS NOT NULL THEN 'set' ELSE 'unset' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[nvl2-case-expression]
+SELECT CASE WHEN CASE WHEN "simple_t"['a'] THEN "simple_t"['b'] ELSE NULL END IS NOT NULL THEN "simple_t"['b'] ELSE 0 END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[decode-boolean-connective-literal-search]
+SELECT CASE WHEN ("simple_t"['a'] AND "simple_t"['a']) = true THEN 'both' ELSE 'not' END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[greatest-subquery-in-argument-expression]
+SELECT CASE WHEN "simple_t"['b'] >= COALESCE((SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") + 1, "simple_t"['b']) THEN "simple_t"['b'] ELSE (SELECT max("t"['b']) AS "_1" FROM "default"."T" AS "t") + 1 END AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[conditional-in-cte-referenced-twice]
+WITH "c" AS (SELECT CASE WHEN "simple_t"['b'] >= 1 THEN "simple_t"['b'] ELSE 1 END AS "g" FROM "default"."SIMPLE_T" AS "simple_t") SELECT "x"['g'] AS "g", "y"['g'] AS "g" FROM "c" AS "x" INNER JOIN "c" AS "y" ON true;
