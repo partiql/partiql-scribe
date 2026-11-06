@@ -56,7 +56,7 @@ internal sealed interface ToCharPart {
  * - unquoted digits, spaces, and `- / : . , ; _` between them.
  *
  * Everything else is rejected, including names (`Month`, `Dy`, ...), fill mode (`FM`), ordinal suffixes (`TH`),
- * other patterns (`Q`, `IW`, `US`, `FF6`, ...), double-quoted text, and other literal characters. These either have no
+ * other patterns (`Q`, `IW`, `US`, `FF6`, ...), double-quoted text, other literal characters, and the empty template. These either have no
  * equivalent in some target or are formatted differently (padding, locale, or precision).
  */
 internal object ToCharTemplate {
@@ -94,6 +94,10 @@ internal object ToCharTemplate {
      * Returns the parsed [template], or the reason it is not supported.
      */
     fun parse(template: String): Result {
+        // The extension returns null for an empty template; the targets don't all agree.
+        if (template.isEmpty()) {
+            return Result.Unsupported("empty template")
+        }
         val parts = mutableListOf<ToCharPart>()
         val text = StringBuilder()
         var i = 0
