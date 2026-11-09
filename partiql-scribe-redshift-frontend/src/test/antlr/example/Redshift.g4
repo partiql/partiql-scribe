@@ -1,5 +1,7 @@
 /*
- * Amazon Redshift query grammar for the Redshift-to-PartiQL frontend.
+ * An example of the Amazon Redshift query grammar the Redshift-to-PartiQL frontend's parser is generated from. The
+ * module's tests run with the parser generated from this file; the module does not package a parser, and a deployment
+ * generates its own (see the README).
  *
  * Scope: the Redshift constructs that map to a PartiQL construct that Scribe's targets accept, directly, by an exact
  * rewrite, or by a call of a function the caller's catalog defines (POWER, POW, and `^` call `pow`). The query that

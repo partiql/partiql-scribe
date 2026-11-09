@@ -46,7 +46,7 @@ class RedshiftParserClassPathTest {
 
     @Test
     fun theParserIsFoundThroughTheFrontEndsOwnClassLoader() {
-        // The test class path has the parser (the `parser` source set); the front end works, and the parser's classes
+        // The test class path has the parser generated from the example grammar; the front end works, and the parser's classes
         // come from the loader that defined the front end, which is what a deployment's class path provides.
         val ast = RedshiftFrontend(ScribeContext.standard()).toAst("SELECT a FROM SIMPLE_T")
         assertEquals("Query", ast::class.java.simpleName)

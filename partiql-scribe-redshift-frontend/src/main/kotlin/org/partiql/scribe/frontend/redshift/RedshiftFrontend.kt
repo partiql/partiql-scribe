@@ -49,8 +49,8 @@ import org.partiql.scribe.problems.Severity
  * and converting it use, and the depth of the AST bounds what the planner and the targets recurse over.
  *
  * The parser is not part of this module: it is generated from the Redshift grammar into the package [PARSER_PACKAGE],
- * and a deployment puts those classes on the class path next to the module (the module's own tests do, from
- * `src/parser/antlr/Redshift.g4`). The constructor throws [IllegalStateException] when they are missing.
+ * and a deployment puts those classes on the class path next to the module. The constructor throws
+ * [IllegalStateException] when they are missing.
  *
  * @param caseSensitiveIdentifiers The Redshift `enable_case_sensitive_identifier` setting of the source queries.
  */

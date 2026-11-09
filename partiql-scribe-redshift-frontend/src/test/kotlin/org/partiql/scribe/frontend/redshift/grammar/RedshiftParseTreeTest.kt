@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
  * identifiers, `DATE` as a literal prefix and as a name, `||` before a comment, an alias after a literal).
  *
  * The trees are rendered by [render]: a rule with a single child collapses into it, a rule with several children is
- * `(label child ...)` where the label is the alternative's label in `Redshift.g4`.
+ * `(label child ...)` where the label is the alternative's label in the grammar.
  */
 class RedshiftParseTreeTest {
     @ParameterizedTest(name = "{0}")
