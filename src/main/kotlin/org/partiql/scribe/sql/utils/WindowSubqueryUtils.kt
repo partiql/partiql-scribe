@@ -31,18 +31,14 @@ internal fun isCorrelatedSubqueryWithWindow(rel: Rel): Boolean {
         if (op is RelWindow && depth == 0) {
             hasWindow = true
         }
-        if (op.refersOutside(depth)) {
+        // A variable's scope counts the scopes it skips; it refers outside the subquery if it skips more scopes than
+        // it is nested inside the subquery.
+        if (op is RexVar && op.scope > depth) {
             isCorrelated = true
         }
     }
     return hasWindow && isCorrelated
 }
-
-/**
- * A variable's scope counts the scopes it skips; it refers outside the subquery if it skips more scopes than it is
- * nested inside the subquery.
- */
-private fun Operator.refersOutside(depth: Int): Boolean = this is RexVar && this.scope > depth
 
 /**
  * Visits [op] and the operators and expressions below it. [depth] is the number of scopes (nested subqueries, the

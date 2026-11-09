@@ -880,7 +880,10 @@ public open class RelConverter(
         rel: RelWindow,
         rexConverter: RexConverter,
     ): Expr {
-        val windowType = createWindowFunctionType(windowFunction, rel, rexConverter)
+        if (windowFunction.aggregate != null) {
+            checkAggregateWindowFunction(windowFunction, rel)
+        }
+        val windowType = createWindowFunctionType(windowFunction, rexConverter)
 
         val windowSpec =
             if (rel.name != null) {
@@ -900,11 +903,9 @@ public open class RelConverter(
 
     internal fun createWindowFunctionType(
         windowFunction: WindowFunctionNode,
-        rel: RelWindow,
         rexConverter: RexConverter,
     ): WindowFunctionType {
         if (windowFunction.aggregate != null) {
-            checkAggregateWindowFunction(windowFunction, rel)
             return createAggregateWindowFunctionType(windowFunction, rexConverter)
         }
         val functionName = windowFunction.signature.name
@@ -977,16 +978,18 @@ public open class RelConverter(
     ) {}
 
     /**
-     * Reports and throws that this target does not support an aggregate window function, for [reason].
+     * The uppercase name of an aggregate window function, e.g. `MAX`.
      */
-    protected fun unsupportedAggregateWindowFunction(
-        windowFunction: WindowFunctionNode,
-        reason: String,
-    ): Nothing =
+    protected fun WindowFunctionNode.aggregateName(): String = aggregate!!.signature.name.uppercase()
+
+    /**
+     * Reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] with [message].
+     */
+    protected fun unsupported(message: String): Nothing =
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = "Unsupported aggregate window function ${windowFunction.aggregate!!.signature.name.uppercase()}: $reason",
+                message = message,
             ),
         )
 
@@ -1002,20 +1005,8 @@ public open class RelConverter(
         val name = aggregate.signature.name
         val args = windowFunction.arguments.map { SqlArg(rexConverter.apply(it), it.type.pType) }
         val call =
-            transform.getAggregate(
-                routineRef = windowFunction.routineRef,
-                name = name,
-                args = args,
-                distinct = windowFunction.isDistinct,
-            )
-        if (call !is ExprCall) {
-            listener.reportAndThrow(
-                ScribeProblem.simpleError(
-                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                    message = "Aggregate $name cannot be used as a window function for this target",
-                ),
-            )
-        }
+            transform.getAggregate(windowFunction.routineRef, name, args, windowFunction.isDistinct) as? ExprCall
+                ?: unsupported("Aggregate $name cannot be used as a window function for this target")
         return WindowFunctionType.Aggregate(call.function, call.args, call.setq)
     }
 

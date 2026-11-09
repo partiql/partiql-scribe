@@ -54,7 +54,7 @@ public open class RedshiftRexConverter(
         isScalar: Boolean,
     ) {
         if (isCorrelatedSubqueryWithWindow(rel)) {
-            unsupportedSubquery("Redshift does not support correlation references from within a subquery that contains a window function")
+            unsupported("Redshift does not support correlation references from within a subquery that contains a window function")
         }
     }
 

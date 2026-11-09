@@ -96,12 +96,15 @@ public open class RedshiftRelConverter(
         rel: RelWindow,
     ) {
         if (windowFunction.isDistinct) {
-            unsupportedAggregateWindowFunction(windowFunction, "Redshift does not support DISTINCT in aggregate window functions")
+            unsupported(
+                "Unsupported aggregate window function ${windowFunction.aggregateName()}: " +
+                    "Redshift does not support DISTINCT in aggregate window functions",
+            )
         }
         if (rel.collations.isNotEmpty()) {
-            unsupportedAggregateWindowFunction(
-                windowFunction,
-                "Redshift requires a ROWS frame clause for an aggregate window function with ORDER BY, which cannot " +
+            unsupported(
+                "Unsupported aggregate window function ${windowFunction.aggregateName()}: " +
+                    "Redshift requires a ROWS frame clause for an aggregate window function with ORDER BY, which cannot " +
                     "express the default frame (the current row's peers); window frame clauses are not supported yet " +
                     "(https://github.com/partiql/partiql-lang-kotlin/issues/1837)",
             )
@@ -142,7 +145,10 @@ public open class RedshiftRelConverter(
         rel: RelWindow,
         rexConverter: RexConverter,
     ): Expr {
-        val windowType = createWindowFunctionType(windowFunction, rel, rexConverter)
+        if (windowFunction.aggregate != null) {
+            checkAggregateWindowFunction(windowFunction, rel)
+        }
+        val windowType = createWindowFunctionType(windowFunction, rexConverter)
         val windowSpec = createInlineWindowSpecification(rel, rexConverter)
         return exprWindowFunction(windowType, windowSpec)
     }

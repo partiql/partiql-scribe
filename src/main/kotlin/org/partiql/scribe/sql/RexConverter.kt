@@ -878,16 +878,6 @@ public open class RexConverter(
         )
     }
 
-    private fun checkNestedQuery(
-        rel: Rel,
-        isScalar: Boolean,
-    ) {
-        // Only a nested query (one with an enclosing row) can be correlated.
-        if (locals.env.isNotEmpty() || locals.outer.isNotEmpty()) {
-            checkSubquery(rel, isScalar)
-        }
-    }
-
     /**
      * Checks that this target can express the subquery [rel] (a scalar subquery if [isScalar]) nested in the current
      * query; reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] otherwise. For example, targets
@@ -899,13 +889,13 @@ public open class RexConverter(
     ) {}
 
     /**
-     * Reports and throws that this target does not support a subquery, for [reason].
+     * Reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] with [message].
      */
-    protected fun unsupportedSubquery(reason: String): Nothing =
+    protected fun unsupported(message: String): Nothing =
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = reason,
+                message = message,
             ),
         )
 
@@ -914,7 +904,7 @@ public open class RexConverter(
         ctx: Unit,
     ): Expr {
         val inputRel = rex.input
-        checkNestedQuery(inputRel, isScalar = false)
+        checkSubquery(inputRel, isScalar = false)
         val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(inputRel, ctx).toExprQuerySet()
     }
@@ -957,7 +947,7 @@ public open class RexConverter(
         // For `IN` and `EXISTS`, it was planned as RexSelect Node and get handled by visitSelect
         // For comparison operators, it was planned as RexSubquery and get handled by visitSubquery
         val transform = transform
-        checkNestedQuery(rex.input, isScalar = rex.isScalar)
+        checkSubquery(rex.input, isScalar = rex.isScalar)
         val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(rex.input, ctx).toExprQuerySet()
     }

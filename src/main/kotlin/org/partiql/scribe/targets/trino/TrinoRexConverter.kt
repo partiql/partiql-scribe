@@ -33,7 +33,7 @@ public open class TrinoRexConverter(
         isScalar: Boolean,
     ) {
         if (isScalar && isCorrelatedSubqueryWithWindow(rel)) {
-            unsupportedSubquery("Trino does not support window functions in a correlated scalar subquery")
+            unsupported("Trino does not support window functions in a correlated scalar subquery")
         }
     }
 

@@ -33,7 +33,10 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
         rel: RelWindow,
     ) {
         if (windowFunction.isDistinct) {
-            unsupportedAggregateWindowFunction(windowFunction, "Spark does not support DISTINCT in window functions")
+            unsupported(
+                "Unsupported aggregate window function ${windowFunction.aggregateName()}: " +
+                    "Spark does not support DISTINCT in window functions",
+            )
         }
     }
 
