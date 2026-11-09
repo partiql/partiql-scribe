@@ -12,7 +12,7 @@ import org.antlr.v4.runtime.atn.PredictionMode
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.partiql.ast.Statement
 import org.partiql.scribe.ScribeContext
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftLexer
+import org.partiql.scribe.frontend.redshift.antlr.RedshiftLexer // compileOnly: generated from the grammar, not packaged
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import org.partiql.scribe.frontend.redshift.internal.TranslationStop
@@ -48,6 +48,10 @@ import org.partiql.scribe.problems.Severity
  * A query that nests deeper than [MAX_NESTING] is refused, so that the depth of the text bounds the stack that parsing
  * and converting it use, and the depth of the AST bounds what the planner and the targets recurse over.
  *
+ * The parser is not part of this module: it is generated from the Redshift grammar into the package [PARSER_PACKAGE],
+ * and a deployment puts those classes on the class path next to the module (the module's own tests do, from
+ * `src/parser/antlr/Redshift.g4`). The constructor throws [IllegalStateException] when they are missing.
+ *
  * @param caseSensitiveIdentifiers The Redshift `enable_case_sensitive_identifier` setting of the source queries.
  */
 public class RedshiftFrontend
@@ -56,6 +60,21 @@ public class RedshiftFrontend
         private val context: ScribeContext,
         private val caseSensitiveIdentifiers: Boolean = false,
     ) {
+        init {
+            // The class loader that defined this class is the one the parser's `new` below is resolved against.
+            try {
+                Class.forName("$PARSER_PACKAGE.RedshiftParser", false, RedshiftFrontend::class.java.classLoader)
+            } catch (e: ClassNotFoundException) {
+                throw IllegalStateException(
+                    "The Redshift parser is not on the class path. The front end needs the parser generated from the " +
+                        "Redshift grammar: a grammar named `Redshift`, generated with ANTLR $ANTLR_VERSION as " +
+                        "`-visitor -no-listener -package $PARSER_PACKAGE`, whose rule, label, and token names are the " +
+                        "ones the front end reads. The module does not package it; see its README.",
+                    e,
+                )
+            }
+        }
+
         /**
          * Returns the tables that [sql] reads: the qualified name of every `FROM` item that names a table, as the query
          * writes it (`db.schema.table` gives `["db", "schema", "table"]`), folded as [toAst] folds identifiers, without
@@ -186,5 +205,11 @@ public class RedshiftFrontend
 
             /** A query that Redshift itself rejects; the message starts with `Invalid Redshift query:`. */
             public const val KIND_INVALID: String = "INVALID"
+
+            /** The package of the parser generated from the Redshift grammar, which the class path must provide. */
+            public const val PARSER_PACKAGE: String = "org.partiql.scribe.frontend.redshift.antlr"
+
+            /** The ANTLR version the parser must be generated with: that of the module's `antlr4-runtime` dependency. */
+            public const val ANTLR_VERSION: String = "4.10.1"
         }
     }

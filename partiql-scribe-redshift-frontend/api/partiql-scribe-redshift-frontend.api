@@ -1,10 +1,12 @@
 public final class org/partiql/scribe/frontend/redshift/RedshiftFrontend {
+	public static final field ANTLR_VERSION Ljava/lang/String;
 	public static final field Companion Lorg/partiql/scribe/frontend/redshift/RedshiftFrontend$Companion;
 	public static final field KIND Ljava/lang/String;
 	public static final field KIND_INVALID Ljava/lang/String;
 	public static final field KIND_SYNTAX Ljava/lang/String;
 	public static final field KIND_UNSUPPORTED Ljava/lang/String;
 	public static final field MAX_NESTING I
+	public static final field PARSER_PACKAGE Ljava/lang/String;
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;Z)V
 	public synthetic fun <init> (Lorg/partiql/scribe/ScribeContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V

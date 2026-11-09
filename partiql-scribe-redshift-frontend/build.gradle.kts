@@ -18,16 +18,26 @@ repositories {
     mavenLocal()
 }
 
+// The parser generated from the Redshift grammar (`src/parser/antlr/Redshift.g4`) is its own source set: the main
+// code is compiled against it and the tests run with it, but the jar does not package it. A deployment generates the
+// parser from its own copy of the grammar and puts the classes on the class path next to this module; see the README.
+val parser: SourceSet by sourceSets.creating
+
+val antlrPackage = "org.partiql.scribe.frontend.redshift.antlr"
+
 dependencies {
     antlr("org.antlr:antlr4:4.10.1")
     api(project(":"))
     api("org.partiql:partiql-ast:$partiqlVersion")
     api("org.partiql:partiql-spi:$partiqlVersion")
+    implementation("org.antlr:antlr4-runtime:4.10.1")
+    compileOnly(parser.output)
+    "parserImplementation"("org.antlr:antlr4-runtime:4.10.1")
+
+    testImplementation(parser.output)
     testImplementation("org.partiql:partiql-parser:$partiqlVersion")
     testImplementation("org.partiql:partiql-planner:$partiqlVersion")
     testImplementation("org.partiql:partiql-function-extensions:$partiqlVersion")
-    implementation("org.antlr:antlr4-runtime:4.10.1")
-
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.21")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.3.21")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
@@ -38,27 +48,22 @@ configurations.api {
     setExtendsFrom(extendsFrom.filter { it.name != "antlr" })
 }
 
-val antlrPackage = "org.partiql.scribe.frontend.redshift.antlr"
-
-tasks.generateGrammarSource {
+tasks.named<AntlrTask>("generateParserGrammarSource") {
     arguments = listOf("-visitor", "-no-listener", "-long-messages", "-package", antlrPackage)
-    outputDirectory = layout.buildDirectory.dir("generated-src/antlr/main/${antlrPackage.replace('.', '/')}").get().asFile
+    outputDirectory = layout.buildDirectory.dir("generated-src/antlr/parser/${antlrPackage.replace('.', '/')}").get().asFile
 }
 
-tasks.compileKotlin {
-    dependsOn(tasks.generateGrammarSource)
+// Only the parser source set has a grammar: the plugin's generation tasks and output directories for main and test
+// have nothing to generate, and are taken out so that no task reads them.
+tasks.generateGrammarSource { enabled = false }
+tasks.generateTestGrammarSource { enabled = false }
+sourceSets {
+    main { java.setSrcDirs(java.srcDirs - tasks.generateGrammarSource.get().outputDirectory) }
+    test { java.setSrcDirs(java.srcDirs - tasks.generateTestGrammarSource.get().outputDirectory) }
 }
 
-tasks.compileTestKotlin {
-    dependsOn(tasks.generateTestGrammarSource)
-}
-
-tasks.named("runKtlintCheckOverMainSourceSet") {
-    dependsOn(tasks.generateGrammarSource)
-}
-
-tasks.named("runKtlintCheckOverTestSourceSet") {
-    dependsOn(tasks.generateTestGrammarSource)
+tasks.named("runKtlintCheckOverParserSourceSet") {
+    dependsOn(tasks.named("generateParserGrammarSource"))
 }
 
 ktlint {

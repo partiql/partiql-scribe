@@ -25,6 +25,18 @@ PartiQL does not define on the operand types, is found by the planner, not by th
 `tables(sql)` lists the tables the query reads, from the same conversion as `toAst`, so a common table expression counts
 as a table exactly where the AST reads it as one.
 
+### Supplying the parser
+
+The module does not package the parser. It is generated from the Redshift grammar into the package
+`org.partiql.scribe.frontend.redshift.antlr` (`RedshiftFrontend.PARSER_PACKAGE`): the module's own code is compiled
+against it and its tests run with it, from `src/parser/antlr/Redshift.g4` in a source set the jar leaves out. A
+deployment generates the parser from its own copy of the grammar, with ANTLR 4.10.1 (`RedshiftFrontend.ANTLR_VERSION`,
+the version of the module's `antlr4-runtime` dependency) and the arguments `-visitor -no-listener -package
+org.partiql.scribe.frontend.redshift.antlr`, and puts the classes on the class path next to the module. The grammar
+must be named `Redshift`, and its rule, label, and token names are the ones the front end reads, so the parser has to
+come from this grammar or one that keeps them. `RedshiftFrontend`'s constructor throws `IllegalStateException` when the
+parser is missing, naming this contract.
+
 One rewrite depends on the caller's catalog: `POWER`, `POW`, and `^` become a call of `pow`, which PartiQL's built-in
 functions do not define. Plan against a catalog that defines it (`Pow.overloads()` of
 `org.partiql:partiql-function-extensions`, which `partiql-scribe-function-extensions` compiles for each target), or
@@ -38,7 +50,7 @@ prediction first and full LL only when SLL finds an error, which keeps its decis
 
 ## Grammar
 
-`src/main/antlr/Redshift.g4` is an ANTLR 4 grammar of the subset of the Redshift *query* language that the front end
+`src/parser/antlr/Redshift.g4` is an ANTLR 4 grammar of the subset of the Redshift *query* language that the front end
 translates: the constructs with a PartiQL counterpart that Scribe's targets accept, directly or by an exact rewrite.
 What parses either translates or is refused at its position; everything else is a syntax error with a line and column. It is case-insensitive and
 follows PostgreSQL operator precedence, from which Redshift derives.
@@ -63,7 +75,8 @@ What parses:
   function call is a syntax error at its opening parenthesis.
 
 The grammar's header comment lists what is deliberately not parsed. The generated parser is in the package
-`org.partiql.scribe.frontend.redshift.antlr`; it is an implementation detail and not part of the module's API.
+`org.partiql.scribe.frontend.redshift.antlr`; it is not part of the module's API, and not packaged in its jar (see
+"Supplying the parser" above).
 
 ## Translation
 
@@ -192,7 +205,8 @@ Redshift takes literally.
   `RedshiftTranspilerSuite` runs them, parses and plans every valid output again as a check, parses every input with
   the grammar, and checks that `tables` names the tables the AST reads.
 - `RedshiftTranspilerTest`: the public contract: problem codes and kinds, positions, notes, determinism, the nesting
-  limit, and the AST planned and compiled by `RedshiftTarget`.
+  limit, and the AST planned and compiled by `RedshiftTarget`. `RedshiftParserClassPathTest`: the front end reports a
+  missing parser at construction, through a class loader that hides it.
 
 ```
 ./gradlew :partiql-scribe-redshift-frontend:test
