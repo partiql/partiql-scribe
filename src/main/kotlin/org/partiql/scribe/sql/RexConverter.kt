@@ -883,7 +883,7 @@ public open class RexConverter(
      * query; reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] otherwise. For example, targets
      * differ in their support for window functions in correlated subqueries.
      */
-    protected open fun checkSubquery(
+    internal open fun checkSubquery(
         rel: Rel,
         isScalar: Boolean,
     ) {}

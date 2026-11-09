@@ -972,7 +972,7 @@ public open class RelConverter(
      * so an aggregate window function uses the SQL default frame: with an ORDER BY, from the start of the partition
      * through the current row's peers; without one, the whole partition.
      */
-    protected open fun checkAggregateWindowFunction(
+    internal open fun checkAggregateWindowFunction(
         windowFunction: WindowFunctionNode,
         rel: RelWindow,
     ) {}
