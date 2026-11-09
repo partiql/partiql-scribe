@@ -104,8 +104,6 @@ SELECT "T"."a", SUM("T"."b") OVER () AS "_1" FROM "default"."T" AS "T";
 --#[window-40]
 SELECT "T"."a", SUM(count(1)) OVER () AS "_1" FROM "default"."T" AS "T" GROUP BY "T"."a";
 
---#[window-41]
-[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
 
 --#[window-42]
 [ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];

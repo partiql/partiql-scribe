@@ -6,14 +6,12 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprVarRef
-import org.partiql.plan.rel.Rel
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexPathKey
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
-import org.partiql.scribe.sql.utils.hasCorrelatedWindowFunction
 import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.scribe.targets.duckdb.utils.TRANSFORM_VAR
@@ -24,19 +22,6 @@ public open class DuckDBRexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : RexConverter(transform, locals, context) {
-    /**
-     * DuckDB does not support correlation references in a window function's arguments, partitions, or ordering
-     * ("correlated columns in window functions not supported").
-     */
-    override fun checkSubquery(
-        rel: Rel,
-        isScalar: Boolean,
-    ) {
-        if (hasCorrelatedWindowFunction(rel)) {
-            unsupportedSubquery("DuckDB does not support correlation references in window functions")
-        }
-    }
-
     /**
      * Convert any plan string literals (i.e. [RexLit]s) that have a string value of [TRANSFORM_VAR] into an unquoted
      * string AST expr (i.e. [ExprVarRef]).

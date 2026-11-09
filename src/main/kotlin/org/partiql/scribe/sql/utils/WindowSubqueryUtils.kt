@@ -39,22 +39,6 @@ internal fun isCorrelatedSubqueryWithWindow(rel: Rel): Boolean {
 }
 
 /**
- * Returns true if a window function at the subquery [rel]'s own query level contains a correlation reference in its
- * arguments, partitions, or ordering.
- */
-@Suppress("DEPRECATION")
-internal fun hasCorrelatedWindowFunction(rel: Rel): Boolean {
-    var isCorrelated = false
-    visitWithDepth(rel, 0) { op, depth ->
-        if (op is RelWindow && depth == 0) {
-            val exprs = op.windowFunctions.flatMap { it.arguments } + op.partitions + op.collations.map { it.column }
-            exprs.forEach { expr -> visitWithDepth(expr, depth) { e, d -> if (e.refersOutside(d)) isCorrelated = true } }
-        }
-    }
-    return isCorrelated
-}
-
-/**
  * A variable's scope counts the scopes it skips; it refers outside the subquery if it skips more scopes than it is
  * nested inside the subquery.
  */

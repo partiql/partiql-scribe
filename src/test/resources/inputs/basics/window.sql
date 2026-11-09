@@ -137,9 +137,7 @@ SELECT a, COUNT(b) OVER (ORDER BY c), MAX(b) OVER (ORDER BY c) FROM T;
 SELECT a, SUM(COUNT(*)) OVER () FROM T GROUP BY a;
 
 -- Window functions in correlated subqueries
---#[window-41]
-SELECT o.a AS a, (SELECT MAX(t.b + o.b) OVER () AS m FROM T AS t LIMIT 1) AS m FROM T AS o;
-
+-- An outer reference in a window function, e.g. MAX(t.b + o.b) OVER (), is rejected by PartiQL (SQL:2023 9.23 SR 3).
 --#[window-42]
 SELECT o.a AS a, (SELECT MAX(t.b) OVER () AS m FROM T AS t WHERE t.c = o.c LIMIT 1) AS m FROM T AS o;
 

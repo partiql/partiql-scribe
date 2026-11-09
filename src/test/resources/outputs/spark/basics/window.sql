@@ -104,8 +104,6 @@ SELECT `T`.`a` AS `a`, COUNT(`T`.`b`) OVER (ORDER BY `T`.`c` ASC NULLS LAST) AS 
 --#[window-40]
 SELECT `T`.`a` AS `a`, SUM(`count`(1)) OVER () AS `_1` FROM `default`.`T` AS `T` GROUP BY `T`.`a`;
 
---#[window-41]
-SELECT `o`.`a` AS `a`, (SELECT MAX(`t`.`b` + `o`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` LIMIT 1) AS `m` FROM `default`.`T` AS `o`;
 
 --#[window-42]
 SELECT `o`.`a` AS `a`, (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c` LIMIT 1) AS `m` FROM `default`.`T` AS `o`;
