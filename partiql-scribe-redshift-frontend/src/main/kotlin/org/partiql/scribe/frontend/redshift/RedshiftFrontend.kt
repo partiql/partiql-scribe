@@ -48,9 +48,10 @@ import org.partiql.scribe.problems.Severity
  * A query that nests deeper than [MAX_NESTING] is refused, so that the depth of the text bounds the stack that parsing
  * and converting it use, and the depth of the AST bounds what the planner and the targets recurse over.
  *
- * The parser is not part of this module: it is generated from the Redshift grammar into the package [PARSER_PACKAGE],
- * and a deployment puts those classes on the class path next to the module. The constructor throws
- * [IllegalStateException] when they are missing.
+ * The parser is generated from the Redshift grammar into the package [PARSER_PACKAGE]. The module ships without one:
+ * a deployment puts its grammar in the module's `src/main/antlr/Redshift.g4` placeholder and builds, or puts the
+ * generated classes on the class path next to the module. The constructor throws [IllegalStateException] when they
+ * are missing.
  *
  * @param caseSensitiveIdentifiers The Redshift `enable_case_sensitive_identifier` setting of the source queries.
  */
@@ -69,7 +70,9 @@ public class RedshiftFrontend
                     "The Redshift parser is not on the class path. The front end needs the parser generated from the " +
                         "Redshift grammar: a grammar named `Redshift`, generated with ANTLR $ANTLR_VERSION as " +
                         "`-visitor -no-listener -package $PARSER_PACKAGE`, whose rule, label, and token names are the " +
-                        "ones the front end reads. The module does not package it; see its README.",
+                        "ones the front end reads. The module ships without one: put the grammar in its " +
+                        "`src/main/antlr/Redshift.g4` placeholder and build, or put the generated classes on the class " +
+                        "path; see its README.",
                     e,
                 )
             }

@@ -10,8 +10,9 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
- * The module does not package the parser generated from the grammar; a deployment supplies it. These tests load the
- * front end through a class loader that hides the parser, as a class path without it would.
+ * The module ships without a parser; a deployment supplies one (a grammar in the placeholder, or the classes on the
+ * class path). These tests load the front end through a class loader that hides the parser, as a class path without it
+ * would.
  */
 class RedshiftParserClassPathTest {
     /** Defines the front end's own classes itself, refuses the parser's, and delegates everything else. */

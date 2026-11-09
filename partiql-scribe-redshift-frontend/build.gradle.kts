@@ -19,15 +19,22 @@ repositories {
     mavenLocal()
 }
 
-// The tests run with a parser generated from an example of the grammar, `RedshiftTestExample.g4` in the test tree:
-// the main code is compiled against it, and the jar does not package it. A deployment generates its parser from its
-// own grammar; see the README.
-//
+// `src/main/antlr/Redshift.g4` is a placeholder for a deployment's grammar, blank as shipped. While it is blank, the
+// module is built without a parser (the jar packages none) and compiled against the parser of the example grammar in
+// the test tree, `RedshiftTestExample.g4`, which the tests run with. With a grammar in it, the parser is generated from
+// that grammar into the module, the jar packages it, and the tests run against it; the example is left out.
+val grammar = layout.projectDirectory.file("src/main/antlr/Redshift.g4")
+val grammarIsPlaceholder = grammar.asFile.readText().isBlank()
+
+val antlrPackage = "org.partiql.scribe.frontend.redshift.antlr"
+val antlrArguments = listOf("-visitor", "-no-listener", "-long-messages", "-package", antlrPackage)
+
 // ANTLR names the generated classes after the grammar, and the front end is compiled against `RedshiftParser`, so the
 // example is generated through a grammar named `Redshift` that imports it. That stub is written by the build.
 val exampleGrammarDir = layout.projectDirectory.dir("src/test/antlr/example")
 
 val writeExampleGrammarStub by tasks.registering {
+    enabled = grammarIsPlaceholder
     val stubDir = layout.buildDirectory.dir("example-grammar")
     outputs.dir(stubDir)
     doLast {
@@ -47,18 +54,18 @@ val exampleParser: SourceSet by sourceSets.creating {
     extensions.getByType<AntlrSourceDirectorySet>().setSrcDirs(listOf(writeExampleGrammarStub))
 }
 
-val antlrPackage = "org.partiql.scribe.frontend.redshift.antlr"
-
 dependencies {
     antlr("org.antlr:antlr4:4.10.1")
     api(project(":"))
     api("org.partiql:partiql-ast:$partiqlVersion")
     api("org.partiql:partiql-spi:$partiqlVersion")
     implementation("org.antlr:antlr4-runtime:4.10.1")
-    compileOnly(exampleParser.output)
     "exampleParserImplementation"("org.antlr:antlr4-runtime:4.10.1")
+    if (grammarIsPlaceholder) {
+        compileOnly(exampleParser.output)
+        testImplementation(exampleParser.output)
+    }
 
-    testImplementation(exampleParser.output)
     testImplementation("org.partiql:partiql-parser:$partiqlVersion")
     testImplementation("org.partiql:partiql-planner:$partiqlVersion")
     testImplementation("org.partiql:partiql-function-extensions:$partiqlVersion")
@@ -72,27 +79,42 @@ configurations.api {
     setExtendsFrom(extendsFrom.filter { it.name != "antlr" })
 }
 
-tasks.named<AntlrTask>("generateExampleParserGrammarSource") {
-    // `-lib` is where the stub's import is resolved; the example is an input, so that a change to it regenerates.
-    inputs.dir(exampleGrammarDir)
-    arguments = listOf("-visitor", "-no-listener", "-long-messages", "-package", antlrPackage, "-lib", exampleGrammarDir.asFile.path)
-    outputDirectory = layout.buildDirectory.dir("generated-src/antlr/exampleParser/${antlrPackage.replace('.', '/')}").get().asFile
+// The deployment's grammar, when the placeholder is filled in.
+tasks.generateGrammarSource {
+    enabled = !grammarIsPlaceholder
+    arguments = antlrArguments
+    outputDirectory = layout.buildDirectory.dir("generated-src/antlr/main/${antlrPackage.replace('.', '/')}").get().asFile
 }
 
-// The example grammar is generated into the exampleParser source set only: the plugin's generation tasks for main and
-// test have nothing to generate, and their output directories are taken out so that no task reads them.
-tasks.generateGrammarSource { enabled = false }
-tasks.generateTestGrammarSource { enabled = false }
-sourceSets {
-    main { java.setSrcDirs(java.srcDirs - tasks.generateGrammarSource.get().outputDirectory) }
-    test {
-        java.setSrcDirs(java.srcDirs - tasks.generateTestGrammarSource.get().outputDirectory)
-        extensions.getByType<AntlrSourceDirectorySet>().setSrcDirs(emptyList<File>())
-    }
+tasks.compileKotlin {
+    dependsOn(tasks.generateGrammarSource)
+}
+
+tasks.named("runKtlintCheckOverMainSourceSet") {
+    dependsOn(tasks.generateGrammarSource)
+}
+
+// The example grammar, while the placeholder is blank.
+tasks.named<AntlrTask>("generateExampleParserGrammarSource") {
+    enabled = grammarIsPlaceholder
+    // `-lib` is where the stub's import is resolved; the example is an input, so that a change to it regenerates.
+    inputs.dir(exampleGrammarDir)
+    arguments = antlrArguments + listOf("-lib", exampleGrammarDir.asFile.path)
+    outputDirectory = layout.buildDirectory.dir("generated-src/antlr/exampleParser/${antlrPackage.replace('.', '/')}").get().asFile
 }
 
 tasks.named("runKtlintCheckOverExampleParserSourceSet") {
     dependsOn(tasks.named("generateExampleParserGrammarSource"))
+}
+
+// The test source set holds the example grammar but generates nothing itself: the example is generated above, under
+// the name `Redshift`, or not at all.
+tasks.generateTestGrammarSource { enabled = false }
+sourceSets {
+    test {
+        java.setSrcDirs(java.srcDirs - tasks.generateTestGrammarSource.get().outputDirectory)
+        extensions.getByType<AntlrSourceDirectorySet>().setSrcDirs(emptyList<File>())
+    }
 }
 
 // Reuse the Scribe test utilities (catalog loading, fixture loading) and the Scribe test resources (catalogs and

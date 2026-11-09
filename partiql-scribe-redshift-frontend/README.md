@@ -25,17 +25,21 @@ PartiQL does not define on the operand types, is found by the planner, not by th
 `tables(sql)` lists the tables the query reads, from the same conversion as `toAst`, so a common table expression counts
 as a table exactly where the AST reads it as one.
 
-### Supplying the parser
+### Supplying the grammar
 
-The module does not package a parser. A deployment generates one from its Redshift grammar into the package
-`org.partiql.scribe.frontend.redshift.antlr` (`RedshiftFrontend.PARSER_PACKAGE`), with ANTLR 4.10.1
-(`RedshiftFrontend.ANTLR_VERSION`, the version of the module's `antlr4-runtime` dependency) and the arguments
-`-visitor -no-listener -package org.partiql.scribe.frontend.redshift.antlr`, and puts the classes on the class path
-next to the module. The grammar must be named `Redshift`, and its rule, label, and token names are the ones the front
-end reads (the "Grammar" section below says what it parses). `RedshiftFrontend`'s constructor throws
-`IllegalStateException` when the parser is missing, naming this contract. The module's tests run with a parser
-generated from an example grammar in the test tree, through a grammar named `Redshift` that imports it (the build
-writes that stub); the jar leaves both out.
+The module ships without a parser: `src/main/antlr/Redshift.g4` is a blank placeholder for a deployment's grammar.
+Put the grammar there and build, and the parser is generated from it into the module, which the jar then packages.
+Or generate the parser separately, with ANTLR 4.10.1 (`RedshiftFrontend.ANTLR_VERSION`, the version of the module's
+`antlr4-runtime` dependency) and the arguments `-visitor -no-listener -package
+org.partiql.scribe.frontend.redshift.antlr` (`RedshiftFrontend.PARSER_PACKAGE`), and put the classes on the class path
+next to the module built from the blank placeholder. Either way the grammar must be named `Redshift`, and its rule,
+label, and token names are the ones the front end reads (the "Grammar" section below says what it parses).
+`RedshiftFrontend`'s constructor throws `IllegalStateException` when the parser is missing, naming this contract.
+
+While the placeholder is blank, the module's own build compiles against, and its tests run with, the parser of an
+example grammar in the test tree, generated under the name `Redshift` through a stub the build writes; the jar leaves
+it out. With a grammar in the placeholder, the tests run against that grammar instead (the grammar fixtures describe
+the example).
 
 One rewrite depends on the caller's catalog: `POWER`, `POW`, and `^` become a call of `pow`, which PartiQL's built-in
 functions do not define. Plan against a catalog that defines it (`Pow.overloads()` of
@@ -75,7 +79,7 @@ What parses:
   function call is a syntax error at its opening parenthesis.
 
 The generated parser is in the package `org.partiql.scribe.frontend.redshift.antlr`; it is not part of the module's
-API, and not packaged in its jar (see "Supplying the parser" above).
+API, and the jar packages it only when a grammar is in the placeholder (see "Supplying the grammar" above).
 
 ## Translation
 
