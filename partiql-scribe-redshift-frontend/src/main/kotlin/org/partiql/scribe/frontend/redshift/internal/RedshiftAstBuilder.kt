@@ -81,6 +81,9 @@ import org.partiql.ast.expr.ExprVarRef
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.expr.TruthValue
 import org.partiql.scribe.frontend.redshift.RedshiftFrontend
+import org.partiql.scribe.frontend.redshift.internal.functions.ConditionalFunctions
+import org.partiql.scribe.frontend.redshift.internal.functions.MathFunctions
+import org.partiql.scribe.frontend.redshift.internal.functions.StringFunctions
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
 import java.util.IdentityHashMap
@@ -92,8 +95,8 @@ import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
  *
  * Each rule rewrites a form of the Redshift query into a form of PartiQL. The planner then resolves the names and types
  * of the result. A construct that has no conversion yet stops the build with [TranslationStop] at its position; the
- * string, math, and datetime functions are in that set for now, and so are the `INTERVAL` literal and the operators `^`
- * and `&`. The conditional functions are translated by [ConditionalFunctions].
+ * datetime functions are in that set for now, and so is the `INTERVAL` literal. The functions are translated by family:
+ * [ConditionalFunctions], [StringFunctions] (with the operator `||`), and [MathFunctions] (with the operator `^`).
  * The depth of the AST is bounded by [RedshiftFrontend.MAX_NESTING]; see [nested].
  *
  * The rewrites that change the form of the query:
@@ -144,6 +147,8 @@ internal class RedshiftAstBuilder(
     private var depth = 0
 
     private val conditional = ConditionalFunctions(this)
+    private val strings = StringFunctions(this)
+    private val math = MathFunctions(this)
 
     /**
      * The select list of a query block, for the block's ORDER BY and for the DISTINCT subquery: the expression items in
@@ -1029,17 +1034,43 @@ internal class RedshiftAstBuilder(
                     ctx.DOUBLE_COLON().symbol,
                 ) { exprCast(valueExpr(ctx.valueExpr()), dataType(ctx.dataType())) }
             is P.ValueSignedContext -> nested(ctx.sign) { exprOperator(ctx.sign.text, null, valueExpr(ctx.valueExpr())) }
-            // PartiQL has no counterpart of `^` and `&` yet; the operators are translated with the functions, by a later change.
-            is P.ValueExponentContext -> throw TranslationStop.unsupported(ctx.op, "operator `^` is not translated yet")
+            // `a ^ b` is the call `pow(a, b)`, so a subquery operand is a subquery as a function argument; see [argument].
+            is P.ValueExponentContext ->
+                nested(ctx.op) { math.power(operand(ctx.lhs, "`^`"), operand(ctx.rhs, "`^`")) }
             is P.ValueMultiplicativeContext -> nested(ctx.op) { exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
             is P.ValueAdditiveContext -> nested(ctx.op) { exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
             is P.ValueOperatorContext ->
-                if (ctx.op.type == P.CONCAT) {
-                    nested(ctx.op) { exprOperator("||", valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
-                } else {
-                    throw TranslationStop.unsupported(ctx.op, "operator `&` is not translated yet")
+                when (ctx.op.type) {
+                    P.CONCAT -> nested(ctx.op) { strings.concatenation(valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
+                    // `a & b` on integers is PartiQL's `&`. Redshift defines `&` on integers only; PartiQL casts another
+                    // number to BIGINT, which rounds, so a decimal literal operand (visible without types) is refused.
+                    else -> nested(ctx.op) { exprOperator("&", integer(ctx.lhs), integer(ctx.rhs)) }
                 }
             else -> unexpected(ctx)
+        }
+
+    /** An operand of the operator [op] that becomes a function argument; a subquery is refused as such, see [argument]. */
+    private fun operand(
+        ctx: P.ValueExprContext,
+        op: String,
+    ): Expr {
+        val expr = valueExpr(ctx)
+        if (expr is ExprQuerySet) throw TranslationStop.unsupported(ctx, "subquery as an operand of $op")
+        return expr
+    }
+
+    /** An operand of `&`, which Redshift defines on integers only: a decimal literal is invalid there. */
+    private fun integer(ctx: P.ValueExprContext): Expr {
+        val expr = valueExpr(ctx)
+        if (expr.isDecimalLiteral()) throw TranslationStop.invalid(ctx, "`&` with a decimal operand")
+        return expr
+    }
+
+    private fun Expr.isDecimalLiteral(): Boolean =
+        when (this) {
+            is ExprLit -> lit.code() == Literal.EXACT_NUM
+            is ExprOperator -> lhs == null && rhs.isDecimalLiteral()
+            else -> false
         }
 
     private fun atom(ctx: P.AtomContext): Expr =
@@ -1105,13 +1136,17 @@ internal class RedshiftAstBuilder(
     }
 
     /**
-     * A scalar function call. Each family of functions has its own rules: the conditional functions in
-     * [ConditionalFunctions]; the string, math, and datetime functions are translated by later changes.
+     * A scalar function call. Each family of functions has its own rules: [ConditionalFunctions], [StringFunctions],
+     * and [MathFunctions]; the datetime functions are translated by a later change.
      */
     private fun function(
         name: Token,
         args: List<P.ExprContext>,
-    ): Expr = conditional.translate(name, args) ?: notYet(name)
+    ): Expr =
+        conditional.translate(name, args)
+            ?: strings.translate(name, args)
+            ?: math.translate(name, args)
+            ?: notYet(name)
 
     /**
      * An argument of a function. A scalar subquery is not translated there yet: the PartiQL printer writes a subquery
@@ -1121,6 +1156,18 @@ internal class RedshiftAstBuilder(
         val expr = expr(ctx)
         if (expr is ExprQuerySet) throw TranslationStop.unsupported(ctx, "subquery as a function argument")
         return expr
+    }
+
+    /** Stops when the function [name] does not take exactly [count] of [args]: Redshift has no such function. */
+    fun arity(
+        name: Token,
+        args: List<P.ExprContext>,
+        count: Int,
+    ) {
+        if (args.size != count) {
+            val takes = if (count == 1) "1 argument" else "$count arguments"
+            throw TranslationStop.invalid(name, "${name.text.uppercase()} takes $takes, not ${args.size}")
+        }
     }
 
     private fun notYet(name: Token): Nothing =

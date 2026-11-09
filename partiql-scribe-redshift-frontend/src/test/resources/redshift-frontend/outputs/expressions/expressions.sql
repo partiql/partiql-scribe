@@ -8,10 +8,22 @@ SELECT -"simple_t"['b'] AS "_1", +"simple_t"['b'] AS "_2", -("simple_t"['b'] + 1
 SELECT ("simple_t"['b'] + (1 * 2)) - (3 / 4) AS "_1", ("simple_t"['b'] + 1) * 2 AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[arith-exponent]
-[UNSUPPORTED_OPERATION{message="operator `^` is not translated yet"}];
+SELECT "pow"(CAST("simple_t"['b'] AS DOUBLE PRECISION), CAST(2 AS DOUBLE PRECISION)) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
 
 --#[bitwise-and]
-[UNSUPPORTED_OPERATION{message="operator `&` is not translated yet"}];
+SELECT "simple_t"['b'] & 1 AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[bitwise-and-precedence]
+SELECT "simple_t"['b'] & ("simple_t"['b'] + 1) AS "_1", ("simple_t"['b'] & "simple_t"['b']) + 1 AS "_2", "simple_t"['b'] & ("simple_t"['b'] * 2) AS "_3" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[bitwise-and-chain]
+SELECT ("simple_t"['b'] & 1) & 3 AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[bitwise-and-null]
+SELECT "simple_t"['b'] & NULL AS "_1", NULL & 1 AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[bitwise-and-in-where]
+SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE ("simple_t"['b'] & 1) = 1;
 
 --#[concat]
 SELECT "simple_t"['c'] || 'x' AS "_1", ("simple_t"['c'] || "simple_t"['c']) || 'y' AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";

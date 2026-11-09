@@ -22,7 +22,6 @@ import org.partiql.scribe.problems.Severity
 import org.partiql.scribe.targets.partiql.PartiQLTarget
 import org.partiql.scribe.utils.PErrorCollector
 import org.partiql.scribe.utils.ScribeTestProvider
-import org.partiql.scribe.utils.SessionProvider
 import org.partiql.scribe.utils.SqlEqualsNaive
 import org.partiql.spi.Context
 import org.partiql.spi.catalog.Session
@@ -35,10 +34,10 @@ import kotlin.test.fail
 /**
  * The conformance suite of the Redshift front end. Each case is a Redshift input in `redshift-frontend/inputs` and the
  * expected result of the same name in `redshift-frontend/outputs`: the input is converted to a PartiQL AST, planned
- * against the Scribe test catalogs, and compiled with the PartiQL target.
+ * against [RedshiftTestSession] (the Scribe test catalogs, with `pow`), and compiled with the PartiQL target.
  *
  * An expected output is either PartiQL text, or the problem that stops the translation, as its code and a substring of
- * its message: `[UNSUPPORTED_OPERATION{message="function UPPER"}];`. A problem the planner reports (an unknown name, an
+ * its message: `[UNSUPPORTED_OPERATION{message="function DATEADD"}];`. A problem the planner reports (an unknown name, an
  * operation PartiQL does not define on the operand types) is `[PLANNER{message="..."}];`, with the planner's own code
  * in the message. A valid output is also parsed and planned again, as a check that the translation produced the query
  * it meant to.
@@ -49,7 +48,7 @@ import kotlin.test.fail
 class RedshiftTranspilerSuite {
     private val inputs = load("/redshift-frontend/inputs")
     private val outputs = load("/redshift-frontend/outputs")
-    private val session = SessionProvider().getSession()
+    private val session = RedshiftTestSession.withPow()
     private val parser = PartiQLParser.standard()
     private val planner = PartiQLPlannerBuilder().forceInlineWithClause(replaceWith = false).build()
 

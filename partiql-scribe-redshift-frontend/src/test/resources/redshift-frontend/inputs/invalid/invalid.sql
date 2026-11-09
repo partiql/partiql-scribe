@@ -47,3 +47,31 @@ SELECT DECODE(b, 1) FROM SIMPLE_T;
 -- Redshift identifiers are at most 127 bytes; a longer one is refused before the planner sees it.
 --#[identifier-longer-than-127-bytes]
 SELECT b AS xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx FROM SIMPLE_T;
+
+--#[upper-two-arguments]
+SELECT UPPER(c, c) FROM SIMPLE_T;
+
+--#[concat-one-argument]
+SELECT CONCAT(c) FROM SIMPLE_T;
+
+--#[concat-three-arguments]
+SELECT CONCAT(c, c, c) FROM SIMPLE_T;
+
+--#[power-one-argument]
+SELECT POWER(b) FROM SIMPLE_T;
+
+--#[lower-two-arguments]
+SELECT LOWER(c, c) FROM SIMPLE_T;
+
+--#[pow-one-argument]
+SELECT POW(b) FROM SIMPLE_T;
+
+--#[power-three-arguments]
+SELECT POWER(b, 2, 3) FROM SIMPLE_T;
+
+-- Redshift defines `&` on integers only; PartiQL would cast the decimal to BIGINT, which rounds.
+--#[bitwise-and-decimal-literal]
+SELECT b & 1.5 FROM SIMPLE_T;
+
+--#[bitwise-and-signed-decimal-literal]
+SELECT -2.5 & b FROM SIMPLE_T;

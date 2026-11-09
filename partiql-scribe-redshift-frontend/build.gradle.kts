@@ -25,6 +25,7 @@ dependencies {
     api("org.partiql:partiql-spi:$partiqlVersion")
     testImplementation("org.partiql:partiql-parser:$partiqlVersion")
     testImplementation("org.partiql:partiql-planner:$partiqlVersion")
+    testImplementation("org.partiql:partiql-function-extensions:$partiqlVersion")
     implementation("org.antlr:antlr4-runtime:4.10.1")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.21")

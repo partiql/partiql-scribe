@@ -1,14 +1,37 @@
 -- Inputs the grammar accepts and the translation refuses: the functions that later changes translate, the forms with
 -- no PartiQL counterpart yet, and operations PartiQL does not define on the operand types.
 
---#[function-power]
-SELECT POWER(b, 2), POW(b, 2) FROM SIMPLE_T;
+-- Redshift converts a non-string argument of UPPER, LOWER, CONCAT, and `||` to VARCHAR; the conversion depends on the
+-- type, which the front end does not see, so the planner reports the mismatch (a numeric literal is the exception).
+--#[upper-of-number]
+SELECT UPPER(b) FROM SIMPLE_T;
 
---#[function-concat]
-SELECT CONCAT(c, 'x') FROM SIMPLE_T;
+--#[concat-of-number-column]
+SELECT CONCAT(c, b) FROM SIMPLE_T;
 
---#[function-lower-upper]
-SELECT LOWER(c), UPPER(c) FROM SIMPLE_T;
+--#[concat-of-power]
+SELECT POWER(2, 3) || 'x' FROM SIMPLE_T;
+
+--#[bitwise-and-of-string]
+SELECT c & 1 FROM SIMPLE_T;
+
+-- Redshift converts the NULL to VARCHAR; PartiQL sees an INTEGER operand of `||`.
+--#[concat-of-null-cast-to-integer]
+SELECT c || NULL::int FROM SIMPLE_T;
+
+-- `&` and `||` share one level: 'x' || b & 1 is ('x' || b) & 1, which PartiQL does not type.
+--#[concat-then-bitwise-and]
+SELECT 'x' || b & 1 FROM SIMPLE_T;
+
+-- `^` becomes the call `pow(a, b)`, so a subquery operand is a subquery as a function argument: Redshift's own example.
+--#[subquery-as-caret-operand]
+SELECT (SELECT SUM(b) FROM T) ^ ((5::float / 100) * 10) FROM SIMPLE_T;
+
+--#[subquery-as-upper-argument]
+SELECT UPPER((SELECT MAX(c) FROM T)) FROM SIMPLE_T;
+
+--#[subquery-as-power-argument]
+SELECT POWER(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;
 
 --#[function-dateadd]
 SELECT DATEADD(day, 1, timestamp_1) FROM T;
@@ -27,9 +50,6 @@ SELECT CURRENT_DATE FROM SIMPLE_T;
 
 --#[function-extract-epoch]
 SELECT EXTRACT(EPOCH FROM timestamp_1) FROM T;
-
---#[function-in-where]
-SELECT a FROM SIMPLE_T WHERE UPPER(c) = 'X';
 
 --#[interval-literal]
 SELECT INTERVAL '1 day' FROM SIMPLE_T;

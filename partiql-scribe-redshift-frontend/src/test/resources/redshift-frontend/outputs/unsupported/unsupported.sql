@@ -1,11 +1,29 @@
---#[function-power]
-[UNSUPPORTED_OPERATION{message="function POWER is not translated yet"}];
+--#[upper-of-number]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
 
---#[function-concat]
-[UNSUPPORTED_OPERATION{message="function CONCAT is not translated yet"}];
+--#[concat-of-number-column]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
 
---#[function-lower-upper]
-[UNSUPPORTED_OPERATION{message="function LOWER is not translated yet"}];
+--#[concat-of-power]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[bitwise-and-of-string]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[concat-of-null-cast-to-integer]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[concat-then-bitwise-and]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[subquery-as-caret-operand]
+[UNSUPPORTED_OPERATION{message="subquery as an operand of `^`"}];
+
+--#[subquery-as-upper-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+
+--#[subquery-as-power-argument]
+[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
 
 --#[function-dateadd]
 [UNSUPPORTED_OPERATION{message="function DATEADD is not translated yet"}];
@@ -24,9 +42,6 @@
 
 --#[function-extract-epoch]
 [UNSUPPORTED_OPERATION{message="function EXTRACT is not translated yet"}];
-
---#[function-in-where]
-[UNSUPPORTED_OPERATION{message="function UPPER is not translated yet"}];
 
 --#[interval-literal]
 [UNSUPPORTED_OPERATION{message="INTERVAL literal"}];

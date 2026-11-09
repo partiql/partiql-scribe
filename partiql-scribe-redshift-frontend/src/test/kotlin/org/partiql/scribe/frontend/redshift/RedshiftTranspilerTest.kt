@@ -15,7 +15,9 @@ import org.partiql.scribe.targets.partiql.PartiQLTarget
 import org.partiql.scribe.targets.redshift.RedshiftTarget
 import org.partiql.scribe.targets.spark.SparkTarget
 import org.partiql.scribe.targets.trino.TrinoTarget
-import org.partiql.scribe.utils.SessionProvider
+import org.partiql.scribe.utils.PErrorCollector
+import org.partiql.spi.Context
+import org.partiql.spi.errors.PError
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -25,7 +27,7 @@ import kotlin.test.assertTrue
  * translation itself is covered by [RedshiftTranspilerSuite].
  */
 class RedshiftTranspilerTest {
-    private val session = SessionProvider().getSession()
+    private val session = RedshiftTestSession.withPow()
     private val planner = PartiQLPlanner.standard()
 
     /** A context that records every problem and throws on an error, as [ScribeContext.standard] does. */
@@ -97,7 +99,7 @@ class RedshiftTranspilerTest {
     @Test
     fun tablesRefusesWhatToAstRefusesAndReportsNoNotes() {
         val context = Recording()
-        val ex = assertThrows<ScribeException> { RedshiftFrontend(context).tables("SELECT UPPER(c) FROM T") }
+        val ex = assertThrows<ScribeException> { RedshiftFrontend(context).tables("SELECT GETDATE() FROM T") }
         assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, ex.error.kind())
         val notes = Recording()
         RedshiftFrontend(notes).tables("SELECT DISTINCT c FROM SIMPLE_T ORDER BY c LIMIT 5")
@@ -119,7 +121,7 @@ class RedshiftTranspilerTest {
     @Test
     fun problemsCarryTheirKind() {
         assertEquals(RedshiftFrontend.KIND_SYNTAX, failure("SELECT a FROM SIMPLE_T WHERE b >").kind())
-        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, failure("SELECT a FROM SIMPLE_T WHERE UPPER(c) = 'X'").kind())
+        assertEquals(RedshiftFrontend.KIND_UNSUPPORTED, failure("SELECT a FROM SIMPLE_T WHERE GETDATE() IS NULL").kind())
         assertEquals(RedshiftFrontend.KIND_INVALID, failure("SELECT a FROM SIMPLE_T ORDER BY 2").kind())
     }
 
@@ -321,10 +323,10 @@ class RedshiftTranspilerTest {
 
     @Test
     fun unconvertedFunctionIsUnsupportedWithPosition() {
-        val problem = failure("SELECT a FROM SIMPLE_T WHERE UPPER(c) = 'X'")
+        val problem = failure("SELECT a FROM SIMPLE_T WHERE GETDATE() IS NULL")
         assertEquals("UNSUPPORTED_OPERATION", problem.name())
         assertEquals(1 to 30, problem.position())
-        assertTrue(problem.message().contains("UPPER"), problem.message())
+        assertTrue(problem.message().contains("GETDATE"), problem.message())
     }
 
     @Test
@@ -359,5 +361,35 @@ class RedshiftTranspilerTest {
         val plan = planner.plan(frontend().toAst("SELECT a, b FROM SIMPLE_T WHERE c ILIKE 'x%'"), session).plan
         val redshift = Scribe(ScribeContext.standard()).compile(plan, session, RedshiftTarget.STANDARD).output.value
         assertTrue(redshift.contains("lower"), redshift)
+    }
+
+    @Test
+    fun powerIsACallOfPowForTheCatalogToDefine() {
+        // POWER, POW, and `^` are written as `pow(a, b)`, which PartiQL's built-in functions do not define: against
+        // the test catalogs as they are, the planner reports the function as not found, and nothing else.
+        val ast = frontend().toAst("SELECT POWER(b, 2), POW(b, 2), b ^ 2 FROM SIMPLE_T")
+        val problems = PErrorCollector()
+        planner.plan(ast, RedshiftTestSession.withoutPow(), Context.of(problems))
+        assertEquals(listOf(PError.FUNCTION_NOT_FOUND), problems.errors.map { it.code() }.distinct(), problems.errors.toString())
+        assertEquals(3, problems.errors.size, problems.errors.toString())
+        // Against the `pow` overloads of partiql-function-extensions, one per numeric type, the front end's casts to
+        // DOUBLE PRECISION select the DOUBLE PRECISION one (Redshift's POWER converts its arguments so), and every target
+        // writes the call with them. Without the casts, POWER(1.5, 2) would resolve to the integer overload as pow(1, 2).
+        val plan = planner.plan(frontend().toAst("SELECT POWER(1.5, 2) FROM SIMPLE_T"), session).plan
+        val precision = """"pow"(CAST(1.5 AS DOUBLE PRECISION), CAST(2 AS DOUBLE PRECISION))"""
+        val double = """"pow"(CAST(1.5 AS DOUBLE), CAST(2 AS DOUBLE))"""
+        val from = """FROM "default"."SIMPLE_T" AS "simple_t""""
+        val expected =
+            mapOf(
+                PartiQLTarget to """SELECT $precision AS "_1" $from""",
+                RedshiftTarget.STANDARD to """SELECT $precision AS "_1" $from""",
+                TrinoTarget.STANDARD to """SELECT $double AS "_1" $from""",
+                SparkTarget.STANDARD to
+                    "SELECT `pow`(CAST(1.5 AS DOUBLE), CAST(2 AS DOUBLE)) AS `_1` FROM `default`.`SIMPLE_T` AS `simple_t`",
+                DuckDBTarget.STANDARD to """SELECT $double AS "_1" $from""",
+            )
+        for ((target, output) in expected) {
+            assertEquals(output, Scribe(ScribeContext.standard()).compile(plan, session, target).output.value, target.toString())
+        }
     }
 }

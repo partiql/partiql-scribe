@@ -1,4 +1,4 @@
-package org.partiql.scribe.frontend.redshift.internal
+package org.partiql.scribe.frontend.redshift.internal.functions
 
 import org.antlr.v4.runtime.Token
 import org.partiql.ast.Ast.exprAnd
@@ -13,6 +13,8 @@ import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprOperator
+import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
+import org.partiql.scribe.frontend.redshift.internal.TranslationStop
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
 
 /**
