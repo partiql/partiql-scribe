@@ -28,6 +28,7 @@ Thank you to all who have contributed!
 
 ### Added
 - Added transpilation of the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX` (e.g. `MAX(x) OVER (PARTITION BY k ORDER BY t)`) to all targets. Redshift supports them only without a window `ORDER BY` (Redshift requires a `ROWS` frame, which cannot express the default frame) and without `DISTINCT`; Spark does not support `DISTINCT`.
+- Added Scribe errors for window functions in correlated subqueries that a target does not support: on Redshift, any correlation in a subquery with a window function; on DuckDB, a correlation reference in a window function; on Trino, a window function in a correlated scalar subquery.
 
 ### Changed
 

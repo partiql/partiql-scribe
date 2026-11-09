@@ -878,11 +878,43 @@ public open class RexConverter(
         )
     }
 
+    private fun checkNestedQuery(
+        rel: Rel,
+        isScalar: Boolean,
+    ) {
+        // Only a nested query (one with an enclosing row) can be correlated.
+        if (locals.env.isNotEmpty() || locals.outer.isNotEmpty()) {
+            checkSubquery(rel, isScalar)
+        }
+    }
+
+    /**
+     * Checks that this target can express the subquery [rel] (a scalar subquery if [isScalar]) nested in the current
+     * query; reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] otherwise. For example, targets
+     * differ in their support for window functions in correlated subqueries.
+     */
+    protected open fun checkSubquery(
+        rel: Rel,
+        isScalar: Boolean,
+    ) {}
+
+    /**
+     * Reports and throws that this target does not support a subquery, for [reason].
+     */
+    protected fun unsupportedSubquery(reason: String): Nothing =
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                message = reason,
+            ),
+        )
+
     override fun visitSelect(
         rex: RexSelect,
         ctx: Unit,
     ): Expr {
         val inputRel = rex.input
+        checkNestedQuery(inputRel, isScalar = false)
         val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(inputRel, ctx).toExprQuerySet()
     }
@@ -925,6 +957,7 @@ public open class RexConverter(
         // For `IN` and `EXISTS`, it was planned as RexSelect Node and get handled by visitSelect
         // For comparison operators, it was planned as RexSubquery and get handled by visitSubquery
         val transform = transform
+        checkNestedQuery(rex.input, isScalar = rex.isScalar)
         val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(rex.input, ctx).toExprQuerySet()
     }

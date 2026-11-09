@@ -100,3 +100,15 @@ SELECT "T"."a", SUM("T"."b") OVER () AS "_1" FROM "default"."T" AS "T";
 
 --#[window-39]
 [ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-40]
+SELECT "T"."a", SUM(count(1)) OVER () AS "_1" FROM "default"."T" AS "T" GROUP BY "T"."a";
+
+--#[window-41]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-42]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION}];
+
+--#[window-43]
+SELECT "o"."a", (SELECT MAX("t"."b") OVER () AS "m" FROM "default"."T" AS "t" LIMIT 1) AS "m" FROM "default"."T" AS "o";

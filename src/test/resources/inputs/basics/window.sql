@@ -131,3 +131,17 @@ SELECT a, SUM(b) OVER () FROM T;
 
 --#[window-39]
 SELECT a, COUNT(b) OVER (ORDER BY c), MAX(b) OVER (ORDER BY c) FROM T;
+
+-- Aggregate window functions over group aggregates
+--#[window-40]
+SELECT a, SUM(COUNT(*)) OVER () FROM T GROUP BY a;
+
+-- Window functions in correlated subqueries
+--#[window-41]
+SELECT o.a AS a, (SELECT MAX(t.b + o.b) OVER () AS m FROM T AS t LIMIT 1) AS m FROM T AS o;
+
+--#[window-42]
+SELECT o.a AS a, (SELECT MAX(t.b) OVER () AS m FROM T AS t WHERE t.c = o.c LIMIT 1) AS m FROM T AS o;
+
+--#[window-43]
+SELECT o.a AS a, (SELECT MAX(t.b) OVER () AS m FROM T AS t LIMIT 1) AS m FROM T AS o;
