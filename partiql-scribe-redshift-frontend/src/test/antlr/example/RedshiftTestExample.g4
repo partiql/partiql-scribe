@@ -1,9 +1,10 @@
 /*
  * An example of the Amazon Redshift query grammar the Redshift-to-PartiQL frontend's parser is generated from. The
- * module ships without a parser: `src/main/antlr/Redshift.g4` is a blank placeholder for a deployment's grammar. While
- * it is blank, the module is compiled against, and its tests run with, the parser generated from this file through a
- * grammar named `Redshift` that imports it (the build writes that stub), since the frontend is compiled against the
- * classes of a grammar of that name. See the README.
+ * module ships without a parser: a deployment brings its own grammar, as the parser its build generates from it
+ * (`RedshiftGrammar`). While the module's `src/main/antlr/Redshift.g4` placeholder is blank, the module is compiled
+ * against, and its tests run with, the parser generated from this file through a grammar named `Redshift` that imports
+ * it (the build writes that stub), since the frontend is compiled against the classes of a grammar of that name. See
+ * the README.
  *
  * Scope: the Redshift constructs that map to a PartiQL construct that Scribe's targets accept, directly, by an exact
  * rewrite, or by a call of a function the caller's catalog defines (POWER, POW, and `^` call `pow`). The query that

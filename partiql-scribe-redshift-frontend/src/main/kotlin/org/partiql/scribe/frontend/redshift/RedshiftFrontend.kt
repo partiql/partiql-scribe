@@ -48,35 +48,23 @@ import org.partiql.scribe.problems.Severity
  * A query that nests deeper than [MAX_NESTING] is refused, so that the depth of the text bounds the stack that parsing
  * and converting it use, and the depth of the AST bounds what the planner and the targets recurse over.
  *
- * The parser is generated from the Redshift grammar into the package [PARSER_PACKAGE]. The module ships without one:
- * a deployment puts its grammar in the module's `src/main/antlr/Redshift.g4` placeholder and builds, or puts the
- * generated classes on the class path next to the module. The constructor throws [IllegalStateException] when they
- * are missing.
+ * The module ships no grammar: the deployment brings its own, as the parser generated from it, [RedshiftGrammar]. The
+ * constructor takes it, or finds it on the class path, and throws [IllegalStateException] when it is missing.
  *
+ * @param grammar The parser generated from the deployment's Redshift grammar; [RedshiftGrammar.fromClassPath] when
+ * not given.
  * @param caseSensitiveIdentifiers The Redshift `enable_case_sensitive_identifier` setting of the source queries.
  */
 public class RedshiftFrontend
     @JvmOverloads
     constructor(
         private val context: ScribeContext,
+        public val grammar: RedshiftGrammar = RedshiftGrammar.fromClassPath(),
         private val caseSensitiveIdentifiers: Boolean = false,
     ) {
-        init {
-            // The class loader that defined this class is the one the parser's `new` below is resolved against.
-            try {
-                Class.forName("$PARSER_PACKAGE.RedshiftParser", false, RedshiftFrontend::class.java.classLoader)
-            } catch (e: ClassNotFoundException) {
-                throw IllegalStateException(
-                    "The Redshift parser is not on the class path. The front end needs the parser generated from the " +
-                        "Redshift grammar: a grammar named `Redshift`, generated with ANTLR $ANTLR_VERSION as " +
-                        "`-visitor -no-listener -package $PARSER_PACKAGE`, whose rule, label, and token names are the " +
-                        "ones the front end reads. The module ships without one: put the grammar in its " +
-                        "`src/main/antlr/Redshift.g4` placeholder and build, or put the generated classes on the class " +
-                        "path; see its README.",
-                    e,
-                )
-            }
-        }
+        /** The front end over the grammar on the class path; see [RedshiftGrammar.fromClassPath]. */
+        public constructor(context: ScribeContext, caseSensitiveIdentifiers: Boolean) :
+            this(context, RedshiftGrammar.fromClassPath(), caseSensitiveIdentifiers)
 
         /**
          * Returns the tables that [sql] reads: the qualified name of every `FROM` item that names a table, as the query
