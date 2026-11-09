@@ -32,8 +32,8 @@ internal class StringFunctions(private val builder: RedshiftAstBuilder) {
         args: List<P.ExprContext>,
     ): Expr? =
         when (name.type) {
-            P.UPPER -> case(name, args, "upper")
-            P.LOWER -> case(name, args, "lower")
+            P.UPPER -> caseFold(name, args, "upper")
+            P.LOWER -> caseFold(name, args, "lower")
             P.CONCAT_FUNCTION -> concat(name, args)
             else -> null
         }
@@ -44,7 +44,7 @@ internal class StringFunctions(private val builder: RedshiftAstBuilder) {
      * https://docs.aws.amazon.com/redshift/latest/dg/r_UPPER.html
      * https://docs.aws.amazon.com/redshift/latest/dg/r_LOWER.html
      */
-    private fun case(
+    private fun caseFold(
         name: Token,
         args: List<P.ExprContext>,
         function: String,
@@ -54,7 +54,8 @@ internal class StringFunctions(private val builder: RedshiftAstBuilder) {
     }
 
     /**
-     * `CONCAT(a, b)` is `a || b`; see [concatenation].
+     * `CONCAT(a, b)` is `a || b`; see [concatenation]. The arguments become the operands of `||`, not of a call, and
+     * the PartiQL printer writes a subquery operand with its parentheses, so a subquery is allowed here.
      * https://docs.aws.amazon.com/redshift/latest/dg/r_CONCAT.html
      */
     private fun concat(
@@ -62,7 +63,7 @@ internal class StringFunctions(private val builder: RedshiftAstBuilder) {
         args: List<P.ExprContext>,
     ): Expr {
         builder.arity(name, args, 2)
-        return builder.nested(name) { concatenation(builder.argument(args[0]), builder.argument(args[1])) }
+        return builder.nested(name) { concatenation(builder.expr(args[0]), builder.expr(args[1])) }
     }
 
     /**
@@ -81,12 +82,20 @@ internal class StringFunctions(private val builder: RedshiftAstBuilder) {
 
     /** The digits of a numeric literal, with its sign; null when [operand] is not one. */
     private fun digits(operand: Expr): String? =
-        when {
-            operand is ExprLit && operand.lit.code() == Literal.INT_NUM -> BigInteger(operand.lit.numberValue()).toString()
-            operand is ExprLit && operand.lit.code() == Literal.EXACT_NUM -> operand.lit.bigDecimalValue().toPlainString()
-            operand is ExprOperator && operand.lhs == null && operand.symbol == "+" -> digits(operand.rhs)
-            operand is ExprOperator && operand.lhs == null && operand.symbol == "-" ->
-                digits(operand.rhs)?.let { BigDecimal(it).negate().toPlainString() }
+        when (operand) {
+            is ExprLit ->
+                when (operand.lit.code()) {
+                    Literal.INT_NUM -> BigInteger(operand.lit.numberValue()).toString()
+                    Literal.EXACT_NUM -> operand.lit.bigDecimalValue().toPlainString()
+                    else -> null
+                }
+            is ExprOperator ->
+                when {
+                    operand.lhs != null -> null
+                    operand.symbol == "+" -> digits(operand.rhs)
+                    operand.symbol == "-" -> digits(operand.rhs)?.let { BigDecimal(it).negate().toPlainString() }
+                    else -> null
+                }
             else -> null
         }
 }

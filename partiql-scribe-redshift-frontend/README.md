@@ -25,6 +25,11 @@ PartiQL does not define on the operand types, is found by the planner, not by th
 `tables(sql)` lists the tables the query reads, from the same conversion as `toAst`, so a common table expression counts
 as a table exactly where the AST reads it as one.
 
+One rewrite depends on the caller's catalog: `POWER`, `POW`, and `^` become a call of `pow`, which PartiQL's built-in
+functions do not define. Plan against a catalog that defines it (`Pow.overloads()` of
+`org.partiql:partiql-function-extensions`, which `partiql-scribe-function-extensions` compiles for each target), or
+these queries fail to plan with `FUNCTION_NOT_FOUND`.
+
 A query that nests deeper than `RedshiftFrontend.MAX_NESTING` (200) is refused: parentheses or `CASE` expressions open
 at once, prefix operators (`NOT`, `-`) in a row, and levels of the AST, where each subquery, `CASE`, join, `UNION`, and
 each operator of a chain is a level (`a AND b AND c` is two deep). The bound on the text keeps the parser's recursion
@@ -63,8 +68,8 @@ The grammar's header comment lists what is deliberately not parsed. The generate
 ## Translation
 
 Each rule rewrites a form of the Redshift query into a form of PartiQL; the planner then resolves names and types. A
-query the planner cannot type (an operation Redshift defines on types PartiQL does not, for example `'a' || 1`) fails
-at the planner with its reason. The rewrites:
+query the planner cannot type (an operation Redshift defines on types PartiQL does not, for example `c || b` with `b` an
+integer column) fails at the planner with its reason. The rewrites:
 
 | Redshift | PartiQL |
 |---|---|
@@ -98,13 +103,13 @@ The string and math functions, and the operators that go with them:
 
 | Redshift | PartiQL |
 |---|---|
-| `UPPER(s)`, `LOWER(s)` | `UPPER(s)`, `LOWER(s)`: the result has the argument's type, and a `CHAR(n)` keeps its padding, in both languages |
-| `CONCAT(a, b)`, `a \|\| b` | `a \|\| b`, NULL when either side is NULL in both languages. Redshift converts an operand that is not a character string to `VARCHAR`; the conversion depends on the operand's type, which the front end does not see, except for a numeric literal, which is written as the string it converts to: `c \|\| 007` is `c \|\| '7'`, `CONCAT('v', 1.50)` is `'v' \|\| '1.50'`, `c \|\| -1` is `c \|\| '-1'`. Another non-string operand (a column, `NVL(seats, 0)`) is left to the planner, which reports the type mismatch |
-| `a & b` | `a & b`, PartiQL's bitwise AND |
-| `POWER(a, b)`, `POW(a, b)`, `a ^ b` | the call `pow(a, b)`. PartiQL's built-in functions define no power, so the call resolves only against a catalog that defines `pow` over two `DOUBLE PRECISION` arguments with a `DOUBLE PRECISION` result, which is what Redshift's `POWER` computes (it converts its arguments to `DOUBLE PRECISION`; the planner inserts the same casts). Against a catalog without `pow`, the planner reports the function as not found. `^` is left-associative, binds tighter than `*` and looser than a sign, as in Redshift: `2 ^ 3 ^ 2` is `pow(pow(2, 3), 2)` and `-2 ^ 2` is `pow(-2, 2)` |
+| `UPPER(s)`, `LOWER(s)` | `UPPER(s)`, `LOWER(s)`: the result has the argument's type, and a `CHAR(n)` keeps its padding, in both languages. The case mapping is the target engine's: `UPPER('straße')` is `STRASSE` on an engine with full Unicode case mapping, and `STRAßE` in Redshift |
+| `CONCAT(a, b)`, `a \|\| b` | `a \|\| b`, NULL when either side is NULL in both languages. Redshift converts an operand that is not a character string to `VARCHAR`; the conversion depends on the operand's type, which the front end does not see, except for a numeric literal, which is written as the string it converts to: `c \|\| 007` is `c \|\| '7'`, `CONCAT('v', 1.50)` is `'v' \|\| '1.50'`, `c \|\| -1` is `c \|\| '-1'`. Another non-string operand (a column, `NVL(seats, 0)`) is left to the planner, which reports the type mismatch. A subquery is allowed as an argument of `CONCAT`, since it becomes an operand of `\|\|`, which prints with its parentheses |
+| `a & b` | `a & b`, PartiQL's bitwise AND. Redshift defines `&` on integers only; a decimal literal operand is refused as invalid, and a decimal column (which the front end cannot see) is cast to `BIGINT` by the planner, which rounds |
+| `POWER(a, b)`, `POW(a, b)`, `a ^ b` | the call `pow(CAST(a AS DOUBLE PRECISION), CAST(b AS DOUBLE PRECISION))`: Redshift's `POWER` converts its arguments to `DOUBLE PRECISION` and returns one, and the casts make a catalog with one `pow` overload per numeric type (`Pow.overloads()` of `partiql-function-extensions`) resolve the `DOUBLE PRECISION` one, not the integer one with `1.5` cast down. The name is `pow`, that of the extension, where SQL names the function `POWER`; PartiQL has no built-in of either name, and the planner reports `FUNCTION_NOT_FOUND` against a catalog without `pow`. `^` is left-associative, binds tighter than `*` and looser than a sign, as in Redshift: `2 ^ 3 ^ 2` is `pow(pow(2, 3), 2)` and `-2 ^ 2` is `pow(-2, 2)`; a subquery operand of `^` is refused like a subquery argument |
 
-A wrong number of arguments (`NULLIF(a)`, `NVL2(e, a)`, `DECODE(e, s)`, `UPPER(a, b)`, `CONCAT(a)`, `POWER(a)`) is
-refused as invalid.
+A wrong number of arguments (`NULLIF(a)`, `NVL2(e, a)`, `DECODE(e, s)`, `UPPER(a, b)`, `CONCAT(a)`, `POWER(a)`) and
+`&` with a decimal literal operand are refused as invalid.
 
 `DECODE`, `GREATEST`, and `LEAST` repeat their arguments in the rewrite, and a call nested in a repeated position repeats
 the repetition, so the size of the AST of a statement is bounded: at most 100,000 nodes as the planner walks them, where
@@ -143,6 +148,12 @@ and a qualified key of another relation than the `*`. A select-list alias used i
 later select item (a lateral column alias) is left as a name: Redshift reads it as the alias only when no FROM column
 has the name, which needs the schema and is a later change; for now the planner reports it as unknown.
 
+A limit of the planner, not of the front end: a query that groups by an expression and orders by the same expression,
+by its alias, or by its ordinal (`SELECT UPPER(c) AS u, COUNT(*) FROM t GROUP BY UPPER(c) ORDER BY u`, `... GROUP BY 1
+ORDER BY 1`) fails to plan with `VAR_REF_NOT_FOUND` on the column inside the expression, as the same query written in
+PartiQL does; the `ORDER BY` key is resolved against the input of the grouping, not its output. Grouping and ordering
+by a column works.
+
 Known differences that are not refused: the aggregates `AVG`, `COUNT`, `MAX`, `MIN`, and `SUM` are translated directly,
 and `AVG` of an integer, which Redshift truncates, is not yet rewritten; `NULLIF`, `DECODE`, `GREATEST`, and `LEAST`
 compare `CHAR(n)` values with their padding, which Redshift disregards, and compare values of different types as
@@ -154,8 +165,13 @@ either branch's type where Redshift converts to a common type (`NVL2(x, '2345', 
 character string in Redshift, which converts it to `VARCHAR`, and the planner reports a type mismatch in PartiQL (the
 numeric literal operand of `||` and `CONCAT` is the one conversion the front end writes, since it needs no type); `||`
 and `CONCAT` of a `CHAR(n)` value keep its padding, which Redshift drops when it converts the operand to `VARCHAR`; `&`
-of a `DECIMAL` or floating-point value is an error in Redshift, where PartiQL casts the operand to `BIGINT`; an unnamed select item is
-named `_n` by the planner where Redshift names it after the function (`coalesce`, `case`, `greatest`, `upper`, `pow`), so
+of a `DECIMAL` or floating-point column is an error in Redshift, where PartiQL casts the operand to `BIGINT`, which
+rounds (`2.5` to `2`, half to even, and other engines round their own way); `POWER` of a string column, which Redshift
+rejects, casts the string to `DOUBLE PRECISION` at run time; `POWER` of a negative base with a fractional exponent, of 0
+with a negative exponent, or past the range of `DOUBLE PRECISION` is an error in Redshift, where a target may return
+`NaN` or `Infinity`; an unnamed select item is
+named `_n` by the planner where Redshift names it after the function as written (`coalesce`, `case`, `greatest`,
+`upper`, `power`) and an operator's `?column?`, so
 `SELECT NVL(b, 0) FROM t ORDER BY coalesce` does not resolve; `ILIKE` folds the case of every letter through
 `LOWER`, where Redshift folds only single-byte characters; a `CHAR` or `VARCHAR` length is a number of bytes in Redshift
 and of characters in PartiQL, and the number is kept; a `LIKE` pattern that is not a literal keeps Redshift's escape

@@ -12,21 +12,23 @@ SELECT CONCAT(c, b) FROM SIMPLE_T;
 --#[concat-of-power]
 SELECT POWER(2, 3) || 'x' FROM SIMPLE_T;
 
---#[power-of-string]
-SELECT POWER(c, 2) FROM SIMPLE_T;
-
 --#[bitwise-and-of-string]
 SELECT c & 1 FROM SIMPLE_T;
 
--- `^` becomes the call `pow(a, b)`, so a subquery operand is a subquery as a function argument.
+-- Redshift converts the NULL to VARCHAR; PartiQL sees an INTEGER operand of `||`.
+--#[concat-of-null-cast-to-integer]
+SELECT c || NULL::int FROM SIMPLE_T;
+
+-- `&` and `||` share one level: 'x' || b & 1 is ('x' || b) & 1, which PartiQL does not type.
+--#[concat-then-bitwise-and]
+SELECT 'x' || b & 1 FROM SIMPLE_T;
+
+-- `^` becomes the call `pow(a, b)`, so a subquery operand is a subquery as a function argument: Redshift's own example.
 --#[subquery-as-caret-operand]
-SELECT 2 ^ (SELECT MAX(b) FROM T) FROM SIMPLE_T;
+SELECT (SELECT SUM(b) FROM T) ^ ((5::float / 100) * 10) FROM SIMPLE_T;
 
 --#[subquery-as-upper-argument]
 SELECT UPPER((SELECT MAX(c) FROM T)) FROM SIMPLE_T;
-
---#[subquery-as-concat-argument]
-SELECT CONCAT(c, (SELECT MAX(c) FROM T)) FROM SIMPLE_T;
 
 --#[subquery-as-power-argument]
 SELECT POWER(b, (SELECT MAX(b) FROM T)) FROM SIMPLE_T;

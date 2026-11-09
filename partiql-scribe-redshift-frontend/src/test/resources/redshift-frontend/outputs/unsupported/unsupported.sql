@@ -7,19 +7,19 @@
 --#[concat-of-power]
 [PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
 
---#[power-of-string]
-[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
-
 --#[bitwise-and-of-string]
 [PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
 
+--#[concat-of-null-cast-to-integer]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
+--#[concat-then-bitwise-and]
+[PLANNER{message="FUNCTION_TYPE_MISMATCH"}];
+
 --#[subquery-as-caret-operand]
-[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
+[UNSUPPORTED_OPERATION{message="subquery as an operand of `^`"}];
 
 --#[subquery-as-upper-argument]
-[UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
-
---#[subquery-as-concat-argument]
 [UNSUPPORTED_OPERATION{message="subquery as a function argument"}];
 
 --#[subquery-as-power-argument]

@@ -54,3 +54,18 @@
 
 --#[power-one-argument]
 [UNSUPPORTED_OPERATION{message="Invalid Redshift query: POWER takes 2 arguments, not 1"}];
+
+--#[lower-two-arguments]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: LOWER takes 1 argument, not 2"}];
+
+--#[pow-one-argument]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: POW takes 2 arguments, not 1"}];
+
+--#[power-three-arguments]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: POWER takes 2 arguments, not 3"}];
+
+--#[bitwise-and-decimal-literal]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: `&` with a decimal operand"}];
+
+--#[bitwise-and-signed-decimal-literal]
+[UNSUPPORTED_OPERATION{message="Invalid Redshift query: `&` with a decimal operand"}];

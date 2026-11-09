@@ -16,6 +16,12 @@ SELECT "simple_t"['b'] & 1 AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
 --#[bitwise-and-precedence]
 SELECT "simple_t"['b'] & ("simple_t"['b'] + 1) AS "_1", ("simple_t"['b'] & "simple_t"['b']) + 1 AS "_2", "simple_t"['b'] & ("simple_t"['b'] * 2) AS "_3" FROM "default"."SIMPLE_T" AS "simple_t";
 
+--#[bitwise-and-chain]
+SELECT ("simple_t"['b'] & 1) & 3 AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[bitwise-and-null]
+SELECT "simple_t"['b'] & NULL AS "_1", NULL & 1 AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
+
 --#[bitwise-and-in-where]
 SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE ("simple_t"['b'] & 1) = 1;
 

@@ -1034,18 +1034,43 @@ internal class RedshiftAstBuilder(
                     ctx.DOUBLE_COLON().symbol,
                 ) { exprCast(valueExpr(ctx.valueExpr()), dataType(ctx.dataType())) }
             is P.ValueSignedContext -> nested(ctx.sign) { exprOperator(ctx.sign.text, null, valueExpr(ctx.valueExpr())) }
-            // `a ^ b` is the call `pow(a, b)`, so its operands are function arguments; see [argument].
+            // `a ^ b` is the call `pow(a, b)`, so a subquery operand is a subquery as a function argument; see [argument].
             is P.ValueExponentContext ->
-                nested(ctx.op) { math.power(argument(valueExpr(ctx.lhs), ctx.lhs), argument(valueExpr(ctx.rhs), ctx.rhs)) }
+                nested(ctx.op) { math.power(operand(ctx.lhs, "`^`"), operand(ctx.rhs, "`^`")) }
             is P.ValueMultiplicativeContext -> nested(ctx.op) { exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
             is P.ValueAdditiveContext -> nested(ctx.op) { exprOperator(ctx.op.text, valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
             is P.ValueOperatorContext ->
                 when (ctx.op.type) {
                     P.CONCAT -> nested(ctx.op) { strings.concatenation(valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
-                    // `a & b` on integers is PartiQL's `&`; PartiQL also takes other numbers, with their integer part.
-                    else -> nested(ctx.op) { exprOperator("&", valueExpr(ctx.lhs), valueExpr(ctx.rhs)) }
+                    // `a & b` on integers is PartiQL's `&`. Redshift defines `&` on integers only; PartiQL casts another
+                    // number to BIGINT, which rounds, so a decimal literal operand (visible without types) is refused.
+                    else -> nested(ctx.op) { exprOperator("&", integer(ctx.lhs), integer(ctx.rhs)) }
                 }
             else -> unexpected(ctx)
+        }
+
+    /** An operand of the operator [op] that becomes a function argument; a subquery is refused as such, see [argument]. */
+    private fun operand(
+        ctx: P.ValueExprContext,
+        op: String,
+    ): Expr {
+        val expr = valueExpr(ctx)
+        if (expr is ExprQuerySet) throw TranslationStop.unsupported(ctx, "subquery as an operand of $op")
+        return expr
+    }
+
+    /** An operand of `&`, which Redshift defines on integers only: a decimal literal is invalid there. */
+    private fun integer(ctx: P.ValueExprContext): Expr {
+        val expr = valueExpr(ctx)
+        if (expr.isDecimalLiteral()) throw TranslationStop.invalid(ctx, "`&` with a decimal operand")
+        return expr
+    }
+
+    private fun Expr.isDecimalLiteral(): Boolean =
+        when (this) {
+            is ExprLit -> lit.code() == Literal.EXACT_NUM
+            is ExprOperator -> lhs == null && rhs.isDecimalLiteral()
+            else -> false
         }
 
     private fun atom(ctx: P.AtomContext): Expr =
@@ -1127,14 +1152,9 @@ internal class RedshiftAstBuilder(
      * An argument of a function. A scalar subquery is not translated there yet: the PartiQL printer writes a subquery
      * inside an argument list without its parentheses (as inside an `IN` list), which no engine parses.
      */
-    fun argument(ctx: P.ExprContext): Expr = argument(expr(ctx), ctx)
-
-    /** [expr], built from [at], as an argument of a function; see [argument]. */
-    fun argument(
-        expr: Expr,
-        at: ParserRuleContext,
-    ): Expr {
-        if (expr is ExprQuerySet) throw TranslationStop.unsupported(at, "subquery as a function argument")
+    fun argument(ctx: P.ExprContext): Expr {
+        val expr = expr(ctx)
+        if (expr is ExprQuerySet) throw TranslationStop.unsupported(ctx, "subquery as a function argument")
         return expr
     }
 

@@ -22,6 +22,12 @@ SELECT b & b + 1, (b & b) + 1, b & b * 2 FROM SIMPLE_T;
 --#[bitwise-and-in-where]
 SELECT a FROM SIMPLE_T WHERE b & 1 = 1;
 
+--#[bitwise-and-chain]
+SELECT b & 1 & 3 FROM SIMPLE_T;
+
+--#[bitwise-and-null]
+SELECT b & NULL, NULL & 1 FROM SIMPLE_T;
+
 --#[concat]
 SELECT c || 'x', c || c || 'y' FROM SIMPLE_T;
 

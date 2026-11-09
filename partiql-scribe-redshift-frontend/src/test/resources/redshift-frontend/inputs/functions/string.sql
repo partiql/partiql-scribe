@@ -43,3 +43,10 @@ SELECT a FROM SIMPLE_T WHERE c LIKE CONCAT(c, '%');
 
 --#[string-functions-mixed-case-names]
 SELECT Concat(Upper(C), lower(c)) FROM simple_t;
+
+-- CONCAT's arguments are the operands of `||`, which prints a subquery with its parentheses, so a subquery is allowed.
+--#[concat-subquery-argument]
+SELECT CONCAT(c, (SELECT MAX(c) FROM T)), (SELECT MAX(c) FROM T) || c FROM SIMPLE_T;
+
+--#[string-functions-null]
+SELECT UPPER(NULL), LOWER(NULL::varchar), NULL || NULL, CONCAT(NULL, NULL) FROM SIMPLE_T;

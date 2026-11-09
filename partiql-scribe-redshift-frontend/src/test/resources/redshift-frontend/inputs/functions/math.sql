@@ -33,3 +33,11 @@ SELECT POWER(b, 2) ^ 2 FROM SIMPLE_T;
 
 --#[math-functions-mixed-case-names]
 SELECT Power(B, 2), pow(b, 2) FROM simple_t;
+
+--#[power-null]
+SELECT POWER(NULL, 2), POWER(b, NULL), NULL ^ 2 FROM SIMPLE_T;
+
+-- The casts the rewrite writes take any argument; Redshift takes none but numbers, so a string here does not come
+-- from a query Redshift ran, and the cast of a numeric string is the same value in both.
+--#[power-of-string-column]
+SELECT POWER(c, 2) FROM SIMPLE_T;

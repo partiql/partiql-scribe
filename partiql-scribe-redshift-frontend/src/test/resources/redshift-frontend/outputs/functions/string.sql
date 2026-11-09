@@ -40,3 +40,9 @@ SELECT "simple_t"['a'] AS "a" FROM "default"."SIMPLE_T" AS "simple_t" WHERE "sim
 --#[string-functions-mixed-case-names]
 SELECT "upper"("simple_t"['c']) || "lower"("simple_t"['c']) AS "_1" FROM "default"."SIMPLE_T" AS "simple_t";
 
+--#[concat-subquery-argument]
+SELECT "simple_t"['c'] || (SELECT max("t"['c']) AS "_1" FROM "default"."T" AS "t") AS "_1", (SELECT max("t"['c']) AS "_1" FROM "default"."T" AS "t") || "simple_t"['c'] AS "_2" FROM "default"."SIMPLE_T" AS "simple_t";
+
+--#[string-functions-null]
+SELECT "upper"(NULL) AS "_1", "lower"(CAST(NULL AS VARCHAR(256))) AS "_2", NULL || NULL AS "_3", NULL || NULL AS "_4" FROM "default"."SIMPLE_T" AS "simple_t";
+

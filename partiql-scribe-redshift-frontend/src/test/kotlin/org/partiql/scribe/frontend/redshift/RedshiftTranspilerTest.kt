@@ -372,14 +372,24 @@ class RedshiftTranspilerTest {
         planner.plan(ast, RedshiftTestSession.withoutPow(), Context.of(problems))
         assertEquals(listOf(PError.FUNCTION_NOT_FOUND), problems.errors.map { it.code() }.distinct(), problems.errors.toString())
         assertEquals(3, problems.errors.size, problems.errors.toString())
-        // Against a catalog that defines `pow` over two DOUBLE PRECISION values, the call resolves, the planner casts the
-        // arguments as Redshift's POWER converts them, and every target writes the call.
-        val plan = planner.plan(ast, session).plan
-        val targets = listOf(PartiQLTarget, RedshiftTarget.STANDARD, TrinoTarget.STANDARD, SparkTarget.STANDARD, DuckDBTarget.STANDARD)
-        for (target in targets) {
-            val output = Scribe(ScribeContext.standard()).compile(plan, session, target).output.value
-            assertEquals(3, Regex("pow").findAll(output).count(), "$target: $output")
-            assertTrue(output.contains("AS DOUBLE"), "$target: $output")
+        // Against the `pow` overloads of partiql-function-extensions, one per numeric type, the front end's casts to
+        // DOUBLE PRECISION select the DOUBLE PRECISION one (Redshift's POWER converts its arguments so), and every target
+        // writes the call with them. Without the casts, POWER(1.5, 2) would resolve to the integer overload as pow(1, 2).
+        val plan = planner.plan(frontend().toAst("SELECT POWER(1.5, 2) FROM SIMPLE_T"), session).plan
+        val precision = """"pow"(CAST(1.5 AS DOUBLE PRECISION), CAST(2 AS DOUBLE PRECISION))"""
+        val double = """"pow"(CAST(1.5 AS DOUBLE), CAST(2 AS DOUBLE))"""
+        val from = """FROM "default"."SIMPLE_T" AS "simple_t""""
+        val expected =
+            mapOf(
+                PartiQLTarget to """SELECT $precision AS "_1" $from""",
+                RedshiftTarget.STANDARD to """SELECT $precision AS "_1" $from""",
+                TrinoTarget.STANDARD to """SELECT $double AS "_1" $from""",
+                SparkTarget.STANDARD to
+                    "SELECT `pow`(CAST(1.5 AS DOUBLE), CAST(2 AS DOUBLE)) AS `_1` FROM `default`.`SIMPLE_T` AS `simple_t`",
+                DuckDBTarget.STANDARD to """SELECT $double AS "_1" $from""",
+            )
+        for ((target, output) in expected) {
+            assertEquals(output, Scribe(ScribeContext.standard()).compile(plan, session, target).output.value, target.toString())
         }
     }
 }
