@@ -891,7 +891,7 @@ public open class RexConverter(
     /**
      * Reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] with [message].
      */
-    protected fun unsupported(message: String): Nothing =
+    internal fun unsupported(message: String): Nothing =
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,

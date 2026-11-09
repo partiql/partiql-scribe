@@ -980,12 +980,12 @@ public open class RelConverter(
     /**
      * The uppercase name of an aggregate window function, e.g. `MAX`.
      */
-    protected fun WindowFunctionNode.aggregateName(): String = aggregate!!.signature.name.uppercase()
+    internal fun WindowFunctionNode.aggregateName(): String = aggregate!!.signature.name.uppercase()
 
     /**
      * Reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] with [message].
      */
-    protected fun unsupported(message: String): Nothing =
+    internal fun unsupported(message: String): Nothing =
         listener.reportAndThrow(
             ScribeProblem.simpleError(
                 code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
