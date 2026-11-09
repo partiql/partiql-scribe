@@ -81,6 +81,9 @@ import org.partiql.ast.expr.ExprVarRef
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.expr.TruthValue
 import org.partiql.scribe.frontend.redshift.RedshiftFrontend
+import org.partiql.scribe.frontend.redshift.internal.functions.ConditionalFunctions
+import org.partiql.scribe.frontend.redshift.internal.functions.MathFunctions
+import org.partiql.scribe.frontend.redshift.internal.functions.StringFunctions
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
 import java.util.IdentityHashMap

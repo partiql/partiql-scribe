@@ -1,4 +1,4 @@
-package org.partiql.scribe.frontend.redshift.internal
+package org.partiql.scribe.frontend.redshift.internal.functions
 
 import org.antlr.v4.runtime.Token
 import org.partiql.ast.Ast.exprCall
@@ -9,6 +9,7 @@ import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprOperator
+import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import java.math.BigDecimal
 import java.math.BigInteger
 import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
