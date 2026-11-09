@@ -5,6 +5,10 @@ session and compiles the plan with `Scribe.compile` and any target (`PartiQLTarg
 `TrinoTarget`, `DuckDBTarget`). The front end needs no session and no planner, and nothing Redshift-specific reaches the
 targets.
 
+**Bring your own grammar of Redshift.** The module does not ship one: it converts the parse tree, and you supply the
+ANTLR grammar that produces it, in the module's `src/main/antlr/Redshift.g4` placeholder or as a generated parser on
+the class path. See "Supplying the grammar" below.
+
 ```kotlin
 val context = ScribeContext.standard()
 val frontend = RedshiftFrontend(context)
@@ -27,13 +31,13 @@ as a table exactly where the AST reads it as one.
 
 ### Supplying the grammar
 
-The module ships without a parser: `src/main/antlr/Redshift.g4` is a blank placeholder for a deployment's grammar.
-Put the grammar there and build, and the parser is generated from it into the module, which the jar then packages.
-Or generate the parser separately, with ANTLR 4.10.1 (`RedshiftFrontend.ANTLR_VERSION`, the version of the module's
-`antlr4-runtime` dependency) and the arguments `-visitor -no-listener -package
+You bring your own grammar of Redshift; the module ships without a parser. `src/main/antlr/Redshift.g4` is a blank
+placeholder for it: put your grammar there and build, and the parser is generated from it into the module, which the
+jar then packages. Or generate the parser separately, with ANTLR 4.10.1 (`RedshiftFrontend.ANTLR_VERSION`, the version
+of the module's `antlr4-runtime` dependency) and the arguments `-visitor -no-listener -package
 org.partiql.scribe.frontend.redshift.antlr` (`RedshiftFrontend.PARSER_PACKAGE`), and put the classes on the class path
-next to the module built from the blank placeholder. Either way the grammar must be named `Redshift`, and its rule,
-label, and token names are the ones the front end reads (the "Grammar" section below says what it parses).
+next to the module built from the blank placeholder. Either way your grammar must be named `Redshift`, and its rule,
+label, and token names must be the ones the front end reads (the "Grammar" section below says what it parses).
 `RedshiftFrontend`'s constructor throws `IllegalStateException` when the parser is missing, naming this contract.
 
 While the placeholder is blank, the module's own build compiles against, and its tests run with, the parser of an
