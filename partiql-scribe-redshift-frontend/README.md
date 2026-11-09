@@ -34,7 +34,8 @@ The module does not package a parser. A deployment generates one from its Redshi
 next to the module. The grammar must be named `Redshift`, and its rule, label, and token names are the ones the front
 end reads (the "Grammar" section below says what it parses). `RedshiftFrontend`'s constructor throws
 `IllegalStateException` when the parser is missing, naming this contract. The module's tests run with a parser
-generated from an example grammar in the test tree, which the jar leaves out.
+generated from an example grammar in the test tree, through a grammar named `Redshift` that imports it (the build
+writes that stub); the jar leaves both out.
 
 One rewrite depends on the caller's catalog: `POWER`, `POW`, and `^` become a call of `pow`, which PartiQL's built-in
 functions do not define. Plan against a catalog that defines it (`Pow.overloads()` of

@@ -1,7 +1,8 @@
 /*
  * An example of the Amazon Redshift query grammar the Redshift-to-PartiQL frontend's parser is generated from. The
- * module's tests run with the parser generated from this file; the module does not package a parser, and a deployment
- * generates its own (see the README).
+ * module's tests run with the parser generated from this file, through a grammar named `Redshift` that imports it (the
+ * build writes that stub), since the frontend is compiled against the classes of a grammar of that name. The module
+ * does not package a parser, and a deployment generates its own (see the README).
  *
  * Scope: the Redshift constructs that map to a PartiQL construct that Scribe's targets accept, directly, by an exact
  * rewrite, or by a call of a function the caller's catalog defines (POWER, POW, and `^` call `pow`). The query that
@@ -31,7 +32,7 @@
  *
  * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_SELECT_synopsis.html
  */
-grammar Redshift;
+grammar RedshiftTestExample;
 
 options { caseInsensitive = true; }
 

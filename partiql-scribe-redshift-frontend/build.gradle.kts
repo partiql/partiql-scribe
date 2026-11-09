@@ -19,11 +19,32 @@ repositories {
     mavenLocal()
 }
 
-// The tests run with a parser generated from an example of the grammar, kept in the test tree (`src/test/antlr`):
+// The tests run with a parser generated from an example of the grammar, `RedshiftTestExample.g4` in the test tree:
 // the main code is compiled against it, and the jar does not package it. A deployment generates its parser from its
 // own grammar; see the README.
+//
+// ANTLR names the generated classes after the grammar, and the front end is compiled against `RedshiftParser`, so the
+// example is generated through a grammar named `Redshift` that imports it. That stub is written by the build.
+val exampleGrammarDir = layout.projectDirectory.dir("src/test/antlr/example")
+
+val writeExampleGrammarStub by tasks.registering {
+    val stubDir = layout.buildDirectory.dir("example-grammar")
+    outputs.dir(stubDir)
+    doLast {
+        stubDir.get().file("Redshift.g4").asFile.writeText(
+            """
+            // Written by the build: the example grammar under the name the front end's parser classes have.
+            grammar Redshift;
+            options { caseInsensitive = true; }
+            import RedshiftTestExample;
+
+            """.trimIndent(),
+        )
+    }
+}
+
 val exampleParser: SourceSet by sourceSets.creating {
-    extensions.getByType<AntlrSourceDirectorySet>().setSrcDirs(listOf("src/test/antlr"))
+    extensions.getByType<AntlrSourceDirectorySet>().setSrcDirs(listOf(writeExampleGrammarStub))
 }
 
 val antlrPackage = "org.partiql.scribe.frontend.redshift.antlr"
@@ -52,7 +73,9 @@ configurations.api {
 }
 
 tasks.named<AntlrTask>("generateExampleParserGrammarSource") {
-    arguments = listOf("-visitor", "-no-listener", "-long-messages", "-package", antlrPackage)
+    // `-lib` is where the stub's import is resolved; the example is an input, so that a change to it regenerates.
+    inputs.dir(exampleGrammarDir)
+    arguments = listOf("-visitor", "-no-listener", "-long-messages", "-package", antlrPackage, "-lib", exampleGrammarDir.asFile.path)
     outputDirectory = layout.buildDirectory.dir("generated-src/antlr/exampleParser/${antlrPackage.replace('.', '/')}").get().asFile
 }
 
