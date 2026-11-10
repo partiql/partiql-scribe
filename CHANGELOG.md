@@ -34,6 +34,7 @@ Thank you to all who have contributed!
 
 ### Fixed
 - Redshift `UPPER` and `LOWER` now cast strings read from SUPER values to VARCHAR.
+- Spark now escapes backticks in quoted identifiers.
 
 ### Removed
 
