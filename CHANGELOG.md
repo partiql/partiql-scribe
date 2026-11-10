@@ -34,6 +34,7 @@ Thank you to all who have contributed!
 
 ### Fixed
 - Redshift `UPPER` and `LOWER` now cast strings read from SUPER values to VARCHAR.
+- Spark and Redshift now escape backslashes in string literals and in `LIKE` patterns without `ESCAPE`.
 
 ### Removed
 

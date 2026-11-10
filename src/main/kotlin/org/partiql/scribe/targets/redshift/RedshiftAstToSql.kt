@@ -16,6 +16,7 @@ import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
+import org.partiql.ast.expr.ExprLike
 import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprMap
 import org.partiql.ast.expr.ExprPath
@@ -28,6 +29,7 @@ import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
+import org.partiql.scribe.sql.utils.escapeBackslashes
 import org.partiql.scribe.sql.utils.inferredAlias
 import org.partiql.scribe.sql.utils.list
 import org.partiql.scribe.sql.utils.removePathRoot
@@ -35,6 +37,22 @@ import org.partiql.scribe.sql.utils.type
 
 public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
+
+    /**
+     * Redshift reads `\` as an escape in string literals; PartiQL does not.
+     */
+    override fun visitExprLit(
+        node: ExprLit,
+        tail: SqlBlock,
+    ): SqlBlock = super.visitExprLit(escapeBackslashes(node), tail)
+
+    /**
+     * Redshift uses `\` as the default LIKE escape character; PartiQL has none.
+     */
+    override fun visitExprLike(
+        node: ExprLike,
+        tail: SqlBlock,
+    ): SqlBlock = super.visitExprLike(escapeBackslashes(node), tail)
 
     /**
      * Redshift does not support x['y'] syntax; replace with x.y

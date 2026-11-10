@@ -415,13 +415,8 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
     /**
      * Escape the Java regex metacharacters in [delimiter] so that it matches literally.
      *
-     * There are two layers of unescaping between this string and the regex engine, so escaping happens in two stages:
-     *  1. Regex: prefix each metacharacter with a backslash, so `.` becomes `\.`.
-     *  2. String literal: Spark's parser also processes backslash escapes inside string literals, so every backslash is
-     *     doubled to survive that pass, turning `\.` into `\\.`.
-     *
-     * This yields the standard Spark idiom -- splitting on a literal `.` is written `split(v, '\\.')`. Note a literal
-     * backslash needs all four: regex `\\` written as `'\\\\'`.
+     * Each metacharacter is prefixed with a backslash, so `.` becomes `\.`. [SparkAstToSql] then doubles every
+     * backslash when it prints the string literal, which yields the standard Spark idiom `split(v, '\\.')`.
      */
     private fun escapeRegex(delimiter: String): String {
         val regexEscaped =
@@ -431,8 +426,7 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                     else -> listOf(char)
                 }
             }.joinToString("")
-        // Double every backslash so it survives Spark's string-literal unescaping.
-        return regexEscaped.replace("\\", "\\\\")
+        return regexEscaped
     }
 
     /**
@@ -449,17 +443,17 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
                 args =
                     listOf(
                         delimiter,
-                        exprLit(Literal.string("\\\\E")),
-                        exprLit(Literal.string("\\\\E\\\\\\\\E\\\\Q")),
+                        exprLit(Literal.string("\\E")),
+                        exprLit(Literal.string("\\E\\\\E\\Q")),
                     ),
             )
         return exprCall(
             function = Identifier.regular("CONCAT"),
             args =
                 listOf(
-                    exprLit(Literal.string("\\\\Q")),
+                    exprLit(Literal.string("\\Q")),
                     sanitized,
-                    exprLit(Literal.string("\\\\E")),
+                    exprLit(Literal.string("\\E")),
                 ),
         )
     }
