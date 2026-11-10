@@ -502,7 +502,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         return tail concat datetimeField
     }
 
-    // Spark, has no notion of case sensitivity
+    // Spark, has no notion of case sensitivity. A backtick inside a quoted identifier is written as two backticks.
     // https://spark.apache.org/docs/latest/sql-ref-identifier.html
-    private fun Identifier.Simple.sql() = "`$text`"
+    private fun Identifier.Simple.sql() = "`${text.replace("`", "``")}`"
 }
