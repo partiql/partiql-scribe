@@ -38,3 +38,30 @@ SELECT POSITION('\' IN t.c) AS v FROM T AS t;
 
 --#[backslash-12]
 SELECT {'k\': t.c} AS v FROM T AS t;
+
+--#[backslash-13]
+SELECT 'a\''' || t.c AS v FROM T AS t;
+
+--#[backslash-14]
+SELECT t.c AS c FROM T AS t WHERE t.c LIKE 'a\''%';
+
+--#[backslash-15]
+SELECT t.c AS c FROM T AS t WHERE NOT t.c LIKE t.z;
+
+--#[backslash-16]
+SELECT t.c AS c FROM T AS t WHERE t.c IN ('a\', 'b');
+
+--#[backslash-17]
+SELECT t.c AS c FROM T AS t WHERE t.c LIKE t.d.e;
+
+--#[backslash-18]
+SELECT t.col_string AS c FROM T_ALL_TYPES AS t WHERE t.col_string LIKE t.col_list_string[1];
+
+--#[backslash-19]
+SELECT t.c AS c FROM T AS t WHERE t.c LIKE NULL;
+
+--#[backslash-20]
+SELECT ['a\', t.c] AS v FROM T AS t;
+
+--#[backslash-21]
+SELECT t.c AS c FROM T AS t WHERE t.c LIKE t.x.y;

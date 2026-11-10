@@ -36,3 +36,30 @@ SELECT POSITION('\\' IN "t"."c") AS "v" FROM "default"."T" AS "t";
 
 --#[backslash-12]
 SELECT OBJECT('k\\', "t"."c") AS "v" FROM "default"."T" AS "t";
+
+--#[backslash-13]
+SELECT 'a\\''' || "t"."c" AS "v" FROM "default"."T" AS "t";
+
+--#[backslash-14]
+SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" LIKE 'a\\\\''%';
+
+--#[backslash-15]
+SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" NOT LIKE REPLACE("t"."z", '\\', '\\\\');
+
+--#[backslash-16]
+SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" IN ('a\\', 'b');
+
+--#[backslash-17]
+SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" LIKE REPLACE(CAST("t"."d"."e" AS VARCHAR), '\\', '\\\\');
+
+--#[backslash-18]
+SELECT "t"."col_string" AS "c" FROM "default"."T_ALL_TYPES" AS "t" WHERE "t"."col_string" LIKE REPLACE(CAST("t"."col_list_string"[1] AS VARCHAR), '\\', '\\\\');
+
+--#[backslash-19]
+SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" LIKE NULL;
+
+--#[backslash-20]
+SELECT ARRAY('a\\', "t"."c") AS "v" FROM "default"."T" AS "t";
+
+--#[backslash-21]
+SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" LIKE REPLACE(CAST("t"."x".y AS VARCHAR), '\\', '\\\\');

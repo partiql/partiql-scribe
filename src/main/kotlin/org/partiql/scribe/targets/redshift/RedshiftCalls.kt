@@ -5,6 +5,7 @@ import org.partiql.ast.Ast.exprCase
 import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprInCollection
+import org.partiql.ast.Ast.exprLike
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprNullPredicate
 import org.partiql.ast.Ast.exprOperator
@@ -39,6 +40,7 @@ import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
+import org.partiql.scribe.sql.utils.escapeLikePattern
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.spi.types.PType
 
@@ -97,6 +99,28 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
     override fun position(args: SqlArgs): Expr = super.position(castSuperStrings(args))
 
     override fun replace(args: SqlArgs): Expr = super.replace(castSuperStrings(args))
+
+    /**
+     * Redshift uses `\` as the default LIKE escape character; PartiQL has none. Without an `ESCAPE` clause, backslashes in
+     * the pattern are escaped so they match literally. Strings read from SUPER are cast to VARCHAR first, since `LIKE`
+     * and `REPLACE` have no SUPER overload.
+     */
+    override fun like(
+        args: SqlArgs,
+        escape: Boolean,
+    ): Expr {
+        val cast = castSuperStrings(args)
+        if (escape) {
+            return super.like(cast, escape)
+        }
+        // REPLACE has no SUPER overload, so a pattern read from SUPER is cast even when its type is dynamic.
+        val pattern = args[1]
+        val patternExpr = pattern.expr
+        val isDynamicSuperNavigation =
+            pattern.type.code() == PType.DYNAMIC && patternExpr is ExprPath && patternExpr.steps.size > 1
+        val castPattern = if (isDynamicSuperNavigation) exprCast(patternExpr, DataType.VARCHAR()) else cast[1].expr
+        return exprLike(cast[0].expr, escapeLikePattern(castPattern), null, false)
+    }
 
     override fun trim(
         args: SqlArgs,

@@ -29,12 +29,16 @@ Thank you to all who have contributed!
 ### Added
 
 ### Changed
+- Spark target, Redshift target: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice.
 
 ### Deprecated
 
 ### Fixed
 - Redshift `UPPER` and `LOWER` now cast strings read from SUPER values to VARCHAR.
-- Spark and Redshift now escape backslashes in string literals and in `LIKE` patterns without `ESCAPE`.
+- Spark target, Redshift target: string literals double each backslash (`'C:\temp'` prints as `'C:\\temp'`), so the engine reads the same value as PartiQL. Before, a literal ending in `\` failed to parse and `\t` was read as a tab.
+- Spark target, Redshift target: `LIKE` without `ESCAPE` escapes backslashes in the pattern. A non-literal pattern is wrapped in `REPLACE(...)`; on Redshift, a pattern read from SUPER is cast to VARCHAR first.
+- Redshift target: `split(c, '\')` prints `SPLIT_TO_ARRAY(c, '\\')`.
+- Redshift target: `EXCLUDE` escapes `\` and `"` in `OBJECT_TRANSFORM` path elements.
 
 ### Removed
 
@@ -42,6 +46,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @xd1313113
 
 ## [2.1.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.1) - 2026-10-27
 

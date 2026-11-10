@@ -14,6 +14,12 @@ import org.partiql.spi.types.PTypeField
 import org.partiql.spi.value.Datum
 
 /**
+ * Returns [key] as a quoted path element. Redshift's path parser reads `\` as an escape inside a quoted element, so `\` and
+ * `"` are escaped, e.g. `k"q` -> `"k\"q"`. The printer then escapes the path string as a string literal.
+ */
+private fun pathElement(key: String): String = "\"" + key.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+/**
  * Second and third arguments of Redshift's OBJECT_TRANSFORM are the "paths" to keep and set in the output SUPER object.
  * These "paths" must are string literals with double-quoted path componenets delimited by periods.
  *
@@ -23,6 +29,7 @@ import org.partiql.spi.value.Datum
  * 1. the output paths to KEEP
  * 2. the output paths to SET to empty rows
  */
+
 private fun fieldToRedshiftPaths(
     field: PTypeField,
     prefix: String?,
@@ -34,9 +41,9 @@ private fun fieldToRedshiftPaths(
             // Empty row (all fields excluded). Add the path to both the keepList and setList.
             val setList =
                 if (prefix == null) {
-                    listOf("\"${fieldKey}\"")
+                    listOf(pathElement(fieldKey))
                 } else {
-                    listOf("$prefix.\"${fieldKey}\"")
+                    listOf("$prefix.${pathElement(fieldKey)}")
                 }
             setList to setList
         } else {
@@ -45,9 +52,9 @@ private fun fieldToRedshiftPaths(
             fieldValue.fields.fold(emptyList<String>() to emptyList()) { (keyAcc, setAcc), subField ->
                 val newPrefix =
                     if (prefix == null) {
-                        "\"${fieldKey}\""
+                        pathElement(fieldKey)
                     } else {
-                        "$prefix.\"${fieldKey}\""
+                        "$prefix.${pathElement(fieldKey)}"
                     }
                 val (keepNew, setNew) = fieldToRedshiftPaths(subField, prefix = newPrefix)
                 keyAcc + keepNew to setAcc + setNew
@@ -56,9 +63,9 @@ private fun fieldToRedshiftPaths(
     } else {
         // Not a row OR is a row with no excluded fields or subfields. Return back the field
         if (prefix == null) {
-            listOf("\"${fieldKey}\"") to emptyList()
+            listOf(pathElement(fieldKey)) to emptyList()
         } else {
-            listOf("$prefix.\"${fieldKey}\"") to emptyList()
+            listOf("$prefix.${pathElement(fieldKey)}") to emptyList()
         }
     }
 }
