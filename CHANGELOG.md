@@ -29,15 +29,14 @@ Thank you to all who have contributed!
 ### Added
 
 ### Changed
-- Spark target, Redshift target: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice.
+- Spark and Redshift targets: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice; build them from the unescaped value instead. `SparkCalls` and `RedshiftCalls` now override `like`; a subclass that overrides `like` should call `super.like(...)` to keep the pattern escaping.
 
 ### Deprecated
 
 ### Fixed
 - Redshift `UPPER` and `LOWER` now cast strings read from SUPER values to VARCHAR.
-- Spark target, Redshift target: string literals double each backslash (`'C:\temp'` prints as `'C:\\temp'`), so the engine reads the same value as PartiQL. Before, a literal ending in `\` failed to parse and `\t` was read as a tab.
-- Spark target, Redshift target: `LIKE` without `ESCAPE` escapes backslashes in the pattern. A non-literal pattern is wrapped in `REPLACE(...)`; on Redshift, a pattern read from SUPER is cast to VARCHAR first.
-- Redshift target: `split(c, '\')` prints `SPLIT_TO_ARRAY(c, '\\')`.
+- Spark and Redshift targets: string literals double each backslash (`'C:\temp'` prints as `'C:\\temp'`), so the engine reads the same value as PartiQL. Before, a literal ending in `\` failed to parse and `\t` was read as a tab. For example, Redshift `split(c, '\')` now prints `SPLIT_TO_ARRAY(c, '\\')`.
+- Spark and Redshift targets: `LIKE` without `ESCAPE` escapes backslashes in the pattern. A non-literal pattern is wrapped in `REPLACE(...)`. On Redshift, a string pattern read from SUPER is cast to VARCHAR first, and a dynamic one is cast only when `IS_VARCHAR` is true.
 - Redshift target: `EXCLUDE` escapes `\` and `"` in `OBJECT_TRANSFORM` path elements.
 
 ### Removed

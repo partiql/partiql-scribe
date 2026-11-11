@@ -102,24 +102,46 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
 
     /**
      * Redshift uses `\` as the default LIKE escape character; PartiQL has none. Without an `ESCAPE` clause, backslashes in
-     * the pattern are escaped so they match literally. Strings read from SUPER are cast to VARCHAR first, since `LIKE`
-     * and `REPLACE` have no SUPER overload.
+     * the pattern are escaped so they match literally.
+     *
+     * Redshift's `LIKE` and `REPLACE` have no SUPER overload, so the pattern is cast when it is read from SUPER (a path
+     * with more than one step), with or without `ESCAPE`:
+     *  - a string pattern is cast to VARCHAR, as in [castSuperString];
+     *  - a dynamic pattern becomes `CASE WHEN IS_VARCHAR(p) THEN CAST(p AS VARCHAR) END`, so a SUPER number or boolean
+     *    gives NULL (no match) instead of being cast to text, matching PartiQL, where `LIKE` on a non-string is MISSING.
+     *
+     * Not cast: a top-level column (a single-step path), which is a real VARCHAR column, and a dynamic value, since
+     * `<super> LIKE <varchar>` already works on Redshift. Measured on Redshift: `LIKE <non-literal pattern> ESCAPE ...`
+     * against a table fails ("not supported on Redshift tables"), cast or not.
      */
     override fun like(
         args: SqlArgs,
         escape: Boolean,
     ): Expr {
         val cast = castSuperStrings(args)
-        if (escape) {
-            return super.like(cast, escape)
+        val pattern = likePattern(args[1], cast[1].expr)
+        return if (escape) {
+            exprLike(cast[0].expr, pattern, cast[2].expr, false)
+        } else {
+            exprLike(cast[0].expr, escapeLikePattern(pattern), null, false)
         }
-        // REPLACE has no SUPER overload, so a pattern read from SUPER is cast even when its type is dynamic.
-        val pattern = args[1]
-        val patternExpr = pattern.expr
-        val isDynamicSuperNavigation =
-            pattern.type.code() == PType.DYNAMIC && patternExpr is ExprPath && patternExpr.steps.size > 1
-        val castPattern = if (isDynamicSuperNavigation) exprCast(patternExpr, DataType.VARCHAR()) else cast[1].expr
-        return exprLike(cast[0].expr, escapeLikePattern(castPattern), null, false)
+    }
+
+    /**
+     * Returns the `LIKE` pattern, guarding a dynamic SUPER navigation with `IS_VARCHAR`; [castPattern] is the pattern after
+     * [castSuperString].
+     */
+    private fun likePattern(
+        pattern: SqlArg,
+        castPattern: Expr,
+    ): Expr {
+        val expr = pattern.expr
+        val isDynamicSuperNavigation = pattern.type.code() == PType.DYNAMIC && expr is ExprPath && expr.steps.size > 1
+        if (!isDynamicSuperNavigation) {
+            return castPattern
+        }
+        val isVarchar = exprCall(Identifier.regular("IS_VARCHAR"), listOf(expr))
+        return exprCase(null, listOf(exprCaseBranch(isVarchar, exprCast(expr, DataType.VARCHAR()))), null)
     }
 
     override fun trim(

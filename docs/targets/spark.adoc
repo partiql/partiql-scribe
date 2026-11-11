@@ -19,27 +19,8 @@ backslash as an escape in both places, so Scribe doubles each backslash in strin
 | c LIKE 'a\\\\_%'
 
 | c LIKE p
-| c LIKE REPLACE(p, '\\', '\\\\')
+| c LIKE `REPLACE`(p, '\\', '\\\\')
 |===
 
 This assumes the default `spark.sql.parser.escapedStringLiterals=false`. With `true`, Spark reads string literals
 without backslash escapes, so the doubled backslashes change the value.
-
-[#variable-substitution]
-=== Variable Substitution
-
-With the default `spark.sql.variable.substitute=true`, Spark replaces `${name}` in the SQL text before it parses the
-query, including inside string literals. Escaping can't prevent this, because the substitution runs before Spark reads
-any escape. Scribe doesn't rewrite `${` in string literals.
-
-.Variable Substitution
-[cols="1m,1m,2",grid=rows,frame=all]
-|===
-| PartiQL | Spark | Spark Result
-
-| 'cost ${x}'
-| 'cost ${x}'
-| `cost SUBST` after `SET x=SUBST`. The `spark-sql` CLI returns `cost ` when `x` is not set.
-|===
-
-To keep `${...}` in a string literal, run the query with `spark.sql.variable.substitute=false`.

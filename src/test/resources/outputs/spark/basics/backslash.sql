@@ -60,3 +60,6 @@ SELECT `t`.`c` AS `c` FROM `default`.`T` AS `t` WHERE `t`.`c` LIKE NULL;
 
 --#[backslash-20]
 SELECT ARRAY('a\\', `t`.`c`) AS `v` FROM `default`.`T` AS `t`;
+
+--#[backslash-21]
+SELECT `t`.`c` AS `c` FROM `default`.`T` AS `t` WHERE `t`.`c` LIKE `REPLACE`(`t`.`x`.`y`, '\\', '\\\\');

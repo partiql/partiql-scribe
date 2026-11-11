@@ -62,4 +62,4 @@ SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" LIKE NULL;
 SELECT ARRAY('a\\', "t"."c") AS "v" FROM "default"."T" AS "t";
 
 --#[backslash-21]
-SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" LIKE REPLACE(CAST("t"."x".y AS VARCHAR), '\\', '\\\\');
+SELECT "t"."c" FROM "default"."T" AS "t" WHERE "t"."c" LIKE REPLACE(CASE WHEN IS_VARCHAR("t"."x".y) THEN CAST("t"."x".y AS VARCHAR) END, '\\', '\\\\');

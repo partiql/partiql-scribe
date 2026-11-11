@@ -15,7 +15,9 @@ import org.partiql.spi.value.Datum
 
 /**
  * Returns [key] as a quoted path element. Redshift's path parser reads `\` as an escape inside a quoted element, so `\` and
- * `"` are escaped, e.g. `k"q` -> `"k\"q"`. The printer then escapes the path string as a string literal.
+ * `"` are escaped, e.g. `k"q` -> `"k\"q"`. The printer then escapes the path string as a string literal. The
+ * OBJECT_TRANSFORM docs don't describe escapes; this was measured on Redshift, where an unescaped `"k\"` is a
+ * "Malformed path argument", and `.`, `[`, and `'` inside a quoted element need no escape.
  */
 private fun pathElement(key: String): String = "\"" + key.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
@@ -29,7 +31,6 @@ private fun pathElement(key: String): String = "\"" + key.replace("\\", "\\\\").
  * 1. the output paths to KEEP
  * 2. the output paths to SET to empty rows
  */
-
 private fun fieldToRedshiftPaths(
     field: PTypeField,
     prefix: String?,

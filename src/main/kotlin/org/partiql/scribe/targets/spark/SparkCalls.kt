@@ -379,7 +379,6 @@ public open class SparkCalls(context: ScribeContext) : SqlCalls(context) {
      *  > https://spark.apache.org/docs/latest/api/sql/index.html#split
      *  > https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html#quote-java.lang.String-
      */
-
     override fun split(args: SqlArgs): Expr {
         val string = args[0].expr
         val delimiter = args[1].expr
