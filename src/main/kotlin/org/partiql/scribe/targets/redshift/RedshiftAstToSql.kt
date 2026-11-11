@@ -28,6 +28,7 @@ import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
+import org.partiql.scribe.sql.utils.escapeStringLiteral
 import org.partiql.scribe.sql.utils.inferredAlias
 import org.partiql.scribe.sql.utils.list
 import org.partiql.scribe.sql.utils.removePathRoot
@@ -35,6 +36,16 @@ import org.partiql.scribe.sql.utils.type
 
 public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
+
+    /**
+     * Redshift reads `\` as an escape in string literals; PartiQL does not. [RedshiftCalls] builds string literals with
+     * plain values and relies on this override to escape them, so a subclass that overrides this method should still
+     * call `super`.
+     */
+    override fun visitExprLit(
+        node: ExprLit,
+        tail: SqlBlock,
+    ): SqlBlock = super.visitExprLit(escapeStringLiteral(node), tail)
 
     /**
      * Redshift does not support x['y'] syntax; replace with x.y

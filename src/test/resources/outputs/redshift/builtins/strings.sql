@@ -90,7 +90,7 @@ SELECT SPLIT_TO_ARRAY("T"."c", '|') AS "_1" FROM "default"."T" AS "T";
 
 -- https://github.com/partiql/partiql-scribe/issues/158
 --#[split-03]
-SELECT SPLIT_TO_ARRAY("T"."c", '\') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT_TO_ARRAY("T"."c", '\\') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-04]
 SELECT SPLIT_TO_ARRAY("T"."c", '::') AS "_1" FROM "default"."T" AS "T";

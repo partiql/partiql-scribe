@@ -1,0 +1,42 @@
+{
+  type: "bag",
+  items: {
+    type: "struct",
+    constraints: [ closed, ordered, unique ],
+    fields: [
+      {
+        name: "flds",
+        type: {
+          type: "struct",
+          constraints: [ closed, ordered, unique ],
+          fields: [
+            {
+              name: "k\\",
+              type: "int32",
+            },
+            {
+              name: "k\"q",
+              type: "int32",
+            },
+            {
+              name: "a.b",
+              type: "int32",
+            },
+            {
+              name: "x[0]",
+              type: "int32",
+            },
+            {
+              name: "k'",
+              type: "int32",
+            },
+            {
+              name: "j",
+              type: "int32",
+            }
+          ]
+        },
+      }
+    ]
+  }
+}
