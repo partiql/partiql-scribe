@@ -1,0 +1,38 @@
+{
+  type: "bag",
+  items: {
+    type: "struct",
+    constraints: [ closed, ordered, unique ],
+    fields: [
+      {
+        name: "a\"b",
+        type: "int32",
+      },
+      {
+        name: "c`d",
+        type: "int32",
+      },
+      {
+        name: "x\"); DROP TABLE target--",
+        type: "int32",
+      },
+      {
+        name: "s\"t",
+        type: {
+          type: "struct",
+          constraints: [ closed, ordered, unique ],
+          fields: [
+            {
+              name: "u\"v",
+              type: "int32",
+            },
+            {
+              name: "w`x",
+              type: "int32",
+            }
+          ]
+        },
+      }
+    ]
+  }
+}

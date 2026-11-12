@@ -68,7 +68,14 @@ private val ROUTINES =
 private val PAYLOAD =
     Table.empty(
         "payload",
-        PType.bag(PType.row(PTypeField.of("items", PType.array(PType.string())))),
+        PType.bag(
+            PType.row(
+                PTypeField.of("items", PType.array(PType.string())),
+                // Field names containing each target's identifier quote character.
+                PTypeField.of("x\"); DROP TABLE target--", PType.array(PType.string())),
+                PTypeField.of("x`); DROP TABLE target--", PType.array(PType.string())),
+            ),
+        ),
     )
 private val CATALOG =
     object : RoutineCatalog {

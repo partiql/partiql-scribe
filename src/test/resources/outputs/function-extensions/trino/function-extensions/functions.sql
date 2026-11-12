@@ -7,6 +7,15 @@ at_timezone(current_timestamp, 'UTC');
 --#[contains]
 SELECT "contains"("p"."items", 'x') AS "c" FROM "test"."payload" AS "p";
 
+--#[contains-embedded-quote]
+SELECT "contains"("p"."x""); DROP TABLE target--", 'x') AS "c" FROM "test"."payload" AS "p";
+
+--#[contains-embedded-backtick]
+SELECT "contains"("p"."x`); DROP TABLE target--", 'x') AS "c" FROM "test"."payload" AS "p";
+
+--#[contains-embedded-quote-select-value]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="SELECT VALUE is not supported by SQL targets unless it is a struct with string-literal keys (e.g. SELECT VALUE {'a': a}); use a SELECT list instead"}];
+
 --#[hex-to-bigint]
 from_base('00C10300', 16);
 

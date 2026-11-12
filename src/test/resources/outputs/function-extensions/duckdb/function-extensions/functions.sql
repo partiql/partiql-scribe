@@ -7,6 +7,15 @@ timezone('UTC', current_timestamp);
 --#[contains]
 SELECT contains("p"."items", 'x') AS "c" FROM "test"."payload" AS "p";
 
+--#[contains-embedded-quote]
+SELECT contains("p"."x""); DROP TABLE target--", 'x') AS "c" FROM "test"."payload" AS "p";
+
+--#[contains-embedded-backtick]
+SELECT contains("p"."x`); DROP TABLE target--", 'x') AS "c" FROM "test"."payload" AS "p";
+
+--#[contains-embedded-quote-select-value]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="SELECT VALUE is not supported by SQL targets unless it is a struct with string-literal keys (e.g. SELECT VALUE {'a': a}); use a SELECT list instead"}];
+
 --#[hex-to-bigint]
 CAST(CASE WHEN left('00C10300', 1) = '-' THEN -CAST(CAST('0x' || substring('00C10300', 2) AS UBIGINT) AS HUGEINT) WHEN left('00C10300', 1) = '+' THEN CAST('0x' || substring('00C10300', 2) AS UBIGINT) ELSE CAST('0x' || '00C10300' AS UBIGINT) END AS BIGINT);
 

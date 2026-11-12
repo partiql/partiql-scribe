@@ -122,6 +122,32 @@ class FunctionExtensionCallsTest {
     }
 
     @Test
+    fun `redshift contains escapes a double-quote in the field name`() {
+        val context = ScribeContext.standard()
+        val calls = TestRedshiftCalls(context, routines)
+        val args =
+            args("contains").toMutableList().apply {
+                this[0] =
+                    SqlArg(
+                        exprPath(
+                            exprVarRef(Identifier.regular("t"), false),
+                            listOf(exprPathStepField(Identifier.Simple.delimited("x\"); DROP TABLE target--"))),
+                        ),
+                        PType.array(),
+                    )
+            }
+
+        val sql = RedshiftAstToSql(context).transform(calls.translate("contains", args)).sql(SqlLayout.STANDARD)
+
+        assertEquals(
+            "1 <= (SELECT COUNT(___partiql_scribe_contains_element___) " +
+                "FROM t.\"x\"\"); DROP TABLE target--\" AS ___partiql_scribe_contains_element___ " +
+                "WHERE ___partiql_scribe_contains_element___ IN ('x'))",
+            sql,
+        )
+    }
+
+    @Test
     fun `spark extension translations`() {
         val context = ScribeContext.standard()
         val calls = TestSparkCalls(context, routines)

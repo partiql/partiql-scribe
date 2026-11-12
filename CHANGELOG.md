@@ -38,6 +38,7 @@ Thank you to all who have contributed!
 - Spark and Redshift targets: string literals double each backslash (`'C:\temp'` prints as `'C:\\temp'`), so the engine reads the same value as PartiQL. Before, a literal ending in `\` failed to parse and `\t` was read as a tab. For example, Redshift `split(c, '\')` now prints `SPLIT_TO_ARRAY(c, '\\')`.
 - Spark and Redshift targets: `LIKE` without `ESCAPE` escapes backslashes in the pattern. A non-literal pattern is wrapped in `REPLACE(...)`. On Redshift, a string pattern read from SUPER is cast to VARCHAR first, and a dynamic one is cast only when `IS_VARCHAR` is true.
 - Redshift target: `EXCLUDE` escapes `\` and `"` in `OBJECT_TRANSFORM` path elements.
+- All targets: delimited identifiers double an embedded quote character (`"` for Redshift, Trino, DuckDB, and PartiQL; `` ` `` for Spark), so PartiQL `t."a""b"` prints as `"t"."a""b"` (Spark: `` `t`.`a"b` ``) and field ``"c`d"`` prints on Spark as `` `c``d` ``. This covers paths, `SELECT`/`FROM`/`LET`/`GROUP BY` aliases, `WITH` names, and Trino `ROW` cast field names. `AstToSql` subclasses should render identifiers with the new `identifierSql` / `quoted` helpers.
 
 ### Removed
 

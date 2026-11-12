@@ -165,7 +165,7 @@ public open class RedshiftAstToSql(context: ScribeContext) : AstToSql(context) {
         if (asAlias != null) {
             // only add the alias if the inferred alias is not equal to the `asName`
             if (expr.inferredAlias() != asAlias.text) {
-                t = t concat " AS \"${asAlias.text}\""
+                t = t concat " AS ${quoted(asAlias.text)}"
             }
         }
         return t

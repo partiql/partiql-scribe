@@ -9,6 +9,7 @@ import org.partiql.plan.rex.RexStruct
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.utils.containsExcludedFieldMeta
+import org.partiql.scribe.sql.utils.quoteIdentifier
 import org.partiql.spi.function.Fn
 import org.partiql.spi.function.Parameter
 import org.partiql.spi.types.PType
@@ -187,8 +188,8 @@ private fun PType.toTrinoString(context: ScribeContext): String {
             val head = "ROW("
             val fieldsAsString =
                 this.fields.foldIndexed("") { index, acc, field ->
-                    // wrap `field.key` in double-quotes since the field name could be a reserved keyword
-                    val fieldStr = acc + "\"${field.name}\"" + " " + field.type.toTrinoString(context)
+                    // delimit the field name since it could be a reserved keyword or contain a double-quote
+                    val fieldStr = acc + quoteIdentifier(field.name) + " " + field.type.toTrinoString(context)
                     if (index < fields.size - 1) {
                         "$fieldStr, "
                     } else {
