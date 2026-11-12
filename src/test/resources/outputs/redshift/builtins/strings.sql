@@ -1,3 +1,21 @@
+--#[builtins-strings-lower-00]
+SELECT LOWER("T"."c") AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-lower-01]
+SELECT LOWER(CAST("T"."d"."e" AS VARCHAR)) AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-lower-02]
+SELECT LOWER(CAST("T_ALL_TYPES"."col_list_string"[1] AS VARCHAR)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES";
+
+--#[builtins-strings-upper-00]
+SELECT UPPER("T"."c") AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-upper-01]
+SELECT UPPER(CAST("T"."d"."e" AS VARCHAR)) AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-upper-02]
+SELECT UPPER(CAST("T_ALL_TYPES"."col_list_string"[1] AS VARCHAR)) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES";
+
 --#[trim-00]
 SELECT TRIM(BOTH "T"."c") AS "_1" FROM "default"."T" AS "T";
 
@@ -72,7 +90,7 @@ SELECT SPLIT_TO_ARRAY("T"."c", '|') AS "_1" FROM "default"."T" AS "T";
 
 -- https://github.com/partiql/partiql-scribe/issues/158
 --#[split-03]
-SELECT SPLIT_TO_ARRAY("T"."c", '\') AS "_1" FROM "default"."T" AS "T";
+SELECT SPLIT_TO_ARRAY("T"."c", '\\') AS "_1" FROM "default"."T" AS "T";
 
 --#[split-04]
 SELECT SPLIT_TO_ARRAY("T"."c", '::') AS "_1" FROM "default"."T" AS "T";

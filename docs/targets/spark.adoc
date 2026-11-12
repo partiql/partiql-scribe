@@ -1,0 +1,26 @@
+= Spark Target
+
+[#string-literals]
+== String Literals
+
+PartiQL string literals have no backslash escapes, and `LIKE` without `ESCAPE` has no escape character. Spark reads a
+backslash as an escape in both places, so Scribe doubles each backslash in string literals and escapes backslashes in
+`LIKE` patterns that have no `ESCAPE` clause.
+
+.Backslash Escaping
+[cols="1m,1m",grid=rows,frame=all]
+|===
+| PartiQL | Spark
+
+| 'C:\temp\n'
+| 'C:\\temp\\n'
+
+| c LIKE 'a\_%'
+| c LIKE 'a\\\\_%'
+
+| c LIKE p
+| c LIKE `REPLACE`(p, '\\', '\\\\')
+|===
+
+This assumes the default `spark.sql.parser.escapedStringLiterals=false`. With `true`, Spark reads string literals
+without backslash escapes, so the doubled backslashes change the value.
