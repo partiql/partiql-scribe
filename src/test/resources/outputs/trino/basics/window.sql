@@ -77,3 +77,107 @@ SELECT "t"."a" AS "_id", "t"."b" AS "_name", RANK() OVER "_w1" AS "_rank_1", RAN
 
 --#[window-34]
 SELECT "T"."a" AS "a", count(1) AS "_1", ROW_NUMBER() OVER (ORDER BY count(1) ASC NULLS LAST) AS "_2" FROM "default"."T" AS "T" GROUP BY "T"."a";
+
+-- SUM over a partition
+--#[window-23]
+SELECT "T"."a" AS "a", SUM("T"."b") OVER (PARTITION BY "T"."a") AS "_1" FROM "default"."T" AS "T";
+
+-- AVG over a partition with ORDER BY
+--#[window-24]
+SELECT "T"."a" AS "a", AVG("T"."b") OVER (PARTITION BY "T"."a" ORDER BY "T"."c" ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
+
+-- COUNT(*) over a partition
+--#[window-25]
+SELECT "T"."a" AS "a", COUNT(1) OVER (PARTITION BY "T"."a") AS "_1" FROM "default"."T" AS "T";
+
+-- MAX with PARTITION BY and ORDER BY
+--#[window-35]
+SELECT "T"."a" AS "a", MAX("T"."b") OVER (PARTITION BY "T"."a" ORDER BY "T"."c" ASC NULLS LAST) AS "_1" FROM "default"."T" AS "T";
+
+-- MIN over a named window with ORDER BY
+--#[window-36]
+SELECT "T"."a" AS "a", MIN("T"."b") OVER "w" AS "_1" FROM "default"."T" AS "T" WINDOW "w" AS (PARTITION BY "T"."a" ORDER BY "T"."c" ASC NULLS LAST);
+
+-- COUNT(DISTINCT) over a partition
+--#[window-37]
+SELECT "T"."a" AS "a", COUNT(DISTINCT "T"."b") OVER (PARTITION BY "T"."a") AS "_1" FROM "default"."T" AS "T";
+
+-- SUM over the whole input (empty OVER)
+--#[window-38]
+SELECT "T"."a" AS "a", SUM("T"."b") OVER () AS "_1" FROM "default"."T" AS "T";
+
+-- Two aggregate window functions in one query
+--#[window-39]
+SELECT "T"."a" AS "a", COUNT("T"."b") OVER (ORDER BY "T"."c" ASC NULLS LAST) AS "_1", MAX("T"."b") OVER (ORDER BY "T"."c" ASC NULLS LAST) AS "_2" FROM "default"."T" AS "T";
+
+-- Aggregate window function over a GROUP BY aggregate
+--#[window-40]
+SELECT "T"."a" AS "a", SUM(count(1)) OVER () AS "_1" FROM "default"."T" AS "T" GROUP BY "T"."a";
+
+-- Window in a correlated derived table under a scalar subquery. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-42]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Window in an uncorrelated scalar subquery
+--#[window-43]
+SELECT "o"."a" AS "a", (SELECT MAX("t"."b") OVER () AS "m" FROM "default"."T" AS "t" LIMIT 1) AS "m" FROM "default"."T" AS "o";
+
+-- Window in a correlated IN subquery. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-44]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Window in a correlated EXISTS subquery. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-45]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Window in a correlated lateral derived table. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-46]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- ROW_NUMBER in a correlated subquery. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-47]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Window in a subquery over a CTE of the outer query (not a correlation)
+--#[window-48]
+WITH "w" AS (SELECT "t"."b" AS "b", "t"."c" AS "c" FROM "default"."T" AS "t") SELECT "o"."a" AS "a", (SELECT MAX("x"."b") OVER () AS "m" FROM "w" AS "x" LIMIT 1) AS "m" FROM "default"."T" AS "o";
+
+-- Correlation inside a CASE in a subquery with a window. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-49]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Correlation in a subquery body with its own WITH clause. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-50]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Aggregate over a named window without ORDER BY
+--#[window-51]
+SELECT "T"."a" AS "a", MIN("T"."b") OVER "w" AS "_1" FROM "default"."T" AS "T" WINDOW "w" AS (PARTITION BY "T"."a");
+
+-- Subquery over an outer CTE that is also correlated. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-52]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Window in a correlated NOT EXISTS subquery. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-53]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Correlated EXISTS and correlated scalar subqueries with windows in one query. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-54]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Correlation in the select list, outside the window function. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-55]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Correlation in a subquery nested in the subquery with the window. Not supported: Trino does not support a correlated subquery with a window function
+--#[window-56]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Trino does not support window functions in a correlated subquery"}];
+
+-- Correlated subquery whose window is only in an uncorrelated derived table
+--#[window-57]
+SELECT "o"."a" AS "a", (SELECT max("s"."m") AS "m" FROM (SELECT MAX("t"."b") OVER () AS "m" FROM "default"."T" AS "t") AS "s" WHERE "s"."m" > "o"."b") AS "m" FROM "default"."T" AS "o";
+
+-- Correlation in a path index. Not supported: Trino supports only literal array indexes
+--#[window-58]
+[ScribeException{code=INVALID_PLAN, message="Trino array indexing only supports integer literals, e.g. x[1]."}];

@@ -22,6 +22,9 @@ public open class TrinoRexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : RexConverter(transform, locals, context) {
+    override val correlatedSubqueryWithWindowError: String =
+        "Trino does not support window functions in a correlated subquery"
+
     /**
      * Convert any plan string literals (i.e. [RexLit]s) that have a string value of [TRANSFORM_VAR] into an unquoted
      * string AST expr (i.e. [ExprVarRef]).

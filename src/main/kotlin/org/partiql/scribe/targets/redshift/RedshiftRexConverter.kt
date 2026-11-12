@@ -43,6 +43,10 @@ public open class RedshiftRexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : RexConverter(transform, locals, context) {
+    // See https://docs.aws.amazon.com/redshift/latest/dg/r_correlated_subqueries.html.
+    override val correlatedSubqueryWithWindowError: String =
+        "Redshift does not support correlation references from within a subquery that contains a window function"
+
     override fun visitCall(
         rex: RexCall,
         ctx: Unit,

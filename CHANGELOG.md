@@ -27,8 +27,14 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+- All targets: transpile the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX`.
+- Redshift target: aggregate window functions are supported only without a window `ORDER BY` and without `DISTINCT`, since Redshift needs a `ROWS` frame that cannot express the default frame.
+- Spark target: aggregate window functions do not support `DISTINCT`.
 
 ### Changed
+- Redshift target: a subquery with a window function and a correlation reference, including `ROW_NUMBER` and `RANK`, is now an error.
+- Trino target: a window function in a correlated subquery, including a derived table or a lateral join, is now an error.
+- PartiQL now rejects an outer reference or a subquery in a window function at planning ([partiql-lang-kotlin#2006](https://github.com/partiql/partiql-lang-kotlin/pull/2006)).
 - Spark and Redshift targets: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice; build them from the unescaped value instead. `SparkCalls` and `RedshiftCalls` now override `like`; a subclass that overrides `like` should call `super.like(...)` to keep the pattern escaping.
 
 ### Deprecated

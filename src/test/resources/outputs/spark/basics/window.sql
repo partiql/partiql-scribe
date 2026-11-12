@@ -77,3 +77,107 @@ SELECT `t`.`a` AS `_id`, `t`.`b` AS `_name`, RANK() OVER `_w1` AS `_rank_1`, RAN
 
 --#[window-34]
 SELECT `T`.`a` AS `a`, `count`(1) AS `_1`, ROW_NUMBER() OVER (ORDER BY `count`(1) ASC NULLS LAST) AS `_2` FROM `default`.`T` AS `T` GROUP BY `T`.`a`;
+
+-- SUM over a partition
+--#[window-23]
+SELECT `T`.`a` AS `a`, SUM(`T`.`b`) OVER (PARTITION BY `T`.`a`) AS `_1` FROM `default`.`T` AS `T`;
+
+-- AVG over a partition with ORDER BY
+--#[window-24]
+SELECT `T`.`a` AS `a`, AVG(`T`.`b`) OVER (PARTITION BY `T`.`a` ORDER BY `T`.`c` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
+
+-- COUNT(*) over a partition
+--#[window-25]
+SELECT `T`.`a` AS `a`, COUNT(1) OVER (PARTITION BY `T`.`a`) AS `_1` FROM `default`.`T` AS `T`;
+
+-- MAX with PARTITION BY and ORDER BY
+--#[window-35]
+SELECT `T`.`a` AS `a`, MAX(`T`.`b`) OVER (PARTITION BY `T`.`a` ORDER BY `T`.`c` ASC NULLS LAST) AS `_1` FROM `default`.`T` AS `T`;
+
+-- MIN over a named window with ORDER BY
+--#[window-36]
+SELECT `T`.`a` AS `a`, MIN(`T`.`b`) OVER `w` AS `_1` FROM `default`.`T` AS `T` WINDOW `w` AS (PARTITION BY `T`.`a` ORDER BY `T`.`c` ASC NULLS LAST);
+
+-- COUNT(DISTINCT) over a partition. Not supported: Spark does not support DISTINCT in window functions
+--#[window-37]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="Unsupported aggregate window function COUNT: Spark does not support DISTINCT in window functions. Remove DISTINCT or use another target"}];
+
+-- SUM over the whole input (empty OVER)
+--#[window-38]
+SELECT `T`.`a` AS `a`, SUM(`T`.`b`) OVER () AS `_1` FROM `default`.`T` AS `T`;
+
+-- Two aggregate window functions in one query
+--#[window-39]
+SELECT `T`.`a` AS `a`, COUNT(`T`.`b`) OVER (ORDER BY `T`.`c` ASC NULLS LAST) AS `_1`, MAX(`T`.`b`) OVER (ORDER BY `T`.`c` ASC NULLS LAST) AS `_2` FROM `default`.`T` AS `T`;
+
+-- Aggregate window function over a GROUP BY aggregate
+--#[window-40]
+SELECT `T`.`a` AS `a`, SUM(`count`(1)) OVER () AS `_1` FROM `default`.`T` AS `T` GROUP BY `T`.`a`;
+
+-- Window in a correlated derived table under a scalar subquery
+--#[window-42]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c`) AS `s`) AS `m` FROM `default`.`T` AS `o`;
+
+-- Window in an uncorrelated scalar subquery
+--#[window-43]
+SELECT `o`.`a` AS `a`, (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` LIMIT 1) AS `m` FROM `default`.`T` AS `o`;
+
+-- Window in a correlated IN subquery
+--#[window-44]
+SELECT `o`.`a` AS `a` FROM `default`.`T` AS `o` WHERE `o`.`b` IN (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c`);
+
+-- Window in a correlated EXISTS subquery
+--#[window-45]
+SELECT `o`.`a` AS `a` FROM `default`.`T` AS `o` WHERE EXISTS (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c`);
+
+-- Window in a correlated lateral derived table
+--#[window-46]
+SELECT `o`.`a` AS `a`, `s`.`m` AS `m` FROM `default`.`T` AS `o` INNER JOIN LATERAL (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c`) AS `s` ON true;
+
+-- ROW_NUMBER in a correlated subquery
+--#[window-47]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`n`) AS `n` FROM (SELECT ROW_NUMBER() OVER (ORDER BY `t`.`b` ASC NULLS LAST) AS `n` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c`) AS `s`) AS `n` FROM `default`.`T` AS `o`;
+
+-- Window in a subquery over a CTE of the outer query (not a correlation)
+--#[window-48]
+WITH `w` AS (SELECT `t`.`b` AS `b`, `t`.`c` AS `c` FROM `default`.`T` AS `t`) SELECT `o`.`a` AS `a`, (SELECT MAX(`x`.`b`) OVER () AS `m` FROM `w` AS `x` LIMIT 1) AS `m` FROM `default`.`T` AS `o`;
+
+-- Correlation inside a CASE in a subquery with a window
+--#[window-49]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE CASE WHEN `t`.`c` = `o`.`c` THEN true ELSE false END) AS `s`) AS `m` FROM `default`.`T` AS `o`;
+
+-- Correlation in a subquery body with its own WITH clause
+--#[window-50]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (WITH `w` AS (SELECT `t`.`b` AS `b`, `t`.`c` AS `c` FROM `default`.`T` AS `t`) SELECT MAX(`x`.`b`) OVER () AS `m` FROM `w` AS `x` WHERE `x`.`c` = `o`.`c`) AS `s`) AS `m` FROM `default`.`T` AS `o`;
+
+-- Aggregate over a named window without ORDER BY
+--#[window-51]
+SELECT `T`.`a` AS `a`, MIN(`T`.`b`) OVER `w` AS `_1` FROM `default`.`T` AS `T` WINDOW `w` AS (PARTITION BY `T`.`a`);
+
+-- Subquery over an outer CTE that is also correlated
+--#[window-52]
+WITH `w` AS (SELECT `t`.`b` AS `b`, `t`.`c` AS `c` FROM `default`.`T` AS `t`) SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`x`.`b`) OVER () AS `m` FROM `w` AS `x` WHERE `x`.`c` = `o`.`c`) AS `s`) AS `m` FROM `default`.`T` AS `o`;
+
+-- Window in a correlated NOT EXISTS subquery
+--#[window-53]
+SELECT `o`.`a` AS `a` FROM `default`.`T` AS `o` WHERE NOT (EXISTS (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c`));
+
+-- Correlated EXISTS and correlated scalar subqueries with windows in one query
+--#[window-54]
+SELECT `o`.`a` AS `a` FROM `default`.`T` AS `o` WHERE EXISTS (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`c` = `o`.`c`) AND (`o`.`b` = (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`u`.`b`) OVER () AS `m` FROM `default`.`T` AS `u` WHERE `u`.`c` = `o`.`c`) AS `s`));
+
+-- Correlation in the select list, outside the window function
+--#[window-55]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`t`.`b`) OVER () + `o`.`b` AS `m` FROM `default`.`T` AS `t`) AS `s`) AS `m` FROM `default`.`T` AS `o`;
+
+-- Correlation in a subquery nested in the subquery with the window. Not supported: Spark resolves an outer reference only from the immediately enclosing subquery (fails with UNRESOLVED_COLUMN)
+--#[window-56]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE EXISTS (SELECT `u`.`a` AS `a` FROM `default`.`T` AS `u` WHERE `u`.`c` = `o`.`c`)) AS `s`) AS `m` FROM `default`.`T` AS `o`;
+
+-- Correlated subquery whose window is only in an uncorrelated derived table
+--#[window-57]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t`) AS `s` WHERE `s`.`m` > `o`.`b`) AS `m` FROM `default`.`T` AS `o`;
+
+-- Correlation in a path index
+--#[window-58]
+SELECT `o`.`a` AS `a`, (SELECT `max`(`s`.`m`) AS `m` FROM (SELECT MAX(`t`.`b`) OVER () AS `m` FROM `default`.`T` AS `t` WHERE `t`.`array`[`o`.`b`] = 1) AS `s`) AS `m` FROM `default`.`T` AS `o`;
