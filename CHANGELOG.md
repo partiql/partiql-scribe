@@ -27,7 +27,7 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
-- Adds translations for the `date_trunc` and `to_char` function extensions.
+- Adds translations for the `date_trunc` and `to_char` function extensions to every target. `to_char` translates the templates that every target formats the same way (`YYYY YY MM DD DDD HH24 HH12 HH MI SS MS FF3 AM PM`). A `TIMESTAMP WITH TIME ZONE` argument is translated only for Trino, which keeps the value's offset like the extensions do.
 
 ### Changed
 - Spark and Redshift targets: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice; build them from the unescaped value instead. `SparkCalls` and `RedshiftCalls` now override `like`; a subclass that overrides `like` should call `super.like(...)` to keep the pattern escaping.

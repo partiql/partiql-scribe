@@ -33,12 +33,22 @@ public open class TrinoFunctionExtensionCalls(
     public override val routineRules: Map<RoutineRef, SqlCallFn> =
         bind(
             routines,
-            commonRules(this, context.getProblemListener()) +
+            commonRules(this, context.getProblemListener(), zonedTimestamps = true) +
                 mapOf(
                     CONTAINS to ::contains,
                     TO_UNIXTIME to ::toUnixTime,
                     HEX_TO_BIGINT to ::hexToBigInt,
-                    TO_CHAR to { args -> toChar(context.getProblemListener(), args, "format_datetime", TO_CHAR_JAVA) },
+                    TO_CHAR to {
+                            args ->
+                        toChar(
+                            context.getProblemListener(),
+                            args,
+                            "format_datetime",
+                            TO_CHAR_JAVA,
+                            zonedTimestamps = true,
+                            truncateToMillis = true,
+                        )
+                    },
                 ),
         )
 

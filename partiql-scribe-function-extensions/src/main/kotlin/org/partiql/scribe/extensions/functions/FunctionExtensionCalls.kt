@@ -19,6 +19,7 @@ import org.partiql.extensions.functions.custom.math.Pow
 import org.partiql.plan.RoutineRef
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
+import org.partiql.scribe.sql.SqlArg
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
@@ -37,15 +38,20 @@ internal val TO_CHAR = ToChar.overloads().first().signature.name
 private val DATE_TRUNC_PARTS =
     setOf("millisecond", "second", "minute", "hour", "day", "week", "month", "quarter", "year")
 
+/**
+ * The rules shared by every target. [zonedTimestamps] is true when the target's `TIMESTAMP WITH TIME ZONE` keeps the
+ * value's own offset, as the function extensions do; see [rejectZonedTimestamp].
+ */
 internal fun commonRules(
     calls: SqlCalls,
     listener: ScribeProblemListener,
+    zonedTimestamps: Boolean = false,
 ): Map<String, SqlCallFn> =
     mapOf(
         DATE_ADD to { args -> dateAdd(calls, listener, args) },
         UTCNOW to { args -> calls.retarget(UTCNOW, args) },
         POW to { args -> exprCall(Identifier.delimited(POW), args.map { it.expr }) },
-        DATE_TRUNC to { args -> dateTrunc(listener, args) },
+        DATE_TRUNC to { args -> dateTrunc(listener, args, zonedTimestamps) },
     )
 
 internal fun bind(
@@ -90,6 +96,7 @@ private fun dateAdd(
 private fun dateTrunc(
     listener: ScribeProblemListener,
     args: SqlArgs,
+    zonedTimestamps: Boolean,
 ): Expr {
     val part = (args.firstOrNull()?.expr as? ExprLit)?.lit
     if (args.size != 2 || part?.code() != Literal.STRING) {
@@ -110,8 +117,31 @@ private fun dateTrunc(
         )
     }
     val source = args[1]
+    rejectZonedTimestamp(listener, DATE_TRUNC, source, zonedTimestamps)
     val value = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
     return exprCall(Identifier.regular("date_trunc"), listOf(exprLit(Literal.string(normalizedPart)), value))
+}
+
+/**
+ * The function extensions format and truncate a `TIMESTAMP WITH TIME ZONE` in the value's own offset. Redshift, Spark,
+ * and DuckDB store an instant and use the session time zone instead, so `23:20:30-05:00` would become `04:20` (UTC);
+ * Trino keeps the offset. Rejects a zoned [source] unless the target keeps it ([zonedTimestamps]).
+ */
+internal fun rejectZonedTimestamp(
+    listener: ScribeProblemListener,
+    function: String,
+    source: SqlArg,
+    zonedTimestamps: Boolean,
+) {
+    if (!zonedTimestamps && source.type.code() == PType.TIMESTAMPZ) {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Function extension `$function` with a TIMESTAMP WITH TIME ZONE is unsupported for this target, " +
+                    "which uses the session time zone instead of the value's own offset",
+            ),
+        )
+    }
 }
 
 internal fun intLiteral(value: Int): Expr = exprLit(Literal.intNum(value.toLong()))

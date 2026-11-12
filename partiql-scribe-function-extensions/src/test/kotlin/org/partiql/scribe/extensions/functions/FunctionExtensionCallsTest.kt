@@ -166,7 +166,8 @@ class FunctionExtensionCallsTest {
         val expected =
             mapOf(
                 TrinoAstToSql(context) to TestTrinoCalls(context, routines)::translate to
-                    "format_datetime(CAST(d AS TIMESTAMP), 'yyyy/yy-MM-dd DDD HH:hh:hh:mm:ss.SSS.SSS a a, 01;_')",
+                    "format_datetime(date_trunc('millisecond', CAST(d AS TIMESTAMP)), " +
+                    "'yyyy/yy-MM-dd DDD HH:hh:hh:mm:ss.SSS.SSS a a, 01;_')",
                 SparkAstToSql(context) to TestSparkCalls(context, routines)::translate to
                     "`date_format`(CAST(`d` AS TIMESTAMP_NTZ), 'yyyy/yy-MM-dd DDD HH:hh:hh:mm:ss.SSS.SSS a a, 01;_')",
                 DuckDBAstToSql(context) to TestDuckDBCalls(context, routines)::translate to
@@ -228,6 +229,14 @@ class FunctionExtensionCallsTest {
             "YYYY\"T\"HH24",
             "YYYY'MM",
             "YYYY%MM",
+            // The extension matches patterns only in upper or lower case, so these are text there, not elements.
+            "Mm",
+            "Yyyy",
+            "Dd",
+            "Hh24",
+            "mI",
+            "sS",
+            "Ms",
         ).forEach { template ->
             val args =
                 args("to_char").toMutableList().apply {
@@ -243,6 +252,23 @@ class FunctionExtensionCallsTest {
     }
 
     @Test
+    fun `zoned timestamps are translated only by trino`() {
+        // The extensions use the value's own offset; Redshift, Spark, and DuckDB use the session time zone instead.
+        val zoned = SqlArg(exprVarRef(Identifier.regular("tz"), false), PType.timestampz())
+        val dateTrunc = listOf(SqlArg(exprLit(Literal.string("day")), PType.string()), zoned)
+        val toChar = listOf(zoned, SqlArg(exprLit(Literal.string("YYYY-MM-DD HH24:MI")), PType.string()))
+
+        assertEquals("date_trunc('day', tz)", target("trino").sql("date_trunc", dateTrunc))
+        assertEquals("format_datetime(date_trunc('millisecond', tz), 'yyyy-MM-dd HH:mm')", target("trino").sql("to_char", toChar))
+        for (name in listOf("spark", "redshift", "duckdb")) {
+            for ((function, args) in listOf("date_trunc" to dateTrunc, "to_char" to toChar)) {
+                val error = assertFailsWith<ScribeException>("$name $function") { target(name).translate(function, args) }
+                assertEquals("UNSUPPORTED_OPERATION", error.error.name(), "$name $function")
+            }
+        }
+    }
+
+    @Test
     fun `to char splits adjacent elements without separators`() {
         val args =
             args("to_char").toMutableList().apply {
@@ -250,7 +276,7 @@ class FunctionExtensionCallsTest {
             }
         mapOf(
             "spark" to "`date_format`(`ts`, 'yyyyMMddHHmmssSSS')",
-            "trino" to "format_datetime(ts, 'yyyyMMddHHmmssSSS')",
+            "trino" to "format_datetime(date_trunc('millisecond', ts), 'yyyyMMddHHmmssSSS')",
             "redshift" to "TO_CHAR(ts, 'YYYYMMDDHH24MISSMS')",
             "duckdb" to "strftime(ts, '%Y%m%d%H%M%S%g')",
         ).forEach { (name, expected) ->
@@ -380,7 +406,7 @@ class FunctionExtensionCallsTest {
                 "to_unixtime" to "CAST(to_unixtime(with_timezone(date_trunc('second', ts), 'UTC')) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
                 "date_trunc" to "date_trunc('month', ts)",
-                "to_char" to "format_datetime(ts, 'yyyy-MM-dd HH:mm:ss.SSS')",
+                "to_char" to "format_datetime(date_trunc('millisecond', ts), 'yyyy-MM-dd HH:mm:ss.SSS')",
             ),
         )
     }

@@ -12,6 +12,7 @@ import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
 import org.partiql.scribe.sql.SqlArgs
 import org.partiql.spi.types.PType
+import java.util.Locale
 
 /**
  * The `to_char` template elements that every Scribe target formats identically. Each element knows its spelling in
@@ -47,12 +48,13 @@ internal sealed interface ToCharPart {
 }
 
 /**
- * Parses the subset of PostgreSQL / Oracle `to_char` templates that Scribe translates to every target.
+ * Parses the subset of PostgreSQL `to_char` templates that Scribe translates to every target.
  *
- * Template patterns are matched case-insensitively, longest first, exactly like the `to_char` function extension, so
- * a template is either translated with the same meaning or rejected; it is never reinterpreted. Supported:
+ * Template patterns are matched longest first, in upper or lower case only, exactly like the `to_char` function
+ * extension (so `Mm` is text, not `MM`). A template is either translated with the same meaning or rejected; it is never
+ * reinterpreted. Supported:
  *
- * - `YYYY YY MM DD DDD HH24 HH12 HH MI SS MS FF3`, and `AM` / `PM` in upper case;
+ * - `YYYY YY MM DD DDD HH24 HH12 HH MI SS MS FF3` in upper or lower case, and `AM` / `PM` in upper case;
  * - unquoted digits, spaces, and `- / : . , ; _` between them.
  *
  * Everything else is rejected, including names (`Month`, `Dy`, ...), fill mode (`FM`), ordinal suffixes (`TH`),
@@ -65,9 +67,9 @@ internal object ToCharTemplate {
     private val PATTERNS =
         listOf(
             "A.D.", "A.M.", "AD", "AM", "B.C.", "BC", "CC", "DAY", "DDD", "DD", "DY", "D",
-            "FF1", "FF2", "FF3", "FF4", "FF5", "FF6", "FF7", "FF8", "FF9", "FF",
+            "FF1", "FF2", "FF3", "FF4", "FF5", "FF6",
             "HH24", "HH12", "HH", "IDDD", "ID", "IW", "IYYY", "IYY", "IY", "I", "J",
-            "MI", "MM", "MONTH", "MON", "MS", "OF", "P.M.", "PM", "Q", "RM", "RRRR", "RR",
+            "MI", "MM", "MONTH", "MON", "MS", "OF", "P.M.", "PM", "Q", "RM",
             "SSSSS", "SSSS", "SS", "TZH", "TZM", "TZ", "US", "WW", "W",
             "Y,YYY", "YYYY", "YYY", "YY", "Y", "FM", "FX", "TM",
         ).sortedByDescending { it.length }
@@ -109,7 +111,7 @@ internal object ToCharTemplate {
                 continue
             }
             val pattern =
-                PATTERNS.firstOrNull { template.regionMatches(i, it, 0, it.length, ignoreCase = true) }
+                PATTERNS.firstOrNull { matchesCase(template, i, it) }
                     ?: return Result.Unsupported("character `$c`")
             val spelling = template.substring(i, i + pattern.length)
             val element =
@@ -132,6 +134,26 @@ internal object ToCharTemplate {
         }
         return Result.Supported(parts)
     }
+
+    /**
+     * Like the function extension, a pattern matches in upper or lower case, and a name pattern also capitalized
+     * (names are rejected later anyway).
+     */
+    private fun matchesCase(
+        template: String,
+        offset: Int,
+        pattern: String,
+    ): Boolean {
+        if (!template.regionMatches(offset, pattern, 0, pattern.length, ignoreCase = true)) {
+            return false
+        }
+        val text = template.substring(offset, offset + pattern.length)
+        return text == pattern ||
+            text == pattern.lowercase(Locale.ROOT) ||
+            (pattern in NAME_PATTERNS && text == pattern[0] + pattern.substring(1).lowercase(Locale.ROOT))
+    }
+
+    private val NAME_PATTERNS = setOf("MONTH", "MON", "DAY", "DY")
 
     sealed interface Result {
         data class Supported(
@@ -159,13 +181,16 @@ internal fun List<ToCharPart>.render(element: (ToCharElement) -> String): String
 /**
  * Translates `to_char(<timestamp | date>, '<template>')` to `<function>(<value>, '<pattern>')`, where [pattern]
  * renders the parsed template for the target. A date argument is cast to TIMESTAMP so every target formats it as
- * midnight, like the function extension.
+ * midnight, like the function extension. [zonedTimestamps] allows a TIMESTAMP WITH TIME ZONE (see
+ * [rejectZonedTimestamp]), and [truncateToMillis] truncates the value to milliseconds before formatting.
  */
 internal fun toChar(
     listener: ScribeProblemListener,
     args: SqlArgs,
     function: String,
     pattern: (List<ToCharPart>) -> String,
+    zonedTimestamps: Boolean = false,
+    truncateToMillis: Boolean = false,
 ): Expr {
     val template = (args.getOrNull(1)?.expr as? ExprLit)?.lit
     if (args.size != 2 || template?.code() != Literal.STRING) {
@@ -190,7 +215,16 @@ internal fun toChar(
                 )
         }
     val source = args[0]
-    val value = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
+    rejectZonedTimestamp(listener, TO_CHAR, source, zonedTimestamps)
+    val timestamp = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
+    // Trino's format_datetime rounds the fraction to milliseconds, which can carry into every other field
+    // (23:59:59.999999 on Dec 31 prints as the next year); the extension truncates, so truncate first.
+    val value =
+        if (truncateToMillis) {
+            exprCall(Identifier.regular("date_trunc"), listOf(exprLit(Literal.string("millisecond")), timestamp))
+        } else {
+            timestamp
+        }
     return exprCall(Identifier.regular(function), listOf(value, exprLit(Literal.string(pattern(parts)))))
 }
 
