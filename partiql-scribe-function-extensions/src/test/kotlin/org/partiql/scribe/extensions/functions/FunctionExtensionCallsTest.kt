@@ -63,6 +63,252 @@ class FunctionExtensionCallsTest {
     }
 
     @Test
+    fun `date trunc rejects a dynamic datetime part`() {
+        targets().forEach { target ->
+            val args =
+                args("date_trunc").toMutableList().apply {
+                    this[0] = SqlArg(exprVarRef(Identifier.regular("part"), false), PType.string())
+                }
+
+            val error = assertFailsWith<ScribeException>(target.name) { target.translate("date_trunc", args) }
+
+            assertEquals("UNSUPPORTED_OPERATION", error.error.name())
+        }
+    }
+
+    @Test
+    fun `date trunc rejects an unsupported datetime part`() {
+        listOf("century", "microsecond", "decade", "millennium", "weeks", " day", "").forEach { part ->
+            targets().forEach { target ->
+                val args =
+                    args("date_trunc").toMutableList().apply {
+                        this[0] = SqlArg(exprLit(Literal.string(part)), PType.string())
+                    }
+
+                val error = assertFailsWith<ScribeException>("${target.name} '$part'") { target.translate("date_trunc", args) }
+
+                assertEquals("UNSUPPORTED_OPERATION", error.error.name())
+            }
+        }
+    }
+
+    @Test
+    fun `date trunc rejects a wrong number of arguments`() {
+        targets().forEach { target ->
+            val args = args("date_trunc").take(1)
+
+            val error = assertFailsWith<ScribeException>(target.name) { target.translate("date_trunc", args) }
+
+            assertEquals("UNSUPPORTED_OPERATION", error.error.name())
+        }
+    }
+
+    @Test
+    fun `date trunc translates every supported part in every target`() {
+        listOf("millisecond", "second", "minute", "hour", "day", "week", "month", "quarter", "year").forEach { part ->
+            val args =
+                args("date_trunc").toMutableList().apply {
+                    this[0] = SqlArg(exprLit(Literal.string(part.uppercase())), PType.string())
+                }
+            mapOf(
+                "spark" to "`date_trunc`('$part', `ts`)",
+                "trino" to "date_trunc('$part', ts)",
+                "redshift" to "date_trunc('$part', ts)",
+                "duckdb" to "date_trunc('$part', ts)",
+            ).forEach { (name, expected) ->
+                assertEquals(expected, target(name).sql("date_trunc", args), "$name $part")
+            }
+        }
+    }
+
+    @Test
+    fun `date trunc casts a date to timestamp in every target`() {
+        val args =
+            listOf(
+                SqlArg(exprLit(Literal.string("month")), PType.string()),
+                SqlArg(exprVarRef(Identifier.regular("d"), false), PType.date()),
+            )
+        mapOf(
+            "spark" to "`date_trunc`('month', CAST(`d` AS TIMESTAMP_NTZ))",
+            "trino" to "date_trunc('month', CAST(d AS TIMESTAMP))",
+            "redshift" to "date_trunc('month', CAST(d AS TIMESTAMP))",
+            "duckdb" to "date_trunc('month', CAST(d AS TIMESTAMP))",
+        ).forEach { (name, expected) ->
+            assertEquals(expected, target(name).sql("date_trunc", args), name)
+        }
+    }
+
+    @Test
+    fun `date trunc normalizes the part and casts a date to timestamp`() {
+        val context = ScribeContext.standard()
+        val calls = TestTrinoCalls(context, routines)
+        val args =
+            listOf(
+                SqlArg(exprLit(Literal.string("QUARTER")), PType.string()),
+                SqlArg(exprVarRef(Identifier.regular("d"), false), PType.date()),
+            )
+
+        val sql = TrinoAstToSql(context).transform(calls.translate("date_trunc", args)).sql(SqlLayout.STANDARD)
+
+        assertEquals("date_trunc('quarter', CAST(d AS TIMESTAMP))", sql)
+    }
+
+    @Test
+    fun `to char translates every supported element`() {
+        val context = ScribeContext.standard()
+        val template = "yyyy/YY-mm-dd ddd hh24:HH12:hh:MI:ss.MS.ff3 AM PM, 01;_"
+        val args =
+            listOf(
+                SqlArg(exprVarRef(Identifier.regular("d"), false), PType.date()),
+                SqlArg(exprLit(Literal.string(template)), PType.string()),
+            )
+
+        val expected =
+            mapOf(
+                TrinoAstToSql(context) to TestTrinoCalls(context, routines)::translate to
+                    "format_datetime(date_trunc('millisecond', CAST(d AS TIMESTAMP)), " +
+                    "'yyyy/yy-MM-dd DDD HH:hh:hh:mm:ss.SSS.SSS a a, 01;_')",
+                SparkAstToSql(context) to TestSparkCalls(context, routines)::translate to
+                    "`date_format`(CAST(`d` AS TIMESTAMP_NTZ), 'yyyy/yy-MM-dd DDD HH:hh:hh:mm:ss.SSS.SSS a a, 01;_')",
+                DuckDBAstToSql(context) to TestDuckDBCalls(context, routines)::translate to
+                    "strftime(CAST(d AS TIMESTAMP), '%Y/%y-%m-%d %j %H:%I:%I:%M:%S.%g.%g %p %p, 01;_')",
+                RedshiftAstToSql(context) to TestRedshiftCalls(context, routines)::translate to
+                    "TO_CHAR(CAST(d AS TIMESTAMP), 'YYYY/YY-MM-DD DDD HH24:HH12:HH12:MI:SS.MS.MS AM AM, 01;_')",
+            )
+        expected.forEach { (target, sql) ->
+            val (dialect, translate) = target
+            assertEquals(sql, dialect.transform(translate("to_char", args)).sql(SqlLayout.STANDARD))
+        }
+    }
+
+    @Test
+    fun `to char rejects templates that are not formatted the same in every target`() {
+        listOf(
+            "",
+            "DDDD",
+            "MONTH",
+            "MON",
+            "Day",
+            "DY",
+            "RM",
+            "J",
+            "W",
+            "WW",
+            "ID",
+            "IYYY",
+            "CC",
+            "Y,YYY",
+            "Y",
+            "RRRR",
+            "RR",
+            "SSSSS",
+            "FF",
+            "FF1",
+            "FF9",
+            "Am",
+            "AD",
+            "FXYYYY",
+            "TMMonth",
+            "YYYY T",
+            "YYYY\\MM",
+            "YYYY#MM",
+            "YYYY[MM]",
+            "Month",
+            "Mon DD",
+            "FMDD",
+            "DDth",
+            "Q",
+            "IW",
+            "US",
+            "FF6",
+            "SSSS",
+            "YYY",
+            "am",
+            "A.M.",
+            "TZ",
+            "YYYY\"T\"HH24",
+            "YYYY'MM",
+            "YYYY%MM",
+            // The extension matches patterns only in upper or lower case, so these are text there, not elements.
+            "Mm",
+            "Yyyy",
+            "Dd",
+            "Hh24",
+            "mI",
+            "sS",
+            "Ms",
+        ).forEach { template ->
+            val args =
+                args("to_char").toMutableList().apply {
+                    this[1] = SqlArg(exprLit(Literal.string(template)), PType.string())
+                }
+            targets().forEach { target ->
+                val error =
+                    assertFailsWith<ScribeException>("${target.name} '$template'") { target.translate("to_char", args) }
+
+                assertEquals("UNSUPPORTED_OPERATION", error.error.name(), template)
+            }
+        }
+    }
+
+    @Test
+    fun `zoned timestamps are translated only by trino`() {
+        // The extensions use the value's own offset; Redshift, Spark, and DuckDB use the session time zone instead.
+        val zoned = SqlArg(exprVarRef(Identifier.regular("tz"), false), PType.timestampz())
+        val dateTrunc = listOf(SqlArg(exprLit(Literal.string("day")), PType.string()), zoned)
+        val toChar = listOf(zoned, SqlArg(exprLit(Literal.string("YYYY-MM-DD HH24:MI")), PType.string()))
+
+        assertEquals("date_trunc('day', tz)", target("trino").sql("date_trunc", dateTrunc))
+        assertEquals("format_datetime(date_trunc('millisecond', tz), 'yyyy-MM-dd HH:mm')", target("trino").sql("to_char", toChar))
+        for (name in listOf("spark", "redshift", "duckdb")) {
+            for ((function, args) in listOf("date_trunc" to dateTrunc, "to_char" to toChar)) {
+                val error = assertFailsWith<ScribeException>("$name $function") { target(name).translate(function, args) }
+                assertEquals("UNSUPPORTED_OPERATION", error.error.name(), "$name $function")
+            }
+        }
+    }
+
+    @Test
+    fun `to char splits adjacent elements without separators`() {
+        val args =
+            args("to_char").toMutableList().apply {
+                this[1] = SqlArg(exprLit(Literal.string("YYYYMMDDHH24MISSMS")), PType.string())
+            }
+        mapOf(
+            "spark" to "`date_format`(`ts`, 'yyyyMMddHHmmssSSS')",
+            "trino" to "format_datetime(date_trunc('millisecond', ts), 'yyyyMMddHHmmssSSS')",
+            "redshift" to "TO_CHAR(ts, 'YYYYMMDDHH24MISSMS')",
+            "duckdb" to "strftime(ts, '%Y%m%d%H%M%S%g')",
+        ).forEach { (name, expected) ->
+            assertEquals(expected, target(name).sql("to_char", args), name)
+        }
+    }
+
+    @Test
+    fun `to char rejects a wrong number of arguments`() {
+        targets().forEach { target ->
+            val error =
+                assertFailsWith<ScribeException>(target.name) { target.translate("to_char", args("to_char").take(1)) }
+
+            assertEquals("UNSUPPORTED_OPERATION", error.error.name())
+        }
+    }
+
+    @Test
+    fun `to char rejects a dynamic template`() {
+        targets().forEach { target ->
+            val args =
+                args("to_char").toMutableList().apply {
+                    this[1] = SqlArg(exprVarRef(Identifier.regular("fmt"), false), PType.string())
+                }
+
+            val error = assertFailsWith<ScribeException>(target.name) { target.translate("to_char", args) }
+
+            assertEquals("UNSUPPORTED_OPERATION", error.error.name())
+        }
+    }
+
+    @Test
     fun `redshift contains rejects an invalid collection`() {
         val calls = TestRedshiftCalls(ScribeContext.standard(), routines)
         val args =
@@ -138,6 +384,8 @@ class FunctionExtensionCallsTest {
                     "CAST(`unix_timestamp`(`ts`) AS BIGINT) - CASE WHEN `ts` < TIMESTAMP_NTZ '1970-01-01 00:00:00' " +
                     "AND `date_part`('SECOND', `ts`) <> `second`(`ts`) THEN 1 ELSE 0 END",
                 "pow" to "`pow`(2, 3)",
+                "date_trunc" to "`date_trunc`('month', `ts`)",
+                "to_char" to "`date_format`(`ts`, 'yyyy-MM-dd HH:mm:ss.SSS')",
             ),
         )
     }
@@ -157,6 +405,8 @@ class FunctionExtensionCallsTest {
                 "hex_to_bigint" to "from_base('00C10300', 16)",
                 "to_unixtime" to "CAST(to_unixtime(with_timezone(date_trunc('second', ts), 'UTC')) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
+                "date_trunc" to "date_trunc('month', ts)",
+                "to_char" to "format_datetime(date_trunc('millisecond', ts), 'yyyy-MM-dd HH:mm:ss.SSS')",
             ),
         )
     }
@@ -179,6 +429,8 @@ class FunctionExtensionCallsTest {
                 "hex_to_bigint" to "STRTOL('00C10300', 16)",
                 "to_unixtime" to "CAST(DATE_PART(EPOCH, date_trunc('second', ts)) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
+                "date_trunc" to "date_trunc('month', ts)",
+                "to_char" to "TO_CHAR(ts, 'YYYY-MM-DD HH24:MI:SS.MS')",
             ),
         )
     }
@@ -202,9 +454,34 @@ class FunctionExtensionCallsTest {
                     "ELSE CAST('0x' || '00C10300' AS UBIGINT) END AS BIGINT)",
                 "to_unixtime" to "CAST(epoch(date_trunc('second', ts)) AS BIGINT)",
                 "pow" to "\"pow\"(2, 3)",
+                "date_trunc" to "date_trunc('month', ts)",
+                "to_char" to "strftime(ts, '%Y-%m-%d %H:%M:%S.%g')",
             ),
         )
     }
+
+    private class Target(
+        val name: String,
+        val dialect: AstToSql,
+        val translate: (String, SqlArgs) -> Expr,
+    ) {
+        fun sql(
+            name: String,
+            args: SqlArgs,
+        ): String = dialect.transform(translate(name, args)).sql(SqlLayout.STANDARD)
+    }
+
+    private fun targets(): List<Target> {
+        val context = ScribeContext.standard()
+        return listOf(
+            Target("spark", SparkAstToSql(context), TestSparkCalls(context, routines)::translate),
+            Target("trino", TrinoAstToSql(context), TestTrinoCalls(context, routines)::translate),
+            Target("redshift", RedshiftAstToSql(context), TestRedshiftCalls(context, routines)::translate),
+            Target("duckdb", DuckDBAstToSql(context), TestDuckDBCalls(context, routines)::translate),
+        )
+    }
+
+    private fun target(name: String): Target = targets().single { it.name == name }
 
     private fun assertTranslations(
         dialect: AstToSql,
@@ -239,6 +516,16 @@ class FunctionExtensionCallsTest {
                 )
             "hex_to_bigint" -> listOf(SqlArg(exprLit(Literal.string("00C10300")), PType.string()))
             "to_unixtime" -> listOf(SqlArg(exprVarRef(Identifier.regular("ts"), false), PType.timestamp()))
+            "date_trunc" ->
+                listOf(
+                    SqlArg(exprLit(Literal.string("month")), PType.string()),
+                    SqlArg(exprVarRef(Identifier.regular("ts"), false), PType.timestamp()),
+                )
+            "to_char" ->
+                listOf(
+                    SqlArg(exprVarRef(Identifier.regular("ts"), false), PType.timestamp()),
+                    SqlArg(exprLit(Literal.string("YYYY-MM-DD HH24:MI:SS.MS")), PType.string()),
+                )
             "pow" ->
                 listOf(
                     SqlArg(exprLit(Literal.intNum(2)), PType.integer()),
@@ -293,7 +580,7 @@ class FunctionExtensionCallsTest {
     }
 
     private companion object {
-        val NAMES = listOf("date_add", "utcnow", "contains", "hex_to_bigint", "to_unixtime", "pow")
+        val NAMES = listOf("date_add", "utcnow", "contains", "hex_to_bigint", "to_unixtime", "pow", "date_trunc", "to_char")
 
         fun ref(name: String): RoutineRef = RoutineRef("test", Name.of(name))
     }

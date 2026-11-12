@@ -27,6 +27,7 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+- Adds translations for the `date_trunc` and `to_char` function extensions.
 
 ### Changed
 - Spark and Redshift targets: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice; build them from the unescaped value instead. `SparkCalls` and `RedshiftCalls` now override `like`; a subclass that overrides `like` should call `super.like(...)` to keep the pattern escaping.
