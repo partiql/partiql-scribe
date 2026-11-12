@@ -27,10 +27,14 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
-- Added transpilation of the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX` (e.g. `MAX(x) OVER (PARTITION BY k ORDER BY t)`) to all targets. Redshift supports them only without a window `ORDER BY` (Redshift requires a `ROWS` frame, which cannot express the default frame) and without `DISTINCT`; Spark does not support `DISTINCT`.
-- Added Scribe errors for window functions in correlated subqueries that a target does not support: on Redshift, any correlation in a subquery with a window function; on Trino, a window function in a correlated scalar subquery.
+- All targets: transpile the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX`.
+- Redshift target: aggregate window functions are supported only without a window `ORDER BY` and without `DISTINCT`, since Redshift needs a `ROWS` frame that cannot express the default frame.
+- Spark target: aggregate window functions do not support `DISTINCT`.
 
 ### Changed
+- Redshift target: a subquery with a window function and a correlation reference, including `ROW_NUMBER` and `RANK`, is now an error.
+- Trino target: a window function in a correlated subquery, including a derived table or a lateral join, is now an error.
+- PartiQL now rejects an outer reference or a subquery in a window function at planning ([partiql-lang-kotlin#2006](https://github.com/partiql/partiql-lang-kotlin/pull/2006)).
 
 ### Deprecated
 
@@ -42,6 +46,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @xd1313113
 
 ## [2.1.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.1) - 2026-10-27
 

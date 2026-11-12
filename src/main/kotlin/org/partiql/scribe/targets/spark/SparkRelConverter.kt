@@ -16,6 +16,7 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
 import org.partiql.scribe.sql.andPredicate
 import org.partiql.scribe.sql.utils.isUnknown
+import org.partiql.spi.function.Agg
 import org.partiql.spi.types.PType
 
 public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeContext, outer: List<Locals> = emptyList()) : RelConverter(
@@ -30,12 +31,13 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
      */
     override fun checkAggregateWindowFunction(
         windowFunction: WindowFunctionNode,
+        aggregate: Agg,
         rel: RelWindow,
     ) {
         if (windowFunction.isDistinct) {
             unsupported(
-                "Unsupported aggregate window function ${windowFunction.aggregateName()}: " +
-                    "Spark does not support DISTINCT in window functions",
+                "Unsupported aggregate window function ${aggregate.signature.name.uppercase()}: " +
+                    "Spark does not support DISTINCT in window functions. Remove DISTINCT or use another target",
             )
         }
     }

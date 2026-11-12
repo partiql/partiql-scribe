@@ -8,7 +8,6 @@ import org.partiql.ast.Ast.exprNullIf
 import org.partiql.ast.DataType
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
-import org.partiql.plan.rel.Rel
 import org.partiql.plan.rex.Rex
 import org.partiql.plan.rex.RexCall
 import org.partiql.plan.rex.RexCase
@@ -27,7 +26,6 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
 import org.partiql.scribe.sql.SqlArg
-import org.partiql.scribe.sql.utils.isCorrelatedSubqueryWithWindow
 import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
@@ -45,18 +43,9 @@ public open class RedshiftRexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : RexConverter(transform, locals, context) {
-    /**
-     * Redshift does not support correlation references from within a subquery that contains a window function; see
-     * https://docs.aws.amazon.com/redshift/latest/dg/r_correlated_subqueries.html.
-     */
-    override fun checkSubquery(
-        rel: Rel,
-        isScalar: Boolean,
-    ) {
-        if (isCorrelatedSubqueryWithWindow(rel)) {
-            unsupported("Redshift does not support correlation references from within a subquery that contains a window function")
-        }
-    }
+    // See https://docs.aws.amazon.com/redshift/latest/dg/r_correlated_subqueries.html.
+    override val correlatedSubqueryWithWindowError: String =
+        "Redshift does not support correlation references from within a subquery that contains a window function"
 
     override fun visitCall(
         rex: RexCall,

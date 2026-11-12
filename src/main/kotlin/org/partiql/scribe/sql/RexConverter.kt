@@ -59,6 +59,8 @@ import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
+import org.partiql.scribe.sql.utils.isCorrelatedSubqueryWithWindow
+import org.partiql.scribe.sql.utils.unsupported
 import org.partiql.spi.types.IntervalCode
 import org.partiql.spi.types.PType
 import org.partiql.spi.types.PTypeField
@@ -146,6 +148,11 @@ public class Locals(
             null
         }
     }
+
+    /**
+     * @return true if the scope [depth] scopes out (0 is this scope) binds the common table expressions of a WITH clause.
+     */
+    internal fun isWithScope(depth: Int): Boolean = getScope(depth)?.ctes?.isNotEmpty() == true
 
     private fun getScope(depth: Int): Locals? {
         return when (depth) {
@@ -879,32 +886,27 @@ public open class RexConverter(
     }
 
     /**
-     * Checks that this target can express the subquery [rel] (a scalar subquery if [isScalar]) nested in the current
-     * query; reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] otherwise. For example, targets
-     * differ in their support for window functions in correlated subqueries.
+     * If set, the error for a subquery (scalar, `IN`, `EXISTS`, or a derived table) that contains a window function and
+     * a correlation reference, which this target does not support.
      */
-    internal open fun checkSubquery(
-        rel: Rel,
-        isScalar: Boolean,
-    ) {}
+    internal open val correlatedSubqueryWithWindowError: String? = null
+
+    private fun checkSubquery(rel: Rel) {
+        val error = correlatedSubqueryWithWindowError ?: return
+        if (isCorrelatedSubqueryWithWindow(rel) { locals.isWithScope(it) }) unsupported(error)
+    }
 
     /**
      * Reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] with [message].
      */
-    internal fun unsupported(message: String): Nothing =
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = message,
-            ),
-        )
+    internal fun unsupported(message: String): Nothing = listener.unsupported(message)
 
     override fun visitSelect(
         rex: RexSelect,
         ctx: Unit,
     ): Expr {
         val inputRel = rex.input
-        checkSubquery(inputRel, isScalar = false)
+        checkSubquery(inputRel)
         val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(inputRel, ctx).toExprQuerySet()
     }
@@ -947,7 +949,7 @@ public open class RexConverter(
         // For `IN` and `EXISTS`, it was planned as RexSelect Node and get handled by visitSelect
         // For comparison operators, it was planned as RexSubquery and get handled by visitSubquery
         val transform = transform
-        checkSubquery(rex.input, isScalar = rex.isScalar)
+        checkSubquery(rex.input)
         val relConverter = transform.getRelConverter(locals.outer + listOf(locals))
         return relConverter.apply(rex.input, ctx).toExprQuerySet()
     }

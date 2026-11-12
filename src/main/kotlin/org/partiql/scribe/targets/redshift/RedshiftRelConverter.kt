@@ -15,6 +15,7 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
 import org.partiql.scribe.sql.RexConverter
 import org.partiql.scribe.sql.utils.isUnknown
+import org.partiql.spi.function.Agg
 import org.partiql.spi.types.PType
 
 public open class RedshiftRelConverter(
@@ -86,27 +87,26 @@ public open class RedshiftRelConverter(
     }
 
     /**
-     * Redshift aggregate window functions do not support DISTINCT, and require an explicit frame clause when the window
-     * has an ORDER BY. Redshift only supports ROWS frames, which cannot express the SQL default frame used by PartiQL
-     * (through the current row's peers), so only an aggregate window function without an ORDER BY can be transpiled.
+     * Redshift aggregate window functions do not support DISTINCT, and with an ORDER BY require a ROWS frame, which
+     * cannot express the default frame (through the current row's peers).
      * See https://docs.aws.amazon.com/redshift/latest/dg/c_Window_functions.html.
      */
     override fun checkAggregateWindowFunction(
         windowFunction: WindowFunctionNode,
+        aggregate: Agg,
         rel: RelWindow,
     ) {
+        val name = aggregate.signature.name.uppercase()
         if (windowFunction.isDistinct) {
             unsupported(
-                "Unsupported aggregate window function ${windowFunction.aggregateName()}: " +
-                    "Redshift does not support DISTINCT in aggregate window functions",
+                "Unsupported aggregate window function $name: Redshift does not support DISTINCT in aggregate window " +
+                    "functions. Remove DISTINCT or use another target",
             )
         }
         if (rel.collations.isNotEmpty()) {
             unsupported(
-                "Unsupported aggregate window function ${windowFunction.aggregateName()}: " +
-                    "Redshift requires a ROWS frame clause for an aggregate window function with ORDER BY, which cannot " +
-                    "express the default frame (the current row's peers); window frame clauses are not supported yet " +
-                    "(https://github.com/partiql/partiql-lang-kotlin/issues/1837)",
+                "Unsupported aggregate window function $name: Redshift requires a ROWS frame with ORDER BY, which cannot " +
+                    "express the default frame. Remove ORDER BY from the OVER clause or use another target",
             )
         }
     }
@@ -145,10 +145,7 @@ public open class RedshiftRelConverter(
         rel: RelWindow,
         rexConverter: RexConverter,
     ): Expr {
-        if (windowFunction.aggregate != null) {
-            checkAggregateWindowFunction(windowFunction, rel)
-        }
-        val windowType = createWindowFunctionType(windowFunction, rexConverter)
+        val windowType = createWindowFunctionType(windowFunction, rel, rexConverter)
         val windowSpec = createInlineWindowSpecification(rel, rexConverter)
         return exprWindowFunction(windowType, windowSpec)
     }

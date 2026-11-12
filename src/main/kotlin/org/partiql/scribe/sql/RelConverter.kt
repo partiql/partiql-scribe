@@ -87,6 +87,8 @@ import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.sql.utils.toIdentifier
+import org.partiql.scribe.sql.utils.unsupported
+import org.partiql.spi.function.Agg
 
 /**
  * Data class to hold the state to create an [ExprQuerySet].
@@ -880,10 +882,7 @@ public open class RelConverter(
         rel: RelWindow,
         rexConverter: RexConverter,
     ): Expr {
-        if (windowFunction.aggregate != null) {
-            checkAggregateWindowFunction(windowFunction, rel)
-        }
-        val windowType = createWindowFunctionType(windowFunction, rexConverter)
+        val windowType = createWindowFunctionType(windowFunction, rel, rexConverter)
 
         val windowSpec =
             if (rel.name != null) {
@@ -901,12 +900,18 @@ public open class RelConverter(
         return exprWindowFunction(windowType, windowSpec)
     }
 
+    /**
+     * Converts [windowFunction] of [rel]; an aggregate window function is first checked by [checkAggregateWindowFunction].
+     */
     internal fun createWindowFunctionType(
         windowFunction: WindowFunctionNode,
+        rel: RelWindow,
         rexConverter: RexConverter,
     ): WindowFunctionType {
-        if (windowFunction.aggregate != null) {
-            return createAggregateWindowFunctionType(windowFunction, rexConverter)
+        val aggregate = windowFunction.aggregate
+        if (aggregate != null) {
+            checkAggregateWindowFunction(windowFunction, aggregate, rel)
+            return createAggregateWindowFunctionType(windowFunction, aggregate, rexConverter)
         }
         val functionName = windowFunction.signature.name
         val arguments = windowFunction.arguments
@@ -967,47 +972,42 @@ public open class RelConverter(
     }
 
     /**
-     * Checks that this target can express the aggregate window function [windowFunction] of [rel]; reports and throws a
-     * [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] otherwise. PartiQL does not support window frame clauses yet,
-     * so an aggregate window function uses the SQL default frame: with an ORDER BY, from the start of the partition
-     * through the current row's peers; without one, the whole partition.
+     * Checks that this target can express the aggregate window function [windowFunction] of [rel]; reports an
+     * [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] otherwise. Without a frame clause, the window uses the default
+     * frame: through the current row's peers with an ORDER BY, the whole partition without one.
      */
     internal open fun checkAggregateWindowFunction(
         windowFunction: WindowFunctionNode,
+        aggregate: Agg,
         rel: RelWindow,
     ) {}
 
     /**
-     * The uppercase name of an aggregate window function, e.g. `MAX`.
-     */
-    internal fun WindowFunctionNode.aggregateName(): String = aggregate!!.signature.name.uppercase()
-
-    /**
      * Reports and throws a [ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION] with [message].
      */
-    internal fun unsupported(message: String): Nothing =
-        listener.reportAndThrow(
-            ScribeProblem.simpleError(
-                code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
-                message = message,
-            ),
-        )
+    internal fun unsupported(message: String): Nothing = listener.unsupported(message)
 
     /**
-     * Converts an aggregate window function, e.g. `SUM(x) OVER (...)`, to a [WindowFunctionType.Aggregate]. The aggregate
-     * is converted exactly like a GROUP BY aggregate (see [visitAggregate]), so a target's aggregate rules apply to both.
+     * Converts an aggregate window function, e.g. `SUM(x) OVER (...)`, like a GROUP BY aggregate (see [visitAggregate]).
      */
     private fun createAggregateWindowFunctionType(
         windowFunction: WindowFunctionNode,
+        aggregate: Agg,
         rexConverter: RexConverter,
     ): WindowFunctionType {
-        val aggregate = windowFunction.aggregate!!
         val name = aggregate.signature.name
+        if (name.uppercase() !in WINDOW_AGGREGATES) {
+            unsupported("Unsupported aggregate window function ${name.uppercase()}")
+        }
         val args = windowFunction.arguments.map { SqlArg(rexConverter.apply(it), it.type.pType) }
         val call =
             transform.getAggregate(windowFunction.routineRef, name, args, windowFunction.isDistinct) as? ExprCall
-                ?: unsupported("Aggregate $name cannot be used as a window function for this target")
-        return WindowFunctionType.Aggregate(call.function, call.args, call.setq)
+                ?: unsupported("Aggregate ${name.uppercase()} cannot be used as a window function: its rule must return a call")
+        return try {
+            WindowFunctionType.Aggregate(call.function, call.args, call.setq)
+        } catch (e: IllegalArgumentException) {
+            unsupported("Unsupported aggregate window function ${name.uppercase()}: ${e.message}")
+        }
     }
 
     private fun createNamedWindowDefinition(
@@ -1086,3 +1086,8 @@ internal fun andPredicate(
     existing: Expr?,
     predicate: Expr,
 ): Expr = if (existing == null) predicate else Ast.exprOperator("AND", existing, predicate)
+
+/**
+ * The aggregates that may be used as window functions.
+ */
+private val WINDOW_AGGREGATES = listOf("COUNT", "SUM", "AVG", "MIN", "MAX")

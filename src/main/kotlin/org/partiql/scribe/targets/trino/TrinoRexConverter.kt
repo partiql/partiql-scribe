@@ -6,14 +6,12 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.expr.Expr
 import org.partiql.ast.expr.ExprPath
 import org.partiql.ast.expr.ExprVarRef
-import org.partiql.plan.rel.Rel
 import org.partiql.plan.rex.RexLit
 import org.partiql.plan.rex.RexPathKey
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.PlanToAst
 import org.partiql.scribe.sql.RexConverter
-import org.partiql.scribe.sql.utils.isCorrelatedSubqueryWithWindow
 import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.scribe.targets.trino.utils.TRANSFORM_VAR
@@ -24,18 +22,8 @@ public open class TrinoRexConverter(
     private val locals: Locals,
     private val context: ScribeContext,
 ) : RexConverter(transform, locals, context) {
-    /**
-     * Trino does not support a window function in a correlated scalar subquery ("Given correlated subquery is not
-     * supported"); a correlated EXISTS or IN subquery with a window function is supported.
-     */
-    override fun checkSubquery(
-        rel: Rel,
-        isScalar: Boolean,
-    ) {
-        if (isScalar && isCorrelatedSubqueryWithWindow(rel)) {
-            unsupported("Trino does not support window functions in a correlated scalar subquery")
-        }
-    }
+    override val correlatedSubqueryWithWindowError: String =
+        "Trino does not support window functions in a correlated subquery"
 
     /**
      * Convert any plan string literals (i.e. [RexLit]s) that have a string value of [TRANSFORM_VAR] into an unquoted

@@ -19,6 +19,10 @@ import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.scribe.targets.spark.utils.TRANSFORM_VAR
 import org.partiql.spi.types.PType
 
+/**
+ * Converts PartiQL expressions to Spark SQL. Spark resolves an outer reference only from the immediately enclosing
+ * scalar, `EXISTS`, or `IN` subquery, so a reference across two such subqueries fails in Spark (`UNRESOLVED_COLUMN`).
+ */
 public open class SparkRexConverter(
     private val transform: PlanToAst,
     private val locals: Locals,
