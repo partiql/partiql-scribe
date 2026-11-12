@@ -39,12 +39,12 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
      * Spark delimits identifiers with backticks; an embedded backtick is escaped by doubling it.
      * https://spark.apache.org/docs/latest/sql-ref-identifier.html
      */
-    override val identifierQuote: Char = '`'
+    override val identifierDelimiter: Char = '`'
 
     /**
      * Spark has no notion of case sensitivity, so every identifier, regular or delimited, is rendered delimited.
      */
-    override fun identifierSql(node: Identifier.Simple): String = quoted(node.text)
+    override fun formatIdentifier(node: Identifier.Simple): String = quoted(node.text)
 
     /**
      * Spark reads `\` as an escape in string literals (by default,
@@ -92,7 +92,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
             t = t concat " LATERAL VIEW OUTER "
             val expr = rhs.expr as ExprCall
             t = visitExprWrapped(expr, t)
-            val tableAlias = identifierSql(rhs.asAlias!!)
+            val tableAlias = formatIdentifier(rhs.asAlias!!)
             val itemAlias = quoted(rhs.asAlias!!.getText().removePrefix("_"))
             t = t concat " $tableAlias AS $itemAlias"
             return t
@@ -110,7 +110,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         if (isExplodeMarker(node)) {
             h = h concat "LATERAL VIEW "
             h = visitExprWrapped(expr, h)
-            val tableAlias = identifierSql(node.asAlias!!)
+            val tableAlias = formatIdentifier(node.asAlias!!)
             val itemAlias = quoted(node.asAlias!!.getText().removePrefix("_"))
             h = h concat " $tableAlias AS $itemAlias"
             return h
@@ -119,7 +119,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         if (expr is org.partiql.ast.expr.ExprCall && expr.function.identifier.getText() == SparkRelConverter.MARKER_LATERAL) {
             h = h concat "LATERAL "
             h = visitExprWrapped(expr.args[0], h)
-            h = if (node.asAlias != null) h concat " AS ${identifierSql(node.asAlias!!)}" else h
+            h = if (node.asAlias != null) h concat " AS ${formatIdentifier(node.asAlias!!)}" else h
             return h
         }
         h =
@@ -135,7 +135,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
                     )
             }
         h = visitExprWrapped(node.expr, h)
-        h = if (node.asAlias != null) h concat " AS ${identifierSql(node.asAlias!!)}" else h
+        h = if (node.asAlias != null) h concat " AS ${formatIdentifier(node.asAlias!!)}" else h
         // AT and BY should be stopped by feature validation.
         return h
     }
@@ -148,7 +148,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         var t = tail
-        t = t concat identifierSql(node.queryName)
+        t = t concat formatIdentifier(node.queryName)
         t = node.columnList?.let { columns -> list(this, " (", ") ") { columns } } ?: t
         t = t concat " AS "
         t = visitExprWrapped(node.asQuery, t)

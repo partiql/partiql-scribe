@@ -19,7 +19,7 @@ import org.partiql.scribe.sql.utils.quoteIdentifier
 /**
  * Base class for AST to SQL translators.
  *
- * Every identifier is rendered through [identifierSql] so that delimited identifiers have their embedded quote
+ * Every identifier is rendered through [formatIdentifier] so that delimited identifiers have their embedded quote
  * character escaped. The visitors below are overridden only because [SqlDialect] renders identifiers with a
  * private helper that does not escape the quote character; they otherwise match [SqlDialect].
  */
@@ -29,17 +29,17 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
     /**
      * The character that wraps a delimited identifier in the target dialect.
      */
-    protected open val identifierQuote: Char = '"'
+    protected open val identifierDelimiter: Char = '"'
 
     /**
-     * Returns [text] as a delimited identifier, wrapped in [identifierQuote] with embedded quotes doubled.
+     * Returns [text] as a delimited identifier, wrapped in [identifierDelimiter] with embedded quotes doubled.
      */
-    protected fun quoted(text: String): String = quoteIdentifier(text, identifierQuote)
+    protected fun quoted(text: String): String = quoteIdentifier(text, identifierDelimiter)
 
     /**
      * Returns the SQL text for [node]. Regular identifiers are emitted as-is; delimited identifiers are [quoted].
      */
-    protected open fun identifierSql(node: Identifier.Simple): String =
+    protected open fun formatIdentifier(node: Identifier.Simple): String =
         when (node.isRegular) {
             true -> node.text
             false -> quoted(node.text)
@@ -48,20 +48,20 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
     override fun visitIdentifierSimple(
         node: Identifier.Simple,
         tail: SqlBlock,
-    ): SqlBlock = tail concat identifierSql(node)
+    ): SqlBlock = tail concat formatIdentifier(node)
 
     override fun visitIdentifier(
         node: Identifier,
         tail: SqlBlock,
     ): SqlBlock {
-        val path = (node.qualifier + node.identifier).joinToString(".") { identifierSql(it) }
+        val path = (node.qualifier + node.identifier).joinToString(".") { formatIdentifier(it) }
         return tail concat path
     }
 
     override fun visitPathStepField(
         node: PathStep.Field,
         tail: SqlBlock,
-    ): SqlBlock = tail concat ".${identifierSql(node.field)}"
+    ): SqlBlock = tail concat ".${formatIdentifier(node.field)}"
 
     override fun visitSelectItemExpr(
         node: SelectItem.Expr,
@@ -70,7 +70,7 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
         var t = tail
         t = visitExprWrapped(node.expr, t)
         val asAlias = node.asAlias
-        t = if (asAlias != null) t concat " AS ${identifierSql(asAlias)}" else t
+        t = if (asAlias != null) t concat " AS ${formatIdentifier(asAlias)}" else t
         return t
     }
 
@@ -87,9 +87,9 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
             }
         t = visitExprWrapped(node.expr, t)
         val asAlias = node.asAlias
-        t = if (asAlias != null) t concat " AS ${identifierSql(asAlias)}" else t
+        t = if (asAlias != null) t concat " AS ${formatIdentifier(asAlias)}" else t
         val atAlias = node.atAlias
-        t = if (atAlias != null) t concat " AT ${identifierSql(atAlias)}" else t
+        t = if (atAlias != null) t concat " AT ${formatIdentifier(atAlias)}" else t
         return t
     }
 
@@ -99,7 +99,7 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
     ): SqlBlock {
         var t = tail
         t = visitExprWrapped(node.expr, t)
-        t = t concat " AS ${identifierSql(node.asAlias)}"
+        t = t concat " AS ${formatIdentifier(node.asAlias)}"
         return t
     }
 
@@ -110,7 +110,7 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
         // Render the GROUP BY without its alias, then append the alias using the escaping renderer.
         val asAlias = node.asAlias
         var t = super.visitGroupBy(GroupBy(node.strategy, node.keys, null), tail)
-        t = if (asAlias != null) t concat " GROUP AS ${identifierSql(asAlias)}" else t
+        t = if (asAlias != null) t concat " GROUP AS ${formatIdentifier(asAlias)}" else t
         return t
     }
 
@@ -121,7 +121,7 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
         var t = tail
         t = visitExprWrapped(node.expr, t)
         val asAlias = node.asAlias
-        t = if (asAlias != null) t concat " AS ${identifierSql(asAlias)}" else t
+        t = if (asAlias != null) t concat " AS ${formatIdentifier(asAlias)}" else t
         return t
     }
 

@@ -63,7 +63,7 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         // UNNEST: render as UNNEST(expr) AS _alias(item)
         if (expr is ExprCall && expr.function.identifier.getText() == TrinoRelConverter.MARKER_UNNEST) {
             h = visitExprWrapped(expr, h)
-            val tableAlias = identifierSql(node.asAlias!!)
+            val tableAlias = formatIdentifier(node.asAlias!!)
             val itemAlias = quoted(node.asAlias!!.getText().removePrefix("_"))
             h = h concat " AS $tableAlias($itemAlias)"
             return h
@@ -72,12 +72,12 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
         if (expr is ExprCall && expr.function.identifier.getText() == TrinoRelConverter.MARKER_LATERAL) {
             h = h concat "LATERAL "
             h = visitExprWrapped(expr.args[0], h)
-            h = if (node.asAlias != null) h concat " AS ${identifierSql(node.asAlias!!)}" else h
+            h = if (node.asAlias != null) h concat " AS ${formatIdentifier(node.asAlias!!)}" else h
             return h
         }
         // Default rendering
         h = visitExprWrapped(node.expr, h)
-        h = if (node.asAlias != null) h concat " AS ${identifierSql(node.asAlias!!)}" else h
+        h = if (node.asAlias != null) h concat " AS ${formatIdentifier(node.asAlias!!)}" else h
         return h
     }
 
