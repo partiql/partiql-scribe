@@ -5,6 +5,7 @@ import org.partiql.ast.Ast.exprCase
 import org.partiql.ast.Ast.exprCaseBranch
 import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprInCollection
+import org.partiql.ast.Ast.exprLike
 import org.partiql.ast.Ast.exprLit
 import org.partiql.ast.Ast.exprNullPredicate
 import org.partiql.ast.Ast.exprOperator
@@ -39,6 +40,7 @@ import org.partiql.scribe.sql.SqlCallFn
 import org.partiql.scribe.sql.SqlCalls
 import org.partiql.scribe.sql.existsSubquery
 import org.partiql.scribe.sql.inCollectionArrayOperands
+import org.partiql.scribe.sql.utils.escapeLikePattern
 import org.partiql.scribe.sql.utils.unquotedStringExpr
 import org.partiql.spi.types.PType
 
@@ -48,6 +50,8 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
     override val rules: Map<String, SqlCallFn> =
         super.rules.toMutableMap().apply {
             this["utcnow"] = ::utcnow
+            this["upper"] = ::upper
+            this["lower"] = ::lower
             // Extensions
             this["OBJECT_TRANSFORM"] = ::objectTransform
             // MAP functions
@@ -82,9 +86,63 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
 
     override fun charLength(args: SqlArgs): Expr = super.charLength(castSuperStrings(args))
 
+    /**
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_UPPER.html
+     */
+    private fun upper(args: SqlArgs): Expr = exprCall(Identifier.regular("UPPER"), castSuperStrings(args).map { it.expr })
+
+    /**
+     * https://docs.aws.amazon.com/redshift/latest/dg/r_LOWER.html
+     */
+    private fun lower(args: SqlArgs): Expr = exprCall(Identifier.regular("LOWER"), castSuperStrings(args).map { it.expr })
+
     override fun position(args: SqlArgs): Expr = super.position(castSuperStrings(args))
 
     override fun replace(args: SqlArgs): Expr = super.replace(castSuperStrings(args))
+
+    /**
+     * Redshift uses `\` as the default LIKE escape character; PartiQL has none. Without an `ESCAPE` clause, backslashes in
+     * the pattern are escaped so they match literally.
+     *
+     * Redshift's `LIKE` and `REPLACE` have no SUPER overload, so the pattern is cast when it is read from SUPER (a path
+     * with more than one step), with or without `ESCAPE`:
+     *  - a string pattern is cast to VARCHAR, as in [castSuperString];
+     *  - a dynamic pattern becomes `CASE WHEN IS_VARCHAR(p) THEN CAST(p AS VARCHAR) END`, so a SUPER number or boolean
+     *    gives NULL (no match) instead of being cast to text, matching PartiQL, where `LIKE` on a non-string is MISSING.
+     *
+     * Not cast: a top-level column (a single-step path), which is a real VARCHAR column, and a dynamic value, since
+     * `<super> LIKE <varchar>` already works on Redshift. Measured on Redshift: `LIKE <non-literal pattern> ESCAPE ...`
+     * against a table fails ("not supported on Redshift tables"), cast or not.
+     */
+    override fun like(
+        args: SqlArgs,
+        escape: Boolean,
+    ): Expr {
+        val cast = castSuperStrings(args)
+        val pattern = likePattern(args[1], cast[1].expr)
+        return if (escape) {
+            exprLike(cast[0].expr, pattern, cast[2].expr, false)
+        } else {
+            exprLike(cast[0].expr, escapeLikePattern(pattern), null, false)
+        }
+    }
+
+    /**
+     * Returns the `LIKE` pattern, guarding a dynamic SUPER navigation with `IS_VARCHAR`; [castPattern] is the pattern after
+     * [castSuperString].
+     */
+    private fun likePattern(
+        pattern: SqlArg,
+        castPattern: Expr,
+    ): Expr {
+        val expr = pattern.expr
+        val isDynamicSuperNavigation = pattern.type.code() == PType.DYNAMIC && expr is ExprPath && expr.steps.size > 1
+        if (!isDynamicSuperNavigation) {
+            return castPattern
+        }
+        val isVarchar = exprCall(Identifier.regular("IS_VARCHAR"), listOf(expr))
+        return exprCase(null, listOf(exprCaseBranch(isVarchar, exprCast(expr, DataType.VARCHAR()))), null)
+    }
 
     override fun trim(
         args: SqlArgs,

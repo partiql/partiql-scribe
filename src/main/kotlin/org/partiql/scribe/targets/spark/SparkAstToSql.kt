@@ -15,6 +15,7 @@ import org.partiql.ast.WithListElement
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
 import org.partiql.ast.expr.ExprCall
+import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprMap
 import org.partiql.ast.expr.ExprQuerySet
 import org.partiql.ast.expr.ExprStruct
@@ -27,12 +28,24 @@ import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.AstToSql
 import org.partiql.scribe.sql.utils.concat
+import org.partiql.scribe.sql.utils.escapeStringLiteral
 import org.partiql.scribe.sql.utils.list
 import org.partiql.scribe.sql.utils.removePathRoot
 import org.partiql.scribe.sql.utils.type
 
 public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
+
+    /**
+     * Spark reads `\` as an escape in string literals (by default,
+     * `spark.sql.parser.escapedStringLiterals=false`); PartiQL does not. [SparkCalls] builds string literals with plain
+     * values (e.g. the single-backslash regexes in `split`) and relies on this override to escape them, so a subclass
+     * that overrides this method should still call `super`.
+     */
+    override fun visitExprLit(
+        node: ExprLit,
+        tail: SqlBlock,
+    ): SqlBlock = super.visitExprLit(escapeStringLiteral(node), tail)
 
     private fun isExplodeMarker(ref: org.partiql.ast.FromTableRef): Boolean {
         if (ref !is FromExpr) return false

@@ -1,8 +1,20 @@
 --#[builtins-strings-lower-00]
 SELECT lower(c) FROM T;
 
+--#[builtins-strings-lower-01]
+SELECT lower(d.e) FROM T;
+
+--#[builtins-strings-lower-02]
+SELECT lower(col_list_string[1]) FROM T_ALL_TYPES;
+
 --#[builtins-strings-upper-00]
 SELECT upper(c) FROM T;
+
+--#[builtins-strings-upper-01]
+SELECT upper(d.e) FROM T;
+
+--#[builtins-strings-upper-02]
+SELECT upper(col_list_string[1]) FROM T_ALL_TYPES;
 
 --#[builtins-strings-like-00]
 SELECT c LIKE 'x' FROM T;
