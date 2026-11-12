@@ -26,3 +26,36 @@ CAST(`unix_timestamp`(TIMESTAMP_NTZ '9999-12-31 23:59:59.999999') AS BIGINT) - C
 
 --#[pow]
 `pow`(2, 3);
+
+--#[date-trunc]
+`date_trunc`('month', TIMESTAMP_NTZ '2020-08-13 23:20:30.123456');
+
+--#[date-trunc-date]
+`date_trunc`('quarter', CAST(DATE '2020-08-13' AS TIMESTAMP_NTZ));
+
+--#[date-trunc-week]
+`date_trunc`('week', TIMESTAMP_NTZ '2021-01-03 23:59:00');
+
+--#[date-trunc-zoned]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[date-trunc-unsupported-part]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[to-char]
+`date_format`(TIMESTAMP_NTZ '2020-12-31 23:59:59.999999', 'yyyy-MM-dd HH:mm:ss.SSS');
+
+--#[to-char-date]
+`date_format`(CAST(DATE '2020-08-13' AS TIMESTAMP_NTZ), 'yyyy/MM/dd hh:mm:ss a');
+
+--#[to-char-no-separators]
+`date_format`(TIMESTAMP_NTZ '2020-08-13 23:20:30.123456', 'yyyyMMddHHmmssSSS');
+
+--#[to-char-zoned]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[to-char-unsupported]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+--#[to-char-mixed-case]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
