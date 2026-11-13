@@ -234,7 +234,8 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
                 castValue.values,
             )
         val asType = ((args.last().expr as ExprLit).lit).stringValue()
-        val customType = DataType.USER_DEFINED(Identifier.regular(asType))
+        // The type text is printed as-is by [TrinoAstToSql.visitDataType]; its field names are already delimited.
+        val customType = DataType.USER_DEFINED(Identifier.regular(MARKER_ROW_TYPE + asType))
         return exprCast(rowCall, customType)
     }
 
@@ -409,5 +410,12 @@ public open class TrinoCalls(context: ScribeContext) : SqlCalls(context) {
             listOf(exprCaseBranch(empty, exprLit(Literal.bool(false)))),
             exprCall(Identifier.regular("contains"), listOf(collection, value)),
         )
+    }
+
+    internal companion object {
+        /**
+         * Prefix of a user-defined type name whose remaining text is a Trino `ROW(...)` type built by [castrow].
+         */
+        internal const val MARKER_ROW_TYPE = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}ROW_TYPE:"
     }
 }

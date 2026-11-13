@@ -29,6 +29,14 @@ import org.partiql.scribe.sql.utils.quoteIdentifier
  *  become overrides of the upstream hook.
  */
 public abstract class AstToSql(public val context: ScribeContext) : SqlDialect() {
+    private companion object {
+        /**
+         * Text that every target accepts as an unquoted identifier: a letter or underscore, then letters, digits,
+         * underscores, or dollar signs.
+         */
+        val REGULAR_IDENTIFIER = Regex("[A-Za-z_][A-Za-z0-9_$]*")
+    }
+
     private val markerPrefix = SCRIBE_MARKER_FN_PREFIX
 
     /**
@@ -43,10 +51,13 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
     protected fun quoted(text: String): String = quoteIdentifier(text, identifierDelimiter)
 
     /**
-     * Returns the SQL text for [node]. A delimited identifier is [quoted]; a regular identifier is printed as-is.
+     * Returns the SQL text for [node]. A regular identifier whose text is a valid unquoted identifier
+     * ([REGULAR_IDENTIFIER]) is printed as-is. Any other identifier is [quoted], including a regular identifier whose
+     * text could not be printed unquoted, e.g. a name with a space, quote, or parenthesis built from plan or catalog
+     * text.
      */
     protected open fun formatIdentifier(node: Identifier.Simple): String =
-        when (node.isRegular) {
+        when (node.isRegular && REGULAR_IDENTIFIER.matches(node.text)) {
             true -> node.text
             false -> quoted(node.text)
         }

@@ -103,5 +103,33 @@ class IdentifierUtilsTest {
         )
     }
 
+    @Test
+    fun `a regular identifier that is not a valid unquoted identifier is quoted`() {
+        val context = ScribeContext.standard()
+        val cases =
+            listOf(
+                "a" to "a",
+                "_a1\$" to "_a1\$",
+                "Abc" to "Abc",
+                "a b" to "\"a b\"",
+                "1a" to "\"1a\"",
+                "\$a" to "\"\$a\"",
+                "a\"b" to "\"a\"\"b\"",
+                "f(1)" to "\"f(1)\"",
+                "a.b" to "\"a.b\"",
+                "" to "\"\"",
+            )
+        for ((text, expected) in cases) {
+            val expr = exprVarRef(Identifier.regular(text), false)
+            assertEquals(expected, RedshiftAstToSql(context).transform(expr).sql(SqlLayout.ONELINE), text)
+            assertEquals(expected, TrinoAstToSql(context).transform(expr).sql(SqlLayout.ONELINE), text)
+            assertEquals(expected, DuckDBAstToSql(context).transform(expr).sql(SqlLayout.ONELINE), text)
+            assertEquals(expected, PartiQLTarget.getAstToSql(context).transform(expr).sql(SqlLayout.ONELINE), text)
+        }
+        // Spark delimits every identifier.
+        val spark = SparkAstToSql(context).transform(exprVarRef(Identifier.regular("a b`"), false))
+        assertEquals("`a b```", spark.sql(SqlLayout.ONELINE))
+    }
+
     private fun v(name: String) = exprVarRef(Identifier.regular(name), false)
 }

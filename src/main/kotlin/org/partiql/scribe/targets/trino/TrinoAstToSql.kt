@@ -206,6 +206,16 @@ public open class TrinoAstToSql(context: ScribeContext) : AstToSql(context) {
                 t = t concat ")"
                 t
             }
+            DataType.USER_DEFINED -> {
+                // A `ROW(...)` type built by TrinoCalls.castrow is printed as-is; any other name is an identifier.
+                val name = node.name
+                val text = name.identifier.text
+                if (!name.hasQualifier() && name.identifier.isRegular && text.startsWith(TrinoCalls.MARKER_ROW_TYPE)) {
+                    tail concat text.removePrefix(TrinoCalls.MARKER_ROW_TYPE)
+                } else {
+                    super.visitDataType(node, tail)
+                }
+            }
             else -> super.visitDataType(node, tail)
         }
     }
