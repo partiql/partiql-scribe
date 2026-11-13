@@ -16,6 +16,9 @@ import kotlin.test.assertTrue
  *
  * These fixtures test the grammar only. Whether a parsed statement can be translated to PartiQL is decided by the
  * translation, which is tested by its own suite.
+ *
+ * The grammar is Scribe's own, not an official Amazon Redshift grammar; see the disclaimer at the top of
+ * `ScribeRedshift.g4`. These fixtures describe what that grammar accepts, which is the subset the frontend translates.
  */
 class RedshiftGrammarTest {
     @TestFactory

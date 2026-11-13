@@ -1,6 +1,6 @@
--- Constructs that cannot be part of a view query, other than the statements in
+-- Constructs that cannot be part of a query the frontend translates, other than the statements in
 -- 01-statements.sql: session tables, procedure syntax, parameters, SELECT INTO, VALUES, and the types and functions
--- the target cannot hold (VARBYTE, spatial, HyperLogLog, machine learning, system information).
+-- PartiQL has no counterpart for (VARBYTE, spatial, HyperLogLog, machine learning, system information).
 
 --#[temporary-table] 1:15
 SELECT a FROM #tmp;

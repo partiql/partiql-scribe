@@ -1,11 +1,16 @@
 /*
- * Amazon Redshift query grammar for the Redshift-to-PartiQL frontend.
+ * Scribe's grammar of the Amazon Redshift query language, for the Redshift-to-PartiQL frontend.
+ *
+ * This is not an official Amazon Redshift grammar. Amazon Redshift does not publish one; this file is Scribe's own
+ * description of the subset of the Redshift query language that the frontend translates, written from the Redshift
+ * documentation and PostgreSQL's precedence rules, and it is maintained with the frontend, not with Redshift. Where it
+ * and Redshift disagree, Redshift is right: a query Redshift accepts may be a syntax error here, and the grammar may
+ * accept a form Redshift rejects, which the frontend then refuses as invalid where it can tell.
  *
  * Scope: the Redshift constructs that map to a PartiQL construct that Scribe's targets accept, directly, by an exact
- * rewrite, or by a call of a function the caller's catalog defines (POWER, POW, and `^` call `pow`). The query that
- * defines a view is what the frontend translates, so the grammar accepts what the
- * translation is for and nothing more: what parses either translates or is refused at its position. Everything else
- * is a syntax error, including
+ * rewrite, or by a call of a function the caller's catalog defines (POWER, POW, and `^` call `pow`). A single query is
+ * what the frontend translates, so the grammar accepts what the translation is for and nothing more: what parses
+ * either translates or is refused at its position. Everything else is a syntax error, including
  *
  *  - every statement other than a single SELECT query (and a second statement after it);
  *  - the constructs the target does not accept yet: window functions, EXISTS, INTERSECT and EXCEPT, PIVOT and
@@ -29,7 +34,7 @@
  *
  * Reference: https://docs.aws.amazon.com/redshift/latest/dg/r_SELECT_synopsis.html
  */
-grammar Redshift;
+grammar ScribeRedshift;
 
 options { caseInsensitive = true; }
 
@@ -50,7 +55,7 @@ options { caseInsensitive = true; }
 }
 
 /*
- * One query with an optional trailing semicolon. A view is one query: a second statement is a syntax error.
+ * One query with an optional trailing semicolon; a second statement is a syntax error.
  */
 root
     : query SEMICOLON? EOF
@@ -85,7 +90,7 @@ queryPrimary
     ;
 
 /*
- * FROM is required: a view needs at least one source table, so `SELECT 1` is a syntax error.
+ * FROM is required: the translation has no form for a query without a source, so `SELECT 1` is a syntax error.
  */
 querySpecification
     : SELECT topClause? setQuantifier? selectList

@@ -1,5 +1,5 @@
--- Constructs the target view engine does not support yet. The grammar has no rule for them, so they are syntax
--- errors; they can be added when the target supports them.
+-- Constructs the translation does not support yet. The grammar has no rule for them, so they are syntax errors;
+-- they can be added when the translation supports them.
 
 --#[select-without-from] 1:9
 SELECT 1;

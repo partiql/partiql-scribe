@@ -88,7 +88,7 @@ import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
 import java.util.IdentityHashMap
 import java.util.Locale
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftParser as P
 
 /**
  * Builds the PartiQL AST of a Redshift parse tree.
