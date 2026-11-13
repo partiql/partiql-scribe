@@ -111,9 +111,28 @@ public final class org/partiql/scribe/problems/Severity$Companion {
 
 public abstract class org/partiql/scribe/sql/AstToSql : org/partiql/ast/sql/SqlDialect {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	protected fun formatIdentifier (Lorg/partiql/ast/Identifier$Simple;)Ljava/lang/String;
 	public final fun getContext ()Lorg/partiql/scribe/ScribeContext;
+	protected fun getIdentifierDelimiter ()C
+	protected final fun quoted (Ljava/lang/String;)Ljava/lang/String;
 	public synthetic fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitFromExpr (Lorg/partiql/ast/FromExpr;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitFromExpr (Lorg/partiql/ast/FromExpr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitGroupBy (Lorg/partiql/ast/GroupBy;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitGroupBy (Lorg/partiql/ast/GroupBy;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitGroupByKey (Lorg/partiql/ast/GroupBy$Key;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitGroupByKey (Lorg/partiql/ast/GroupBy$Key;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIdentifier (Lorg/partiql/ast/Identifier;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIdentifier (Lorg/partiql/ast/Identifier;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitIdentifierSimple (Lorg/partiql/ast/Identifier$Simple;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitIdentifierSimple (Lorg/partiql/ast/Identifier$Simple;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitLetBinding (Lorg/partiql/ast/Let$Binding;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitLetBinding (Lorg/partiql/ast/Let$Binding;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitPathStepField (Lorg/partiql/ast/expr/PathStep$Field;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitPathStepField (Lorg/partiql/ast/expr/PathStep$Field;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }
 
 public final class org/partiql/scribe/sql/ExprQuerySetFactory {
@@ -615,6 +634,8 @@ public final class org/partiql/scribe/targets/redshift/RedshiftTarget$Companion 
 
 public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe/sql/AstToSql {
 	public fun <init> (Lorg/partiql/scribe/ScribeContext;)V
+	protected fun formatIdentifier (Lorg/partiql/ast/Identifier$Simple;)Ljava/lang/String;
+	protected fun getIdentifierDelimiter ()C
 	public synthetic fun visitDataType (Lorg/partiql/ast/DataType;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitDataType (Lorg/partiql/ast/DataType;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitExprArray (Lorg/partiql/ast/expr/ExprArray;Ljava/lang/Object;)Ljava/lang/Object;
@@ -641,10 +662,6 @@ public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe
 	public fun visitFromExpr (Lorg/partiql/ast/FromExpr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitFromJoin (Lorg/partiql/ast/FromJoin;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitFromJoin (Lorg/partiql/ast/FromJoin;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
-	public synthetic fun visitIdentifier (Lorg/partiql/ast/Identifier;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitIdentifier (Lorg/partiql/ast/Identifier;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
-	public synthetic fun visitIdentifierSimple (Lorg/partiql/ast/Identifier$Simple;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitIdentifierSimple (Lorg/partiql/ast/Identifier$Simple;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitIntervalQualifierRange (Lorg/partiql/ast/IntervalQualifier$Range;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitIntervalQualifierSingle (Lorg/partiql/ast/IntervalQualifier$Single;Ljava/lang/Object;)Ljava/lang/Object;
@@ -653,10 +670,6 @@ public class org/partiql/scribe/targets/spark/SparkAstToSql : org/partiql/scribe
 	public fun visitLiteral (Lorg/partiql/ast/Literal;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitPathStepElement (Lorg/partiql/ast/expr/PathStep$Element;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
-	public synthetic fun visitPathStepField (Lorg/partiql/ast/expr/PathStep$Field;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitPathStepField (Lorg/partiql/ast/expr/PathStep$Field;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
-	public synthetic fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun visitSelectItemExpr (Lorg/partiql/ast/SelectItem$Expr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitWithListElement (Lorg/partiql/ast/WithListElement;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitWithListElement (Lorg/partiql/ast/WithListElement;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 }

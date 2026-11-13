@@ -10,7 +10,6 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.IntervalQualifier
 import org.partiql.ast.Literal
 import org.partiql.ast.QueryBody
-import org.partiql.ast.SelectItem
 import org.partiql.ast.WithListElement
 import org.partiql.ast.expr.ExprArray
 import org.partiql.ast.expr.ExprBag
@@ -35,6 +34,17 @@ import org.partiql.scribe.sql.utils.type
 
 public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     private val listener = context.getProblemListener()
+
+    /**
+     * Spark delimits identifiers with backticks; an embedded backtick is escaped by doubling it.
+     * https://spark.apache.org/docs/latest/sql-ref-identifier.html
+     */
+    override val identifierDelimiter: Char = '`'
+
+    /**
+     * Spark has no notion of case sensitivity, so every identifier, regular or delimited, is rendered delimited.
+     */
+    override fun formatIdentifier(node: Identifier.Simple): String = quoted(node.text)
 
     /**
      * Spark reads `\` as an escape in string literals (by default,
@@ -82,8 +92,8 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
             t = t concat " LATERAL VIEW OUTER "
             val expr = rhs.expr as ExprCall
             t = visitExprWrapped(expr, t)
-            val tableAlias = rhs.asAlias!!.sql()
-            val itemAlias = Identifier.Simple.delimited(rhs.asAlias!!.getText().removePrefix("_")).sql()
+            val tableAlias = formatIdentifier(rhs.asAlias!!)
+            val itemAlias = quoted(rhs.asAlias!!.getText().removePrefix("_"))
             t = t concat " $tableAlias AS $itemAlias"
             return t
         }
@@ -100,8 +110,8 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         if (isExplodeMarker(node)) {
             h = h concat "LATERAL VIEW "
             h = visitExprWrapped(expr, h)
-            val tableAlias = node.asAlias!!.sql()
-            val itemAlias = Identifier.Simple.delimited(node.asAlias!!.getText().removePrefix("_")).sql()
+            val tableAlias = formatIdentifier(node.asAlias!!)
+            val itemAlias = quoted(node.asAlias!!.getText().removePrefix("_"))
             h = h concat " $tableAlias AS $itemAlias"
             return h
         }
@@ -109,7 +119,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         if (expr is org.partiql.ast.expr.ExprCall && expr.function.identifier.getText() == SparkRelConverter.MARKER_LATERAL) {
             h = h concat "LATERAL "
             h = visitExprWrapped(expr.args[0], h)
-            h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
+            h = if (node.asAlias != null) h concat " AS ${formatIdentifier(node.asAlias!!)}" else h
             return h
         }
         h =
@@ -125,7 +135,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
                     )
             }
         h = visitExprWrapped(node.expr, h)
-        h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
+        h = if (node.asAlias != null) h concat " AS ${formatIdentifier(node.asAlias!!)}" else h
         // AT and BY should be stopped by feature validation.
         return h
     }
@@ -138,49 +148,11 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         var t = tail
-        t = t concat node.queryName.sql()
+        t = t concat formatIdentifier(node.queryName)
         t = node.columnList?.let { columns -> list(this, " (", ") ") { columns } } ?: t
         t = t concat " AS "
         t = visitExprWrapped(node.asQuery, t)
         return t
-    }
-
-    /**
-     * For quoted identifiers change the rewriter to use backticks rather than double-quotes.
-     */
-    override fun visitIdentifier(
-        node: Identifier,
-        tail: SqlBlock,
-    ): SqlBlock {
-        val path =
-            when (node.hasQualifier()) {
-                true -> {
-                    val qualifier = node.qualifier.fold("") { acc, part -> acc + "${part.sql()}." }
-                    qualifier + node.identifier.sql()
-                }
-                false -> node.identifier.sql()
-            }
-        return tail concat path
-    }
-
-    /**
-     * For quoted identifiers, change the rewriter to use backticks rather than double-quotes.
-     */
-    override fun visitIdentifierSimple(
-        node: Identifier.Simple,
-        tail: SqlBlock,
-    ): SqlBlock {
-        return tail concat node.sql()
-    }
-
-    override fun visitSelectItemExpr(
-        node: SelectItem.Expr,
-        tail: SqlBlock,
-    ): SqlBlock {
-        var h = tail
-        h = visitExprWrapped(node.expr, h)
-        h = if (node.asAlias != null) h concat " AS ${node.asAlias!!.sql()}" else h
-        return h
     }
 
     override fun visitPathStepElement(
@@ -188,13 +160,6 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         tail: SqlBlock,
     ): SqlBlock {
         return super.visitPathStepElement(node, tail)
-    }
-
-    override fun visitPathStepField(
-        node: PathStep.Field,
-        tail: SqlBlock,
-    ): SqlBlock {
-        return tail concat ".${node.field.sql()}"
     }
 
     // Spark's equivalent for PartiQL's STRUCT type is struct type. Can use the `NAMED_STRUCT` function to create Spark
@@ -514,8 +479,4 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
         }
         return tail concat datetimeField
     }
-
-    // Spark, has no notion of case sensitivity
-    // https://spark.apache.org/docs/latest/sql-ref-identifier.html
-    private fun Identifier.Simple.sql() = "`$text`"
 }

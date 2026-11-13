@@ -8,6 +8,18 @@ utcnow();
 --#[contains]
 SELECT contains(p.items, 'x') AS c FROM payload AS p;
 
+-- The field name contains a double-quote, which must be doubled in the delimited identifier.
+--#[contains-embedded-quote]
+SELECT contains(p."e""),f", 'x') AS c FROM payload AS p;
+
+-- The field name contains a backtick, which must be doubled in a Spark delimited identifier.
+--#[contains-embedded-backtick]
+SELECT contains(p."e`),f", 'x') AS c FROM payload AS p;
+
+-- SELECT VALUE of a non-struct is rejected by SQL targets before the field name is rendered.
+--#[contains-embedded-quote-select-value]
+SELECT VALUE contains(p."e""),f", 'x') FROM payload AS p;
+
 --#[hex-to-bigint]
 hex_to_bigint('00C10300');
 

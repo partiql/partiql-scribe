@@ -7,6 +7,15 @@ sysdate;
 --#[contains]
 SELECT 1 <= (SELECT COUNT(___partiql_scribe_contains_element___) FROM "p"."items" AS ___partiql_scribe_contains_element___ WHERE ___partiql_scribe_contains_element___ IN ('x')) AS "c" FROM "test"."payload" AS "p";
 
+--#[contains-embedded-quote]
+SELECT 1 <= (SELECT COUNT(___partiql_scribe_contains_element___) FROM "p"."e""),f" AS ___partiql_scribe_contains_element___ WHERE ___partiql_scribe_contains_element___ IN ('x')) AS "c" FROM "test"."payload" AS "p";
+
+--#[contains-embedded-backtick]
+SELECT 1 <= (SELECT COUNT(___partiql_scribe_contains_element___) FROM "p"."e`),f" AS ___partiql_scribe_contains_element___ WHERE ___partiql_scribe_contains_element___ IN ('x')) AS "c" FROM "test"."payload" AS "p";
+
+--#[contains-embedded-quote-select-value]
+[ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="SELECT VALUE is not supported by SQL targets unless it is a struct with string-literal keys (e.g. SELECT VALUE {'a': a}); use a SELECT list instead"}];
+
 --#[hex-to-bigint]
 STRTOL('00C10300', 16);
 
