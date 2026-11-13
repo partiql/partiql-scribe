@@ -12,8 +12,8 @@ import org.antlr.v4.runtime.atn.PredictionMode
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import org.partiql.ast.Statement
 import org.partiql.scribe.ScribeContext
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftLexer
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftLexer
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftParser
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import org.partiql.scribe.frontend.redshift.internal.TranslationStop
 import org.partiql.scribe.problems.ScribeProblem
@@ -100,15 +100,15 @@ public class RedshiftFrontend
          * SLL prediction first, which is faster and keeps the parser's decision cache small, and again with full LL
          * prediction only when SLL finds an error, as that error may be SLL's alone.
          */
-        private fun parse(sql: String): RedshiftParser.RootContext {
-            val lexer = RedshiftLexer(CharStreams.fromString(sql))
+        private fun parse(sql: String): ScribeRedshiftParser.RootContext {
+            val lexer = ScribeRedshiftLexer(CharStreams.fromString(sql))
             val errors = SyntaxErrors(context)
             lexer.removeErrorListeners()
             lexer.addErrorListener(errors)
             val tokens = CommonTokenStream(lexer)
             tokens.fill()
             checkNesting(tokens.tokens)
-            val parser = RedshiftParser(tokens)
+            val parser = ScribeRedshiftParser(tokens)
             parser.removeErrorListeners()
             parser.interpreter.predictionMode = PredictionMode.SLL
             parser.errorHandler = BailErrorStrategy()
@@ -134,7 +134,7 @@ public class RedshiftFrontend
             for (token in tokens) {
                 if (token.channel != Token.DEFAULT_CHANNEL) continue // whitespace and comments
                 when (token.type) {
-                    RedshiftLexer.PAREN_LEFT, RedshiftLexer.CASE -> {
+                    ScribeRedshiftLexer.PAREN_LEFT, ScribeRedshiftLexer.CASE -> {
                         if (++depth > MAX_NESTING) {
                             throw TranslationStop.unsupported(
                                 token,
@@ -142,11 +142,11 @@ public class RedshiftFrontend
                             )
                         }
                     }
-                    RedshiftLexer.PAREN_RIGHT, RedshiftLexer.END -> depth--
+                    ScribeRedshiftLexer.PAREN_RIGHT, ScribeRedshiftLexer.END -> depth--
                 }
                 prefixes =
                     when (token.type) {
-                        RedshiftLexer.NOT, RedshiftLexer.MINUS, RedshiftLexer.PLUS -> prefixes + 1
+                        ScribeRedshiftLexer.NOT, ScribeRedshiftLexer.MINUS, ScribeRedshiftLexer.PLUS -> prefixes + 1
                         else -> 0
                     }
                 if (prefixes > MAX_NESTING) throw TranslationStop.unsupported(token, "more than $MAX_NESTING prefix operators in a row")

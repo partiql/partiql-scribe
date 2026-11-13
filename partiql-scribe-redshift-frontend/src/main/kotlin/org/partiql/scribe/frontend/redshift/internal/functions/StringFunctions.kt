@@ -12,7 +12,7 @@ import org.partiql.ast.expr.ExprOperator
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import java.math.BigDecimal
 import java.math.BigInteger
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftParser as P
 
 /**
  * The string functions: `UPPER`, `LOWER`, and `CONCAT`, and the concatenation operator `||`. `UPPER` and `LOWER` are

@@ -12,7 +12,10 @@ import kotlin.test.assertTrue
  * identifiers, `DATE` as a literal prefix and as a name, `||` before a comment, an alias after a literal).
  *
  * The trees are rendered by [render]: a rule with a single child collapses into it, a rule with several children is
- * `(label child ...)` where the label is the alternative's label in `Redshift.g4`.
+ * `(label child ...)` where the label is the alternative's label in `ScribeRedshift.g4`.
+ *
+ * The grammar is Scribe's own, not an official Amazon Redshift grammar; see the disclaimer at the top of
+ * `ScribeRedshift.g4`. These fixtures describe what that grammar accepts, which is the subset the frontend translates.
  */
 class RedshiftParseTreeTest {
     @ParameterizedTest(name = "{0}")

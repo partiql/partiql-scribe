@@ -38,8 +38,12 @@ prediction first and full LL only when SLL finds an error, which keeps its decis
 
 ## Grammar
 
-`src/main/antlr/Redshift.g4` is an ANTLR 4 grammar of the subset of the Redshift *query* language that the front end
-translates: the constructs with a PartiQL counterpart that Scribe's targets accept, directly or by an exact rewrite.
+`src/main/antlr/ScribeRedshift.g4` is an ANTLR 4 grammar of the subset of the Redshift *query* language that the front
+end translates: the constructs with a PartiQL counterpart that Scribe's targets accept, directly or by an exact rewrite.
+It is Scribe's own grammar, not an official Amazon Redshift grammar: Amazon Redshift does not publish one, and this
+file is written from the Redshift documentation and maintained with the front end. Where it and Redshift disagree,
+Redshift is right; a query Redshift accepts may be a syntax error here, and the front end refuses as invalid the forms
+it can tell Redshift rejects.
 What parses either translates or is refused at its position; everything else is a syntax error with a line and column. It is case-insensitive and
 follows PostgreSQL operator precedence, from which Redshift derives.
 

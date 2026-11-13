@@ -8,8 +8,8 @@ import org.antlr.v4.runtime.RecognitionException
 import org.antlr.v4.runtime.Recognizer
 import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.TerminalNode
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftLexer
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftLexer
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftParser
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -26,7 +26,7 @@ data class SyntaxError(val line: Int, val column: Int, val message: String) {
  * The result of parsing a statement with the Redshift grammar: the parse tree of the `root` rule and the syntax errors.
  * A statement is syntactically valid when [errors] is empty.
  */
-class ParseResult(val tree: RedshiftParser.RootContext, val errors: List<SyntaxError>) {
+class ParseResult(val tree: ScribeRedshiftParser.RootContext, val errors: List<SyntaxError>) {
     val isValid: Boolean get() = errors.isEmpty()
 }
 
@@ -48,10 +48,10 @@ fun parse(sql: String): ParseResult {
                 errors.add(SyntaxError(line, charPositionInLine + 1, msg))
             }
         }
-    val lexer = RedshiftLexer(CharStreams.fromString(sql))
+    val lexer = ScribeRedshiftLexer(CharStreams.fromString(sql))
     lexer.removeErrorListeners()
     lexer.addErrorListener(listener)
-    val parser = RedshiftParser(CommonTokenStream(lexer))
+    val parser = ScribeRedshiftParser(CommonTokenStream(lexer))
     parser.removeErrorListeners()
     parser.addErrorListener(listener)
     val tree = parser.root()

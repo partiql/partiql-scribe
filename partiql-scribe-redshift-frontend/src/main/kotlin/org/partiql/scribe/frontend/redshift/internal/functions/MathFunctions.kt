@@ -7,7 +7,7 @@ import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
 import org.partiql.ast.expr.Expr
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftParser as P
 
 /**
  * The math functions: `POWER`, its synonym `POW`, and the exponentiation operator `^`.

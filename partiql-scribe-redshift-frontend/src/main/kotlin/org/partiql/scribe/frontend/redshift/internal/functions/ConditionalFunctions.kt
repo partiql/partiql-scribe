@@ -15,7 +15,7 @@ import org.partiql.ast.expr.ExprLit
 import org.partiql.ast.expr.ExprOperator
 import org.partiql.scribe.frontend.redshift.internal.RedshiftAstBuilder
 import org.partiql.scribe.frontend.redshift.internal.TranslationStop
-import org.partiql.scribe.frontend.redshift.antlr.RedshiftParser as P
+import org.partiql.scribe.frontend.redshift.antlr.ScribeRedshiftParser as P
 
 /**
  * The conditional functions: `NVL`, `COALESCE`, `NULLIF`, `NVL2`, `DECODE`, `GREATEST`, and `LEAST`. Each rule rewrites
