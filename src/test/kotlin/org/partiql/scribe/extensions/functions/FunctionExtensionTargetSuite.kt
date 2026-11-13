@@ -72,8 +72,8 @@ private val PAYLOAD =
             PType.row(
                 PTypeField.of("items", PType.array(PType.string())),
                 // Field names containing each target's identifier quote character.
-                PTypeField.of("x\"); DROP TABLE target--", PType.array(PType.string())),
-                PTypeField.of("x`); DROP TABLE target--", PType.array(PType.string())),
+                PTypeField.of("e\"),f", PType.array(PType.string())),
+                PTypeField.of("e`),f", PType.array(PType.string())),
             ),
         ),
     )

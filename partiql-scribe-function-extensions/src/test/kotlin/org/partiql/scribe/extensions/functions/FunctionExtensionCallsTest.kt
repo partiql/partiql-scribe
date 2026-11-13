@@ -131,7 +131,7 @@ class FunctionExtensionCallsTest {
                     SqlArg(
                         exprPath(
                             exprVarRef(Identifier.regular("t"), false),
-                            listOf(exprPathStepField(Identifier.Simple.delimited("x\"); DROP TABLE target--"))),
+                            listOf(exprPathStepField(Identifier.Simple.delimited("e\"),f"))),
                         ),
                         PType.array(),
                     )
@@ -141,7 +141,7 @@ class FunctionExtensionCallsTest {
 
         assertEquals(
             "1 <= (SELECT COUNT(___partiql_scribe_contains_element___) " +
-                "FROM t.\"x\"\"); DROP TABLE target--\" AS ___partiql_scribe_contains_element___ " +
+                "FROM t.\"e\"\"),f\" AS ___partiql_scribe_contains_element___ " +
                 "WHERE ___partiql_scribe_contains_element___ IN ('x'))",
             sql,
         )

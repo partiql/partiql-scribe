@@ -8,10 +8,10 @@ TIMESTAMP_NTZ '2017-01-02 03:04:05.006' + `make_interval`(0, 0, 0, 1, 0, 0, 0);
 SELECT `array_contains`(`p`.`items`, 'x') AS `c` FROM `test`.`payload` AS `p`;
 
 --#[contains-embedded-quote]
-SELECT `array_contains`(`p`.`x"); DROP TABLE target--`, 'x') AS `c` FROM `test`.`payload` AS `p`;
+SELECT `array_contains`(`p`.`e"),f`, 'x') AS `c` FROM `test`.`payload` AS `p`;
 
 --#[contains-embedded-backtick]
-SELECT `array_contains`(`p`.`x``); DROP TABLE target--`, 'x') AS `c` FROM `test`.`payload` AS `p`;
+SELECT `array_contains`(`p`.`e``),f`, 'x') AS `c` FROM `test`.`payload` AS `p`;
 
 --#[contains-embedded-quote-select-value]
 [ScribeException{code=UNSUPPORTED_PLAN_TO_AST_CONVERSION, message="SELECT VALUE is not supported by SQL targets unless it is a struct with string-literal keys (e.g. SELECT VALUE {'a': a}); use a SELECT list instead"}];

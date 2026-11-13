@@ -27,9 +27,11 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+- `AstToSql.formatIdentifier`, `AstToSql.identifierDelimiter`, and `AstToSql.quoted`: protected hooks through which every identifier is printed. A target can override `identifierDelimiter` (Spark uses a backtick) or `formatIdentifier` (Spark delimits every identifier).
 
 ### Changed
 - Spark and Redshift targets: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice; build them from the unescaped value instead. `SparkCalls` and `RedshiftCalls` now override `like`; a subclass that overrides `like` should call `super.like(...)` to keep the pattern escaping.
+- `AstToSql` now overrides the `SqlDialect` visitors that print identifiers and aliases. A subclass that prints an identifier itself should use `formatIdentifier` or `quoted` so the delimiter is escaped.
 
 ### Deprecated
 
@@ -38,7 +40,7 @@ Thank you to all who have contributed!
 - Spark and Redshift targets: string literals double each backslash (`'C:\temp'` prints as `'C:\\temp'`), so the engine reads the same value as PartiQL. Before, a literal ending in `\` failed to parse and `\t` was read as a tab. For example, Redshift `split(c, '\')` now prints `SPLIT_TO_ARRAY(c, '\\')`.
 - Spark and Redshift targets: `LIKE` without `ESCAPE` escapes backslashes in the pattern. A non-literal pattern is wrapped in `REPLACE(...)`. On Redshift, a string pattern read from SUPER is cast to VARCHAR first, and a dynamic one is cast only when `IS_VARCHAR` is true.
 - Redshift target: `EXCLUDE` escapes `\` and `"` in `OBJECT_TRANSFORM` path elements.
-- All targets: delimited identifiers double an embedded quote character (`"` for Redshift, Trino, DuckDB, and PartiQL; `` ` `` for Spark), so PartiQL `t."a""b"` prints as `"t"."a""b"` (Spark: `` `t`.`a"b` ``) and field ``"c`d"`` prints on Spark as `` `c``d` ``. This covers paths, `SELECT`/`FROM`/`LET`/`GROUP BY` aliases, `WITH` names, and Trino `ROW` cast field names. `AstToSql` subclasses should render identifiers with the new `formatIdentifier` / `quoted` helpers.
+- All targets: a delimited identifier doubles an embedded delimiter (`"` for Redshift, Trino, DuckDB, and PartiQL; a backtick for Spark), so it parses back as the same name. PartiQL `t."a""b"` prints as `"t"."a""b"` (Spark: ``` `t`.`a"b` ```), and the field ``` "c`d" ``` prints on Spark as ``` `c``d` ```. This covers paths, `SELECT` and `FROM` aliases, lateral join aliases (Trino/DuckDB `UNNEST`, Spark `LATERAL VIEW EXPLODE`), `WITH` names, `EXCLUDE` paths, and Trino `ROW` cast field names. Regular (unquoted) identifiers are printed unchanged.
 
 ### Removed
 
