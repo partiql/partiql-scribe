@@ -6,6 +6,7 @@ import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
 import org.partiql.plan.rel.RelCorrelate
 import org.partiql.plan.rel.RelFilter
+import org.partiql.plan.rel.RelRecursiveUnion
 import org.partiql.plan.rel.RelScan
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
@@ -26,6 +27,26 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
     internal companion object {
         val MARKER_EXPLODE = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}EXPLODE"
         val MARKER_LATERAL = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}LATERAL"
+    }
+
+    /**
+     * Spark (as of 4.1) only supports UNION ALL within a recursive common table expression
+     * (UNION_NOT_SUPPORTED_IN_RECURSIVE_CTE). UNION is not rewritten to UNION ALL, as that changes the result if the
+     * recursion produces duplicate rows (and need not terminate).
+     */
+    override fun visitRecursiveUnion(
+        rel: RelRecursiveUnion,
+        ctx: Unit,
+    ): ExprQuerySetFactory {
+        if (!rel.isAll) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                    message = "Spark does not support UNION (DISTINCT) in a recursive common table expression; use UNION ALL",
+                ),
+            )
+        }
+        return super.visitRecursiveUnion(rel, ctx)
     }
 
     override fun visitCorrelate(

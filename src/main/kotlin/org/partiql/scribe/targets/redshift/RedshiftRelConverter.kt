@@ -5,6 +5,7 @@ import org.partiql.ast.expr.Expr
 import org.partiql.plan.WindowFunctionNode
 import org.partiql.plan.rel.RelCorrelate
 import org.partiql.plan.rel.RelFilter
+import org.partiql.plan.rel.RelRecursiveUnion
 import org.partiql.plan.rel.RelScan
 import org.partiql.plan.rel.RelWindow
 import org.partiql.plan.rex.RexLit
@@ -27,6 +28,26 @@ public open class RedshiftRelConverter(
         outer,
     ) {
     override val selectValueSupported: Boolean = false
+
+    /**
+     * Redshift only supports UNION ALL within a recursive common table expression ("UNION is not supported in Recursive
+     * CTE"). UNION is not rewritten to UNION ALL, as that changes the result if the recursion produces duplicate rows
+     * (and need not terminate).
+     */
+    override fun visitRecursiveUnion(
+        rel: RelRecursiveUnion,
+        ctx: Unit,
+    ): ExprQuerySetFactory {
+        if (!rel.isAll) {
+            listener.reportAndThrow(
+                ScribeProblem.simpleError(
+                    code = ScribeProblem.UNSUPPORTED_PLAN_TO_AST_CONVERSION,
+                    message = "Redshift does not support UNION (DISTINCT) in a recursive common table expression; use UNION ALL",
+                ),
+            )
+        }
+        return super.visitRecursiveUnion(rel, ctx)
+    }
 
     override fun visitCorrelate(
         rel: RelCorrelate,

@@ -224,6 +224,8 @@ public class org/partiql/scribe/sql/RelConverter : org/partiql/plan/OperatorVisi
 	public fun visitOffset (Lorg/partiql/plan/rel/RelOffset;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun visitProject (Lorg/partiql/plan/rel/RelProject;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitProject (Lorg/partiql/plan/rel/RelProject;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitRecursiveUnion (Lorg/partiql/plan/rel/RelRecursiveUnion;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitRecursiveUnion (Lorg/partiql/plan/rel/RelRecursiveUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun visitScan (Lorg/partiql/plan/rel/RelScan;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitScan (Lorg/partiql/plan/rel/RelScan;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun visitSort (Lorg/partiql/plan/rel/RelSort;Ljava/lang/Object;)Ljava/lang/Object;
@@ -294,6 +296,8 @@ public class org/partiql/scribe/sql/RexConverter : org/partiql/plan/OperatorVisi
 	public fun visitTable (Lorg/partiql/plan/rex/RexTable;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 	public synthetic fun visitVar (Lorg/partiql/plan/rex/RexVar;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitVar (Lorg/partiql/plan/rex/RexVar;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
+	public synthetic fun visitWorkingTable (Lorg/partiql/plan/rex/RexWorkingTable;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitWorkingTable (Lorg/partiql/plan/rex/RexWorkingTable;Lkotlin/Unit;)Lorg/partiql/ast/expr/Expr;
 }
 
 public final class org/partiql/scribe/sql/SqlArg {
@@ -579,6 +583,8 @@ public class org/partiql/scribe/targets/redshift/RedshiftRelConverter : org/part
 	public synthetic fun <init> (Lorg/partiql/scribe/targets/redshift/RedshiftPlanToAst;Lorg/partiql/scribe/ScribeContext;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitRecursiveUnion (Lorg/partiql/plan/rel/RelRecursiveUnion;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitRecursiveUnion (Lorg/partiql/plan/rel/RelRecursiveUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 	public synthetic fun visitWindow (Lorg/partiql/plan/rel/RelWindow;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitWindow (Lorg/partiql/plan/rel/RelWindow;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 }
@@ -705,6 +711,8 @@ public class org/partiql/scribe/targets/spark/SparkRelConverter : org/partiql/sc
 	public synthetic fun <init> (Lorg/partiql/scribe/targets/spark/SparkPlanToAst;Lorg/partiql/scribe/ScribeContext;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitCorrelate (Lorg/partiql/plan/rel/RelCorrelate;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
+	public synthetic fun visitRecursiveUnion (Lorg/partiql/plan/rel/RelRecursiveUnion;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitRecursiveUnion (Lorg/partiql/plan/rel/RelRecursiveUnion;Lkotlin/Unit;)Lorg/partiql/scribe/sql/ExprQuerySetFactory;
 }
 
 public class org/partiql/scribe/targets/spark/SparkRewriter : org/partiql/plan/OperatorRewriter {

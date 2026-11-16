@@ -149,7 +149,7 @@ public open class SparkAstToSql(context: ScribeContext) : AstToSql(context) {
     ): SqlBlock {
         var t = tail
         t = t concat formatIdentifier(node.queryName)
-        t = node.columnList?.let { columns -> list(this, " (", ") ") { columns } } ?: t
+        t = node.columnList?.let { columns -> t concat list(this, " (", ")") { columns } } ?: t
         t = t concat " AS "
         t = visitExprWrapped(node.asQuery, t)
         return t

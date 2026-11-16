@@ -27,12 +27,15 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+- Added support for recursive common table expressions (`WITH RECURSIVE`) for all targets. The WITH column list (required for each element of a `WITH RECURSIVE` clause) is reproduced, and recursive elements are emitted as `<non-recursive query> UNION [ALL] <recursive query>`. Spark and Redshift only support `UNION ALL` in a recursive common table expression, so `UNION` (DISTINCT) is reported as unsupported for these targets.
 
 ### Changed
+- Upgraded the `partiql-lang-kotlin` submodule to include recursive common table expressions (partiql/partiql-lang-kotlin#2014).
 
 ### Deprecated
 
 ### Fixed
+- Fixed the Spark target dropping the query of a WITH list element having a column list.
 
 ### Removed
 

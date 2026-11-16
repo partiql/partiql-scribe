@@ -74,6 +74,7 @@ import org.partiql.plan.rel.RelJoin
 import org.partiql.plan.rel.RelLimit
 import org.partiql.plan.rel.RelOffset
 import org.partiql.plan.rel.RelProject
+import org.partiql.plan.rel.RelRecursiveUnion
 import org.partiql.plan.rel.RelScan
 import org.partiql.plan.rel.RelSort
 import org.partiql.plan.rel.RelType
@@ -81,11 +82,17 @@ import org.partiql.plan.rel.RelUnion
 import org.partiql.plan.rel.RelUnpivot
 import org.partiql.plan.rel.RelWindow
 import org.partiql.plan.rel.RelWith
+import org.partiql.plan.rex.Rex
 import org.partiql.plan.rex.RexLit
+import org.partiql.plan.rex.RexPathKey
+import org.partiql.plan.rex.RexSelect
+import org.partiql.plan.rex.RexStruct
+import org.partiql.plan.rex.RexVar
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.utils.isUnknown
 import org.partiql.scribe.sql.utils.toIdentifier
+import org.partiql.spi.types.PType
 
 /**
  * Data class to hold the state to create an [ExprQuerySet].
@@ -819,20 +826,104 @@ public open class RelConverter(
         val withElements =
             rel.elements.map { element ->
                 val name = element.name
-                val repr = rexConverter.apply(element.representation)
+                val columns = element.columns
+                // The planner renames the columns of an element having a column list with a projection; the
+                // projection is removed, and the column list is emitted instead (see [visitRecursiveUnion]).
+                val representation = element.representation
+                val query =
+                    when {
+                        columns == null -> representation
+                        (representation as? RexSelect)?.input is RelRecursiveUnion -> representation
+                        else -> (renamedInput(representation, columns) as? RelScan)?.rex ?: representation
+                    }
                 withListElement(
                     queryName = Identifier.Simple.delimited(name),
-                    asQuery = repr as ExprQuerySet,
-                    columnList = null,
+                    asQuery = rexConverter.apply(query) as ExprQuerySet,
+                    columnList = columns?.map { Identifier.Simple.delimited(it) },
                 )
             }
         val querySet = transform.getRelConverter(outer + listOf(withLocals)).visit(rel.input, ctx)
         querySet.with =
             Ast.with(
                 elements = withElements,
-                isRecursive = false,
+                isRecursive = rel.elements.any { (it.representation as? RexSelect)?.input is RelRecursiveUnion },
             )
         return querySet
+    }
+
+    /**
+     * Converts the body of a recursive WITH list element to `seed UNION [ALL] recursive`.
+     *
+     * The planner combines multiple non-recursive (resp. recursive) operands with UNION ALL, and renames their columns
+     * per the column list (which is required, and which [visitWith] emits instead); the operands are emitted as a
+     * single chain of UNION [ALL].
+     */
+    override fun visitRecursiveUnion(
+        rel: RelRecursiveUnion,
+        ctx: Unit,
+    ): ExprQuerySetFactory {
+        val columns = rel.type.fields.single().type.fields.map { it.name }
+        val seed = columnRename(rel.seed, columns) ?: invalidRecursiveUnion(rel)
+        val recursive = columnRename(rel.recursive, columns) ?: invalidRecursiveUnion(rel)
+        val operands = (unionAllOperands(seed) + unionAllOperands(recursive)).map { visit(it, ctx).toExprQuerySet() }
+        val setOp =
+            SetOp.builder()
+                .setOpType(SetOpType.UNION())
+                .setq(if (rel.isAll) SetQuantifier.ALL() else SetQuantifier.DISTINCT())
+                .build()
+        var query = ExprQuerySetFactory(QueryBodySetOpFactory(lhs = operands[0], rhs = operands[1], setOp = setOp))
+        for (operand in operands.drop(2)) {
+            query = ExprQuerySetFactory(QueryBodySetOpFactory(lhs = query.toExprQuerySet(), rhs = operand, setOp = setOp))
+        }
+        return query
+    }
+
+    private fun invalidRecursiveUnion(rel: RelRecursiveUnion): Nothing =
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                code = ScribeProblem.INVALID_PLAN,
+                message = "Malformed plan, the operands of the recursive WITH list element ${rel.name} do not rename their columns",
+            ),
+        )
+
+    /**
+     * Returns the input of the projection renaming the columns of the rows of [representation] (a `SELECT VALUE` over
+     * that projection) per the WITH column list [columns], if any.
+     */
+    private fun renamedInput(
+        representation: Rex,
+        columns: List<String>,
+    ): Rel? {
+        val input = (representation as? RexSelect)?.input ?: return null
+        return columnRename(input, columns)
+    }
+
+    private fun unionAllOperands(rel: Rel): List<Rel> =
+        when {
+            rel is RelUnion && rel.isAll -> unionAllOperands(rel.left) + unionAllOperands(rel.right)
+            else -> listOf(rel)
+        }
+
+    /**
+     * Returns the input of [rel] if [rel] renames the columns of its input per the WITH column list [columns], i.e. it
+     * is the projection `{ 'c_1': v['f_1'], ..., 'c_n': v['f_n'] }` of the single binding `v` of its input.
+     */
+    private fun columnRename(
+        rel: Rel,
+        columns: List<String>,
+    ): Rel? {
+        val projection = (rel as? RelProject)?.projections?.singleOrNull() as? RexStruct ?: return null
+        val keys =
+            projection.fields.map { field ->
+                val key = (field.key as? RexLit)?.datum?.takeIf { it.type.code() == PType.STRING }?.string ?: return null
+                val path = field.value as? RexPathKey ?: return null
+                val root = path.operand as? RexVar ?: return null
+                if (root.scope != 0 || root.offset != 0 || path.key !is RexLit) {
+                    return null
+                }
+                key
+            }
+        return if (keys == columns) rel.input else null
     }
 
     override fun visitWindow(

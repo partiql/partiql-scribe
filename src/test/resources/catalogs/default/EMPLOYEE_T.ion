@@ -1,0 +1,21 @@
+{
+  type: "bag",
+  items: {
+    type: "struct",
+    constraints: [ closed, ordered, unique ],
+    fields: [
+      {
+        name: "id",
+        type: "int32",
+      },
+      {
+        name: "name",
+        type: "string",
+      },
+      {
+        name: "manager_id",
+        type: "int32",
+      }
+    ]
+  }
+}
