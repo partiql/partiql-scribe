@@ -56,6 +56,7 @@ import org.partiql.plan.rex.RexSubqueryIn
 import org.partiql.plan.rex.RexSubqueryTest
 import org.partiql.plan.rex.RexTable
 import org.partiql.plan.rex.RexVar
+import org.partiql.plan.rex.RexWorkingTable
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
@@ -993,6 +994,14 @@ public open class RexConverter(
                 )
         return exprVarRef(global, isQualified = false)
     }
+
+    /**
+     * The recursive self-reference of a recursive WITH list element; see [RelConverter.visitRecursiveUnion].
+     */
+    override fun visitWorkingTable(
+        rex: RexWorkingTable,
+        ctx: Unit,
+    ): Expr = exprVarRef(identifier = Identifier.delimited(rex.name), isQualified = false)
 
     override fun visitVar(
         rex: RexVar,
