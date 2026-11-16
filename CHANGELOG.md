@@ -27,6 +27,23 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Removed
+
+### Security
+
+### Contributors
+Thank you to all who have contributed!
+
+## [2.2.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.2.0) - 2026-11-14
+
+### Added
 - `AstToSql.formatIdentifier`, `AstToSql.identifierDelimiter`, and `AstToSql.quoted`: protected hooks through which every identifier is printed. A target can override `identifierDelimiter` (Spark uses a backtick) or `formatIdentifier` (Spark delimits every identifier).
 
 ### Changed
@@ -48,6 +65,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @johnedquinn
 - @xd1313113
 
 ## [2.1.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.1) - 2026-10-27
