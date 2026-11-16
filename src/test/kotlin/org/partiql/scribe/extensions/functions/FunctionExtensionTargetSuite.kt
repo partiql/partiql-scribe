@@ -4,6 +4,8 @@ import org.partiql.extensions.functions.compat.datetime.DateAdd
 import org.partiql.extensions.functions.compat.datetime.UtcNow
 import org.partiql.extensions.functions.custom.collection.Contains
 import org.partiql.extensions.functions.custom.conversion.HexToBigInt
+import org.partiql.extensions.functions.custom.datetime.DateTrunc
+import org.partiql.extensions.functions.custom.datetime.ToChar
 import org.partiql.extensions.functions.custom.datetime.ToUnixTime
 import org.partiql.extensions.functions.custom.math.Pow
 import org.partiql.plan.RoutineRef
@@ -56,6 +58,8 @@ private val FUNCTIONS =
         HexToBigInt.overloads(),
         ToUnixTime.overloads(),
         Pow.overloads(),
+        DateTrunc.overloads(),
+        ToChar.overloads(),
     ).flatten()
 private val ROUTINE_REFS =
     FUNCTIONS
