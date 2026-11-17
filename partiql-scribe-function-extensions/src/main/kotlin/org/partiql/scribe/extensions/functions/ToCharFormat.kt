@@ -63,7 +63,8 @@ internal sealed interface ToCharPart {
  */
 internal object ToCharTemplate {
     // All template patterns of the `to_char` function extension, longest first, so that, for example, `SSSS` is never
-    // read as `SS` `SS`, and `MON` is never read as `MM`.
+    // read as `SS` `SS`, and `MON` is never read as `MM`. Copied from partiql-lang-kotlin 1.7.0 `ToChar` (its
+    // `PATTERNS` plus the `FM` / `TM` prefixes); re-check it when `partiqlVersion` changes.
     private val PATTERNS =
         listOf(
             "A.D.", "A.M.", "AD", "AM", "B.C.", "BC", "CC", "DAY", "DDD", "DD", "DY", "D",
@@ -74,7 +75,7 @@ internal object ToCharTemplate {
             "Y,YYY", "YYYY", "YYY", "YY", "Y", "FM", "FX", "TM",
         ).sortedByDescending { it.length }
 
-    private val ELEMENTS =
+    val ELEMENTS =
         mapOf(
             "YYYY" to ToCharElement.YEAR,
             "YY" to ToCharElement.YEAR_2,
@@ -179,18 +180,31 @@ internal fun List<ToCharPart>.render(element: (ToCharElement) -> String): String
     }
 
 /**
- * Translates `to_char(<timestamp | date>, '<template>')` to `<function>(<value>, '<pattern>')`, where [pattern]
- * renders the parsed template for the target. A date argument is cast to TIMESTAMP so every target formats it as
- * midnight, like the function extension. [zonedTimestamps] allows a TIMESTAMP WITH TIME ZONE (see
- * [rejectZonedTimestamp]), and [truncateToMillis] truncates the value to milliseconds before formatting.
+ * The elements accepted in a `to_char` template, for error messages.
+ */
+private val SUPPORTED_ELEMENTS = (ToCharTemplate.ELEMENTS.keys + listOf("AM", "PM")).joinToString(" ")
+
+/**
+ * Translates `to_char(<timestamp | timestamp with time zone | date>, '<template>')` to
+ * `<function>(<value>, '<pattern>')`, where [pattern] renders the parsed template for the target. A date argument is
+ * cast to TIMESTAMP so every target formats it as midnight, like the function extension.
+ *
+ * - [target] names the target in error messages.
+ * - [zonedTimestamps] allows a TIMESTAMP WITH TIME ZONE (see [checkDatetimeArgument]).
+ * - [truncateToMillis] truncates the value to milliseconds before formatting.
+ * - [separateFields] rejects two adjacent elements whose rendered patterns end and start with the same letter. Java
+ *   patterns (Spark, Trino) read a run of one letter as one field, so `MM` `MM` would render `MMMM`, the month name,
+ *   and there is no empty separator to split them.
  */
 internal fun toChar(
     listener: ScribeProblemListener,
     args: SqlArgs,
     function: String,
     pattern: (List<ToCharPart>) -> String,
+    target: String,
     zonedTimestamps: Boolean = false,
     truncateToMillis: Boolean = false,
+    separateFields: Boolean = false,
 ): Expr {
     val template = (args.getOrNull(1)?.expr as? ExprLit)?.lit
     if (args.size != 2 || template?.code() != Literal.STRING) {
@@ -209,13 +223,16 @@ internal fun toChar(
                     ScribeProblem.simpleError(
                         ScribeProblem.UNSUPPORTED_OPERATION,
                         "Unsupported ${result.reason} in `to_char` template '${template.stringValue()}'. " +
-                            "Supported: YYYY YY MM DD DDD HH24 HH12 HH MI SS MS FF3 AM PM, " +
+                            "Supported: $SUPPORTED_ELEMENTS, " +
                             "with digits, spaces, and - / : . , ; _ between them",
                     ),
                 )
         }
+    if (separateFields) {
+        rejectMergedFields(listener, template.stringValue(), parts, pattern, target)
+    }
     val source = args[0]
-    rejectZonedTimestamp(listener, TO_CHAR, source, zonedTimestamps)
+    checkDatetimeArgument(listener, TO_CHAR, source, target, zonedTimestamps)
     val timestamp = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
     // Trino's format_datetime rounds the fraction to milliseconds, which can carry into every other field
     // (23:59:59.999999 on Dec 31 prints as the next year); the extension truncates, so truncate first.
@@ -226,6 +243,33 @@ internal fun toChar(
             timestamp
         }
     return exprCall(Identifier.regular(function), listOf(value, exprLit(Literal.string(pattern(parts)))))
+}
+
+/**
+ * Rejects adjacent elements (no text between them) whose renderings in [pattern] end and start with the same letter.
+ */
+private fun rejectMergedFields(
+    listener: ScribeProblemListener,
+    template: String,
+    parts: List<ToCharPart>,
+    pattern: (List<ToCharPart>) -> String,
+    target: String,
+) {
+    parts.zipWithNext().forEach { (left, right) ->
+        if (left is ToCharPart.Element && right is ToCharPart.Element) {
+            val leftPattern = pattern(listOf(left))
+            val rightPattern = pattern(listOf(right))
+            if (leftPattern.last() == rightPattern.first()) {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.UNSUPPORTED_OPERATION,
+                        "Unsupported adjacent elements in `to_char` template '$template' for $target: they would " +
+                            "merge into one field (`$leftPattern$rightPattern`). Separate them, for example with `-`.",
+                    ),
+                )
+            }
+        }
+    }
 }
 
 internal val TO_CHAR_POSTGRES: (List<ToCharPart>) -> String = { parts -> parts.render { it.postgres } }

@@ -78,6 +78,8 @@ private val PAYLOAD =
                 // Field names containing each target's identifier quote character.
                 PTypeField.of("e\"),f", PType.array(PType.string())),
                 PTypeField.of("e`),f", PType.array(PType.string())),
+                // A field whose type is only known at run time.
+                PTypeField.of("dyn", PType.dynamic()),
             ),
         ),
     )

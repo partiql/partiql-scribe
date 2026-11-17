@@ -261,3 +261,43 @@ format_datetime(date_trunc('millisecond', TIMESTAMP '2020-08-13 23:20:30-05:00')
 -- Rejected: an empty template
 --#[to-char-empty]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`MMMM`)
+--#[to-char-merged-month]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`yyyyyy`)
+--#[to-char-merged-year]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`SSSSSS`)
+--#[to-char-merged-milliseconds]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`HHHH`)
+--#[to-char-merged-hour]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`hhhh`)
+--#[to-char-merged-hour-12]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`mmmm`)
+--#[to-char-merged-minute]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`aa`)
+--#[to-char-merged-meridiem]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Trino returns 30123 22613
+--#[to-char-adjacent-different-letters]
+format_datetime(date_trunc('millisecond', TIMESTAMP '2020-08-13 23:20:30.123456'), 'ssSSS DDDdd');
+
+-- Rejected: a dynamic argument's run-time type is unknown
+--#[date-trunc-dynamic]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: a dynamic argument's run-time type is unknown
+--#[to-char-dynamic]
+[ScribeException{code=UNSUPPORTED_OPERATION}];

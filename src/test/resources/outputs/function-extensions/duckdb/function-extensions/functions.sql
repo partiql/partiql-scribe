@@ -261,3 +261,43 @@ strftime(CAST(DATE '2020-08-13' AS TIMESTAMP), '%Y/%m/%d %I:%M:%S %p');
 -- Rejected: an empty template
 --#[to-char-empty]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- DuckDB returns 0808
+--#[to-char-merged-month]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%m%m');
+
+-- DuckDB returns 202020
+--#[to-char-merged-year]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%Y%y');
+
+-- DuckDB returns 123123
+--#[to-char-merged-milliseconds]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%g%g');
+
+-- DuckDB returns 2323
+--#[to-char-merged-hour]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%H%H');
+
+-- DuckDB returns 1111
+--#[to-char-merged-hour-12]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%I%I');
+
+-- DuckDB returns 2020
+--#[to-char-merged-minute]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%M%M');
+
+-- DuckDB returns PMPM
+--#[to-char-merged-meridiem]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%p%p');
+
+-- DuckDB returns 30123 22613
+--#[to-char-adjacent-different-letters]
+strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%S%g %j%d');
+
+-- Rejected: a dynamic argument's run-time type is unknown
+--#[date-trunc-dynamic]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: a dynamic argument's run-time type is unknown
+--#[to-char-dynamic]
+[ScribeException{code=UNSUPPORTED_OPERATION}];

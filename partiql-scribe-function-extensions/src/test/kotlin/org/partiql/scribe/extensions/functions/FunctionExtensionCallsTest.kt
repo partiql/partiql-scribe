@@ -105,7 +105,7 @@ class FunctionExtensionCallsTest {
 
     @Test
     fun `date trunc translates every supported part in every target`() {
-        listOf("millisecond", "second", "minute", "hour", "day", "week", "month", "quarter", "year").forEach { part ->
+        DATE_TRUNC_PARTS.forEach { part ->
             val args =
                 args("date_trunc").toMutableList().apply {
                     this[0] = SqlArg(exprLit(Literal.string(part.uppercase())), PType.string())
@@ -266,6 +266,63 @@ class FunctionExtensionCallsTest {
                 assertEquals("UNSUPPORTED_OPERATION", error.error.name(), "$name $function")
             }
         }
+    }
+
+    @Test
+    fun `to char rejects adjacent elements that merge into one java field`() {
+        // `MM` `MM` would render `MMMM` (the month name) on Spark and Trino; Redshift and DuckDB keep them apart.
+        mapOf(
+            "MMMM" to "TO_CHAR(ts, 'MMMM')",
+            "YYYYYY" to "TO_CHAR(ts, 'YYYYYY')",
+            "MSMS" to "TO_CHAR(ts, 'MSMS')",
+            "MSFF3" to "TO_CHAR(ts, 'MSMS')",
+            "HH24HH24" to "TO_CHAR(ts, 'HH24HH24')",
+            "HH12HH" to "TO_CHAR(ts, 'HH12HH12')",
+            "MIMI" to "TO_CHAR(ts, 'MIMI')",
+            "AMPM" to "TO_CHAR(ts, 'AMAM')",
+        ).forEach { (template, redshift) ->
+            val args =
+                args("to_char").toMutableList().apply {
+                    this[1] = SqlArg(exprLit(Literal.string(template)), PType.string())
+                }
+            assertEquals(redshift, target("redshift").sql("to_char", args), template)
+            target("duckdb").sql("to_char", args)
+            for (name in listOf("spark", "trino")) {
+                val error = assertFailsWith<ScribeException>("$name $template") { target(name).translate("to_char", args) }
+                assertEquals("UNSUPPORTED_OPERATION", error.error.name(), "$name $template")
+            }
+        }
+        // Different letters next to each other stay separate fields.
+        val args =
+            args("to_char").toMutableList().apply {
+                this[1] = SqlArg(exprLit(Literal.string("SSMS DDDDD")), PType.string())
+            }
+        assertEquals("`date_format`(`ts`, 'ssSSS DDDdd')", target("spark").sql("to_char", args))
+    }
+
+    @Test
+    fun `datetime arguments other than timestamp and date are rejected`() {
+        val dynamic = SqlArg(exprVarRef(Identifier.regular("dyn"), false), PType.dynamic())
+        val text = SqlArg(exprVarRef(Identifier.regular("s"), false), PType.string())
+        for (value in listOf(dynamic, text)) {
+            val dateTrunc = listOf(SqlArg(exprLit(Literal.string("day")), PType.string()), value)
+            val toChar = listOf(value, SqlArg(exprLit(Literal.string("YYYY")), PType.string()))
+            targets().forEach { target ->
+                for ((function, args) in listOf("date_trunc" to dateTrunc, "to_char" to toChar)) {
+                    val error = assertFailsWith<ScribeException>("${target.name} $function") { target.translate(function, args) }
+                    assertEquals("UNSUPPORTED_OPERATION", error.error.name(), "${target.name} $function")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `errors name the target`() {
+        val zoned = SqlArg(exprVarRef(Identifier.regular("tz"), false), PType.timestampz())
+        val args = listOf(SqlArg(exprLit(Literal.string("day")), PType.string()), zoned)
+        val error = assertFailsWith<ScribeException> { target("spark").translate("date_trunc", args) }
+        kotlin.test.assertContains(error.toString(), "unsupported for Spark")
+        kotlin.test.assertContains(error.toString(), "Cast the argument to TIMESTAMP first")
     }
 
     @Test

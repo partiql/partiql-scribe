@@ -261,3 +261,43 @@ to_char(TIMESTAMP '2020-08-13 23:20:30', 'HH12 am');
 -- Rejected: an empty template (PartiQL: NULL)
 --#[to-char-empty]
 to_char(TIMESTAMP '2020-08-13 23:20:30', '');
+
+-- Adjacent elements: `MM` `MM` merge into `MMMM`, the month name, in Java patterns; Spark and Trino reject it (PartiQL: 0808)
+--#[to-char-merged-month]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'MMMM');
+
+-- Adjacent elements: `YYYY` `YY` merge into one year field in Java patterns; Spark and Trino reject it (PartiQL: 202020)
+--#[to-char-merged-year]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'YYYYYY');
+
+-- Adjacent elements: `MS` `MS` merge into `SSSSSS`, microseconds, in Java patterns; Spark and Trino reject it (PartiQL: 123123)
+--#[to-char-merged-milliseconds]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'MSMS');
+
+-- Adjacent elements: `HH24` `HH24` merge into one hour field in Java patterns; Spark and Trino reject it (PartiQL: 2323)
+--#[to-char-merged-hour]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'HH24HH24');
+
+-- Adjacent elements: `HH12` `HH` merge into one hour field in Java patterns; Spark and Trino reject it (PartiQL: 1111)
+--#[to-char-merged-hour-12]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'HH12HH');
+
+-- Adjacent elements: `MI` `MI` merge into one minute field in Java patterns; Spark and Trino reject it (PartiQL: 2020)
+--#[to-char-merged-minute]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'MIMI');
+
+-- Adjacent elements: `AM` `PM` merge into one meridiem field in Java patterns; Spark and Trino reject it (PartiQL: PMPM)
+--#[to-char-merged-meridiem]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'AMPM');
+
+-- Adjacent elements with different letters stay separate fields in every target (PartiQL: 30123 22613)
+--#[to-char-adjacent-different-letters]
+to_char(TIMESTAMP '2020-08-13 23:20:30.123456', 'SSMS DDDDD');
+
+-- Rejected: a dynamic argument's run-time type is unknown (PartiQL: depends on the value)
+--#[date-trunc-dynamic]
+SELECT date_trunc('day', p.dyn) AS d FROM payload AS p;
+
+-- Rejected: a dynamic argument's run-time type is unknown (PartiQL: depends on the value)
+--#[to-char-dynamic]
+SELECT to_char(p.dyn, 'YYYY-MM-DD') AS d FROM payload AS p;

@@ -39,12 +39,14 @@ public open class SparkFunctionExtensionCalls(
     public override val routineRules: Map<RoutineRef, SqlCallFn> =
         bind(
             routines,
-            commonRules(this, context.getProblemListener()) +
+            commonRules(this, context.getProblemListener(), "Spark") +
                 mapOf(
                     CONTAINS to ::contains,
                     TO_UNIXTIME to ::toUnixTime,
                     HEX_TO_BIGINT to ::hexToBigInt,
-                    TO_CHAR to { args -> toChar(context.getProblemListener(), args, "date_format", TO_CHAR_JAVA) },
+                    TO_CHAR to { args ->
+                        toChar(context.getProblemListener(), args, "date_format", TO_CHAR_JAVA, "Spark", separateFields = true)
+                    },
                 ),
         )
 

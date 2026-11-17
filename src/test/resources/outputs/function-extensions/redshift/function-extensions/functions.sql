@@ -261,3 +261,43 @@ TO_CHAR(CAST(DATE '2020-08-13' AS TIMESTAMP), 'YYYY/MM/DD HH12:MI:SS AM');
 -- Rejected: an empty template
 --#[to-char-empty]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Redshift returns 0808
+--#[to-char-merged-month]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'MMMM');
+
+-- Redshift returns 202020
+--#[to-char-merged-year]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'YYYYYY');
+
+-- Redshift returns 123123
+--#[to-char-merged-milliseconds]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'MSMS');
+
+-- Redshift returns 2323
+--#[to-char-merged-hour]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'HH24HH24');
+
+-- Redshift returns 1111
+--#[to-char-merged-hour-12]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'HH12HH12');
+
+-- Redshift returns 2020
+--#[to-char-merged-minute]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'MIMI');
+
+-- Redshift returns PMPM
+--#[to-char-merged-meridiem]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'AMAM');
+
+-- Redshift returns 30123 22613
+--#[to-char-adjacent-different-letters]
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'SSMS DDDDD');
+
+-- Rejected: a dynamic argument's run-time type is unknown
+--#[date-trunc-dynamic]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: a dynamic argument's run-time type is unknown
+--#[to-char-dynamic]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
