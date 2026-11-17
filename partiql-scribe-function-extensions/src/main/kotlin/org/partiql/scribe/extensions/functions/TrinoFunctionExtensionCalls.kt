@@ -35,9 +35,24 @@ public open class TrinoFunctionExtensionCalls(
             routines,
             commonRules(this, context.getProblemListener()) +
                 mapOf(
+                    // Trino's TIMESTAMP WITH TIME ZONE keeps the value's own offset, like the extension, so replace
+                    // the shared rule with one that accepts it.
+                    DATE_TRUNC to { args -> dateTrunc(context.getProblemListener(), args, zonedTimestamps = true) },
                     CONTAINS to ::contains,
                     TO_UNIXTIME to ::toUnixTime,
                     HEX_TO_BIGINT to ::hexToBigInt,
+                    TO_CHAR to {
+                            args ->
+                        toChar(
+                            context.getProblemListener(),
+                            args,
+                            "format_datetime",
+                            TO_CHAR_JAVA,
+                            zonedTimestamps = true,
+                            truncateToMillis = true,
+                            separateFields = true,
+                        )
+                    },
                 ),
         )
 

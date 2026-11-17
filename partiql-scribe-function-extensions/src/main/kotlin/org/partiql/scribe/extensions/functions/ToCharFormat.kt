@@ -1,0 +1,315 @@
+package org.partiql.scribe.extensions.functions
+
+import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprLit
+import org.partiql.ast.Identifier
+import org.partiql.ast.Literal
+import org.partiql.ast.expr.Expr
+import org.partiql.ast.expr.ExprLit
+import org.partiql.scribe.problems.ScribeProblem
+import org.partiql.scribe.problems.ScribeProblemListener
+import org.partiql.scribe.sql.SqlArgs
+import java.util.Locale
+
+/**
+ * The `to_char` template elements that every Scribe target formats identically. Each element knows its spelling in
+ * the PostgreSQL-style template (Redshift), Java / Joda patterns (Spark `date_format`, Trino `format_datetime`), and
+ * `strftime` (DuckDB).
+ */
+internal enum class ToCharElement(
+    val postgres: String,
+    val java: String,
+    val strftime: String,
+) {
+    YEAR("YYYY", "yyyy", "%Y"),
+    YEAR_2("YY", "yy", "%y"),
+    MONTH("MM", "MM", "%m"),
+    DAY("DD", "dd", "%d"),
+    DAY_OF_YEAR("DDD", "DDD", "%j"),
+    HOUR_24("HH24", "HH", "%H"),
+    HOUR_12("HH12", "hh", "%I"),
+    MINUTE("MI", "mm", "%M"),
+    SECOND("SS", "ss", "%S"),
+    MILLISECOND("MS", "SSS", "%g"),
+    MERIDIEM("AM", "a", "%p"),
+}
+
+internal sealed interface ToCharPart {
+    /**
+     * An [element] and its [spelling] in the template, which is upper or lower case (e.g. `dd`, `DDD`, `ff3`).
+     */
+    data class Element(
+        val element: ToCharElement,
+        val spelling: String = element.postgres,
+    ) : ToCharPart {
+        /**
+         * The PostgreSQL / Redshift spelling in the template's case, e.g. `dd` -> `dd`, `ff3` -> `ms`. Redshift reads the
+         * rendered template again, so keeping the case makes it split the template exactly as the extension did:
+         * `ddDDD` is `DD` `DDD`, while `DDDDD` would be `DDD` `DD`.
+         */
+        val postgresSpelling: String
+            get() = if (spelling == spelling.lowercase(Locale.ROOT)) element.postgres.lowercase(Locale.ROOT) else element.postgres
+    }
+
+    data class Text(
+        val text: String,
+    ) : ToCharPart
+}
+
+/**
+ * Parses the subset of PostgreSQL `to_char` templates that Scribe translates to every target.
+ *
+ * Template patterns are matched longest first, in upper or lower case only, exactly like the `to_char` function
+ * extension (so `Mm` is text, not `MM`). A template is either translated with the same meaning or rejected; it is never
+ * reinterpreted. Supported:
+ *
+ * - `YYYY YY MM DD DDD HH24 HH12 HH MI SS MS FF3` in upper or lower case, and `AM` / `PM` in upper case;
+ * - unquoted digits, spaces, and `- / : . , ; _` between them.
+ *
+ * Everything else is rejected, including names (`Month`, `Dy`, ...), fill mode (`FM`), ordinal suffixes (`TH`),
+ * other patterns (`Q`, `IW`, `US`, `FF6`, ...), double-quoted text, other literal characters, and the empty template. These either have no
+ * equivalent in some target or are formatted differently (padding, locale, or precision).
+ */
+internal object ToCharTemplate {
+    // All template patterns of the `to_char` function extension, longest first, so that, for example, `SSSS` is never
+    // read as `SS` `SS`, and `MON` is never read as `MM`. Copied from partiql-lang-kotlin 1.7.0 `ToChar` (its
+    // `PATTERNS` plus the `FM` / `TM` prefixes); re-check it when `partiqlVersion` changes.
+    private val PATTERNS =
+        listOf(
+            "A.D.", "A.M.", "AD", "AM", "B.C.", "BC", "CC", "DAY", "DDD", "DD", "DY", "D",
+            "FF1", "FF2", "FF3", "FF4", "FF5", "FF6",
+            "HH24", "HH12", "HH", "IDDD", "ID", "IW", "IYYY", "IYY", "IY", "I", "J",
+            "MI", "MM", "MONTH", "MON", "MS", "OF", "P.M.", "PM", "Q", "RM",
+            "SSSSS", "SSSS", "SS", "TZH", "TZM", "TZ", "US", "WW", "W",
+            "Y,YYY", "YYYY", "YYY", "YY", "Y", "FM", "FX", "TM",
+        ).sortedByDescending { it.length }
+
+    val ELEMENTS =
+        mapOf(
+            "YYYY" to ToCharElement.YEAR,
+            "YY" to ToCharElement.YEAR_2,
+            "MM" to ToCharElement.MONTH,
+            "DD" to ToCharElement.DAY,
+            "DDD" to ToCharElement.DAY_OF_YEAR,
+            "HH24" to ToCharElement.HOUR_24,
+            "HH12" to ToCharElement.HOUR_12,
+            "HH" to ToCharElement.HOUR_12,
+            "MI" to ToCharElement.MINUTE,
+            "SS" to ToCharElement.SECOND,
+            "MS" to ToCharElement.MILLISECOND,
+            "FF3" to ToCharElement.MILLISECOND,
+        )
+
+    private const val TEXT = " -/:.,;_0123456789"
+
+    /**
+     * Returns the parsed [template], or the reason it is not supported.
+     */
+    fun parse(template: String): Result {
+        // The extension returns null for an empty template; the targets don't all agree.
+        if (template.isEmpty()) {
+            return Result.Unsupported("empty template")
+        }
+        val parts = mutableListOf<ToCharPart>()
+        val text = StringBuilder()
+        var i = 0
+        while (i < template.length) {
+            val c = template[i]
+            if (c in TEXT) {
+                text.append(c)
+                i++
+                continue
+            }
+            val pattern =
+                PATTERNS.firstOrNull { matchesCase(template, i, it) }
+                    ?: return Result.Unsupported("character `$c`")
+            val spelling = template.substring(i, i + pattern.length)
+            val element =
+                when {
+                    pattern == "AM" || pattern == "PM" -> if (spelling == pattern) ToCharElement.MERIDIEM else null
+                    else -> ELEMENTS[pattern]
+                } ?: return Result.Unsupported("pattern `$spelling`")
+            i += pattern.length
+            if (element != ToCharElement.MERIDIEM && template.regionMatches(i, "TH", 0, 2, ignoreCase = true)) {
+                return Result.Unsupported("suffix `${template.substring(i, i + 2)}`")
+            }
+            if (text.isNotEmpty()) {
+                parts.add(ToCharPart.Text(text.toString()))
+                text.setLength(0)
+            }
+            parts.add(ToCharPart.Element(element, spelling))
+        }
+        if (text.isNotEmpty()) {
+            parts.add(ToCharPart.Text(text.toString()))
+        }
+        return Result.Supported(parts)
+    }
+
+    /**
+     * Like the function extension, a pattern matches in upper or lower case, and a name pattern also capitalized
+     * (names are rejected later anyway).
+     */
+    private fun matchesCase(
+        template: String,
+        offset: Int,
+        pattern: String,
+    ): Boolean {
+        if (!template.regionMatches(offset, pattern, 0, pattern.length, ignoreCase = true)) {
+            return false
+        }
+        val text = template.substring(offset, offset + pattern.length)
+        return text == pattern ||
+            text == pattern.lowercase(Locale.ROOT) ||
+            (pattern in NAME_PATTERNS && text == pattern[0] + pattern.substring(1).lowercase(Locale.ROOT))
+    }
+
+    private val NAME_PATTERNS = setOf("MONTH", "MON", "DAY", "DY")
+
+    sealed interface Result {
+        data class Supported(
+            val parts: List<ToCharPart>,
+        ) : Result
+
+        data class Unsupported(
+            val reason: String,
+        ) : Result
+    }
+}
+
+/**
+ * Renders parsed `to_char` template parts in a target's pattern language. Literal text is limited to digits, spaces,
+ * and separators, which every pattern language copies as-is.
+ */
+internal fun List<ToCharPart>.render(element: (ToCharPart.Element) -> String): String =
+    joinToString("") {
+        when (it) {
+            is ToCharPart.Element -> element(it)
+            is ToCharPart.Text -> it.text
+        }
+    }
+
+/**
+ * The elements accepted in a `to_char` template, for error messages.
+ */
+private val SUPPORTED_ELEMENTS = (ToCharTemplate.ELEMENTS.keys + listOf("AM", "PM")).joinToString(" ")
+
+/**
+ * Translates `to_char(<timestamp | timestamp with time zone | date>, '<template>')` to
+ * `<function>(<value>, '<pattern>')`, where [pattern] renders the parsed template for the target. A date argument is
+ * cast to TIMESTAMP so every target formats it as midnight, like the function extension.
+ *
+ * - [zonedTimestamps] allows a TIMESTAMP WITH TIME ZONE (see [checkDatetimeArgument]).
+ * - [truncateToMillis] truncates the value to milliseconds before formatting.
+ * - [separateFields] rejects two adjacent elements whose rendered patterns end and start with the same letter. Java
+ *   patterns (Spark, Trino) read a run of one letter as one field, so `MM` `MM` would render `MMMM`, the month name,
+ *   and there is no empty separator to split them.
+ * - [reparse] rejects a template whose rendered pattern, parsed again, gives different elements (for targets such as
+ *   Redshift that tokenize the rendered template themselves).
+ */
+internal fun toChar(
+    listener: ScribeProblemListener,
+    args: SqlArgs,
+    function: String,
+    pattern: (List<ToCharPart>) -> String,
+    zonedTimestamps: Boolean = false,
+    truncateToMillis: Boolean = false,
+    separateFields: Boolean = false,
+    reparse: Boolean = false,
+): Expr {
+    val template = (args.getOrNull(1)?.expr as? ExprLit)?.lit
+    if (args.size != 2 || template?.code() != Literal.STRING) {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Function extension `to_char` requires a timestamp or date and a string literal template",
+            ),
+        )
+    }
+    val parts =
+        when (val result = ToCharTemplate.parse(template.stringValue())) {
+            is ToCharTemplate.Result.Supported -> result.parts
+            is ToCharTemplate.Result.Unsupported ->
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.UNSUPPORTED_OPERATION,
+                        "Unsupported ${result.reason} in `to_char` template '${template.stringValue()}'. " +
+                            "Supported: $SUPPORTED_ELEMENTS, " +
+                            "with digits, spaces, and - / : . , ; _ between them",
+                    ),
+                )
+        }
+    if (separateFields) {
+        rejectMergedFields(listener, template.stringValue(), parts, pattern)
+    }
+    if (reparse) {
+        rejectReparsedDifferently(listener, template.stringValue(), parts, pattern)
+    }
+    val source = args[0]
+    checkDatetimeArgument(listener, TO_CHAR, source, zonedTimestamps)
+    val timestamp = timestampValue(source)
+    // Trino's format_datetime rounds the fraction to milliseconds, which can carry into every other field
+    // (23:59:59.999999 on Dec 31 prints as the next year); the extension truncates, so truncate first.
+    val value =
+        if (truncateToMillis) {
+            exprCall(Identifier.regular("date_trunc"), listOf(exprLit(Literal.string("millisecond")), timestamp))
+        } else {
+            timestamp
+        }
+    return exprCall(Identifier.regular(function), listOf(value, exprLit(Literal.string(pattern(parts)))))
+}
+
+/**
+ * Rejects adjacent elements (no text between them) whose renderings in [pattern] end and start with the same letter.
+ */
+private fun rejectMergedFields(
+    listener: ScribeProblemListener,
+    template: String,
+    parts: List<ToCharPart>,
+    pattern: (List<ToCharPart>) -> String,
+) {
+    parts.zipWithNext().forEach { (left, right) ->
+        if (left is ToCharPart.Element && right is ToCharPart.Element) {
+            val leftPattern = pattern(listOf(left))
+            val rightPattern = pattern(listOf(right))
+            if (leftPattern.last() == rightPattern.first()) {
+                listener.reportAndThrow(
+                    ScribeProblem.simpleError(
+                        ScribeProblem.UNSUPPORTED_OPERATION,
+                        "Unsupported adjacent elements in `to_char` template '$template': they would merge into one " +
+                            "field of the target's pattern (`$leftPattern$rightPattern`). Separate them, for example " +
+                            "with `-`.",
+                    ),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Rejects [parts] when the rendered [pattern], parsed again, doesn't give the same elements and text. A safety net for
+ * Redshift, which tokenizes the rendered template longest match first; [ToCharPart.Element.postgresSpelling] keeps the
+ * template's case so this shouldn't happen.
+ */
+private fun rejectReparsedDifferently(
+    listener: ScribeProblemListener,
+    template: String,
+    parts: List<ToCharPart>,
+    pattern: (List<ToCharPart>) -> String,
+) {
+    val rendered = pattern(parts)
+    val reparsed = (ToCharTemplate.parse(rendered) as? ToCharTemplate.Result.Supported)?.parts
+    val shape: (List<ToCharPart>) -> List<Any> = { ps -> ps.map { if (it is ToCharPart.Element) it.element else it } }
+    if (reparsed == null || shape(reparsed) != shape(parts)) {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Unsupported `to_char` template '$template': the target would read the rendered template " +
+                    "'$rendered' as different elements. Separate the elements, for example with `-`.",
+            ),
+        )
+    }
+}
+
+internal val TO_CHAR_POSTGRES: (List<ToCharPart>) -> String = { parts -> parts.render { it.postgresSpelling } }
+internal val TO_CHAR_JAVA: (List<ToCharPart>) -> String = { parts -> parts.render { it.element.java } }
+internal val TO_CHAR_STRFTIME: (List<ToCharPart>) -> String = { parts -> parts.render { it.element.strftime } }
