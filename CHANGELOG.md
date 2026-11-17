@@ -32,7 +32,6 @@ Thank you to all who have contributed!
 
 ### Changed
 - Redshift and Trino targets: a correlated subquery that contains a window function, including `ROW_NUMBER`/`RANK` and `EXISTS`/`NOT EXISTS`, is now an error. Compute the window function in an uncorrelated derived table instead.
-- Bumped `partiql-lang-kotlin` to 1.7.0, which rejects an outer reference or a subquery in a window function (see its [CHANGELOG](https://github.com/partiql/partiql-lang-kotlin/blob/v1.7.0/CHANGELOG.md)).
 
 ### Deprecated
 
