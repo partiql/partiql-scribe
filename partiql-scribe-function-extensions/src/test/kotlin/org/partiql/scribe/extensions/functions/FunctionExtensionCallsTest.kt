@@ -173,7 +173,7 @@ class FunctionExtensionCallsTest {
                 DuckDBAstToSql(context) to TestDuckDBCalls(context, routines)::translate to
                     "strftime(CAST(d AS TIMESTAMP), '%Y/%y-%m-%d %j %H:%I:%I:%M:%S.%g.%g %p %p, 01;_')",
                 RedshiftAstToSql(context) to TestRedshiftCalls(context, routines)::translate to
-                    "TO_CHAR(CAST(d AS TIMESTAMP), 'YYYY/YY-MM-DD DDD HH24:HH12:HH12:MI:SS.MS.MS AM AM, 01;_')",
+                    "TO_CHAR(CAST(d AS TIMESTAMP), 'yyyy/YY-mm-dd ddd hh24:HH12:hh12:MI:ss.MS.ms AM AM, 01;_')",
             )
         expected.forEach { (target, sql) ->
             val (dialect, translate) = target
@@ -270,7 +270,8 @@ class FunctionExtensionCallsTest {
 
     @Test
     fun `to char rejects adjacent elements that merge into one java field`() {
-        // `MM` `MM` would render `MMMM` (the month name) on Spark and Trino; Redshift and DuckDB keep them apart.
+        // `MM` `MM` would render `MMMM` (the month name) on Spark and Trino. Redshift and DuckDB read each element
+        // separately (Redshift because the rendered template keeps the elements and their case).
         mapOf(
             "MMMM" to "TO_CHAR(ts, 'MMMM')",
             "YYYYYY" to "TO_CHAR(ts, 'YYYYYY')",
@@ -298,6 +299,38 @@ class FunctionExtensionCallsTest {
                 this[1] = SqlArg(exprLit(Literal.string("SSMS DDDDD")), PType.string())
             }
         assertEquals("`date_format`(`ts`, 'ssSSS DDDdd')", target("spark").sql("to_char", args))
+    }
+
+    @Test
+    fun `redshift keeps the template case so mixed-case elements split the same way`() {
+        // Upper-casing `ddDDD` to `DDDDD` would make Redshift read `DDD` `DD`; the extension reads `DD` `DDD`.
+        mapOf(
+            "ddDDD" to "TO_CHAR(ts, 'ddDDD')",
+            "yyYYYY" to "TO_CHAR(ts, 'yyYYYY')",
+            "ssSS" to "TO_CHAR(ts, 'ssSS')",
+            "SSff3" to "TO_CHAR(ts, 'SSms')",
+            "hh" to "TO_CHAR(ts, 'hh12')",
+        ).forEach { (template, expected) ->
+            val args =
+                args("to_char").toMutableList().apply {
+                    this[1] = SqlArg(exprLit(Literal.string(template)), PType.string())
+                }
+            assertEquals(expected, target("redshift").sql("to_char", args), template)
+        }
+    }
+
+    @Test
+    fun `a null argument is cast to timestamp`() {
+        val nul = SqlArg(exprLit(Literal.nul()), PType.unknown())
+        val dateTrunc = listOf(SqlArg(exprLit(Literal.string("day")), PType.string()), nul)
+        val toChar = listOf(nul, SqlArg(exprLit(Literal.string("YYYY")), PType.string()))
+        mapOf(
+            "redshift" to ("date_trunc('day', CAST(NULL AS TIMESTAMP))" to "TO_CHAR(CAST(NULL AS TIMESTAMP), 'YYYY')"),
+            "duckdb" to ("date_trunc('day', CAST(NULL AS TIMESTAMP))" to "strftime(CAST(NULL AS TIMESTAMP), '%Y')"),
+        ).forEach { (name, expected) ->
+            assertEquals(expected.first, target(name).sql("date_trunc", dateTrunc), name)
+            assertEquals(expected.second, target(name).sql("to_char", toChar), name)
+        }
     }
 
     @Test

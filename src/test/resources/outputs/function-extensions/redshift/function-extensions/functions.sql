@@ -128,7 +128,7 @@ TO_CHAR(TIMESTAMP '2020-12-31 23:59:59.999999', 'YYYY-MM-DD HH24:MI:SS.MS');
 
 -- Redshift returns 2020-08-13 23:20:30.123
 --#[to-char-lower-case]
-TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'YYYY-MM-DD HH24:MI:SS.MS');
+TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'yyyy-mm-dd hh24:mi:ss.ms');
 
 -- Redshift returns 2020/08/13
 --#[to-char-slash]
@@ -180,7 +180,7 @@ TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.045678', 'SS.MS SS.MS');
 
 -- Redshift returns 2020/08/13 12:00:00 AM
 --#[to-char-date]
-TO_CHAR(CAST(DATE '2020-08-13' AS TIMESTAMP), 'YYYY/MM/DD HH12:MI:SS AM');
+TO_CHAR(CAST(DATE '2020-08-13' AS TIMESTAMP), 'yyyy/mm/dd hh12:mi:ss AM');
 
 -- Rejected: the target uses the session time zone instead of the value's own offset
 --#[to-char-zoned]
@@ -301,3 +301,23 @@ TO_CHAR(TIMESTAMP '2020-08-13 23:20:30.123456', 'SSMS DDDDD');
 -- Rejected: a dynamic argument's run-time type is unknown
 --#[to-char-dynamic]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Redshift returns 13226
+--#[to-char-mixed-case-day]
+TO_CHAR(TIMESTAMP '2024-08-13 23:20:30.123456', 'ddDDD');
+
+-- Redshift returns 242024
+--#[to-char-mixed-case-year]
+TO_CHAR(TIMESTAMP '2024-08-13 23:20:30.123456', 'yyYYYY');
+
+-- Redshift returns 3030
+--#[to-char-mixed-case-seconds]
+TO_CHAR(TIMESTAMP '2024-08-13 23:20:30.123456', 'ssSS');
+
+-- Redshift returns NULL
+--#[date-trunc-null]
+date_trunc('day', CAST(NULL AS TIMESTAMP));
+
+-- Redshift returns NULL
+--#[to-char-null]
+TO_CHAR(CAST(NULL AS TIMESTAMP), 'YYYY');

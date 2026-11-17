@@ -295,3 +295,23 @@ CAST(`unix_timestamp`(TIMESTAMP_NTZ '9999-12-31 23:59:59.999999') AS BIGINT) - C
 -- Rejected: a dynamic argument's run-time type is unknown
 --#[to-char-dynamic]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Spark returns 13226
+--#[to-char-mixed-case-day]
+`date_format`(TIMESTAMP_NTZ '2024-08-13 23:20:30.123456', 'ddDDD');
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`yyyyyy`)
+--#[to-char-mixed-case-year]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Rejected: the adjacent elements would merge into one Java pattern field (`ssss`)
+--#[to-char-mixed-case-seconds]
+[ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- Spark returns NULL
+--#[date-trunc-null]
+`date_trunc`('day', CAST(NULL AS TIMESTAMP_NTZ));
+
+-- Spark returns NULL
+--#[to-char-null]
+`date_format`(CAST(NULL AS TIMESTAMP_NTZ), 'yyyy');

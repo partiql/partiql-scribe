@@ -1,9 +1,7 @@
 package org.partiql.scribe.extensions.functions
 
 import org.partiql.ast.Ast.exprCall
-import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.Ast.exprLit
-import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
 import org.partiql.ast.Literal
 import org.partiql.ast.expr.Expr
@@ -11,7 +9,6 @@ import org.partiql.ast.expr.ExprLit
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.problems.ScribeProblemListener
 import org.partiql.scribe.sql.SqlArgs
-import org.partiql.spi.types.PType
 import java.util.Locale
 
 /**
@@ -38,9 +35,21 @@ internal enum class ToCharElement(
 }
 
 internal sealed interface ToCharPart {
+    /**
+     * An [element] and its [spelling] in the template, which is upper or lower case (e.g. `dd`, `DDD`, `ff3`).
+     */
     data class Element(
         val element: ToCharElement,
-    ) : ToCharPart
+        val spelling: String = element.postgres,
+    ) : ToCharPart {
+        /**
+         * The PostgreSQL / Redshift spelling in the template's case, e.g. `dd` -> `dd`, `ff3` -> `ms`. Redshift reads the
+         * rendered template again, so keeping the case makes it split the template exactly as the extension did:
+         * `ddDDD` is `DD` `DDD`, while `DDDDD` would be `DDD` `DD`.
+         */
+        val postgresSpelling: String
+            get() = if (spelling == spelling.lowercase(Locale.ROOT)) element.postgres.lowercase(Locale.ROOT) else element.postgres
+    }
 
     data class Text(
         val text: String,
@@ -128,7 +137,7 @@ internal object ToCharTemplate {
                 parts.add(ToCharPart.Text(text.toString()))
                 text.setLength(0)
             }
-            parts.add(ToCharPart.Element(element))
+            parts.add(ToCharPart.Element(element, spelling))
         }
         if (text.isNotEmpty()) {
             parts.add(ToCharPart.Text(text.toString()))
@@ -171,10 +180,10 @@ internal object ToCharTemplate {
  * Renders parsed `to_char` template parts in a target's pattern language. Literal text is limited to digits, spaces,
  * and separators, which every pattern language copies as-is.
  */
-internal fun List<ToCharPart>.render(element: (ToCharElement) -> String): String =
+internal fun List<ToCharPart>.render(element: (ToCharPart.Element) -> String): String =
     joinToString("") {
         when (it) {
-            is ToCharPart.Element -> element(it.element)
+            is ToCharPart.Element -> element(it)
             is ToCharPart.Text -> it.text
         }
     }
@@ -194,6 +203,8 @@ private val SUPPORTED_ELEMENTS = (ToCharTemplate.ELEMENTS.keys + listOf("AM", "P
  * - [separateFields] rejects two adjacent elements whose rendered patterns end and start with the same letter. Java
  *   patterns (Spark, Trino) read a run of one letter as one field, so `MM` `MM` would render `MMMM`, the month name,
  *   and there is no empty separator to split them.
+ * - [reparse] rejects a template whose rendered pattern, parsed again, gives different elements (for targets such as
+ *   Redshift that tokenize the rendered template themselves).
  */
 internal fun toChar(
     listener: ScribeProblemListener,
@@ -203,6 +214,7 @@ internal fun toChar(
     zonedTimestamps: Boolean = false,
     truncateToMillis: Boolean = false,
     separateFields: Boolean = false,
+    reparse: Boolean = false,
 ): Expr {
     val template = (args.getOrNull(1)?.expr as? ExprLit)?.lit
     if (args.size != 2 || template?.code() != Literal.STRING) {
@@ -229,9 +241,12 @@ internal fun toChar(
     if (separateFields) {
         rejectMergedFields(listener, template.stringValue(), parts, pattern)
     }
+    if (reparse) {
+        rejectReparsedDifferently(listener, template.stringValue(), parts, pattern)
+    }
     val source = args[0]
     checkDatetimeArgument(listener, TO_CHAR, source, zonedTimestamps)
-    val timestamp = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
+    val timestamp = timestampValue(source)
     // Trino's format_datetime rounds the fraction to milliseconds, which can carry into every other field
     // (23:59:59.999999 on Dec 31 prints as the next year); the extension truncates, so truncate first.
     val value =
@@ -270,6 +285,31 @@ private fun rejectMergedFields(
     }
 }
 
-internal val TO_CHAR_POSTGRES: (List<ToCharPart>) -> String = { parts -> parts.render { it.postgres } }
-internal val TO_CHAR_JAVA: (List<ToCharPart>) -> String = { parts -> parts.render { it.java } }
-internal val TO_CHAR_STRFTIME: (List<ToCharPart>) -> String = { parts -> parts.render { it.strftime } }
+/**
+ * Rejects [parts] when the rendered [pattern], parsed again, doesn't give the same elements and text. A safety net for
+ * Redshift, which tokenizes the rendered template longest match first; [ToCharPart.Element.postgresSpelling] keeps the
+ * template's case so this shouldn't happen.
+ */
+private fun rejectReparsedDifferently(
+    listener: ScribeProblemListener,
+    template: String,
+    parts: List<ToCharPart>,
+    pattern: (List<ToCharPart>) -> String,
+) {
+    val rendered = pattern(parts)
+    val reparsed = (ToCharTemplate.parse(rendered) as? ToCharTemplate.Result.Supported)?.parts
+    val shape: (List<ToCharPart>) -> List<Any> = { ps -> ps.map { if (it is ToCharPart.Element) it.element else it } }
+    if (reparsed == null || shape(reparsed) != shape(parts)) {
+        listener.reportAndThrow(
+            ScribeProblem.simpleError(
+                ScribeProblem.UNSUPPORTED_OPERATION,
+                "Unsupported `to_char` template '$template': the target would read the rendered template " +
+                    "'$rendered' as different elements. Separate the elements, for example with `-`.",
+            ),
+        )
+    }
+}
+
+internal val TO_CHAR_POSTGRES: (List<ToCharPart>) -> String = { parts -> parts.render { it.postgresSpelling } }
+internal val TO_CHAR_JAVA: (List<ToCharPart>) -> String = { parts -> parts.render { it.element.java } }
+internal val TO_CHAR_STRFTIME: (List<ToCharPart>) -> String = { parts -> parts.render { it.element.strftime } }

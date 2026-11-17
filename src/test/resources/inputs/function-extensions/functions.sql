@@ -301,3 +301,23 @@ SELECT date_trunc('day', p.dyn) AS d FROM payload AS p;
 -- Rejected: a dynamic argument's run-time type is unknown (PartiQL: depends on the value)
 --#[to-char-dynamic]
 SELECT to_char(p.dyn, 'YYYY-MM-DD') AS d FROM payload AS p;
+
+-- Mixed case keeps the split: ddDDD is DD then DDD, not DDD then DD (PartiQL: 13226)
+--#[to-char-mixed-case-day]
+to_char(TIMESTAMP '2024-08-13 23:20:30.123456', 'ddDDD');
+
+-- Mixed case keeps the split: yyYYYY is YY then YYYY, not YYYY then YY (PartiQL: 242024)
+--#[to-char-mixed-case-year]
+to_char(TIMESTAMP '2024-08-13 23:20:30.123456', 'yyYYYY');
+
+-- Mixed case keeps the split: ssSS is SS then SS, not SSSS (PartiQL: 3030)
+--#[to-char-mixed-case-seconds]
+to_char(TIMESTAMP '2024-08-13 23:20:30.123456', 'ssSS');
+
+-- A NULL argument returns NULL (PartiQL: NULL)
+--#[date-trunc-null]
+date_trunc('day', NULL);
+
+-- A NULL argument returns NULL (PartiQL: NULL)
+--#[to-char-null]
+to_char(NULL, 'YYYY');

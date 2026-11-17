@@ -118,7 +118,7 @@ internal fun dateTrunc(
     }
     val source = args[1]
     checkDatetimeArgument(listener, DATE_TRUNC, source, zonedTimestamps)
-    val value = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
+    val value = timestampValue(source)
     return exprCall(Identifier.regular("date_trunc"), listOf(exprLit(Literal.string(normalizedPart)), value))
 }
 
@@ -141,7 +141,8 @@ internal fun checkDatetimeArgument(
 ) {
     val message =
         when (source.type.code()) {
-            PType.TIMESTAMP, PType.DATE -> return
+            // A NULL or MISSING literal: the extensions return NULL for it (see [timestampValue]).
+            PType.TIMESTAMP, PType.DATE, PType.UNKNOWN -> return
             PType.TIMESTAMPZ ->
                 if (zonedTimestamps) {
                     return
@@ -158,6 +159,18 @@ internal fun checkDatetimeArgument(
         }
     listener.reportAndThrow(ScribeProblem.simpleError(ScribeProblem.UNSUPPORTED_OPERATION, message))
 }
+
+/**
+ * The datetime argument as the target's TIMESTAMP: a DATE is cast to TIMESTAMP so every target formats and truncates
+ * it as midnight, and a NULL or MISSING literal becomes `CAST(NULL AS TIMESTAMP)`, so the result is NULL like the
+ * extensions (`isNullCall`).
+ */
+internal fun timestampValue(source: SqlArg): Expr =
+    when (source.type.code()) {
+        PType.DATE -> exprCast(source.expr, DataType.TIMESTAMP())
+        PType.UNKNOWN -> exprCast(exprLit(Literal.nul()), DataType.TIMESTAMP())
+        else -> source.expr
+    }
 
 internal fun intLiteral(value: Int): Expr = exprLit(Literal.intNum(value.toLong()))
 

@@ -301,3 +301,23 @@ strftime(TIMESTAMP '2020-08-13 23:20:30.123456', '%S%g %j%d');
 -- Rejected: a dynamic argument's run-time type is unknown
 --#[to-char-dynamic]
 [ScribeException{code=UNSUPPORTED_OPERATION}];
+
+-- DuckDB returns 13226
+--#[to-char-mixed-case-day]
+strftime(TIMESTAMP '2024-08-13 23:20:30.123456', '%d%j');
+
+-- DuckDB returns 242024
+--#[to-char-mixed-case-year]
+strftime(TIMESTAMP '2024-08-13 23:20:30.123456', '%y%Y');
+
+-- DuckDB returns 3030
+--#[to-char-mixed-case-seconds]
+strftime(TIMESTAMP '2024-08-13 23:20:30.123456', '%S%S');
+
+-- DuckDB returns NULL
+--#[date-trunc-null]
+date_trunc('day', CAST(NULL AS TIMESTAMP));
+
+-- DuckDB returns NULL
+--#[to-char-null]
+strftime(CAST(NULL AS TIMESTAMP), '%Y');
