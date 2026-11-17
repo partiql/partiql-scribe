@@ -41,12 +41,12 @@ public open class DuckDBFunctionExtensionCalls(
     public override val routineRules: Map<RoutineRef, SqlCallFn> =
         bind(
             routines,
-            commonRules(this, context.getProblemListener(), "DuckDB") +
+            commonRules(this, context.getProblemListener()) +
                 mapOf(
                     CONTAINS to ::contains,
                     TO_UNIXTIME to ::toUnixTime,
                     HEX_TO_BIGINT to ::hexToBigInt,
-                    TO_CHAR to { args -> toChar(context.getProblemListener(), args, "strftime", TO_CHAR_STRFTIME, "DuckDB") },
+                    TO_CHAR to { args -> toChar(context.getProblemListener(), args, "strftime", TO_CHAR_STRFTIME) },
                 ),
         )
 

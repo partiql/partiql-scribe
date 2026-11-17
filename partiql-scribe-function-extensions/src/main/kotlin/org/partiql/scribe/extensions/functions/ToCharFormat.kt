@@ -189,7 +189,6 @@ private val SUPPORTED_ELEMENTS = (ToCharTemplate.ELEMENTS.keys + listOf("AM", "P
  * `<function>(<value>, '<pattern>')`, where [pattern] renders the parsed template for the target. A date argument is
  * cast to TIMESTAMP so every target formats it as midnight, like the function extension.
  *
- * - [target] names the target in error messages.
  * - [zonedTimestamps] allows a TIMESTAMP WITH TIME ZONE (see [checkDatetimeArgument]).
  * - [truncateToMillis] truncates the value to milliseconds before formatting.
  * - [separateFields] rejects two adjacent elements whose rendered patterns end and start with the same letter. Java
@@ -201,7 +200,6 @@ internal fun toChar(
     args: SqlArgs,
     function: String,
     pattern: (List<ToCharPart>) -> String,
-    target: String,
     zonedTimestamps: Boolean = false,
     truncateToMillis: Boolean = false,
     separateFields: Boolean = false,
@@ -229,10 +227,10 @@ internal fun toChar(
                 )
         }
     if (separateFields) {
-        rejectMergedFields(listener, template.stringValue(), parts, pattern, target)
+        rejectMergedFields(listener, template.stringValue(), parts, pattern)
     }
     val source = args[0]
-    checkDatetimeArgument(listener, TO_CHAR, source, target, zonedTimestamps)
+    checkDatetimeArgument(listener, TO_CHAR, source, zonedTimestamps)
     val timestamp = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
     // Trino's format_datetime rounds the fraction to milliseconds, which can carry into every other field
     // (23:59:59.999999 on Dec 31 prints as the next year); the extension truncates, so truncate first.
@@ -253,7 +251,6 @@ private fun rejectMergedFields(
     template: String,
     parts: List<ToCharPart>,
     pattern: (List<ToCharPart>) -> String,
-    target: String,
 ) {
     parts.zipWithNext().forEach { (left, right) ->
         if (left is ToCharPart.Element && right is ToCharPart.Element) {
@@ -263,8 +260,9 @@ private fun rejectMergedFields(
                 listener.reportAndThrow(
                     ScribeProblem.simpleError(
                         ScribeProblem.UNSUPPORTED_OPERATION,
-                        "Unsupported adjacent elements in `to_char` template '$template' for $target: they would " +
-                            "merge into one field (`$leftPattern$rightPattern`). Separate them, for example with `-`.",
+                        "Unsupported adjacent elements in `to_char` template '$template': they would merge into one " +
+                            "field of the target's pattern (`$leftPattern$rightPattern`). Separate them, for example " +
+                            "with `-`.",
                     ),
                 )
             }

@@ -49,12 +49,12 @@ public open class RedshiftFunctionExtensionCalls(
     public override val routineRules: Map<RoutineRef, SqlCallFn> =
         bind(
             routines,
-            commonRules(this, listener, "Redshift") +
+            commonRules(this, listener) +
                 mapOf(
                     CONTAINS to ::contains,
                     TO_UNIXTIME to ::toUnixTime,
                     HEX_TO_BIGINT to ::hexToBigInt,
-                    TO_CHAR to { args -> toChar(listener, args, "TO_CHAR", TO_CHAR_POSTGRES, "Redshift") },
+                    TO_CHAR to { args -> toChar(listener, args, "TO_CHAR", TO_CHAR_POSTGRES) },
                 ),
         )
 

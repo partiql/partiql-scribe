@@ -33,8 +33,11 @@ public open class TrinoFunctionExtensionCalls(
     public override val routineRules: Map<RoutineRef, SqlCallFn> =
         bind(
             routines,
-            commonRules(this, context.getProblemListener(), "Trino", zonedTimestamps = true) +
+            commonRules(this, context.getProblemListener()) +
                 mapOf(
+                    // Trino's TIMESTAMP WITH TIME ZONE keeps the value's own offset, like the extension, so replace
+                    // the shared rule with one that accepts it.
+                    DATE_TRUNC to { args -> dateTrunc(context.getProblemListener(), args, zonedTimestamps = true) },
                     CONTAINS to ::contains,
                     TO_UNIXTIME to ::toUnixTime,
                     HEX_TO_BIGINT to ::hexToBigInt,
@@ -45,7 +48,6 @@ public open class TrinoFunctionExtensionCalls(
                             args,
                             "format_datetime",
                             TO_CHAR_JAVA,
-                            "Trino",
                             zonedTimestamps = true,
                             truncateToMillis = true,
                             separateFields = true,

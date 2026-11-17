@@ -39,21 +39,18 @@ internal val DATE_TRUNC_PARTS =
     setOf("millisecond", "second", "minute", "hour", "day", "week", "month", "quarter", "year")
 
 /**
- * The rules shared by every target. [target] names the target in error messages. [zonedTimestamps] is true when the
- * target's `TIMESTAMP WITH TIME ZONE` keeps the value's own offset, as the function extensions do; see
- * [checkDatetimeArgument].
+ * The rules shared by every target. A target with different behavior registers its own rule for the same function
+ * after these, which replaces the shared one (Trino does this for `date_trunc`).
  */
 internal fun commonRules(
     calls: SqlCalls,
     listener: ScribeProblemListener,
-    target: String,
-    zonedTimestamps: Boolean = false,
 ): Map<String, SqlCallFn> =
     mapOf(
         DATE_ADD to { args -> dateAdd(calls, listener, args) },
         UTCNOW to { args -> calls.retarget(UTCNOW, args) },
         POW to { args -> exprCall(Identifier.delimited(POW), args.map { it.expr }) },
-        DATE_TRUNC to { args -> dateTrunc(listener, args, target, zonedTimestamps) },
+        DATE_TRUNC to { args -> dateTrunc(listener, args) },
     )
 
 internal fun bind(
@@ -94,13 +91,12 @@ private fun dateAdd(
 /**
  * `date_trunc('<part>', <timestamp | timestamp with time zone | date>)` is spelled the same in Redshift, Spark, Trino,
  * and DuckDB. A date argument is cast to TIMESTAMP so every target returns a TIMESTAMP, matching the extension (Trino
- * would otherwise return DATE).
+ * would otherwise return DATE). [zonedTimestamps] allows a TIMESTAMP WITH TIME ZONE; see [checkDatetimeArgument].
  */
-private fun dateTrunc(
+internal fun dateTrunc(
     listener: ScribeProblemListener,
     args: SqlArgs,
-    target: String,
-    zonedTimestamps: Boolean,
+    zonedTimestamps: Boolean = false,
 ): Expr {
     val part = (args.firstOrNull()?.expr as? ExprLit)?.lit
     if (args.size != 2 || part?.code() != Literal.STRING) {
@@ -121,14 +117,14 @@ private fun dateTrunc(
         )
     }
     val source = args[1]
-    checkDatetimeArgument(listener, DATE_TRUNC, source, target, zonedTimestamps)
+    checkDatetimeArgument(listener, DATE_TRUNC, source, zonedTimestamps)
     val value = if (source.type.code() == PType.DATE) exprCast(source.expr, DataType.TIMESTAMP()) else source.expr
     return exprCall(Identifier.regular("date_trunc"), listOf(exprLit(Literal.string(normalizedPart)), value))
 }
 
 /**
- * Accepts only the datetime argument types that [target] translates with the extension's meaning: TIMESTAMP and DATE,
- * plus TIMESTAMP WITH TIME ZONE when [zonedTimestamps] is set.
+ * Accepts only the datetime argument types that the target translates with the extension's meaning: TIMESTAMP and
+ * DATE, plus TIMESTAMP WITH TIME ZONE when [zonedTimestamps] is set (the target keeps the value's own offset).
  *
  * - The function extensions format and truncate a `TIMESTAMP WITH TIME ZONE` in the value's own offset. Redshift,
  *   Spark, and DuckDB store an instant and use the session time zone instead, so `23:20:30-05:00` would become `04:20`
@@ -141,7 +137,6 @@ internal fun checkDatetimeArgument(
     listener: ScribeProblemListener,
     function: String,
     source: SqlArg,
-    target: String,
     zonedTimestamps: Boolean,
 ) {
     val message =
@@ -151,14 +146,14 @@ internal fun checkDatetimeArgument(
                 if (zonedTimestamps) {
                     return
                 } else {
-                    "Function extension `$function` with a TIMESTAMP WITH TIME ZONE is unsupported for $target, " +
-                        "which uses the session time zone instead of the value's own offset. " +
+                    "Function extension `$function` with a TIMESTAMP WITH TIME ZONE is unsupported, because the target " +
+                        "uses the session time zone instead of the value's own offset. " +
                         "Cast the argument to TIMESTAMP first."
                 }
             else ->
                 "Function extension `$function` requires a " +
                     (if (zonedTimestamps) "TIMESTAMP, DATE, or TIMESTAMP WITH TIME ZONE" else "TIMESTAMP or DATE") +
-                    " argument for $target, but got ${if (source.type.code() == PType.DYNAMIC) "a dynamic value" else source.type}. " +
+                    " argument, but got ${if (source.type.code() == PType.DYNAMIC) "a dynamic value" else source.type}. " +
                     "Cast the argument to TIMESTAMP first."
         }
     listener.reportAndThrow(ScribeProblem.simpleError(ScribeProblem.UNSUPPORTED_OPERATION, message))

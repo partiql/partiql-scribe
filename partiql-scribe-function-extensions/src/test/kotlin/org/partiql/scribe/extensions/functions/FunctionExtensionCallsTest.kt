@@ -317,11 +317,11 @@ class FunctionExtensionCallsTest {
     }
 
     @Test
-    fun `errors name the target`() {
+    fun `errors suggest casting the argument`() {
         val zoned = SqlArg(exprVarRef(Identifier.regular("tz"), false), PType.timestampz())
         val args = listOf(SqlArg(exprLit(Literal.string("day")), PType.string()), zoned)
         val error = assertFailsWith<ScribeException> { target("spark").translate("date_trunc", args) }
-        kotlin.test.assertContains(error.toString(), "unsupported for Spark")
+        kotlin.test.assertContains(error.toString(), "uses the session time zone")
         kotlin.test.assertContains(error.toString(), "Cast the argument to TIMESTAMP first")
     }
 
