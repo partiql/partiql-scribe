@@ -76,7 +76,8 @@ public abstract class SqlCalls(context: ScribeContext) {
     public open val routineRules: Map<RoutineRef, SqlCallFn> = emptyMap()
 
     /**
-     * Aggregate rewrite rules keyed by exact resolved routine identity.
+     * Aggregate rewrite rules keyed by exact resolved routine identity. A rule also applies to the aggregate used as a
+     * window function, where it must return a function call ([org.partiql.ast.expr.ExprCall]).
      */
     public open val aggregateRules: Map<RoutineRef, (SqlArgs, Boolean) -> Expr> = emptyMap()
 

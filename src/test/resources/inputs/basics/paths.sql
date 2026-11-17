@@ -206,3 +206,11 @@ SELECT t.x['y'] AS v FROM T AS t;
 --#[paths-sfw-32]
 -- Nested array indexes are each shifted on 1-based targets (#195)
 SELECT t.a[0].nested_list[0] AS v FROM EXCLUDE_T_NESTED_LIST AS t;
+
+-- Literal array index in ORDER BY
+--#[paths-sfw-33]
+SELECT t.a AS a FROM T AS t ORDER BY t."array"[0];
+
+-- Non-literal array index in ORDER BY
+--#[paths-sfw-34]
+SELECT t.a AS a FROM T AS t ORDER BY t."array"[t.b];
