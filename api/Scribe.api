@@ -117,6 +117,8 @@ public abstract class org/partiql/scribe/sql/AstToSql : org/partiql/ast/sql/SqlD
 	protected final fun quoted (Ljava/lang/String;)Ljava/lang/String;
 	public synthetic fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitExprCall (Lorg/partiql/ast/expr/ExprCall;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
+	public synthetic fun visitExprOperator (Lorg/partiql/ast/expr/ExprOperator;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun visitExprOperator (Lorg/partiql/ast/expr/ExprOperator;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitFromExpr (Lorg/partiql/ast/FromExpr;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun visitFromExpr (Lorg/partiql/ast/FromExpr;Lorg/partiql/ast/sql/SqlBlock;)Lorg/partiql/ast/sql/SqlBlock;
 	public synthetic fun visitGroupBy (Lorg/partiql/ast/GroupBy;Ljava/lang/Object;)Ljava/lang/Object;
