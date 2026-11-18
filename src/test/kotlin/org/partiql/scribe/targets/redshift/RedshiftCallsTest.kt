@@ -14,18 +14,7 @@ import org.partiql.scribe.utils.SessionProvider
 import kotlin.test.assertEquals
 
 class RedshiftCallsTest {
-    @Test
-    fun `upper and lower cast strings read from SUPER`() {
-        assertEquals(
-            "SELECT UPPER(CAST(\"T\".\"d\".\"e\" AS VARCHAR)) AS \"_1\" FROM \"default\".\"T\" AS \"T\"",
-            compile("SELECT UPPER(d.e) FROM T", RedshiftTarget()),
-        )
-        assertEquals(
-            "SELECT LOWER(\"T\".\"c\") AS \"_1\" FROM \"default\".\"T\" AS \"T\"",
-            compile("SELECT LOWER(c) FROM T", RedshiftTarget()),
-        )
-    }
-
+    // The default output is covered by builtins/strings.sql; the .sql fixtures can't use a custom subclass.
     @Test
     fun `a subclass can override upper and lower`() {
         assertEquals(
