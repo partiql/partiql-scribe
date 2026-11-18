@@ -4,9 +4,11 @@ import org.partiql.ast.Ast.from
 import org.partiql.ast.Ast.fromExpr
 import org.partiql.ast.FromType
 import org.partiql.ast.Identifier
+import org.partiql.plan.WindowFunctionNode
 import org.partiql.plan.rel.RelCorrelate
 import org.partiql.plan.rel.RelFilter
 import org.partiql.plan.rel.RelScan
+import org.partiql.plan.rel.RelWindow
 import org.partiql.scribe.ScribeContext
 import org.partiql.scribe.problems.ScribeProblem
 import org.partiql.scribe.sql.ExprQuerySetFactory
@@ -14,6 +16,7 @@ import org.partiql.scribe.sql.Locals
 import org.partiql.scribe.sql.RelConverter
 import org.partiql.scribe.sql.andPredicate
 import org.partiql.scribe.sql.utils.isUnknown
+import org.partiql.spi.function.Agg
 import org.partiql.spi.types.PType
 
 public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeContext, outer: List<Locals> = emptyList()) : RelConverter(
@@ -22,6 +25,22 @@ public open class SparkRelConverter(transform: SparkPlanToAst, context: ScribeCo
     outer,
 ) {
     override val selectValueSupported: Boolean = false
+
+    /**
+     * Spark does not support DISTINCT in window functions (DISTINCT_WINDOW_FUNCTION_UNSUPPORTED).
+     */
+    override fun checkAggregateWindowFunction(
+        windowFunction: WindowFunctionNode,
+        aggregate: Agg,
+        rel: RelWindow,
+    ) {
+        if (windowFunction.isDistinct) {
+            unsupported(
+                "Unsupported aggregate window function ${aggregate.signature.name.uppercase()}: " +
+                    "Spark does not support DISTINCT in window functions. Remove DISTINCT or use another target",
+            )
+        }
+    }
 
     internal companion object {
         val MARKER_EXPLODE = "${org.partiql.scribe.SCRIBE_MARKER_FN_PREFIX}EXPLODE"

@@ -28,12 +28,16 @@ Thank you to all who have contributed!
 
 ### Added
 - Adds translations for the `date_trunc` and `to_char` function extensions.
+- All targets (experimental): transpile the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX`. Redshift supports them only without `ORDER BY` or `DISTINCT` in the window, and Spark does not support `DISTINCT`.
 
 ### Changed
+- Redshift and Trino targets: a correlated subquery (scalar, `IN`, `EXISTS`, `NOT EXISTS`, a derived table, or a lateral join) that contains any window function, including `ROW_NUMBER` and `RANK`, is now an error. Compute the window function in an uncorrelated derived table instead.
+- Uses `partiql-lang-kotlin` 1.7.0, which rejects an outer reference or a subquery in a window function (see its [CHANGELOG](https://github.com/partiql/partiql-lang-kotlin/blob/v1.7.0/CHANGELOG.md)).
 
 ### Deprecated
 
 ### Fixed
+- DuckDB and Trino targets: a literal array index in `ORDER BY` or below a window is now shifted to 1-based, and a non-literal index there is now an error, as elsewhere.
 
 ### Removed
 
@@ -41,6 +45,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @xd1313113
 
 ## [2.2.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.2.0) - 2026-11-16
 

@@ -2,7 +2,9 @@ package org.partiql.scribe.sql
 
 import org.junit.jupiter.api.Test
 import org.partiql.ast.Ast.exprCall
+import org.partiql.ast.Ast.exprCast
 import org.partiql.ast.AstNode
+import org.partiql.ast.DataType
 import org.partiql.ast.Identifier
 import org.partiql.ast.SetQuantifier
 import org.partiql.ast.expr.Expr
@@ -12,6 +14,7 @@ import org.partiql.plan.RoutineRef
 import org.partiql.planner.PartiQLPlanner
 import org.partiql.scribe.Scribe
 import org.partiql.scribe.ScribeContext
+import org.partiql.scribe.problems.ScribeException
 import org.partiql.scribe.targets.redshift.RedshiftCalls
 import org.partiql.scribe.targets.redshift.RedshiftTarget
 import org.partiql.scribe.targets.spark.SparkCalls
@@ -30,6 +33,8 @@ import org.partiql.spi.function.FnOverload
 import org.partiql.spi.function.MemRoutineProvider
 import org.partiql.spi.types.PType
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.partiql.spi.catalog.Identifier as SpiIdentifier
@@ -102,6 +107,31 @@ class RoutineRefDispatchTest {
             compile("SELECT custom_dispatch(x) AS v FROM payload AS x", session),
             "stable_dispatch(",
         )
+    }
+
+    /**
+     * A target's aggregate rule also applies to the aggregate used as a window function, which PartiQL resolves to the
+     * built-in aggregate.
+     */
+    @Test
+    fun `dispatches window aggregates by resolved routine identity`() {
+        val sql = compile("SELECT SUM(x) OVER (PARTITION BY x) AS s FROM << 1, 2 >> AS x", session)
+        assertContains(sql, "stable_sum(")
+        assertContains(sql, "OVER (PARTITION BY")
+    }
+
+    @Test
+    fun `rejects a window aggregate whose rule does not return a call`() {
+        val ex =
+            assertFailsWith<ScribeException> {
+                compile("SELECT MAX(x) OVER () AS m FROM << 1, 2 >> AS x", session)
+            }
+        assertEquals(
+            "Aggregate MAX cannot be used as a window function: its rule must return a call",
+            ex.error.getOrNull("MESSAGE", String::class.java),
+        )
+        // The same rule still applies to a GROUP BY aggregate.
+        assertContains(compile("SELECT MAX(x) AS m FROM << 1, 2 >> AS x", session), "CAST(stable_max(")
     }
 
     @Test
@@ -221,6 +251,10 @@ class RoutineRefDispatchTest {
                         RoutineRef("demo", Name.of("stable", "custom_aggregate")) to aggregate("stable_aggregate"),
                         RoutineRef("demo", Name.of("experimental", "custom_aggregate")) to
                             aggregate("experimental_aggregate"),
+                        RoutineRef(SYSTEM, Name.of("sum")) to aggregate("stable_sum"),
+                        // A rule that wraps the aggregate call, which a window function cannot use.
+                        RoutineRef(SYSTEM, Name.of("max")) to
+                            { args, distinct -> exprCast(aggregate("stable_max")(args, distinct), DataType.INTEGER()) },
                     )
             }
 
@@ -321,3 +355,8 @@ class RoutineRefDispatchTest {
             .body { args -> args[0] }
             .build()
 }
+
+/**
+ * The name of PartiQL's system catalog, which provides the built-in routines.
+ */
+private const val SYSTEM = "\$system"

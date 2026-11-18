@@ -160,3 +160,11 @@ SELECT "t"['x']['y'] AS "v" FROM "default"."T" AS "t";
 
 --#[paths-sfw-32]
 SELECT "t"['a'][0]['nested_list'][0] AS "v" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+
+-- Literal array index in ORDER BY
+--#[paths-sfw-33]
+SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" ORDER BY "t"['array'][0] ASC NULLS LAST;
+
+-- Non-literal array index in ORDER BY
+--#[paths-sfw-34]
+SELECT "t"['a'] AS "a" FROM "default"."T" AS "t" ORDER BY "t"['array']["t"['b']] ASC NULLS LAST;
