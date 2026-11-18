@@ -28,6 +28,7 @@ Thank you to all who have contributed!
 
 ### Added
 - Adds translations for the `date_trunc` and `to_char` function extensions.
+- `SqlCalls.upper` and `SqlCalls.lower` can be overridden; a subclass that already declares `upper(args)` or `lower(args)` needs `override`.
 - All targets (experimental): transpile the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX`. Redshift supports them only without `ORDER BY` or `DISTINCT` in the window, and Spark does not support `DISTINCT`.
 
 ### Changed

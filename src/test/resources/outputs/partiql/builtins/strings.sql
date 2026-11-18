@@ -88,3 +88,21 @@ SELECT SPLIT("T"['z'], "T"['c']) AS "_1" FROM "default"."T" AS "T";
 
 --#[split-08]
 SELECT SPLIT("T"['c'], '') AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-lower-00]
+SELECT "lower"("T"['c']) AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-lower-01]
+SELECT "lower"("T"['d']['e']) AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-lower-02]
+SELECT "lower"("T_ALL_TYPES"['col_list_string'][1]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES";
+
+--#[builtins-strings-upper-00]
+SELECT "upper"("T"['c']) AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-upper-01]
+SELECT "upper"("T"['d']['e']) AS "_1" FROM "default"."T" AS "T";
+
+--#[builtins-strings-upper-02]
+SELECT "upper"("T_ALL_TYPES"['col_list_string'][1]) AS "_1" FROM "default"."T_ALL_TYPES" AS "T_ALL_TYPES";
