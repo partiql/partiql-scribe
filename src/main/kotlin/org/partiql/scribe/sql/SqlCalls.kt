@@ -192,6 +192,8 @@ public abstract class SqlCalls(context: ScribeContext) {
             "char_length" to { args -> charLength(args) },
             "replace" to { args -> replace(args) },
             "split" to { args -> split(args) },
+            "upper" to { args -> upper(args) },
+            "lower" to { args -> lower(args) },
         )
 
     private fun removeSystemPrefix(name: String): String {
@@ -488,6 +490,22 @@ public abstract class SqlCalls(context: ScribeContext) {
         val call = Identifier.regular("REPLACE")
         return exprCall(call, args.map { it.expr })
     }
+
+    /**
+     * UPPER( <string> )
+     *
+     * Registered so targets can override it (e.g. Redshift casts a string read from SUPER first). The default is the
+     * same as falling through to [default], so the output of a target that doesn't override it is unchanged.
+     */
+    public open fun upper(args: SqlArgs): Expr = default("upper", args)
+
+    /**
+     * LOWER( <string> )
+     *
+     * Registered so targets can override it (e.g. Redshift casts a string read from SUPER first). The default is the
+     * same as falling through to [default], so the output of a target that doesn't override it is unchanged.
+     */
+    public open fun lower(args: SqlArgs): Expr = default("lower", args)
 
     /**
      * SPLIT( <string>, <delimiter> )

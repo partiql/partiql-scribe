@@ -87,3 +87,21 @@ SELECT `SPLIT`(`T`.`z`, `CONCAT`('\\Q', `REPLACE`(`T`.`c`, '\\E', '\\E\\\\E\\Q')
 
 --#[split-08]
 [ScribeException{code=UNSUPPORTED_OPERATION, message="Spark split with an empty string delimiter is unsupported because Spark splits between characters while PartiQL returns the original string as a single-element list."}];
+
+--#[builtins-strings-lower-00]
+SELECT `lower`(`T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[builtins-strings-lower-01]
+SELECT `lower`(`T`.`d`.`e`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[builtins-strings-lower-02]
+SELECT `lower`(`T_ALL_TYPES`.`col_list_string`[1]) AS `_1` FROM `default`.`T_ALL_TYPES` AS `T_ALL_TYPES`;
+
+--#[builtins-strings-upper-00]
+SELECT `upper`(`T`.`c`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[builtins-strings-upper-01]
+SELECT `upper`(`T`.`d`.`e`) AS `_1` FROM `default`.`T` AS `T`;
+
+--#[builtins-strings-upper-02]
+SELECT `upper`(`T_ALL_TYPES`.`col_list_string`[1]) AS `_1` FROM `default`.`T_ALL_TYPES` AS `T_ALL_TYPES`;

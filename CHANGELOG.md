@@ -30,6 +30,7 @@ Thank you to all who have contributed!
 - Adds translations for the `date_trunc` and `to_char` function extensions.
 
 ### Changed
+- `SqlCalls.upper` and `SqlCalls.lower` can be overridden by targets.
 
 ### Deprecated
 

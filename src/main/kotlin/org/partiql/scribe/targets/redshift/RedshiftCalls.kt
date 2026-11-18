@@ -50,8 +50,6 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
     override val rules: Map<String, SqlCallFn> =
         super.rules.toMutableMap().apply {
             this["utcnow"] = ::utcnow
-            this["upper"] = ::upper
-            this["lower"] = ::lower
             // Extensions
             this["OBJECT_TRANSFORM"] = ::objectTransform
             // MAP functions
@@ -87,14 +85,20 @@ public open class RedshiftCalls(context: ScribeContext) : SqlCalls(context) {
     override fun charLength(args: SqlArgs): Expr = super.charLength(castSuperStrings(args))
 
     /**
+     * `UPPER(<string>)`, unquoted, with a string read from SUPER cast to VARCHAR first, since Redshift's `UPPER` has no
+     * SUPER overload. A subclass that overrides this should call `super.upper(args)` to keep the cast.
+     *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_UPPER.html
      */
-    private fun upper(args: SqlArgs): Expr = exprCall(Identifier.regular("UPPER"), castSuperStrings(args).map { it.expr })
+    override fun upper(args: SqlArgs): Expr = exprCall(Identifier.regular("UPPER"), castSuperStrings(args).map { it.expr })
 
     /**
+     * `LOWER(<string>)`, unquoted, with a string read from SUPER cast to VARCHAR first, since Redshift's `LOWER` has no
+     * SUPER overload. A subclass that overrides this should call `super.lower(args)` to keep the cast.
+     *
      * https://docs.aws.amazon.com/redshift/latest/dg/r_LOWER.html
      */
-    private fun lower(args: SqlArgs): Expr = exprCall(Identifier.regular("LOWER"), castSuperStrings(args).map { it.expr })
+    override fun lower(args: SqlArgs): Expr = exprCall(Identifier.regular("LOWER"), castSuperStrings(args).map { it.expr })
 
     override fun position(args: SqlArgs): Expr = super.position(castSuperStrings(args))
 
