@@ -62,3 +62,11 @@ SELECT "t"."x"."y" AS "v" FROM "default"."T" AS "t";
 
 --#[paths-sfw-32]
 SELECT "t"."a"[1]."nested_list"[1] AS "v" FROM "default"."EXCLUDE_T_NESTED_LIST" AS "t";
+
+-- Literal array index in ORDER BY
+--#[paths-sfw-33]
+SELECT "t"."a" AS "a" FROM "default"."T" AS "t" ORDER BY "t"."array"[1] ASC NULLS LAST;
+
+-- Non-literal array index in ORDER BY. Not supported: DuckDB supports only literal array indexes
+--#[paths-sfw-34]
+[ScribeException{code=INVALID_PLAN, message="DuckDB array indexing only supports integer literals, e.g. x[0]."}];
