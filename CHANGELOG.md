@@ -31,7 +31,8 @@ Thank you to all who have contributed!
 - All targets (experimental): transpile the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX`. Redshift supports them only without `ORDER BY` or `DISTINCT` in the window, and Spark does not support `DISTINCT`.
 
 ### Changed
-- Redshift and Trino targets: a correlated subquery that contains a window function, including `ROW_NUMBER`/`RANK` and `EXISTS`/`NOT EXISTS`, is now an error. Compute the window function in an uncorrelated derived table instead.
+- Redshift and Trino targets: a correlated subquery (scalar, `IN`, `EXISTS`, `NOT EXISTS`, a derived table, or a lateral join) that contains any window function, including `ROW_NUMBER` and `RANK`, is now an error. Compute the window function in an uncorrelated derived table instead.
+- Uses `partiql-lang-kotlin` 1.7.0, which rejects an outer reference or a subquery in a window function (see its [CHANGELOG](https://github.com/partiql/partiql-lang-kotlin/blob/v1.7.0/CHANGELOG.md)).
 
 ### Deprecated
 
