@@ -495,7 +495,9 @@ public abstract class SqlCalls(context: ScribeContext) {
      * UPPER( <string> )
      *
      * Registered so targets can override it (e.g. Redshift casts a string read from SUPER first). The default is the
-     * same as falling through to [default], so the output of a target that doesn't override it is unchanged.
+     * same as falling through to [default], so the output of a target that doesn't override it is unchanged. This is a
+     * name rule, so it also handles any routine named `upper` that has no [routineRules] entry (e.g. from an extension
+     * catalog); use [routineRules] to translate one specific routine.
      */
     public open fun upper(args: SqlArgs): Expr = default("upper", args)
 
@@ -503,7 +505,9 @@ public abstract class SqlCalls(context: ScribeContext) {
      * LOWER( <string> )
      *
      * Registered so targets can override it (e.g. Redshift casts a string read from SUPER first). The default is the
-     * same as falling through to [default], so the output of a target that doesn't override it is unchanged.
+     * same as falling through to [default], so the output of a target that doesn't override it is unchanged. This is a
+     * name rule, so it also handles any routine named `lower` that has no [routineRules] entry (e.g. from an extension
+     * catalog); use [routineRules] to translate one specific routine.
      */
     public open fun lower(args: SqlArgs): Expr = default("lower", args)
 

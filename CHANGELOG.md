@@ -28,9 +28,9 @@ Thank you to all who have contributed!
 
 ### Added
 - Adds translations for the `date_trunc` and `to_char` function extensions.
+- `SqlCalls.upper` and `SqlCalls.lower` can be overridden; a subclass that already declares `upper(args)` or `lower(args)` needs `override`.
 
 ### Changed
-- `SqlCalls.upper` and `SqlCalls.lower` can be overridden by targets.
 
 ### Deprecated
 
