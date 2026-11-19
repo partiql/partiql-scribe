@@ -38,6 +38,8 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
+
+- All SQL targets: preserve unary operator token boundaries by parenthesizing operands when needed, including negative literals, paths, and predicates.
 - DuckDB and Trino targets: a literal array index in `ORDER BY` or below a window is now shifted to 1-based, and a non-literal index there is now an error, as elsewhere.
 
 ### Removed

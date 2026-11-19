@@ -19,6 +19,7 @@ import org.partiql.scribe.utils.ScribeTest
 import org.partiql.scribe.utils.ScribeTestProvider
 import org.partiql.scribe.utils.SessionProvider
 import org.partiql.scribe.utils.SqlEqualsNaive
+import org.partiql.scribe.utils.assertNoSqlComments
 import org.partiql.spi.Context
 import org.partiql.spi.catalog.Session
 import java.io.File
@@ -118,6 +119,7 @@ abstract class SqlTargetSuite {
                             fail { "Expected ERROR but got result: ${result.output.value}" }
                         }
                         val actual = result.output.value
+                        assertNoSqlComments(actual)
                         comparator.assertEquals(expected, actual) {
                             this.appendLine("Input Query: $statement")
                             this.appendLine("Expected result: $expected")

@@ -6,6 +6,7 @@ import org.partiql.ast.Identifier
 import org.partiql.ast.Let
 import org.partiql.ast.SelectItem
 import org.partiql.ast.expr.ExprCall
+import org.partiql.ast.expr.ExprOperator
 import org.partiql.ast.expr.PathStep
 import org.partiql.ast.sql.SqlBlock
 import org.partiql.ast.sql.SqlDialect
@@ -38,6 +39,52 @@ public abstract class AstToSql(public val context: ScribeContext) : SqlDialect()
     }
 
     private val markerPrefix = SCRIBE_MARKER_FN_PREFIX
+
+    /**
+     * Keep unary signs separate from the operand's first token: negating a negative value must not print `--`.
+     * Inspect the rendered operand rather than its AST type, since paths and predicates can also start with a sign.
+     * Reuse its blocks so target-specific rendering and the selected layout are preserved.
+     */
+    override fun visitExprOperator(
+        node: ExprOperator,
+        tail: SqlBlock,
+    ): SqlBlock {
+        if (node.lhs != null || (node.symbol != "+" && node.symbol != "-")) {
+            return super.visitExprOperator(node, tail)
+        }
+        val operand = SqlBlock.none()
+        val end = visitExprWrapped(node.rhs, operand, operator = true)
+        val first = firstContentChar(operand)
+        val canFollowSign =
+            first != null &&
+                (first.isLetterOrDigit() || first == '_' || first == '(' || first == '\'' || first == '"' || first == '`')
+        val sign = tail concat node.symbol
+        return if (canFollowSign) {
+            sign.next = operand
+            end
+        } else {
+            sign concat SqlBlock.Nest("(", ")", operand)
+        }
+    }
+
+    // A layout may omit Line blocks, so they cannot guarantee separation between SQL tokens.
+    private fun firstContentChar(block: SqlBlock): Char? {
+        var current: SqlBlock? = block
+        while (true) {
+            val part = current ?: return null
+            val first =
+                when (part) {
+                    is SqlBlock.None, is SqlBlock.Line -> null
+                    is SqlBlock.Text -> part.text.firstOrNull()
+                    is SqlBlock.Nest ->
+                        part.prefix?.firstOrNull()
+                            ?: firstContentChar(part.child)
+                            ?: part.postfix?.firstOrNull()
+                }
+            if (first != null) return first
+            current = part.next
+        }
+    }
 
     /**
      * The character that wraps a delimited identifier in the target dialect.
