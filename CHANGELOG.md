@@ -27,6 +27,23 @@ Thank you to all who have contributed!
 ## [Unreleased](https://TODO.com) - YYYY-MM-DD
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Removed
+
+### Security
+
+### Contributors
+Thank you to all who have contributed!
+
+## [2.3.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.3.0) - 2026-11-19
+
+### Added
 - Adds translations for the `date_trunc` and `to_char` function extensions.
 - `SqlCalls.upper` and `SqlCalls.lower` can be overridden; a subclass that already declares `upper(args)` or `lower(args)` needs `override`.
 - All targets (experimental): transpile the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX`. Redshift supports them only without `ORDER BY` or `DISTINCT` in the window, and Spark does not support `DISTINCT`.
@@ -38,7 +55,6 @@ Thank you to all who have contributed!
 ### Deprecated
 
 ### Fixed
-
 - All SQL targets: preserve unary operator token boundaries by parenthesizing operands when needed, including negative literals, paths, and predicates.
 - DuckDB and Trino targets: a literal array index in `ORDER BY` or below a window is now shifted to 1-based, and a non-literal index there is now an error, as elsewhere.
 
@@ -48,6 +64,7 @@ Thank you to all who have contributed!
 
 ### Contributors
 Thank you to all who have contributed!
+- @derryl0925
 - @xd1313113
 
 ## [2.2.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.2.0) - 2026-11-16
