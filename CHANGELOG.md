@@ -2,129 +2,79 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-<!-- Template: after a release, copy and paste out below
-## [Unreleased](https://TODO.com) - YYYY-MM-DD
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Fixed
-
-### Removed
-
-### Security
-
-### Contributors
-Thank you to all who have contributed!
--->
-
-## [Unreleased](https://TODO.com) - YYYY-MM-DD
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Fixed
-
-### Removed
-
-### Security
-
-### Contributors
-Thank you to all who have contributed!
 
 ## [2.3.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.3.0) - 2026-11-19
 
 ### Added
+
 - Adds translations for the `date_trunc` and `to_char` function extensions.
 - `SqlCalls.upper` and `SqlCalls.lower` can be overridden; a subclass that already declares `upper(args)` or `lower(args)` needs `override`.
 - All targets (experimental): transpile the aggregate window functions `COUNT`, `SUM`, `AVG`, `MIN`, and `MAX`. Redshift supports them only without `ORDER BY` or `DISTINCT` in the window, and Spark does not support `DISTINCT`.
 
 ### Changed
+
 - Redshift and Trino targets: a correlated subquery (scalar, `IN`, `EXISTS`, `NOT EXISTS`, a derived table, or a lateral join) that contains any window function, including `ROW_NUMBER` and `RANK`, is now an error. Compute the window function in an uncorrelated derived table instead.
 - Uses `partiql-lang-kotlin` 1.7.0, which rejects an outer reference or a subquery in a window function (see its [CHANGELOG](https://github.com/partiql/partiql-lang-kotlin/blob/v1.7.0/CHANGELOG.md)).
 
-### Deprecated
-
 ### Fixed
+
 - All SQL targets: preserve unary operator token boundaries by parenthesizing operands when needed, including negative literals, paths, and predicates.
 - DuckDB and Trino targets: a literal array index in `ORDER BY` or below a window is now shifted to 1-based, and a non-literal index there is now an error, as elsewhere.
 
-### Removed
-
-### Security
-
 ### Contributors
-Thank you to all who have contributed!
+
+- Thank you to all who have contributed!
 - @derryl0925
 - @xd1313113
 
 ## [2.2.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.2.0) - 2026-11-16
 
 ### Added
+
 - `AstToSql.formatIdentifier`, `AstToSql.identifierDelimiter`, and `AstToSql.quoted`: protected hooks through which every identifier is printed. A target can override `identifierDelimiter` (Spark uses a backtick) or `formatIdentifier` (Spark delimits every identifier).
 
 ### Changed
+
 - Spark and Redshift targets: string literals built in `SparkCalls` / `RedshiftCalls` rules hold the plain PartiQL value, and the printer escapes them. A subclass rule that builds pre-escaped `Literal.string(...)` values is now escaped twice; build them from the unescaped value instead. `SparkCalls` and `RedshiftCalls` now override `like`; a subclass that overrides `like` should call `super.like(...)` to keep the pattern escaping.
 - `AstToSql` now overrides the `SqlDialect` visitors that print identifiers and aliases. A subclass that prints an identifier itself should use `formatIdentifier` or `quoted` so the delimiter is escaped.
 
-### Deprecated
-
 ### Fixed
+
 - Redshift `UPPER` and `LOWER` now cast strings read from SUPER values to VARCHAR.
 - Spark and Redshift targets: string literals double each backslash (`'C:\temp'` prints as `'C:\\temp'`), so the engine reads the same value as PartiQL. Before, a literal ending in `\` failed to parse and `\t` was read as a tab. For example, Redshift `split(c, '\')` now prints `SPLIT_TO_ARRAY(c, '\\')`.
 - Spark and Redshift targets: `LIKE` without `ESCAPE` escapes backslashes in the pattern. A non-literal pattern is wrapped in `REPLACE(...)`. On Redshift, a string pattern read from SUPER is cast to VARCHAR first, and a dynamic one is cast only when `IS_VARCHAR` is true.
 - Redshift target: `EXCLUDE` escapes `\` and `"` in `OBJECT_TRANSFORM` path elements.
 - All targets: a delimited identifier doubles an embedded delimiter (`"` for Redshift, Trino, DuckDB, and PartiQL; a backtick for Spark), so it parses back as the same name. PartiQL `t."a""b"` prints as `"t"."a""b"` (Spark: ``` `t`.`a"b` ```), and the field ``` "c`d" ``` prints on Spark as ``` `c``d` ```. This covers paths, `SELECT` and `FROM` aliases, lateral join aliases (Trino/DuckDB `UNNEST`, Spark `LATERAL VIEW EXPLODE`), `WITH` names, `EXCLUDE` paths, and Trino `ROW` cast field names. A regular (unquoted) identifier whose text is not a valid unquoted identifier (`[A-Za-z_][A-Za-z0-9_$]*`), such as a name built from plan or catalog text with a space or parenthesis, is now printed delimited instead of as-is.
 
-### Removed
-
-### Security
-
 ### Contributors
-Thank you to all who have contributed!
+
+- Thank you to all who have contributed!
 - @johnedquinn
 - @xd1313113
 
 ## [2.1.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.1) - 2026-10-27
 
-### Added
-
-### Changed
-
-### Deprecated
-
 ### Fixed
+
 - DuckDB target: lambdas (`EXCLUDE` on a field inside a collection, rendered with `list_transform`) use the `lambda x: expr` syntax instead of `x -> expr`, which DuckDB 2.0 rejects by default. This needs DuckDB 1.3 or later.
 
-### Removed
-
-### Security
-
 ### Contributors
-Thank you to all who have contributed!
+
+- Thank you to all who have contributed!
 - @XuechunHHH
 
 ## [2.1.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.1.0) - 2026-10-20
 
 ### Added
+
 - Adds an experimental DuckDB SQL transpilation target, with the same PartiQL feature coverage as the Redshift, Spark, and Trino targets.
 - DuckDB target: translates `DATE_ADD(<part>, <amount>, <datetime>)` to `date_add(<datetime>, to_<part>s(<amount>))`.
 - Adds experimental DuckDB translations to `partiql-scribe-function-extensions` (`DuckDBFunctionExtensionTarget` / `DuckDBFunctionExtensionCalls`): `contains`, `to_unixtime`, `hex_to_bigint`, `pow`, `utcnow`, and `date_add`.
 
-### Changed
-
-### Deprecated
-
 ### Fixed
+
 - Function extension `to_unixtime` now truncates toward negative infinity like PartiQL on Trino, Spark and Redshift (previously rounded fractional seconds and lost a second far from 1970; Trino also read the timestamp in the session time zone).
 - Integer division truncates toward zero like PartiQL on Spark (`DIV`) and DuckDB (`//`) instead of returning a fraction.
 - Correlated join `ON` predicates are combined with an existing `WHERE` instead of overwriting it (Trino, Spark, DuckDB).
@@ -137,54 +87,37 @@ Thank you to all who have contributed!
 - Typed NULL or MISSING literals (e.g. the implicit `ELSE NULL` of a `CASE`) no longer throw a `NullPointerException` in the Trino, Spark and Redshift converters.
 - Converters no longer crash on edge inputs (a path with no steps, a non-string bracket key such as `T[1]`, an out-of-range CTE reference); they return a result or a proper error.
 
-### Removed
-
 ### Security
+
 - Redshift function extension `contains`: the generated alias is now fixed instead of derived from the field name, so a crafted field name can no longer inject SQL.
 
 ### Contributors
-Thank you to all who have contributed!
+
+- Thank you to all who have contributed!
 - @xd1313113
 - @XuechunHHH
 
 ## [2.0.2](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.2) - 2026-09-14
 
-### Added
-
-### Changed
-
-### Deprecated
-
 ### Fixed
+
 - Transpile array-membership `<value> IN <array-expr>` to `contains` (Trino) / `array_contains` (Spark, Redshift) instead of the SQL `IN` operator, which those engines reject for a non-list/subquery right side.
 
-### Removed
-
-### Security
-
 ### Contributors
-Thank you to all who have contributed!
+
+- Thank you to all who have contributed!
 - @xd1313113
 
 ## [2.0.1](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.1) - 2026-09-10
-
-### Added
 
 ### Changed
 
 - Updated the build to Kotlin 2.3.21.
 - Changed `ScribeProblemListener.reportAndThrow` from an abstract method to a JVM default method to retain binary compatibility.
 
-### Deprecated
-
-### Fixed
-
-### Removed
-
-### Security
-
 ### Contributors
-Thank you to all who have contributed!
+
+- Thank you to all who have contributed!
 - @XuechunHHH
 
 ## [2.0.0](https://github.com/partiql/partiql-scribe/releases/tag/v2.0.0) - 2026-09-09
@@ -198,19 +131,13 @@ Thank you to all who have contributed!
 
 - Established `2.0.0` as the first Maven release line, with `scribe` and `partiql-scribe-function-extensions` sharing one version and release lifecycle.
 
-### Deprecated
-
-### Fixed
-
-### Removed
-
-### Security
-
 ### Contributors
-Thank you to all who have contributed!
+
+- Thank you to all who have contributed!
 - @alancai98
 - @johnedquinn
 - @rchowell
 - @xd1313113
 - @XuechunHHH
 - @yliuuuu
+
