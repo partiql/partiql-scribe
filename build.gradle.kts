@@ -185,5 +185,18 @@ signing {
         !version.toString().endsWith("-SNAPSHOT") &&
             gradle.taskGraph.allTasks.any { it is PublishToMavenRepository }
     }
+    // The release workflow passes the ASCII-armored key as the `signingKey` property
+    // (ORG_GRADLE_PROJECT_signingKey) instead of a keyring file. Without it, signing falls back to the
+    // `signing.keyId` / `signing.secretKeyRingFile` properties.
+    val signingKey = providers.gradleProperty("signingKey").orNull
+    if (!signingKey.isNullOrBlank()) {
+        val signingKeyId = providers.gradleProperty("signingKeyId").orNull
+        val signingPassword = providers.gradleProperty("signingPassword").orNull
+        if (signingKeyId.isNullOrBlank()) {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+        } else {
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        }
+    }
     sign(publishing.publications["main"])
 }
